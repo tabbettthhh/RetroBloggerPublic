@@ -1,0 +1,42 @@
+# Keeps your site up to date with the template it was made from (the public one its Deploy
+# button copies). Every night, or whenever you press "Run workflow" (Actions › Update my site),
+# it brings in the latest version, keeping your own settings, and Cloudflare puts it live as it
+# does for any change. Your posts, photos and theme live in your Cloudflare storage, so they're
+# never touched. To keep a file you've changed by hand, list it in a file called .keep-mine.
+# (Made from another copy of the template? Set a repository variable TEMPLATE_REPO to it.)
+name: Update my site
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 3 * * *'
+
+permissions:
+  contents: write
+
+concurrency: update-my-site
+
+jobs:
+  update:
+    # (Not in the template itself, nor in its maker's own copies.)
+    if: github.repository_owner != 'tabbettthhh'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bring in the latest version
+        env:
+          TEMPLATE: ${{ vars.TEMPLATE_REPO || 'tabbettthhh/RetroBloggerPublic' }}
+        run: |
+          set -euo pipefail
+          latest=$(git ls-remote "https://github.com/$TEMPLATE" HEAD | cut -f1)
+          if [ -z "$latest" ]; then echo "Couldn't reach the template ($TEMPLATE)."; exit 1; fi
+          if [ "$(cat .template-version 2>/dev/null || true)" = "$latest" ]; then echo "Already up to date."; exit 0; fi
+          mkdir -p "$RUNNER_TEMP/template"
+          curl -fsSL "https://codeload.github.com/$TEMPLATE/tar.gz/$latest" | tar -xz -C "$RUNNER_TEMP/template" --strip-components=1
+          node "$RUNNER_TEMP/template/scripts/update-from-template.mjs" "$RUNNER_TEMP/template" .
+          echo "$latest" > .template-version
+          git add -A
+          if git diff --cached --quiet; then echo "Nothing new."; exit 0; fi
+          git -c user.name="Site updater" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "Update to the latest version of the template"
+          git push
