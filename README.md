@@ -4,7 +4,7 @@ Your own little social media in four eras of computing: an XP home feed, an old-
 
 Every post is a plain Markdown file in a Cloudflare R2 bucket that you own. The website is only a skin that reads those files, so you can redesign it, move it, or download everything as a zip at any time. You name the site yourself in the back office.
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/tabbettthhh/my-corner)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/tabbettthhh/RetroBloggerPublic)
 
 New here? [Get your own](#get-your-own-about-20-minutes-no-coding) takes about 20 minutes and no coding, and an AI assistant can walk you through it.
 
@@ -26,7 +26,7 @@ You don't need to know anything about code. You'll click through two websites, c
 
 ### Step 1: put your site online (one button)
 
-1. Click this button: [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/tabbettthhh/my-corner)
+1. Click this button: [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/tabbettthhh/RetroBloggerPublic)
 2. Sign in to Cloudflare, and connect your GitHub (or GitLab) account when it asks. That's only so Cloudflare has somewhere to keep your copy.
 3. You'll see one page of settings. Keep the suggested names. Four settings (`ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`, `ADMIN_EMAIL` and `CONTACT_EMAIL`) want a value: type `none` in each, or leave it if it already says `none`. Step 2 fills them in properly. Then press the button at the bottom to deploy.
 4. Wait a minute or two. When it says it's done, open the address it gives you, something like `https://my-corner.yourname.workers.dev`. You'll see your site's welcome screen.
@@ -93,6 +93,22 @@ Your site starts at an address like `my-corner.yourname.workers.dev`. You can gi
 
 Leave the workers.dev address switched on. It costs nothing, and it's what keeps old links working and lets friends who haven't heard you've moved still reach you.
 
+### Getting updates
+
+Your site keeps itself up to date with the template it was made from. Every night, a small job called **Update my site** brings in the latest version, keeping your own settings (your site's name, your storage and your address). Cloudflare then puts it live, as it does for any change. Your posts, photos and theme live in your Cloudflare storage, so an update never touches them. To update straight away, open your site's repository on GitHub, go to **Actions › Update my site** and press **Run workflow**.
+
+**Made your site before updates were added?** Your copy doesn't have the job yet. Add it once, and it looks after itself from then on:
+
+1. Open your site's repository on GitHub (the one the Deploy button made for you).
+2. Press **Add file › Create new file**. For the name, type `.github/workflows/update.yml` (the slashes make the folders).
+3. Open [the job in the template](https://github.com/tabbettthhh/RetroBloggerPublic/blob/main/.github/workflows/update.yml), press the **Copy raw file** button (two overlapping squares), and paste it into your new file.
+4. Press **Commit changes…**, then **Commit changes** again.
+5. Go to **Actions** (at the top). If GitHub asks, press the green button to turn workflows on. Pick **Update my site** and press **Run workflow**. A minute later your site is up to date, and Cloudflare puts it live a minute or two after that.
+
+If it stops with a message about permission, go to **Settings › Actions › General**, choose **Read and write permissions** under "Workflow permissions", save, and run it again.
+
+Changed a file by hand and want to keep your version? List it in a file called `.keep-mine` (one file or folder per line), and updates leave it alone.
+
 ### If something goes wrong
 
 When the back office won't open, the page you see says why, in plain words, and what to fix. The usual ones:
@@ -115,7 +131,7 @@ Paste this into an AI assistant (Claude, ChatGPT, Gemini…) and it will guide y
 
 ```text
 I've just put my own website online with Cloudflare, using the open-source "My Corner" blog
-(https://github.com/tabbettthhh/my-corner). Its address is https://YOUR-SITE-ADDRESS.
+(https://github.com/tabbettthhh/RetroBloggerPublic). Its address is https://YOUR-SITE-ADDRESS.
 I'm not technical, so please guide me one small step at a time and wait for me to say
 "done" before the next one.
 
@@ -151,7 +167,7 @@ Moving to your own domain? Paste this one instead:
 
 ```text
 I run my own website with Cloudflare, using the open-source "My Corner" blog
-(https://github.com/tabbettthhh/my-corner). It's at https://YOUR-SITE-ADDRESS and I want it
+(https://github.com/tabbettthhh/RetroBloggerPublic). It's at https://YOUR-SITE-ADDRESS and I want it
 to live at my own domain, YOUR-DOMAIN (bought from: WHERE YOU BOUGHT IT). I'm not technical,
 so please guide me one small step at a time and wait for me to say "done" before the next.
 Please check Cloudflare's current documentation as we go, because menus change:
@@ -290,7 +306,7 @@ If friends run their own copy of this site, you can follow each other. Under **F
 1. Tap **My friend code** and send it to anyone you want as a friend (a message, an email). It stays the same and never runs out, so you can give it to as many friends as you like. **Make a new code** swaps it (the old one stops working; friends you have stay friends) and **Switch it off** stops anyone new adding you.
 2. They paste it under **Add a friend** on their site. That's it: your two sites now follow each other.
 
-Your site then gets a **Friends** tab next to Home: your friends' posts as one feed you can scroll, newest first, with photos you can swipe through and your friends listed at the top (tap one to see only theirs). The back office lists your friends with how they are (online, away, busy…) and their status, and new posts from friends show in your notifications. When you post (or edit, delete or change your status), your site tells your friends' sites straight away, so it shows on theirs within moments. A post scheduled for later is shared when it goes live. Your site also checks theirs every 10 minutes, in case one was offline, or straight away when you tap **Check now**. A page that's already open (like the site saved to a phone's home screen) picks up new posts when you come back to it.
+Your site then gets a **Friends** tab next to Home: your friends' posts as one feed you can scroll, newest first, with your friends listed at the top (tap one to see only theirs). Each post looks just as it does on your friend's own site: its keepsakes (their own designs too), a memory's ribbon, its font, ratings and photos, with who it's from along the top and a link to see it on their site. Everything is checked by your own site first, so a friend's post can never run anything or reach outside it. (A friend whose site hasn't been updated yet shows as a simpler card until it is.) The back office lists your friends with how they are (online, away, busy…) and their status, and new posts from friends show in your notifications. When you post (or edit, delete or change your status), your site tells your friends' sites straight away, so it shows on theirs within moments. A post scheduled for later is shared when it goes live. Your site also checks theirs every 10 minutes, in case one was offline, or straight away when you tap **Check now**. A page that's already open (like the site saved to a phone's home screen) picks up new posts when you come back to it.
 
 It's following only, with no messages. Only published posts are shared: drafts and posts scheduled for later stay private. Every friendship gets its own secret, known only to those two sites, and every request between them is signed with it, so nobody else can read your friend feed or pretend to be your friend. Friends' photos come through your own site, so visitors' browsers never connect to theirs. Secrets and the copies of friends' posts are kept apart from your files and are never in the export. **Remove buddy** unfollows both ways.
 
@@ -459,6 +475,8 @@ apps: {"journal": {"look": "custom", "colour": "#2f6f6a", "paper": "grid", "font
 | `src/` | The small server (a Cloudflare Worker) that reads your files and serves the site. |
 | `content/` | The example posts, shelves and travel stats the back office can add for you. |
 | `wrangler.jsonc` | The Worker name, the bucket name and the time zone. Nothing personal. |
+| `scripts/` | Small tools: setting up, importing, and `update-from-template.mjs`, which brings a copy of the site up to date. |
+| `.github/workflows/` | **Update my site**, the nightly job that keeps a copy up to date (see "Getting updates"). |
 
 Everything visual lives in `public/css/`: `xp.css`, `leather.css`, `mac.css`, `android.css` and `desktop.css`, one file per era, plus `visa.css` and `keepsake-maker.css` for the designs you can swap. A redesign never touches your posts.
 

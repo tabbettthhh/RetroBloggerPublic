@@ -371,4 +371,7 @@ a.avatar:hover, a.avatar:focus-visible { transform: translateY(-1px); box-shadow
 .ff-post.no-photo .ff-text { font-size: 15px; }
 .ff-more { padding: 0; border: 0; background: none; color: #666; font: inherit; font-size: 12px; cursor: pointer; }
 .ff-open { display: inline-block; margin-top: 6px; color: #1d4fb8; font-size: 12px; }
+/* A friend's post drawn as it looks on their site: who it's from on a strip along the top. */
+.card.ff-full > .ff-from { padding: 6px 10px; border-bottom: 1px solid rgba(0, 0, 0, .08); background: rgba(255, 255, 255, .55); }
+.card.ff-full > .ff-open { display: block; margin: 0; padding: 6px 12px 9px; }
 .ff-empty { padding: 16px; text-align: center; }

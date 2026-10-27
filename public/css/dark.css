@@ -206,6 +206,7 @@
 [data-theme="dark"] .ff-title { color: #b9cdf5; }
 [data-theme="dark"] .ff-who small, [data-theme="dark"] .ff-meta, [data-theme="dark"] .ff-more { color: #aaa; }
 [data-theme="dark"] .ff-open { color: #8fb4ff; }
+[data-theme="dark"] .card.ff-full > .ff-from { background: rgba(255, 255, 255, .05); border-bottom-color: rgba(255, 255, 255, .08); }
 [data-theme="dark"] .ff-pick { background: #1f2a3d; border-color: #364055; }
 [data-theme="dark"] .ff-pick-status { color: #bbb; }
 [data-theme="dark"] .ff-all { background: #2a3140; color: #eee; }
