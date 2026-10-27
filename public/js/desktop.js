@@ -339,6 +339,11 @@ export function startDesktop(root, data) {
 
   return {
     open,
+    // New posts arrived: each open window that's at the top is drawn again with them (one you're
+    // scrolled down in is left alone, and shows them next time it changes).
+    refresh() {
+      for (const [id, w] of wins) if (w.body.scrollTop < 80 && [...w.body.querySelectorAll('*')].every((x) => x.scrollTop < 80)) render(w, id, w.param);
+    },
     welcomeDone() {
       busy(900);
       if (balloon)

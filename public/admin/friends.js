@@ -324,7 +324,7 @@ function feedSection(d) {
     'section',
     { class: 'fr-feed' },
     h('h2', { class: 'section-title' }, 'Your friends’ posts'),
-    all.length ? all.slice(0, 20).map(([f, p]) => postCard(f, p, f.cache.feed)) : h('p', { class: 'hint' }, 'Nothing yet. Their newest posts show up here (your site checks every half hour, or tap Check now).')
+    all.length ? all.slice(0, 20).map(([f, p]) => postCard(f, p, f.cache.feed)) : h('p', { class: 'hint' }, 'Nothing yet. Their newest posts show up here (they arrive moments after your friends post; your site also checks every 10 minutes, or tap Check now).')
   );
 }
 
@@ -334,7 +334,7 @@ function howItWorks() {
     { class: 'fr-how' },
     h('summary', null, 'How friends work'),
     h('p', null, 'You and a friend each run your own copy of this site. Copy your friend code, send it to them, and they paste it into Add a friend on theirs (or the other way round). From then on your two sites trust each other. Your code stays the same for everyone; switch it off or make a new one whenever you like.'),
-    h('p', null, 'Your site checks your friends’ sites every half hour for new posts and statuses. Their photos come through your own site, so your browser never connects to theirs. Drafts and scheduled posts are never shared.'),
+    h('p', null, 'Your friends’ sites tell yours the moment they post or change their status, and your site checks theirs every 10 minutes as well. Their photos come through your own site, so your browser never connects to theirs. Drafts and scheduled posts are never shared.'),
     h('p', null, 'Your site also gets a Friends tab: their posts as one feed you can scroll, with your friends listed at the top. Untick the box above to take it off your site.'),
     h('p', null, 'It’s following only: there are no messages. Remove a buddy and both sites stop following each other.')
   );

@@ -29,8 +29,9 @@
   // This line stops each deploy from wiping those dashboard settings.
   "keep_vars": true,
 
-  // Every half hour your site reads your friends' sites for new posts and statuses.
-  "triggers": { "crons": ["*/30 * * * *"] },
+  // Every 10 minutes your site reads your friends' sites for new posts and statuses (they also
+  // tell it straight away when they post), and tells them about a scheduled post going live.
+  "triggers": { "crons": ["*/10 * * * *"] },
 
   "observability": { "enabled": true }
 }

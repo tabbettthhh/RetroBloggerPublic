@@ -874,6 +874,77 @@ await test('festive days and your own days settle across the site like the seaso
   await putFile('theme.md', '---\ntheme: classic\n---\n');
 });
 
+await test('stylesheet pictures are whole: no raw # cuts one short (it would end the address there and draw nothing)', async () => {
+  const dir = new URL('../public/css/', import.meta.url);
+  for (const f of fs.readdirSync(dir).filter((f) => f.endsWith('.css'))) {
+    const css = fs.readFileSync(new URL(f, dir), 'utf8');
+    for (const m of css.matchAll(/url\((["'])data:image\/svg\+xml,(.*?)\1\)/g)) assert(!m[2].includes('#'), `${f}: a picture with a raw # near "${m[2].slice(0, 60)}"`);
+  }
+});
+
+await test('on a phone the season settles on every app\'s top bar, below the clock, and under the menu', async () => {
+  const bars = { home: '.xp-title', journal: '.leather-head', atlas: '.menubar', guestbook: '.droid-bar', books: '.shelf-bar', films: '.marquee', podcasts: '.deck-bar', music: '.hifi-bar', tv: '.tv-bar', album: '.al-bar' };
+  const has = (p, sel, pseudo) => p.evaluate(([sel, pseudo]) => { const el = document.querySelector(sel); if (!el) return 'missing ' + sel; const cs = getComputedStyle(el, pseudo); return cs.content !== 'none' && cs.backgroundImage !== 'none' && cs.pointerEvents === 'none'; }, [sel, pseudo]);
+  for (const season of ['winter', 'spring', 'summer', 'autumn', 'diwali']) {
+    await putFile('theme.md', `---\ntheme: arcade\nseasons: ${season}\n---\n`);
+    await siteAt(async (p) => {
+      eq(await has(p, '.xp-nav', '::after'), true, `${season}: under the menu`);
+      for (const [app, sel] of Object.entries(bars)) {
+        await p.goto(BASE + '/#/' + app);
+        await p.waitForSelector('.phone ' + sel);
+        eq(await has(p, '.phone ' + sel, '::before'), true, `${season}: the ${app} bar`);
+      }
+    }, { desktop: false, reducedMotion: 'reduce', time: new Date('2026-07-01T12:00:00') });
+  }
+  // The bars that run up under a phone's clock keep it clear: the scenery starts below it.
+  const css = fs.readFileSync(new URL('../public/css/skins.css', import.meta.url), 'utf8');
+  assert(/\[data-settle~="bars"\] :is\(\.xp-phone \.xp-title, \.phone :is\(\.al-bar[^)]*\)\)::before \{ top: env\(safe-area-inset-top, 0px\); \}/.test(css), 'kept below the clock');
+  // On a computer the app's own bar sits inside its window, under the window's bar: only the window's bar gets it.
+  await putFile('theme.md', '---\ntheme: arcade\nseasons: autumn\n---\n');
+  await siteAt(async (p) => {
+    await p.goto(BASE + '/#/books');
+    await p.waitForSelector('.dw-shelf .shelf-bar');
+    eq(await p.evaluate(() => [...document.querySelectorAll('.dw-shelf *')].filter((e) => getComputedStyle(e, '::before').backgroundImage.includes('svg')).length), 1, 'once on a computer: along the window\'s bar');
+  }, { reducedMotion: 'reduce' });
+  await putFile('theme.md', '---\ntheme: classic\nseasons: summer\n---\n');
+  await siteAt(async (p) => {
+    eq(await p.evaluate(() => [...document.querySelectorAll('.feed > .card .card-head')].some((h) => getComputedStyle(h, '::after').backgroundImage.includes('svg'))), true, 'summer peeks over the posts');
+  }, { reducedMotion: 'reduce' });
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+});
+
+await test('a theme that isn\'t saved yet says so, and leaving asks first; an open page picks up a saved theme', async () => {
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+  const page = await adminPage();
+  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await page.waitForSelector('.tm-savebar');
+  eq(await page.locator('.tm-savebar.unsaved').count(), 0, 'nothing unsaved to start with');
+  await page.locator('button', { hasText: 'Surprise me' }).click();
+  await page.waitForSelector('.tm-savebar.unsaved .tm-unsaved');
+  assert((await page.locator('.tm-unsaved').innerText()).includes('Not saved yet'), 'says it isn’t on the site');
+  eq(await page.locator('.tm-savebar').evaluate((e) => getComputedStyle(e).position), 'sticky', 'stays in view');
+  const asks = () => page.evaluate(() => { const e = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(e); return e.defaultPrevented; });
+  eq(await asks(), true, 'leaving asks first');
+  await page.locator('button', { hasText: 'Save the theme' }).click();
+  await page.waitForFunction(() => !document.querySelector('.tm-savebar.unsaved'));
+  eq(await asks(), false, 'saved: leaving doesn’t ask');
+  assert(!page.errors.length, page.errors.join('; '));
+  await page.close();
+  const saved = (await publicData()).theme.theme;
+  // A page that was already open (like the site saved to a phone's home screen) puts on a newly
+  // saved theme when you come back to it.
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+  await siteAt(async (p) => {
+    eq(await p.evaluate(() => document.documentElement.dataset.skin), 'classic', 'classic to start');
+    await putFile('theme.md', '---\ntheme: bunny\n---\n');
+    await p.clock.fastForward(61000);
+    await p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await p.waitForFunction(() => document.documentElement.dataset.skin === 'bunny', null, { timeout: 10000 });
+  }, { desktop: false, reducedMotion: 'reduce', time: new Date() });
+  assert(saved !== undefined, 'the remix was saved');
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+});
+
 const failed = report();
 await close();
 process.exit(failed ? 1 : 0);

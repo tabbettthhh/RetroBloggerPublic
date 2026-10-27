@@ -19,6 +19,47 @@ async function load() {
   return res.json();
 }
 
+// A page left open (a tab in the background, or the site saved to a phone's home screen) picks
+// up new posts, friends' posts included, when you come back to it, and every few minutes while
+// it's showing. (Asking costs almost nothing when there's nothing new.) What's showing is drawn
+// again only if something changed, and never while you're scrolled down reading: then the new
+// posts are there on your next tap.
+function keepFresh(data, redraw) {
+  const plain = ({ generated, ...rest }) => JSON.stringify(rest);
+  let seen = plain(data);
+  let last = Date.now();
+  let busy = false;
+  const check = async () => {
+    if (busy || document.hidden || Date.now() - last < 60000) return;
+    busy = true;
+    last = Date.now();
+    try {
+      const res = await fetch('/api/all', { cache: 'no-cache' });
+      if (!res.ok) return;
+      const fresh = await res.json();
+      const now = plain(fresh);
+      if (now === seen) return;
+      seen = now;
+      for (const k of Object.keys(data)) if (!(k in fresh)) delete data[k];
+      Object.assign(data, fresh);
+      registerCategories(data.categories);
+      registerKeepsakes(data.keepsakes?.custom);
+      if (!previewing) setSoundPack(applySkin(data.theme).sounds);
+      redraw();
+    } catch {
+    } finally {
+      busy = false;
+    }
+  };
+  document.addEventListener('visibilitychange', check);
+  window.addEventListener('pageshow', check);
+  window.addEventListener('focus', check);
+  setInterval(check, 5 * 60 * 1000);
+}
+// Whether the reader is at (or near) the top of what's showing, so drawing it again won't move
+// anything they're reading.
+const nearTop = (el) => [el, ...el.querySelectorAll('*')].every((x) => x.scrollTop < 80) && (document.scrollingElement?.scrollTop || 0) < 80;
+
 function fail() {
   root.replaceChildren(
     h('div', { class: 'boot-error' }, h('div', { class: 'xp-dialog' }, h('div', { class: 'xp-title' }, h('span', { class: 'xp-title-text' }, 'Connection problem')), h('div', { class: 'xp-dialog-body' }, h('p', null, 'The site could not load its posts. Check your connection and try again.'), h('button', { type: 'button', class: 'xp-btn', onclick: () => location.reload() }, 'Try again'))))
@@ -131,6 +172,7 @@ async function main() {
       }
       desk.open(location.hash);
     });
+    if (!previewing) keepFresh(data, () => desk.refresh());
   } else {
     let target = location.hash && location.hash !== '#/welcome' ? location.hash : '#/';
     const show = () => {
@@ -154,6 +196,10 @@ async function main() {
       show();
     });
     show();
+    if (!previewing)
+      keepFresh(data, () => {
+        if (parseRoute(location.hash).app !== 'welcome' && hasEntered() && nearTop(root)) show();
+      });
     // Unfolding a foldable, or turning a tablet, can cross into the roomier layout.
     window.matchMedia('(min-width: 700px)').addEventListener('change', () => show());
   }

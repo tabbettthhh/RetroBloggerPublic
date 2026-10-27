@@ -393,6 +393,9 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .tm-body i:nth-child(3) { width: 45%; }
 .tm-start { position: absolute; left: 0; bottom: 0; width: 30%; height: 12px; border-radius: 0 6px 6px 0; }
 .tm-pointer { position: absolute; right: 8%; bottom: 14%; width: 24px; height: 24px; }
+.tm-savebar.unsaved { position: sticky; bottom: 0; z-index: 6; align-items: center; padding: 8px 10px; border: 1px solid #e0b84a; border-radius: 6px; background: #fff8dc; box-shadow: 0 -3px 10px rgba(0, 0, 0, .12); }
+.tm-unsaved { flex: 1 1 100%; font-weight: bold; color: #7a4b00; }
+@media (max-width: 600px) { .tm-savebar.unsaved { gap: 6px; padding: 6px 8px; } .tm-savebar.unsaved .btn { padding: 5px 9px; font-size: 13px; } .tm-unsaved { font-size: 13px; } }
 .tm-own { padding: 10px 12px; border: 1px solid #c9c4ae; border-radius: 6px; background: #fff; }
 .tm-own summary { cursor: pointer; font-weight: bold; color: #0d3a9a; }
 .tm-own > * + * { margin-top: 10px; }
