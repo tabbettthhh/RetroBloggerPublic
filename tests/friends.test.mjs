@@ -187,14 +187,14 @@ await test('your site has a Friends tab with their posts, unless you turn it off
   site.on('pageerror', (e) => site.errors.push(e.message));
   await site.addInitScript(() => sessionStorage.setItem('entered', '1'));
   await site.goto(BASE + '/#/friends');
-  await site.waitForSelector('.ff-post');
+  await site.waitForSelector('.ff-full');
   assert(await site.locator('.xp-links a', { hasText: 'Friends' }).count(), 'a Friends tab');
   eq(await site.locator('.ff-buddy').count(), 1, 'the buddy list');
-  const post = site.locator('.ff-post').first();
+  const post = site.locator('.ff-full').first();
   assert((await post.innerText()).includes('Harbour walk'), 'post shown');
-  eq(await post.locator('.ff-text img').count(), 0, 'no pictures from the text');
+  eq(await post.locator('.card-body img, .prose img').count(), 0, 'no pictures from the text');
   eq(await post.locator('a[href^="javascript"]').count(), 0, 'no script links');
-  const loaded = await site.waitForFunction(() => { const img = document.querySelector('.ff-photos img'); return img && img.complete && img.naturalWidth > 0; }, null, { timeout: 10000 }).then(() => true, () => false);
+  const loaded = await site.waitForFunction(() => { const img = document.querySelector('.ff-full img[src^="/friends-media/"]'); return img && img.complete && img.naturalWidth > 0; }, null, { timeout: 10000 }).then(() => true, () => false);
   assert(loaded, 'the photo shows');
   await site.locator('.ff-buddy').first().click();
   assert((await site.locator('.ff-pick').innerText()).includes('Lina'), 'tap a buddy to see only theirs');
@@ -254,7 +254,7 @@ await test('a friend\'s new post reaches your site within moments, and an open p
   await site.clock.install();
   await site.addInitScript(() => sessionStorage.setItem('entered', '1'));
   await site.goto(BASE + '/#/friends');
-  await site.waitForSelector('.ff-post');
+  await site.waitForSelector('.ff-full');
   // Your friend posts. Nobody presses Check now and nobody waits for the 10-minute check.
   const at = new Date(Date.now() - 60e3).toISOString().slice(0, 16).replace('T', ' ');
   await fetch(`${BASE2}/admin/api/file?key=thoughts/fresh-news.md`, { method: 'PUT', body: `---\ndate: ${at}\ntitle: Fresh news\n---\nJust now.\n` });
@@ -263,10 +263,10 @@ await test('a friend\'s new post reaches your site within moments, and an open p
   await fetch(`${BASE2}/admin/api/file?key=thoughts/fresh-news.md`, { method: 'PUT', body: `---\ndate: ${at}\ntitle: Fresh news (edited)\n---\nJust now.\n` });
   await until(async () => (await publicData()).friendPosts.some((p) => p.title === 'Fresh news (edited)'), 'an edit follows');
   // The page that was already open shows it when you come back to it.
-  assert(!(await site.locator('.ff-post', { hasText: 'Fresh news' }).count()), 'not there before');
+  assert(!(await site.locator('.ff-full', { hasText: 'Fresh news' }).count()), 'not there before');
   await site.clock.fastForward(61000);
   await site.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
-  await site.waitForSelector('.ff-post:has-text("Fresh news (edited)")', { timeout: 10000 });
+  await site.waitForSelector('.ff-full:has-text("Fresh news (edited)")', { timeout: 10000 });
   assert(!site.errors.length, site.errors.join('; '));
   await browser.close();
   await fetch(`${BASE2}/admin/api/file?key=thoughts/fresh-news.md`, { method: 'DELETE' });
@@ -277,6 +277,66 @@ await test('a friend\'s new post reaches your site within moments, and an open p
   await new Promise((r) => setTimeout(r, 2500));
   eq((await api('friends')).friends[0].cache.at, before, 'no news, no message');
   await fetch(`${BASE2}/admin/api/file?key=theme.md`, { method: 'PUT', body: '---\ntheme: classic\n---\n' });
+});
+
+await test('a friend\'s post looks as it does on their site: keepsakes, a memory, their own designs', async () => {
+  const at = new Date(Date.now() - 30e3).toISOString().slice(0, 16).replace('T', ' ');
+  await fetch(`${BASE2}/admin/api/file?key=keepsakes.md`, { method: 'PUT', body: '---\ncustom: [{"id":"ferry","name":"Ferry ticket","shape":"ticket","heading":"ISLAND FERRY","paper":"#fde7a8","types":["places","thoughts"]}]\n---\n' });
+  await fetch(`${BASE2}/admin/api/file?key=thoughts/by-the-sea.md`, { method: 'PUT', body: `---\ndate: ${at}\ntitle: That summer by the sea\nmemory: 2019-07\nflower: [Daisy from the cliff path]\nsky: true\ncustom_keepsakes: {ferry: ["Return — £8"]}\n---\nWe swam until the sun went down.\n` });
+  await until(async () => (await publicData()).friendPosts.some((p) => p.title === 'That summer by the sea' && p.full?.memory === '2019-07'), 'it arrives in full');
+  const d = await publicData();
+  eq(d.friendKeepsakes.map((k) => [k.id, k.name, k.picture]), [['localhost_8801~ferry', 'Ferry ticket', '']], 'their own keepsake design, under their name');
+  const browser = await chromium.launch();
+  const site = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
+  site.errors = [];
+  site.on('pageerror', (e) => site.errors.push(e.message));
+  await site.addInitScript(() => sessionStorage.setItem('entered', '1'));
+  await site.goto(BASE + '/#/friends');
+  const card = site.locator('.ff-full', { hasText: 'That summer by the sea' });
+  await card.waitFor();
+  assert((await card.locator('.ff-from').innerText()).includes('Lina Lounge'), 'who it’s from');
+  eq(await card.evaluate((el) => el.classList.contains('memory')), true, 'a memory, on its old card');
+  assert((await card.innerText()).toUpperCase().includes('RELIVING A MEMORY'), 'with its ribbon');
+  assert(await card.locator('.ks-sky, .sky').count(), 'the sky keepsake');
+  assert((await card.innerText()).includes('Daisy from the cliff path'), 'the pressed flower');
+  assert((await card.locator('.km-wrap').innerText()).includes('ISLAND FERRY'), 'their own ferry ticket design');
+  const links = await card.locator('a[href]').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
+  assert(links.length && links.every((h) => h.startsWith(BASE2)), 'every link goes to their site: ' + links.join(', '));
+  assert(!site.errors.length, site.errors.join('; '));
+  await browser.close();
+  await fetch(`${BASE2}/admin/api/file?key=thoughts/by-the-sea.md`, { method: 'DELETE' });
+});
+
+await test('a post in full from a friend\'s site is made safe before anyone sees it', async () => {
+  const { tidyFeed } = await import('../src/friends.js');
+  const friend = { url: 'https://pal.example', key: 'pal.example', name: 'Pal' };
+  const nasty = '<img src=x onerror=alert(1)>"\'><svg onload=alert(1)>';
+  const feed = tidyFeed({
+    name: 'Pal',
+    keepsakes: [{ id: 'ferry', name: nasty, shape: '<b>', paper: 'red;background:url(x)', picture: 'design/x.jpg' }, { id: '../../x', name: 'Bad id' }],
+    categories: [{ key: 'brunch', label: nasty, color: 'url(x)' }, { key: '<x>', label: 'no' }],
+    posts: [{
+      id: 'thoughts/hello', type: 'thoughts', title: 'Hi', text: 'Hello <script>alert(1)</script>', ts: 1, photos: ['../../site.md', 'thoughts/hello/1.jpg'],
+      full: { slug: '../../etc', flower: [{ item: nasty, price: 3 }], sky: [], memory: { evil: 1 }, rating: 'five', font: '<x>', made_up: 'dropped', __proto__x: 1, custom_keepsakes: { ferry: [{ item: 'ok' }] }, ordered: Array(500).fill('x'), html: '<script>x</script>', photos: ['https://elsewhere.example/x.jpg'] }
+    }, { id: 'nope/x', type: 'nope', full: { title: 'x' } }]
+  }, friend);
+  const [p, q] = feed.posts;
+  const f = p.full;
+  const text = JSON.stringify(feed);
+  assert(!/[<>]/.test(JSON.stringify([f, feed.keepsakes, feed.categories])), 'no markup characters anywhere in the full post, designs or categories');
+  eq(f.flower[0].item.includes('‹img'), true, 'text kept, made harmless');
+  eq(f.sky, [], 'a plain keepsake stays');
+  eq([f.memory, f.rating, f.font], [{}.memory ?? null, null, ''], 'wrong kinds of values fall back');
+  assert(!('made_up' in f) && !('__proto__x' in f) && !('html' in f) && !('photos' in f), 'only what your site knows');
+  eq(f.ordered.length, 60, 'long lists are capped');
+  eq(Object.keys(f.custom_keepsakes), ['pal.example~ferry'], 'their designs keep their own names');
+  eq(f.slug, 'hello', 'an odd slug is replaced');
+  eq(p.photos, ['thoughts/hello/1.jpg'], 'only their own photos, by name');
+  assert(!p.html.includes('<script'), 'the writing is cleaned');
+  eq(q.full, null, 'an unknown kind of post isn’t drawn in full');
+  eq(feed.keepsakes.map((k) => [k.id, k.shape, k.paper, k.picture]), [['pal.example~ferry', 'ticket', '', '']], 'designs checked, no picture from elsewhere');
+  eq(feed.categories.map((c) => [c.key, c.color]), [['brunch', '']], 'categories checked');
+  assert(!text.includes('javascript:'), 'nothing that runs');
 });
 
 await test('your site keeps its address, and friends follow when it moves', async () => {

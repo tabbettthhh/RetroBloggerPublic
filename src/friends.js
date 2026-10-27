@@ -22,15 +22,18 @@
 // - Secrets and copies of feeds live under data/_ in your bucket, which the file list, the
 //   export and visitors never see.
 
-import { safeMarkdown } from './content.js';
+import { safeMarkdown, buildPost, TYPES, THEME_OPTIONS, KEEPSAKE_SHAPES } from './content.js';
 
 const STORE = 'data/_friends.json';
 // A fingerprint of the feed your friends last heard about.
 const SENT = 'data/_friendsent';
 const MAX_FRIENDS = 40;
+const MAX_PHOTOS = 12;
 const SKEW = 5 * 60 * 1000;
 export const FRIEND_UA = 'MyCorner-Friends/1 (a friend site, following)';
-export const FEED_VERSION = 1;
+// 2: each post also comes in full (keepsakes, memories, flair and all), with your own keepsake
+// designs and place categories, so a friend's site can show it as it looks on yours.
+export const FEED_VERSION = 2;
 
 // ---------- small helpers ----------
 
@@ -254,6 +257,18 @@ export async function friendsApi(request, env, path, deps) {
 }
 
 // What a friend's site gets: your name and status, and your latest posts (newest first).
+// The parts of a post a friend's site can show it with, as it looks on yours: everything but
+// what's already sent on its own (or never leaves your site), and nothing left at its default.
+const NOT_SENT = new Set(['body', 'files', 'key', 'error', 'extra', 'html', 'excerpt', 'draft', 'photos', 'captions']);
+function fullPost(p) {
+  const base = TYPES.includes(p.type) ? blank(p.type) : {};
+  const out = {};
+  for (const [k, v] of Object.entries(p)) {
+    if (NOT_SENT.has(k) || JSON.stringify(v) === JSON.stringify(base[k])) continue;
+    out[k] = v;
+  }
+  return out;
+}
 export function friendFeed(data, origin) {
   const site = data.site;
   const link = (p) => origin + (p.type === 'places' ? `/#/journal/${p.slug}` : ['books', 'films', 'podcasts', 'music', 'tv'].includes(p.type) ? `/#/${p.type}/${p.slug}` : `/#/post/${p.type}/${p.slug}`);
@@ -279,7 +294,7 @@ export function friendFeed(data, origin) {
       // Your own photos only (as "type/post/file"), fetched through the friend's own site.
       photos: (p.photos || [])
         .filter((u) => String(u).startsWith('/media/'))
-        .slice(0, 4)
+        .slice(0, MAX_PHOTOS)
         .map((u) => {
           try {
             return decodeURIComponent(String(u).slice('/media/'.length));
@@ -288,15 +303,97 @@ export function friendFeed(data, origin) {
           }
         })
         .filter(Boolean),
+      captions: (p.captions || []).slice(0, MAX_PHOTOS),
+      full: fullPost(p),
       url: link(p)
-    }))
+    })),
+    // Your own keepsake designs (their pictures stay on your site) and place categories.
+    keepsakes: (data.keepsakes?.custom || []).map(({ picture, ...d }) => d),
+    categories: data.categories || []
   };
 }
 
 // ---------- your side: following, refreshing, sending ----------
 
+// ---------- a friend's post in full, made safe ----------
+// A friend's site sends each post in full, so yours can show it as it looks on theirs. It's
+// rebuilt here on your own site's idea of a post: only the parts your site knows, each the
+// kind of value it should be (text, a number, a list…), sizes capped. Text can't carry markup
+// (the few characters that could are swapped for look-alikes), photos come through your own
+// site, and the writing is turned into HTML by your own site's cleaner.
+const BLANK = {};
+const blank = (type) => (BLANK[type] ||= buildPost(type, `${type}/x.md`, '', 'Europe/London'));
+const LOOKALIKE = { '<': '‹', '>': '›', '"': '”', "'": '’' };
+const words = (v, n = 2000) => String(v).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/[<>"']/g, (c) => LOOKALIKE[c]).slice(0, n);
+const KEY = /^[a-z0-9][a-z0-9_-]{0,40}$/i;
+// Any plain value, a few levels deep.
+function plain(v, depth = 0) {
+  if (v === null || typeof v === 'boolean') return v;
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  if (typeof v === 'string') return words(v);
+  if (depth > 3 || typeof v !== 'object') return undefined;
+  if (Array.isArray(v)) return v.slice(0, 60).map((x) => plain(x, depth + 1)).filter((x) => x !== undefined);
+  const out = {};
+  for (const [k, x] of Object.entries(v).slice(0, 80)) {
+    const y = KEY.test(k) ? plain(x, depth + 1) : undefined;
+    if (y !== undefined) out[k] = y;
+  }
+  return out;
+}
+// A value shaped like `def`, your site's own default for that part of a post. (Where that's
+// "nothing yet", it's a number or a list, or for a memory, a date.)
+const DATE_ONLY = /^\d{4}(-\d{2}(-\d{2})?)?$/;
+function fit(def, v, key) {
+  if (v === undefined) return def;
+  if (def === null) {
+    if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+    if (Array.isArray(v)) return plain(v);
+    return key === 'memory' && typeof v === 'string' && DATE_ONLY.test(v) ? v : null;
+  }
+  if (v === null) return Array.isArray(def) ? [] : def && typeof def === 'object' ? {} : typeof def === 'string' ? '' : typeof def === 'boolean' ? false : null;
+  const kind = (x) => (Array.isArray(x) ? 'list' : x === null ? 'any' : typeof x);
+  const want = kind(def);
+  const got = kind(v);
+  if (want !== 'any' && want !== got) return def;
+  return plain(v) ?? def;
+}
+const FONTS = new Set(THEME_OPTIONS.font);
+// A friend's own keepsake design, named after them so it can't stand in for one of yours.
+const designId = (friend, id) => `${friend.key}~${id}`;
+function fullFrom(p, friend, id) {
+  const type = TYPES.includes(p.type) ? p.type : null;
+  if (!type || !p.full || typeof p.full !== 'object' || Array.isArray(p.full)) return null;
+  const base = blank(type);
+  const out = {};
+  for (const k of Object.keys(base)) {
+    if (NOT_SENT.has(k) || k === 'type' || k === 'slug') continue;
+    out[k] = fit(base[k], p.full[k], k);
+  }
+  const ck = out.custom_keepsakes && typeof out.custom_keepsakes === 'object' ? out.custom_keepsakes : {};
+  out.custom_keepsakes = Object.fromEntries(Object.entries(ck).filter(([, lines]) => Array.isArray(lines)).slice(0, 20).map(([k, lines]) => [designId(friend, k), lines]));
+  if (!FONTS.has(out.font)) out.font = '';
+  out.category = /^[a-z0-9-]{0,30}$/.test(out.category) ? out.category : '';
+  out.slug = (/^[a-z0-9][a-z0-9._-]{0,120}$/i.test(String(p.full.slug || '')) ? String(p.full.slug) : id.split('/')[1] || 'post').slice(0, 120);
+  out.type = type;
+  return out;
+}
+function designsFrom(list, friend) {
+  const hex = (v) => (/^#[0-9a-f]{6}$/i.test(String(v ?? '')) ? String(v).toLowerCase() : '');
+  return (Array.isArray(list) ? list : [])
+    .slice(0, 60)
+    .filter((d) => d && typeof d === 'object' && /^[a-z0-9][a-z0-9-]{0,29}$/.test(String(d.id || '')))
+    .map((d) => ({ id: designId(friend, d.id), name: clean(d.name, 40) && words(clean(d.name, 40)), heading: words(clean(d.heading, 30)), sub: words(clean(d.sub, 50)), shape: KEEPSAKE_SHAPES.includes(d.shape) ? d.shape : 'ticket', paper: hex(d.paper), ink: hex(d.ink), accent: hex(d.accent), picture: '', types: [], prices: !!d.prices }))
+    .filter((d) => d.name);
+}
+function categoriesFrom(list) {
+  return (Array.isArray(list) ? list : [])
+    .slice(0, 60)
+    .filter((c) => c && /^[a-z0-9-]{1,30}$/.test(String(c.key || '')))
+    .map((c) => ({ key: c.key, label: words(clean(c.label, 30)) || c.key, color: /^#[0-9a-f]{6}$/i.test(String(c.color || '')) ? c.color : '' }));
+}
+
 // Tidies a feed from a friend's site before keeping it: plain values only, sizes capped.
-function tidyFeed(f, friend) {
+export function tidyFeed(f, friend) {
   const posts = (Array.isArray(f?.posts) ? f.posts : []).slice(0, 30).map((p) => ({
     id: clean(p.id, 120),
     type: clean(p.type, 12),
@@ -312,7 +409,9 @@ function tidyFeed(f, friend) {
     creator: clean(p.creator, 80),
     rating: Number.isFinite(+p.rating) && p.rating !== null ? Math.max(0, Math.min(10, +p.rating)) : null,
     friends_only: !!p.friends_only,
-    photos: (Array.isArray(p.photos) ? p.photos : []).map((k) => clean(k, 200)).filter(photoKeyOk).slice(0, 4),
+    photos: (Array.isArray(p.photos) ? p.photos : []).map((k) => clean(k, 200)).filter(photoKeyOk).slice(0, MAX_PHOTOS),
+    captions: (Array.isArray(p.captions) ? p.captions : []).slice(0, MAX_PHOTOS).map((c) => words(clean(c, 200))),
+    full: fullFrom(p, friend, clean(p.id, 120)),
     url: String(p.url || '').startsWith(friend.url + '/') ? clean(p.url, 300) : friend.url
   }));
   return {
@@ -323,7 +422,9 @@ function tidyFeed(f, friend) {
     status_updated: Number(f?.status_updated) || null,
     // (Whether they let you show their posts to your visitors.)
     share: f?.share !== false,
-    posts
+    posts,
+    keepsakes: designsFrom(f?.keepsakes, friend),
+    categories: categoriesFrom(f?.categories)
   };
 }
 
@@ -533,6 +634,8 @@ export async function publicFriends(env) {
   const caches = await Promise.all(store.friends.map((f) => readCache(env, f.key)));
   const buddies = [];
   const posts = [];
+  const keepsakes = [];
+  const categories = [];
   store.friends.forEach((f, i) => {
     const c = caches[i];
     const feed = c?.feed;
@@ -540,16 +643,17 @@ export async function publicFriends(env) {
     const who = { name: feed?.name || f.name, owner: feed?.owner || f.owner, url: f.url };
     buddies.push({ ...who, presence: fresh ? feed?.presence || 'online' : 'offline', status: feed?.status || '' });
     if (!postsShown(store, feed)) return;
+    keepsakes.push(...(feed?.keepsakes || []));
+    categories.push(...(feed?.categories || []));
     for (const p of feed?.posts || []) {
-      posts.push({
-        ...p,
-        friend: who,
-        photos: p.photos.map((k) => `/friends-media/${encodeURIComponent(f.key)}/${k.split('/').map(encodeURIComponent).join('/')}`)
-      });
+      const photos = p.photos.map((k) => `/friends-media/${encodeURIComponent(f.key)}/${k.split('/').map(encodeURIComponent).join('/')}`);
+      // (In full: drawn as it looks on their site, with these photos and their own writing.)
+      const full = p.full ? { ...p.full, title: words(p.title), date: words(p.date), ts: p.ts, html: p.html, excerpt: p.excerpt, photos, captions: p.captions || [] } : null;
+      posts.push({ ...p, friend: who, photos, full });
     }
   });
   posts.sort((a, b) => b.ts - a.ts);
-  return { buddies, posts: posts.slice(0, 60), postsShown: store.visibility === 'all' };
+  return { buddies, posts: posts.slice(0, 60), keepsakes, categories, postsShown: store.visibility === 'all' };
 }
 
 async function readCache(env, key) {
