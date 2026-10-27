@@ -1,0 +1,107 @@
+/* ------------------------------------------------------------------
+   The photo album: a 90s magnetic album. A padded leatherette cover with
+   gold blocking, then yellowed sticky pages with glue lines under a
+   crinkly plastic film, foxed with age; glossy prints with an orange
+   camera date stamp, and handwritten month labels on masking tape.
+   ------------------------------------------------------------------ */
+.album-phone, .dw-album, .album-body {
+  --al-vinyl: #5b2a23;
+  --al-page: #efe2bf;
+  --al-glue: rgba(160, 120, 40, .13);
+  color: #2a2016;
+  background:
+    var(--lamp, none),
+    radial-gradient(ellipse 120% 70% at 50% 0, rgba(255,230,180,.16), transparent 70%),
+    repeating-linear-gradient(92deg, rgba(0,0,0,.05) 0 2px, transparent 2px 7px),
+    linear-gradient(180deg, #6b4a2e, #4a3020);
+}
+.album-phone, .dw-album .wbar, .album-back { font-family: var(--font-ios); }
+
+/* The bar: a strip of padded vinyl with a stitched edge and a gold-blocked title. */
+.al-bar { flex: none; position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; height: calc(54px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) 10px 0; background: var(--leather-grain), radial-gradient(ellipse 90% 140% at 50% 0, #7a3a30, var(--al-vinyl) 70%); background-size: 260px 260px, auto; border-bottom: 2px solid #2e140f; box-shadow: inset 0 -5px 0 -3px rgba(240,200,140,.35), 0 2px 8px rgba(0,0,0,.5); }
+.al-bar::after { content: ''; position: absolute; left: 8px; right: 8px; bottom: 5px; border-bottom: 1.5px dashed rgba(240,210,160,.45); pointer-events: none; }
+.al-bar-title { flex: 1; text-align: center; font: 600 17px/1 'Libre Baskerville', Georgia, serif; letter-spacing: 2px; text-transform: uppercase; color: #e9c77e; text-shadow: 0 -1px 0 rgba(0,0,0,.6), 0 1px 0 rgba(255,230,170,.25); }
+.album-back { height: 32px; display: inline-flex; align-items: center; gap: 4px; padding: 0 10px; border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none; color: #f3e2bf; background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(0,0,0,.12)); border: 1px solid rgba(0,0,0,.45); box-shadow: inset 0 1px 0 rgba(255,255,255,.2); }
+.album-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: env(safe-area-inset-bottom); }
+
+/* Desktop window */
+.dw-album { border-radius: 6px; border: 1px solid #2e140f; }
+.dw-album .wbody { background: transparent; }
+.dw .al-bar { height: 42px; padding: 0 8px; }
+.dw .al-bar-title { font-size: 14px; }
+.dw-album .wbtn { width: 16px; height: 16px; flex: none; padding: 0; border: 0; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,.5); background: radial-gradient(circle at 35% 30%, #fff6dc, #d9b26a 60%, #8a6524); }
+.dw-album .wbtn.close { background: radial-gradient(circle at 35% 30%, #ffd0c8, #e0442e 60%, #8a1a0c); }
+
+.album { max-width: 860px; margin: 0 auto; padding: 16px 14px 28px; display: flex; flex-direction: column; gap: 22px; }
+
+/* ---- The cover ---- */
+.al-cover { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 26px 18px 22px; border-radius: 6px 10px 10px 6px; color: #e9c77e; text-align: center;
+  background: var(--leather-grain), radial-gradient(ellipse 80% 90% at 40% 30%, #8a4236, var(--al-vinyl) 60%, #3a1914);
+  background-size: 260px 260px, auto;
+  box-shadow: inset 10px 0 12px -6px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,220,160,.12), inset 0 2px 1px rgba(255,220,180,.25), 0 6px 14px rgba(0,0,0,.45), 0 1px 0 #2a120e; }
+/* gold border tooled into the vinyl, and a scuffed corner */
+.al-cover::before { content: ''; position: absolute; inset: 9px 9px 9px 18px; border: 1.5px solid rgba(233,199,126,.6); outline: 1px solid rgba(233,199,126,.3); outline-offset: 3px; border-radius: 3px; pointer-events: none; }
+.al-cover::after { content: ''; position: absolute; right: 0; bottom: 0; width: 46px; height: 34px; border-radius: 0 0 10px 0; background: radial-gradient(ellipse at 100% 100%, rgba(230,200,160,.35), transparent 70%); pointer-events: none; }
+.al-emboss { font: 700 30px/1 'Libre Baskerville', Georgia, serif; letter-spacing: 8px; text-transform: uppercase; color: #e6c070; background: linear-gradient(180deg, #fbe7a8, #c99a3e 55%, #f3d488); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 -1px 0 rgba(0,0,0,.55)) drop-shadow(0 1px 0 rgba(255,230,170,.2)); }
+.al-cover-sub { font: 13px 'Libre Baskerville', Georgia, serif; font-style: italic; color: #e3c995; opacity: .9; }
+/* Floppy, tucked into the cover like a sticker someone added years ago */
+.al-floppy { margin-top: 8px; display: flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; text-align: left; }
+.al-floppy-disk { width: 46px; flex: none; transform: rotate(-8deg); filter: drop-shadow(0 2px 2px rgba(0,0,0,.45)); }
+.al-floppy-disk svg { width: 100%; height: auto; display: block; }
+.al-said { max-width: 300px; padding: 6px 10px; border-radius: 3px; font-size: 18px; line-height: 1.1; color: #2a2016; background: #fff6b8; box-shadow: 0 2px 4px rgba(0,0,0,.35); transform: rotate(1.5deg); }
+
+/* ---- A sticky album page ---- */
+.al-page { position: relative; padding: 18px 18px 22px 38px; border-radius: 2px 6px 6px 2px;
+  background:
+    var(--paper-mottle),
+    /* the adhesive: fine wavy glue lines across the card */
+    repeating-linear-gradient(180deg, transparent 0 9px, var(--al-glue) 9px 10px),
+    radial-gradient(ellipse 120% 90% at 50% 45%, var(--al-page) 55%, #e2cd98 100%);
+  background-size: 700px 700px, auto, auto;
+  box-shadow: 0 1px 0 #d8c69a, 0 2px 0 #c9b484, 0 3px 0 #b9a372, 0 8px 16px rgba(0,0,0,.4); }
+/* the binder edge: three holes down the left with a little wear around them */
+.al-page::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 12px; pointer-events: none;
+  background: radial-gradient(circle at 6px 18%, #4a3020 0 4px, rgba(120,90,40,.35) 4.5px 6px, transparent 6.5px), radial-gradient(circle at 6px 50%, #4a3020 0 4px, rgba(120,90,40,.35) 4.5px 6px, transparent 6.5px), radial-gradient(circle at 6px 82%, #4a3020 0 4px, rgba(120,90,40,.35) 4.5px 6px, transparent 6.5px);
+  border-right: 1px solid rgba(120,90,40,.25); }
+/* the clear plastic film over everything: a glossy sheen, a few crinkles and a peeling corner */
+.al-page::after { content: ''; position: absolute; inset: 0 0 0 28px; pointer-events: none; border-radius: 0 6px 6px 0;
+  background:
+    linear-gradient(225deg, rgba(255,255,255,.55) 0 18px, rgba(0,0,0,.12) 18px 20px, transparent 20px),
+    linear-gradient(118deg, transparent 18%, rgba(255,255,255,.22) 28%, transparent 36%, transparent 62%, rgba(255,255,255,.14) 70%, transparent 78%),
+    linear-gradient(32deg, transparent 47%, rgba(255,255,255,.18) 48%, transparent 50%),
+    linear-gradient(-14deg, transparent 72%, rgba(255,255,255,.14) 73%, transparent 75%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); }
+.al-empty p { margin: 30px 0; text-align: center; font-size: 22px; color: #7a5a2e; }
+
+/* The month, written on a strip of masking tape */
+.al-month { display: inline-block; margin: 0 0 14px; padding: 2px 14px 3px; font-size: 24px; font-weight: 600; line-height: 1.1; color: var(--pen); background: linear-gradient(180deg, rgba(240,226,180,.92), rgba(226,208,156,.92)); clip-path: polygon(2% 8%, 6% 0, 12% 6%, 20% 1%, 30% 5%, 42% 0, 56% 4%, 70% 0, 82% 5%, 92% 0, 99% 6%, 97% 50%, 100% 94%, 92% 100%, 80% 95%, 66% 100%, 52% 96%, 38% 100%, 24% 95%, 10% 100%, 1% 94%, 3% 50%); transform: rotate(-1.5deg); box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+.al-month.cont { font-size: 18px; opacity: .85; transform: rotate(1deg); }
+
+/* The prints */
+.al-prints { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 16px; align-items: start; }
+.al-prints.one { grid-template-columns: minmax(0, 360px); justify-content: center; }
+.tablet .al-prints, .dw .al-prints { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px 20px; }
+.tablet .al-prints.one, .dw .al-prints.one { grid-template-columns: minmax(0, 340px); }
+.al-print { position: relative; margin: 0; display: flex; flex-direction: column; gap: 6px; transform: rotate(var(--tilt, 0deg)); }
+.al-photo { position: relative; display: block; width: 100%; padding: 5px; border: 0; border-radius: 2px; cursor: pointer; background: #fbf9f2; box-shadow: 0 1px 1px rgba(0,0,0,.25), 0 3px 6px rgba(60,40,10,.3); transition: transform .15s ease; }
+.al-photo:hover, .al-photo:focus-visible { transform: translateY(-2px) scale(1.015); }
+.al-photo img { display: block; width: 100%; height: auto; max-height: 340px; object-fit: cover; aspect-ratio: auto; border-radius: 1px; background: #d8d0bc; filter: saturate(.92) contrast(.97) sepia(.08); }
+/* glossy print sheen */
+.al-photo::after { content: ''; position: absolute; inset: 5px; pointer-events: none; background: linear-gradient(135deg, rgba(255,255,255,.28), transparent 38%, transparent 70%, rgba(255,255,255,.08)); }
+/* the orange camera date */
+.al-stamp { position: absolute; right: 12px; bottom: 10px; font: 600 13px/1 'Share Tech Mono', monospace; letter-spacing: 1.5px; color: #ff8a2a; text-shadow: 0 0 2px rgba(255,120,30,.9), 0 0 6px rgba(255,90,0,.55); opacity: .92; pointer-events: none; }
+.al-print figcaption { padding: 0 4px; font-size: 18px; line-height: 1.1; color: var(--pen); text-align: center; overflow-wrap: anywhere; }
+.al-print figcaption a { color: inherit; text-decoration: none; }
+.al-print figcaption a:hover { text-decoration: underline; }
+.al-end { margin: 0; text-align: center; font-size: 20px; color: #e8d3a6; opacity: .8; }
+
+/* Icons and swatches */
+.di-album { border-radius: 4px 7px 7px 4px; background: var(--leather-grain), radial-gradient(ellipse at 40% 30%, #8a4236, #4a1f19); background-size: 120px, auto; box-shadow: inset 4px 0 4px -2px rgba(0,0,0,.6), inset 0 0 0 1px rgba(233,199,126,.25), 0 3px 5px rgba(0,0,0,.4); }
+.di-album::after { content: ''; width: 46%; height: 36%; background: #fbf9f2; border: 2px solid #fbf9f2; box-shadow: 0 1px 2px rgba(0,0,0,.5); background-image: linear-gradient(160deg, #8fc7ea 50%, #5c9a52 50%); transform: rotate(-6deg); }
+.sw-album { border-radius: 3px 5px 5px 3px; background: radial-gradient(ellipse at 40% 30%, #8a4236, #4a1f19); box-shadow: inset 0 0 0 2px #4a1f19, inset 0 0 0 3px #e9c77e; }
+
+/* Dark mode: the room gets darker, the album stays an old album */
+[data-theme="dark"] .album-phone, [data-theme="dark"] .dw-album, [data-theme="dark"] .album-body { background: var(--lamp, none), radial-gradient(ellipse 120% 70% at 50% 0, rgba(255,210,150,.08), transparent 70%), repeating-linear-gradient(92deg, rgba(0,0,0,.08) 0 2px, transparent 2px 7px), linear-gradient(180deg, #3a271a, #22160e); }
+[data-theme="dark"] .al-page { --al-page: #d9cba6; filter: brightness(.92); }
+
+@media (prefers-reduced-motion: reduce) { .al-photo { transition: none; } }

@@ -1,0 +1,60 @@
+/* The visa in the passport: a security-printed sticker with a guilloche, serial number,
+   machine-readable zone, holographic strip and a stamp pressed half across it.
+   Its colours come from the design chosen in passport.md (--v-ink, --v-accent, --v-hi); the
+   original design is Central Asian, with a tiled frame and a woven strip. */
+.visa-wrap { position: relative; padding: 4px 6px 16px 2px; }
+.visa { --v-ink: #2a4b8d; --v-accent: #1f8f8a; --v-hi: #a8324a; position: relative; display: flex; overflow: hidden; border: 1px solid #b8c4bd; border-radius: 5px; transform: rotate(-1deg); box-shadow: 0 1px 3px rgba(0,0,0,.25), 0 0 0 3px rgba(255,255,255,.35) inset; background: linear-gradient(115deg, #dcecec 0%, #f3ead6 36%, #f6e4dc 64%, #e0e6f4 100%); container-type: inline-size; }
+.visa[data-design="classic"] { background: linear-gradient(115deg, #dff0ea 0%, #f3e6ef 38%, #f7f0db 62%, #e2e9f7 100%); }
+.visa[data-design="mountains"] { background: linear-gradient(115deg, #e4ecf4 0%, #eef0e2 40%, #f4ece0 70%, #e2eaf2 100%); }
+.visa[data-design="seaside"] { background: linear-gradient(115deg, #e0f2f4 0%, #f6efdc 40%, #fbe8dc 70%, #dcecf6 100%); }
+.visa[data-design="city"] { background: linear-gradient(115deg, #e6e4f2 0%, #f2ecdf 40%, #f2e4ec 70%, #e0e2f0 100%); }
+.visa[data-design="botanical"] { background: linear-gradient(115deg, #e6f0e0 0%, #f6efdc 40%, #f8e6e8 70%, #e4eedc 100%); }
+.v-bg { position: absolute; inset: 0; pointer-events: none; }
+.v-guilloche { width: 100%; height: 100%; display: block; }
+.visa-main { position: relative; flex: 1; min-width: 0; padding: 12px 14px 22px; display: flex; flex-direction: column; gap: 6px; }
+.visa.no-strip .visa-main { padding-bottom: 14px; }
+.visa-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid color-mix(in srgb, var(--v-ink) 35%, transparent); padding-bottom: 4px; }
+.visa-word { font-family: Oswald, sans-serif; font-weight: 700; font-size: 24px; line-height: 1; letter-spacing: 5px; color: var(--v-ink); text-shadow: 0 1px 0 rgba(255,255,255,.8); }
+.v-world { flex: 1; min-width: 0; font-family: Oswald, sans-serif; font-size: 8.5px; letter-spacing: .8px; line-height: 1.45; color: color-mix(in srgb, var(--v-ink) 70%, #3f6b7a); }
+.v-serial { margin-left: auto; font-family: 'Special Elite', monospace; font-size: 13px; letter-spacing: 1px; color: #b3261e; }
+.v-body { display: flex; gap: 10px; align-items: flex-start; }
+.v-emblem { flex: none; width: 62px; height: 76px; display: flex; align-items: center; justify-content: center; border: 1px solid color-mix(in srgb, var(--v-ink) 45%, transparent); border-radius: 3px; background: repeating-linear-gradient(0deg, color-mix(in srgb, var(--v-ink) 7%, transparent) 0 1px, transparent 1px 3px), rgba(255,255,255,.45); }
+.v-emblem svg { width: 54px; height: 54px; }
+.visa-fields { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px; }
+.v-field { display: flex; flex-direction: column; min-width: 0; }
+.v-field.wide { grid-column: 1 / -1; }
+.v-field i { font-style: normal; font-family: Oswald, sans-serif; font-size: 7.5px; letter-spacing: .7px; color: #5a6560; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v-field em { font-style: italic; opacity: .8; }
+.v-field b { font-family: 'Special Elite', monospace; font-weight: normal; font-size: 12.5px; letter-spacing: .2px; color: #1f2b28; overflow-wrap: anywhere; }
+.visa-fields b, .v-field i { text-shadow: 0 0 3px rgba(250,246,234,.9), 0 0 1px rgba(250,246,234,.9); }
+.v-mrz { display: flex; flex-direction: column; padding: 4px 4px 2px; margin: 0 -4px; background: rgba(255,255,255,.55); border-top: 1px dashed color-mix(in srgb, var(--v-ink) 30%, transparent); font-family: 'Share Tech Mono', monospace; font-size: clamp(7px, 2.35vw, 11.5px); letter-spacing: .5px; line-height: 1.3; color: #26302d; white-space: nowrap; overflow: hidden; }
+.visa-link { align-self: flex-start; font-size: 12px; color: var(--v-ink); }
+.holo { position: relative; z-index: 1; width: 24px; flex: none; background: linear-gradient(180deg, #ffd6f0, #d6f7ff 22%, #fff3c2 44%, #e0d6ff 66%, #d6ffe9 88%, #ffd6f0); background-size: 100% 200%; box-shadow: inset 2px 0 3px rgba(255,255,255,.9); animation: holo 6s linear infinite; }
+.holo::after { content: ''; position: absolute; inset: 0; opacity: .35; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1'%3E%3Ccircle cx='12' cy='12' r='7'/%3E%3Cellipse cx='12' cy='12' rx='3' ry='7'/%3E%3Cpath d='M5 12h14'/%3E%3C/g%3E%3C/svg%3E") center top / 24px 24px repeat-y; }
+@keyframes holo { to { background-position: 0 200%; } }
+.v-stamp { position: absolute; right: 30px; bottom: -4px; width: 92px; height: 92px; transform: rotate(-16deg); opacity: .82; mix-blend-mode: multiply; pointer-events: none; }
+.v-stamp svg { width: 100%; height: 100%; display: block; overflow: visible; }
+/* The strip along the foot: a woven carpet, waves, checks or stripes. */
+.v-kilim { position: absolute; left: 6px; right: 30px; bottom: 6px; height: 12px; background: var(--kilim) repeat-x left center / 28px 12px; box-shadow: 0 -1px 0 rgba(0,0,0,.15); }
+/* A fine double rule round every design... */
+.visa::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; border: 4px double color-mix(in srgb, var(--v-ink) 55%, transparent); border-radius: 5px; opacity: .7; }
+
+/* ...and for the original: a tiled frame (lapis and turquoise tiles with tiny flowers), tiles
+   behind the emblem, and eight-pointed stars in the hologram. */
+.visa[data-design="central"]::after { border: 6px solid transparent; border-image: var(--v-frame) 6 round; opacity: .9; }
+.visa[data-design="central"] .v-emblem { border: 0; padding: 3px; background: var(--v-emblem-bg) 0 0 / 10px 10px; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.visa[data-design="central"] .v-emblem svg { background: repeating-linear-gradient(0deg, rgba(42,111,99,.07) 0 1px, transparent 1px 3px), #fbf6ea; width: 100%; height: 100%; padding: 4px; }
+.visa[data-design="central"] .holo::after { opacity: .45; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1'%3E%3Cpolygon points='12,4 14.8,9.2 20,12 14.8,14.8 12,20 9.2,14.8 4,12 9.2,9.2'/%3E%3Crect x='7.5' y='7.5' width='9' height='9' transform='rotate(45 12 12)'/%3E%3C/g%3E%3C/svg%3E") center top / 24px 24px repeat-y; }
+
+/* The scene is drawn in fine lines that catch the light: the colours drift slowly as if the
+   page were tilted, and things glint now and then. */
+.v-scene .glint { transform-box: fill-box; transform-origin: center; animation: glint 6s ease-in-out infinite; opacity: 0; }
+@keyframes glint { 0%, 70%, 100% { opacity: 0; scale: .3; } 80% { opacity: .95; scale: 1; } 90% { opacity: 0; scale: .5; } }
+@media (prefers-reduced-motion: reduce) { .holo { animation: none; } .v-scene .glint { animation: none; opacity: .6; } }
+.visa.v-off .holo, .visa.v-off .glint { animation-play-state: paused; }
+.lite .visa .holo, .lite .v-scene .glint { animation: none; }
+/* On a narrow visa (phones) the scene sits further back so the writing stays easy to read. */
+@container (max-width: 400px) {
+  .v-scene { opacity: .45; }
+  .v-kite { display: none; }
+}

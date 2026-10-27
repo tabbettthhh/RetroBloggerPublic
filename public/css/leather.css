@@ -1,0 +1,953 @@
+/* Old-iPhone leather era: places journal and passport. */
+.leather-phone, .dw-leather {
+  --leather: #5a3620;
+  background: radial-gradient(circle at 18% 12%, rgba(255,255,255,.10), transparent 42%), radial-gradient(circle at 85% 92%, rgba(0,0,0,.38), transparent 55%), repeating-radial-gradient(circle at 30% 30%, rgba(0,0,0,.05) 0 1px, transparent 1px 3px), var(--leather);
+  font-family: 'Libre Baskerville', Georgia, serif;
+  color: #2b1d12;
+}
+.leather-phone { padding: 12px; padding-top: calc(12px + env(safe-area-inset-top)); padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+.stitched { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 12px; border: 2px dashed #e3c38e; border-radius: 16px; }
+.leather-head { display: flex; align-items: center; gap: 12px; flex: none; }
+.paper-tab { min-height: 44px; display: inline-flex; align-items: center; gap: 4px; padding: 0 12px; border-radius: 6px; background: linear-gradient(180deg, #f7efdc, #e4d6b6); box-shadow: 0 2px 4px rgba(0,0,0,.45), inset 0 1px 0 #fff; color: #3a2414; text-decoration: none; font-size: 13px; }
+.gold { margin: 0; flex: 1; text-align: right; font-weight: bold; font-size: 22px; letter-spacing: .5px; color: #ecca8a; text-shadow: 0 1px 0 rgba(0,0,0,.6), 0 -1px 0 rgba(255,240,200,.25); }
+.paper { flex: 1; min-height: 0; overflow-y: auto; border-radius: 4px; background: repeating-linear-gradient(0deg, rgba(120,90,50,.05) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(120,90,50,.05) 0 1px, transparent 1px 3px), #f6efdf; box-shadow: 0 4px 12px rgba(0,0,0,.45); -webkit-overflow-scrolling: touch; }
+
+/* Journal page */
+.page.single { display: flex; flex-direction: column; gap: 14px; padding: 16px 16px 20px; }
+.journal-empty { padding: 30px 20px; text-align: center; }
+.journal-empty .hand { font-size: 22px; }
+.taped { position: relative; padding: 6px; background: #fffdf6; box-shadow: 0 2px 5px rgba(0,0,0,.25); transform: rotate(-1deg); }
+.tape { position: absolute; top: -9px; width: 64px; height: 20px; background: rgba(236,222,180,.85); box-shadow: 0 1px 2px rgba(0,0,0,.15); z-index: 500; }
+.tape.l { left: 14px; transform: rotate(-8deg); }
+.tape.r { right: 14px; transform: rotate(7deg); }
+.journal-map { height: 200px; }
+.journal-head h2 { margin: 0; font-size: 22px; line-height: 1.25; }
+.hand.big { display: block; font-size: 20px; color: #5b4632; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; font-family: Georgia, serif; font-size: 12px; color: #4a3826; }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border: 1px solid #cdbb98; border-radius: 12px; background: #fbf6ea; }
+.rating-row { display: flex; align-items: center; gap: 6px; }
+.stickers { display: flex; gap: 5px; }
+.sticker { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #bba98a; }
+.sticker.on { background: radial-gradient(circle at 35% 30%, #ffe08a, #e2a417 70%); border-color: #a8740a; box-shadow: 0 2px 3px rgba(0,0,0,.3); }
+.sticker svg path { stroke: none; }
+.return-stamp { margin-left: auto; padding: 4px 8px; border: 2px solid #b0301c; border-radius: 4px; color: #b0301c; font-family: Caveat, cursive; font-weight: bold; font-size: 18px; letter-spacing: 1px; transform: rotate(-6deg); mix-blend-mode: multiply; }
+.ruled { font-family: Caveat, cursive; font-size: 23px; line-height: 29px; color: #2c2a4a; background: repeating-linear-gradient(180deg, transparent 0 28px, rgba(70,110,170,.25) 28px 29px); }
+.ruled p { margin: 0 0 29px; }
+.ruled p:last-child { margin: 0; }
+.polaroids { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; padding-top: 4px; }
+.polaroid { width: 140px; padding: 7px 7px 4px; border: 0; background: #fffdf8; box-shadow: 0 3px 6px rgba(0,0,0,.3); transform: rotate(var(--r)); cursor: zoom-in; display: flex; flex-direction: column; gap: 2px; }
+.polaroid img { width: 100%; height: 110px; object-fit: cover; }
+.polaroid .hand { font-size: 17px; color: var(--pen); min-height: 20px; }
+.page-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.page-nav .hand { font-size: 17px; color: #6b5640; }
+.leather-pill, .paper-pill { min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 16px; border-radius: 22px; text-decoration: none; font-size: 13px; }
+.leather-pill { border: 1px dashed #e3c38e; background: #5a3620; color: #f3dcab; box-shadow: 0 2px 5px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.15); }
+.paper-pill { border: 1px solid #b9a27a; background: #fbf6ea; color: #3a2414; }
+.journal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+
+/* Desktop: the two-page spread */
+.spread { display: flex; min-height: 100%; font-family: 'Libre Baskerville', Georgia, serif; }
+.spread .page { flex: 1; min-width: 0; padding: 22px; display: flex; flex-direction: column; gap: 16px; background: repeating-linear-gradient(0deg, rgba(120,90,50,.05) 0 1px, transparent 1px 3px), #f6efdf; }
+.spread .page.left { background: linear-gradient(90deg, rgba(0,0,0,0) 85%, rgba(80,50,20,.22) 100%), repeating-linear-gradient(0deg, rgba(120,90,50,.05) 0 1px, transparent 1px 3px), #f6efdf; border-radius: 4px 0 0 4px; }
+.spread .page.right { position: relative; background: linear-gradient(90deg, rgba(80,50,20,.22) 0%, rgba(0,0,0,0) 15%), repeating-linear-gradient(0deg, rgba(120,90,50,.05) 0 1px, transparent 1px 3px), #f6efdf; border-radius: 0 4px 4px 0; }
+.spread .gutter { width: 2px; background: linear-gradient(180deg, #b49a72, #8a7050, #b49a72); }
+.spread .journal-map { height: 260px; }
+.page-text { display: flex; flex-direction: column; gap: 14px; }
+.page-curl { position: absolute; right: 0; bottom: 0; width: 34px; height: 34px; background: linear-gradient(135deg, transparent 50%, #e2d4b4 50%, #c9b68f 100%); box-shadow: -2px -2px 4px rgba(0,0,0,.15); }
+
+/* Passport */
+.passport-page { min-height: 100%; padding: 14px 12px 18px; display: flex; flex-direction: column; gap: 12px; background: repeating-radial-gradient(ellipse at 50% 115%, rgba(40,110,95,.08) 0 1px, transparent 1px 7px), repeating-radial-gradient(ellipse at 50% -15%, rgba(60,80,140,.07) 0 1px, transparent 1px 9px), repeating-linear-gradient(115deg, rgba(150,90,130,.04) 0 1px, transparent 1px 5px), #eef1e4; }
+.ink-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.passport-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; border-bottom: 1px solid #b9bfa8; padding-bottom: 6px; }
+.passport-head > div { display: flex; flex-direction: column; min-width: 0; }
+.visas { font-family: Oswald, sans-serif; font-size: 13px; letter-spacing: 4px; color: #45503b; }
+.owner { font-family: Oswald, sans-serif; font-size: 12px; letter-spacing: 2px; color: #6a7360; }
+.stamp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 0; padding: 6px 0; }
+.stamp-grid.wide { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stamp { min-height: 132px; display: flex; align-items: center; justify-content: center; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: var(--op); mix-blend-mode: multiply; transition: transform .2s; }
+.stamp:hover { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1.05); }
+/* Arriving from a journal entry: that city's stamp comes down again, in fresh ink. */
+.stamp.found { opacity: 1; animation: stamp-press .45s cubic-bezier(.2, .9, .3, 1.25) .35s backwards; }
+@keyframes stamp-press { from { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1.4); } }
+@media (prefers-reduced-motion: reduce) { .stamp.found { animation: none; } }
+.stamp svg { max-width: 100%; height: auto; }
+.stamp.next { opacity: 1; transform: none; mix-blend-mode: normal; }
+.stamp.next .hand { width: 118px; height: 92px; border: 2px dashed #a3aa92; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 8px; text-align: center; font-size: 18px; line-height: 1.1; color: #5f6852; }
+.passport-foot { display: flex; flex-direction: column; align-items: center; gap: 4px; border-top: 1px solid #b9bfa8; padding-top: 6px; overflow: hidden; }
+.passport-foot .hand { font-size: 19px; color: #4a3826; }
+
+/* Passport page: a faint globe watermark, multilingual headings and microprint. */
+.passport-page { position: relative; overflow-x: clip; }
+.passport-page::before { content: ''; position: absolute; left: 50%; top: 260px; width: min(520px, 100%); aspect-ratio: 1; transform: translateX(-50%); pointer-events: none; opacity: .09; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cg fill='none' stroke='%23224f45' stroke-width='1.2'%3E%3Ccircle cx='100' cy='100' r='92'/%3E%3Cellipse cx='100' cy='100' rx='30' ry='92'/%3E%3Cellipse cx='100' cy='100' rx='62' ry='92'/%3E%3Cpath d='M100 8v184M8 100h184M20 58h160M20 142h160M44 28h112M44 172h112'/%3E%3Ccircle cx='100' cy='100' r='98' stroke-dasharray='2 4'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat; }
+.passport-page > * { position: relative; }
+.pp-title { gap: 1px; }
+.pp-langs { font-family: Oswald, sans-serif; font-size: 9.5px; letter-spacing: 1.2px; line-height: 1.5; color: #6a7360; }
+.pp-langs bdi, .v-world bdi { white-space: nowrap; }
+.pp-sub { margin-top: -6px; font-size: 19px; color: #4a3826; }
+.microprint { display: block; width: 100%; white-space: nowrap; overflow: hidden; font-family: Oswald, sans-serif; font-size: 5.5px; letter-spacing: .6px; color: #8a9480; opacity: .8; }
+
+
+/* Journal scrapbook under the map: receipt, Floppy in the margin, other places nearby.
+   Two columns on a computer page and on a phone; the receipt runs down the left. */
+.scrapbook { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); grid-template-areas: "receipt floppy" "receipt also"; gap: 16px 14px; align-items: start; padding: 8px 2px 4px; }
+.scrapbook.no-also { grid-template-areas: "receipt floppy"; }
+.scrapbook.no-receipt { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); grid-template-areas: "also floppy"; }
+.scrapbook.no-receipt.no-also { grid-template-columns: minmax(0, 1fr); grid-template-areas: "floppy"; justify-items: start; }
+.receipt-wrap { position: relative; justify-self: center; width: 100%; max-width: 230px; rotate: -2deg; filter: drop-shadow(0 3px 4px rgba(60,40,20,.3)); }
+.receipt-wrap::before { content: ''; position: absolute; z-index: 1; top: -8px; left: 50%; width: 64px; height: 18px; translate: -50% 0; rotate: 3deg; background: rgba(240,228,190,.75); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.receipt { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 18px 14px 20px; background: #fffdf7; color: #2a2a2a; font: 12px/1.45 'Share Tech Mono', 'Courier New', monospace; text-align: center;
+  --zz: 10px;
+  -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / var(--zz) 51% repeat-x, conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / var(--zz) 51% repeat-x;
+  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / var(--zz) 51% repeat-x, conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / var(--zz) 51% repeat-x; }
+.rc-name { font-size: 14px; letter-spacing: 1px; overflow-wrap: anywhere; }
+.rc-sub { font-size: 11px; color: #666; letter-spacing: .5px; }
+.rc-rule { width: 100%; margin: 6px 0; border-top: 1px dashed #999; }
+.rc-items { width: 100%; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; text-align: left; }
+.rc-items li { display: flex; align-items: baseline; gap: 4px; }
+.rc-item { min-width: 0; overflow-wrap: anywhere; }
+.rc-dots { flex: 1; min-width: 8px; border-bottom: 1px dotted #aaa; translate: 0 -3px; }
+.rc-price { flex: none; }
+.rc-total { width: 100%; display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; letter-spacing: 1px; }
+.rc-thanks { margin-top: 8px; font-size: 10px; letter-spacing: 1.5px; color: #555; }
+.rc-barcode { width: 80%; height: 26px; margin-top: 6px; background: repeating-linear-gradient(90deg, #222 0 2px, transparent 2px 3px, #222 3px 4px, transparent 4px 7px, #222 7px 10px, transparent 10px 11px, #222 11px 12px, transparent 12px 15px); }
+
+/* Several keepsakes: stuck in one under another, each at its own angle */
+.keepsakes { grid-area: receipt; display: flex; flex-direction: column; align-items: center; gap: 20px; min-width: 0; }
+.keepsakes > * { grid-area: auto; }
+.scrapbook.many { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "floppy also" "receipt receipt"; }
+.scrapbook.many.no-also { grid-template-areas: "floppy floppy" "receipt receipt"; justify-items: start; }
+.scrapbook.many .keepsakes { justify-self: stretch; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 22px 14px; }
+.scrapbook.many .keepsakes > * { flex: 0 1 205px; min-width: 0; }
+.keepsakes.several > :nth-child(2) { rotate: 2.5deg; }
+.keepsakes.several > :nth-child(3) { rotate: -1.5deg; }
+.keepsakes.several > :nth-child(4) { rotate: 3deg; }
+.rc-count { width: 100%; display: flex; justify-content: space-between; font-size: 12px; letter-spacing: 1px; }
+/* the shop's bag, printed at the top of its receipt */
+.rc-bag { position: relative; width: 20px; height: 16px; margin: 2px 0 4px; border: 2px solid #333; border-radius: 1px 1px 3px 3px; }
+.rc-bag::before { content: ''; position: absolute; left: 4px; top: -7px; width: 8px; height: 7px; border: 2px solid #333; border-bottom: 0; border-radius: 6px 6px 0 0; }
+.receipt.shop { background: linear-gradient(180deg, #fff 0 70%, #fbfbf6); }
+
+/* a strip of tape across a corner of each ticket */
+.ticket-wrap::before { content: ''; position: absolute; z-index: 1; top: -7px; left: 14px; width: 50px; height: 16px; rotate: -8deg; }
+/* An entry ticket: a coloured edge, the place in print, and a stub to tear off */
+.ticket-wrap { position: relative; width: 100%; max-width: 250px; justify-self: center; rotate: 1.5deg; filter: drop-shadow(0 3px 4px rgba(60,40,20,.3)); }
+.entry-ticket { display: flex; min-height: 104px; border-left: 8px solid var(--band); border-radius: 4px; color: #2b1d12; background: #fbf4e2;
+  -webkit-mask: radial-gradient(circle at calc(100% - 58px) 0, transparent 6px, #000 6.5px) top / 100% 51% no-repeat, radial-gradient(circle at calc(100% - 58px) 100%, transparent 6px, #000 6.5px) bottom / 100% 51% no-repeat;
+  mask: radial-gradient(circle at calc(100% - 58px) 0, transparent 6px, #000 6.5px) top / 100% 51% no-repeat, radial-gradient(circle at calc(100% - 58px) 100%, transparent 6px, #000 6.5px) bottom / 100% 51% no-repeat; }
+.et-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; padding: 10px 10px 10px 12px; }
+.et-kind { font: 600 10px Oswald, sans-serif; letter-spacing: 3px; color: var(--band); }
+.et-name { font: 700 16px/1.15 'Libre Baskerville', Georgia, serif; overflow-wrap: anywhere; }
+.et-sub { font: 11px 'Share Tech Mono', monospace; letter-spacing: .5px; color: #6a5a48; }
+.et-admit { margin-top: 4px; font: 700 13px Oswald, sans-serif; letter-spacing: 3px; }
+.et-total { align-self: flex-end; font: 700 12px 'Share Tech Mono', monospace; }
+.et-stub { flex: none; width: 58px; display: flex; align-items: center; justify-content: center; gap: 6px; border-left: 2px dashed rgba(43,29,18,.35); background: #f1e3c4; background: color-mix(in srgb, var(--band) 16%, #fbf4e2); }
+.et-stub-word { writing-mode: vertical-rl; rotate: 180deg; font: 700 12px Oswald, sans-serif; letter-spacing: 3px; color: var(--band); }
+.et-no { writing-mode: vertical-rl; font: 10px 'Share Tech Mono', monospace; color: #7a6a58; }
+.et-lines, .rt-lines { width: 100%; margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; font: 12px/1.35 'Share Tech Mono', 'Courier New', monospace; }
+.et-lines li, .rt-lines li { display: flex; align-items: baseline; gap: 4px; }
+
+/* An exhibition ticket: white card, a bold blob of colour, a punched lanyard hole */
+.ticket-wrap.gallery { max-width: 200px; rotate: -1.5deg; }
+.gallery-ticket { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 30px 14px 12px; overflow: hidden; border-radius: 3px; color: #151515; background: #fdfdfb; font-family: Oswald, sans-serif;
+  -webkit-mask: radial-gradient(circle 5px at 50% 12px, transparent 96%, #000); mask: radial-gradient(circle 5px at 50% 12px, transparent 96%, #000); }
+.gt-blob { position: absolute; right: -26px; top: -22px; width: 92px; height: 92px; border-radius: 50%; background: var(--band); opacity: .9; }
+.gt-kind { position: relative; font-size: 10px; letter-spacing: 4px; color: #555; }
+.gt-name { position: relative; font: 700 22px/1.02 Oswald, sans-serif; letter-spacing: .5px; text-transform: uppercase; overflow-wrap: anywhere; }
+.gt-sub { font: 11px 'Share Tech Mono', monospace; color: #444; }
+.gt-lines, .tt-lines, .iv-lines, .bp-lines { margin: 4px 0 0; padding: 0; list-style: none; }
+.gt-lines { font: 12px/1.4 'Share Tech Mono', monospace; }
+.gt-foot { margin-top: 8px; padding-top: 6px; border-top: 2px solid #151515; font-size: 9px; letter-spacing: 2px; }
+
+/* A theatre ticket: velvet red, gold rules, a stub to tear */
+.ticket-wrap.theatre { max-width: 250px; rotate: 2deg; }
+.theatre-ticket { display: flex; min-height: 112px; border-radius: 4px; color: #f6e2b0; background: radial-gradient(ellipse at 30% 0, #9c1f24, #6b0f14 70%); box-shadow: inset 0 0 0 3px #6b0f14, inset 0 0 0 4px #d9b25c, inset 0 0 0 6px #6b0f14, inset 0 0 0 7px rgba(217,178,92,.6);
+  -webkit-mask: radial-gradient(circle at 40px 0, transparent 6px, #000 6.5px) top / 100% 51% no-repeat, radial-gradient(circle at 40px 100%, transparent 6px, #000 6.5px) bottom / 100% 51% no-repeat;
+  mask: radial-gradient(circle at 40px 0, transparent 6px, #000 6.5px) top / 100% 51% no-repeat, radial-gradient(circle at 40px 100%, transparent 6px, #000 6.5px) bottom / 100% 51% no-repeat; }
+.tt-stub { flex: none; width: 40px; display: flex; align-items: center; justify-content: center; border-right: 2px dashed rgba(246,226,176,.45); }
+.tt-stub span { writing-mode: vertical-rl; rotate: 180deg; font: 600 10px Oswald, sans-serif; letter-spacing: 3px; color: #d9b25c; }
+.tt-main { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 12px 12px 10px; text-align: center; }
+.tt-kind { font: 600 9px Oswald, sans-serif; letter-spacing: 4px; color: #d9b25c; }
+.tt-name { font: 700 18px/1.1 'Libre Baskerville', Georgia, serif; color: #fff4d8; text-shadow: 0 1px 0 rgba(0,0,0,.4); overflow-wrap: anywhere; }
+.tt-sub { font: italic 11px 'Libre Baskerville', Georgia, serif; color: #e9cf95; }
+.tt-lines, .tt-plain { font: 11px/1.45 'Share Tech Mono', monospace; letter-spacing: .5px; }
+.tt-no { margin-top: 4px; font: 9px 'Share Tech Mono', monospace; letter-spacing: 1px; color: #d9b25c; }
+
+/* An invitation: a deckle-edged card, handwritten, sealed in wax */
+.ticket-wrap.invite { max-width: 220px; rotate: -2deg; }
+.invite-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 22px 20px 28px; text-align: center; color: #3a2c1c; border-radius: 2px; background: radial-gradient(ellipse at 50% 0, #fffdf6, #f4ead3); box-shadow: inset 0 0 0 6px #fbf6ea, inset 0 0 0 7px #c8a96a, inset 0 0 0 9px #fbf6ea, inset 0 0 0 10px rgba(200,169,106,.5); }
+.iv-hand { font: 600 26px/1 Caveat, cursive; color: var(--pen); }
+.iv-to { font: italic 11px 'Libre Baskerville', Georgia, serif; color: #7a6248; }
+.iv-name { font: 700 16px/1.2 'Libre Baskerville', Georgia, serif; overflow-wrap: anywhere; }
+.iv-when { margin-top: 4px; font: italic 11px 'Libre Baskerville', Georgia, serif; }
+.iv-where { font: 10px Oswald, sans-serif; letter-spacing: 3px; text-transform: uppercase; color: #7a6248; }
+.iv-lines { font: 17px/1.15 Caveat, cursive; color: var(--pen); }
+.iv-rsvp { margin-top: 8px; font: 9px Oswald, sans-serif; letter-spacing: 3px; color: #a08060; }
+.iv-seal { position: absolute; right: 12px; bottom: 10px; width: 30px; height: 30px; border-radius: 47% 53% 50% 50% / 52% 46% 54% 48%; background: radial-gradient(circle at 38% 32%, #e0645a, #a8231b 55%, #6e110c); box-shadow: 0 1px 2px rgba(0,0,0,.35), inset 0 0 0 4px rgba(0,0,0,.12); }
+.iv-seal::after { content: '✦'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 13px; color: rgba(255,210,190,.55); }
+
+/* A boarding pass to the place: airline blue, the destination big, a code on the stub */
+.ticket-wrap.boarding { max-width: 250px; rotate: 1.5deg; }
+.boarding-pass { position: relative; display: grid; grid-template-columns: 1fr 46px; overflow: hidden; border-radius: 8px; color: #13233f; background: #fdfdfb; }
+.bp-head { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; padding: 6px 10px; color: #fff; background: linear-gradient(90deg, #1d4f9c, #3a76c9); font: 600 11px Oswald, sans-serif; letter-spacing: 3px; }
+.bp-plane { display: flex; rotate: 90deg; }
+.bp-body { display: flex; flex-direction: column; gap: 1px; padding: 8px 10px 10px; border-right: 2px dashed #b9c6db; }
+.bp-label { font: 9px Oswald, sans-serif; letter-spacing: 2px; color: #6a7a94; }
+.bp-to { margin-bottom: 4px; font: 700 21px/1.05 Oswald, sans-serif; letter-spacing: 1px; overflow-wrap: anywhere; }
+.bp-date { font: 13px 'Share Tech Mono', monospace; }
+.bp-lines { margin-top: 6px; font: 11px/1.4 'Share Tech Mono', monospace; color: #33445f; }
+.bp-code { margin: 10px 9px; background: repeating-linear-gradient(180deg, #13233f 0 2px, transparent 2px 3px, #13233f 3px 4px, transparent 4px 7px, #13233f 7px 9px, transparent 9px 10px); }
+.kl-price { opacity: .8; }
+
+/* Cinema stub: pink card stock, ADMIT ONE in red */
+.ticket-wrap.cinema { max-width: 190px; rotate: -3deg; }
+.ks-cinema { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 12px; border-radius: 3px; text-align: center; color: #5a1420; background: linear-gradient(180deg, #ffd9de, #f7b9c2); font: 11px/1.35 'Share Tech Mono', monospace;
+  -webkit-mask: radial-gradient(circle 6px at 0 50%, transparent 96%, #000) left / 51% 100% no-repeat, radial-gradient(circle 6px at 100% 50%, transparent 96%, #000) right / 51% 100% no-repeat;
+  mask: radial-gradient(circle 6px at 0 50%, transparent 96%, #000) left / 51% 100% no-repeat, radial-gradient(circle 6px at 100% 50%, transparent 96%, #000) right / 51% 100% no-repeat; }
+.cs-admit { font: 700 13px Oswald, sans-serif; letter-spacing: 4px; color: #c21f35; }
+.cs-name { font: 700 15px/1.1 Oswald, sans-serif; letter-spacing: 1px; overflow-wrap: anywhere; }
+.cs-lines { width: 100%; margin: 4px 0 0; padding: 0; list-style: none; text-align: left; }
+.cs-lines li { display: flex; align-items: baseline; gap: 4px; }
+.cs-no { margin-top: 3px; font-size: 9px; opacity: .75; }
+
+/* Cloakroom ticket: a raffle stub with a big number */
+.ticket-wrap.cloakroom { max-width: 130px; rotate: 4deg; }
+.ks-cloakroom { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 8px 8px; text-align: center; color: #1f3d5c; background: #bfe0f2; border: 1px dashed rgba(31,61,92,.35); font-family: Oswald, sans-serif; }
+.ck-kind { font-size: 10px; letter-spacing: 3px; }
+.ck-no { font: 700 40px/1 Oswald, sans-serif; color: #c0392b; }
+.ck-lines, .ck-sub { margin: 0; padding: 0; list-style: none; font: 10px/1.3 'Share Tech Mono', monospace; overflow-wrap: anywhere; }
+.ck-foot { margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(31,61,92,.4); font-size: 8px; letter-spacing: 2px; }
+
+/* Wristband: a long strip across the page, torn at one end */
+.keepsakes > .ticket-wrap.wristband { flex-basis: 100%; max-width: none; width: 100%; rotate: -1deg; }
+.ks-wristband { position: relative; display: flex; align-items: center; height: 30px; padding: 0 28px 0 34px; overflow: hidden; color: #fff; background: repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 2px, transparent 2px 5px), linear-gradient(180deg, #ff5fa2, #d6337a);
+  clip-path: polygon(0 0, 100% 0, 97% 20%, 100% 40%, 96% 60%, 100% 80%, 97% 100%, 0 100%); }
+.wb-snap { position: absolute; left: 10px; top: 50%; width: 14px; height: 14px; translate: 0 -50%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #c9c9c9 60%, #888); }
+.wb-text { white-space: nowrap; font: 700 12px Oswald, sans-serif; letter-spacing: 2px; text-shadow: 0 1px 0 rgba(0,0,0,.2); }
+
+/* Postcard: photo or painted sky on the front, a note and postmark on the back; tap to turn */
+.ticket-wrap.postcard { max-width: 240px; rotate: -2deg; perspective: 900px; }
+.pc-card { position: relative; display: block; width: 100%; aspect-ratio: 3 / 2; padding: 0; border: 0; background: none; cursor: pointer; transform-style: preserve-3d; transition: transform .6s ease; }
+.pc-card.over { transform: rotateY(180deg); }
+.pc-front, .pc-back { position: absolute; inset: 0; border-radius: 3px; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 0 0 5px #fffdf6 inset; background: #fffdf6; }
+.pc-front img { position: absolute; inset: 5px; width: calc(100% - 10px); height: calc(100% - 10px); max-width: none; object-fit: cover; }
+.pc-scene { position: absolute; inset: 5px; display: block; }
+.pc-scene svg { display: block; }
+.pc-greet { position: absolute; left: 10px; right: 10px; bottom: 10px; display: flex; flex-direction: column; text-align: left; color: #fff; text-shadow: 0 2px 0 #c0392b, 0 3px 6px rgba(0,0,0,.45); }
+.pc-greet small { font: 600 18px/1 Caveat, cursive; }
+.pc-greet b { font: 700 24px/1 Oswald, sans-serif; letter-spacing: 1px; overflow-wrap: break-word; }
+.pc-back { display: grid; grid-template-columns: 1fr 1fr; transform: rotateY(180deg); padding: 10px; }
+.pc-note { display: flex; flex-direction: column; padding-right: 8px; border-right: 1px solid #c9bfa8; font: 16px/1.15 Caveat, cursive; color: var(--pen); text-align: left; overflow: hidden; }
+.pc-side { position: relative; display: flex; flex-direction: column; align-items: flex-end; padding-left: 8px; }
+.pc-stamp { width: 30px; height: 36px; background: linear-gradient(160deg, #8fc7ea 50%, #5c9a52 50%); box-shadow: 0 0 0 2px #fff, 0 0 0 3px #d4c9b0; }
+.pc-mark { position: absolute; right: 22px; top: 18px; width: 50px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid rgba(60,60,90,.55); border-radius: 50%; font: 8px/1.1 'Share Tech Mono', monospace; color: rgba(60,60,90,.75); text-transform: uppercase; text-align: center; rotate: -12deg; overflow: hidden; }
+.pc-mark small { font-size: 7px; }
+.pc-lines { margin-top: auto; width: 100%; height: 34px; background: repeating-linear-gradient(180deg, transparent 0 10px, #c9bfa8 10px 11px); }
+@media (prefers-reduced-motion: reduce) { .pc-card { transition: none; } }
+
+/* Fortune cookie slip */
+.ticket-wrap.fortune { max-width: 230px; rotate: 2.5deg; }
+.ks-fortune { display: flex; flex-direction: column; gap: 3px; padding: 7px 12px; background: #fffefa; color: #b3261e; box-shadow: 0 1px 1px rgba(0,0,0,.12); font: 12px/1.3 'Libre Baskerville', Georgia, serif; text-align: center; }
+.fs-nums { font: 9px 'Share Tech Mono', monospace; letter-spacing: 1px; color: #7a3a32; }
+
+/* Luggage tag: manila card with cut corners, a reinforced hole and string */
+.ticket-wrap.luggage { max-width: 180px; rotate: -4deg; }
+.ks-luggage { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px 12px 34px; min-height: 110px; color: #4a3826; background: repeating-linear-gradient(0deg, rgba(120,90,40,.06) 0 1px, transparent 1px 4px), #e8cf98;
+  clip-path: polygon(16px 0, 100% 0, 100% 100%, 16px 100%, 0 calc(100% - 16px), 0 16px); }
+.lt-hole { position: absolute; left: 10px; top: 50%; width: 12px; height: 12px; translate: 0 -50%; border-radius: 50%; background: #f3e8cf; box-shadow: 0 0 0 3px #c9a14a; }
+.lt-label { font: 9px Oswald, sans-serif; letter-spacing: 3px; }
+.lt-to { font: 700 22px/1 Caveat, cursive; color: var(--pen); overflow-wrap: anywhere; }
+.lt-lines { margin: 2px 0 0; padding: 0; list-style: none; font: 15px/1.1 Caveat, cursive; color: var(--pen); }
+.lt-date { margin-top: auto; font: 9px 'Share Tech Mono', monospace; }
+
+/* Matchbook: a little closed book of matches */
+.ticket-wrap.matchbook { max-width: 120px; rotate: 6deg; }
+.ks-matchbook { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 18px 8px 22px; border-radius: 3px; text-align: center; color: #fbe7b0; background: radial-gradient(ellipse at 50% 30%, #2f5d4a, #183a2c); box-shadow: inset 0 0 0 2px #183a2c, inset 0 0 0 3px #d9b25c; }
+.mb-flap { position: absolute; left: 0; right: 0; top: 0; height: 10px; border-radius: 3px 3px 0 0; background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(0,0,0,.25)); }
+.mb-name { font: 700 15px/1.05 'Libre Baskerville', Georgia, serif; overflow-wrap: anywhere; }
+.mb-city { font: 8px Oswald, sans-serif; letter-spacing: 2px; text-transform: uppercase; opacity: .8; }
+.mb-lines { margin: 2px 0 0; padding: 0; list-style: none; font: italic 9px 'Libre Baskerville', Georgia, serif; }
+.mb-strike { position: absolute; left: 6px; right: 6px; bottom: 6px; height: 8px; border-radius: 2px; background: repeating-linear-gradient(90deg, #5a3a2a 0 1px, #7a5240 1px 3px); }
+
+/* Coaster: a round beer mat with a ring stain */
+.ticket-wrap.coaster { max-width: 150px; rotate: -6deg; }
+.ks-coaster { position: relative; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 18px; border-radius: 50%; text-align: center; color: #fff; background: radial-gradient(circle, #1d5aa8 0 58%, #fff 59% 62%, #1d5aa8 63%); }
+.co-ring { position: absolute; inset: 14% 4% -6% 22%; border-radius: 50%; box-shadow: 0 0 0 4px rgba(120,80,30,.28) inset; pointer-events: none; }
+.co-name { font: 700 15px/1.05 Oswald, sans-serif; letter-spacing: 1px; text-transform: uppercase; overflow-wrap: anywhere; }
+.co-lines { margin: 0; padding: 0; list-style: none; font: 10px/1.2 'Share Tech Mono', monospace; }
+.co-city { font: 8px Oswald, sans-serif; letter-spacing: 3px; opacity: .85; }
+
+/* Room key: a brass key on a plastic diamond tag */
+.ticket-wrap.roomkey { max-width: 200px; rotate: 3deg; }
+.ks-roomkey { display: flex; flex-direction: column; align-items: center; }
+.rk-key { display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,.3)); }
+.rk-tag { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 130px; height: 90px; margin-top: -6px; color: #fff; background: linear-gradient(160deg, #c0392b, #7e1d14); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); font-family: Oswald, sans-serif; text-align: center; }
+.rk-tag b { font-size: 26px; line-height: 1; }
+.rk-tag small { max-width: 80px; font-size: 7px; letter-spacing: 1px; overflow-wrap: anywhere; }
+
+/* Pressed flower, taped down, with a note beside it */
+.ticket-wrap.flower { max-width: 200px; rotate: -2deg; }
+.ks-flower { display: flex; align-items: center; gap: 8px; padding: 6px 8px; }
+.pf-art { flex: none; display: flex; mix-blend-mode: multiply; filter: saturate(.8); }
+.pf-note { display: flex; flex-direction: column; font: 17px/1.15 Caveat, cursive; color: var(--pen); }
+
+/* A travel ticket: a small stiff card, machine-printed, with the guard's clip through it */
+.ticket-wrap.ride { max-width: 225px; rotate: -2.5deg; }
+.ride-ticket { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 8px; border-radius: 6px; color: #2a2118; font: 12px/1.35 'Share Tech Mono', 'Courier New', monospace;
+  background: repeating-linear-gradient(135deg, rgba(255,255,255,.2) 0 2px, transparent 2px 6px), linear-gradient(180deg, #f5c98c, #ecb46c);
+  -webkit-mask: radial-gradient(circle 5px at calc(100% - 22px) 18px, transparent 96%, #000); mask: radial-gradient(circle 5px at calc(100% - 22px) 18px, transparent 96%, #000); }
+.rt-top { display: flex; justify-content: space-between; padding-right: 26px; font-size: 10px; letter-spacing: 2px; }
+.rt-name { font: 700 18px/1.1 Oswald, sans-serif; letter-spacing: 2px; overflow-wrap: anywhere; }
+.rt-plain { letter-spacing: 1.5px; }
+.rt-foot { display: flex; justify-content: space-between; gap: 6px; margin-top: 2px; padding-top: 4px; border-top: 1px solid rgba(42,33,24,.3); font-size: 9px; letter-spacing: 1px; color: #5a4632; }
+.floppy-doodle { grid-area: floppy; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: center; cursor: pointer; }
+.fd-say { position: relative; max-width: 180px; padding: 8px 11px; border: 1.6px solid #5a4632; border-radius: 48% 52% 46% 54% / 56% 44% 58% 42%; font-family: Caveat, cursive; font-size: 18px; line-height: 1.1; color: #3a2a1a; }
+.fd-say::after { content: ''; position: absolute; left: 50%; bottom: -10px; width: 12px; height: 12px; translate: -50% 0; rotate: 35deg; border: solid #5a4632; border-width: 0 1.6px 1.6px 0; background: transparent; }
+.fd-pic { width: 56px; height: 62px; margin-top: 6px; filter: grayscale(1) sepia(.35) contrast(1.25); opacity: .78; mix-blend-mode: multiply; rotate: -6deg; transition: rotate .2s; }
+.fd-pic svg { width: 56px; height: 62px; display: block; }
+.floppy-doodle:hover .fd-pic, .floppy-doodle:focus-visible .fd-pic { rotate: 4deg; }
+.also-in { grid-area: also; position: relative; padding: 14px 12px 10px; background: #fff7d6; box-shadow: 0 2px 4px rgba(60,40,20,.25); rotate: 1.5deg; }
+.also-in .hand { display: block; margin-bottom: 4px; font-size: 19px; color: #4a3826; }
+.also-in ul { margin: 0; padding: 0 0 0 16px; display: flex; flex-direction: column; gap: 3px; }
+.also-in li { font-family: Caveat, cursive; font-size: 18px; line-height: 1.15; color: #4a3826; }
+.also-in a { color: #6b3f1d; text-decoration-thickness: 1px; text-underline-offset: 2px; overflow-wrap: anywhere; }
+.ai-stars { margin-left: 4px; font-family: system-ui, sans-serif; font-size: 10px; color: #c98a10; }
+.paperclip { position: absolute; top: -10px; left: 14px; width: 12px; height: 34px; border: 2px solid #8a8f98; border-radius: 7px; rotate: 8deg; }
+.paperclip::after { content: ''; position: absolute; left: 2px; top: 6px; width: 4px; height: 20px; border: 2px solid #8a8f98; border-top: 0; border-radius: 0 0 4px 4px; }
+[data-theme="dark"] .receipt { background: #ece6d6; }
+[data-theme="dark"] .also-in { background: #e6dcb4; }
+
+/* ------------------------------------------------------------------
+   Realism pass: paper grain and ageing, curved pages into a stitched
+   spine, stacked page edges, satin ribbon, coffee ring, torn tape,
+   glossy prints, patchy stamp ink and pebbled leather.
+   ------------------------------------------------------------------ */
+:root {
+  --paper-base: #f3e8cf;
+  /* fine fibre grain */
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .22 0 0 0 0 .1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.38'/%3E%3C/svg%3E");
+  /* soft age blotches and foxing */
+  --paper-mottle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='700'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .38 0 0 0 0 .16 1.1 0 0 0 -.52'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)' opacity='.5'/%3E%3C/svg%3E");
+  /* pebbled leather */
+  --leather-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='turbulence' baseFrequency='.55' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -.9 .62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23l)' opacity='.55'/%3E%3C/svg%3E");
+  /* patchy ink for rubber stamps */
+  --ink-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='60'%3E%3Cfilter id='k'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.08 .3' numOctaves='3' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.2 2.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23k)'/%3E%3C/svg%3E");
+}
+[data-theme="dark"] { --paper-base: #d6c8a6; }
+/* Low-powered phones: skip the blotchy ageing (it's costly to draw) and keep the visa still. */
+:root.lite { --paper-mottle: none; }
+
+/* Leather: grain, worn edges, embossed stitching */
+.leather-phone, .dw-leather {
+  background: var(--lamp, none), var(--leather-grain), radial-gradient(circle at 18% 12%, rgba(255,235,200,.14), transparent 45%), radial-gradient(circle at 85% 92%, rgba(0,0,0,.42), transparent 55%), linear-gradient(135deg, rgba(255,255,255,.05), rgba(0,0,0,.18)), var(--leather);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.45), inset 0 2px 1px rgba(255,230,190,.12), inset 0 -10px 24px rgba(0,0,0,.35), 0 12px 30px rgba(0,0,0,.45);
+}
+.stitched, .dw-leather::before { filter: drop-shadow(0 1px 0 rgba(0,0,0,.55)) drop-shadow(0 -1px 0 rgba(255,220,170,.12)); }
+
+/* Paper everywhere in the journal and passport wrapper */
+.paper, .spread .page, .dw-leather .wbody {
+  background-color: var(--paper-base);
+}
+.paper, .page.single {
+  background: var(--paper-mottle), var(--paper-grain), radial-gradient(ellipse 120% 90% at 50% 40%, transparent 62%, rgba(150,105,45,.22) 100%), linear-gradient(180deg, #f6eed8, var(--paper-base));
+}
+.paper { box-shadow: 0 1px 0 #e9dcbb, 0 2px 0 #cbb88f, 0 3px 0 #ebdfc0, 0 4px 0 #c2ad83, 0 5px 0 #e6d8b6, 0 10px 18px rgba(0,0,0,.5); }
+
+/* The two-page spread: pages curve into the spine */
+.spread { position: relative; background: #2f1d10; border-radius: 6px; box-shadow: 0 1px 0 #e8dbb9, 0 2px 0 #c7b38a, 0 3px 0 #eadfc0, 0 4px 0 #bfa97f; }
+.spread .page { position: relative; }
+.spread .page.left {
+  border-radius: 6px 0 0 6px;
+  background: linear-gradient(90deg, transparent 68%, rgba(110,75,30,.10) 84%, rgba(70,45,15,.28) 95%, rgba(40,25,8,.48) 100%), var(--paper-mottle), var(--paper-grain), radial-gradient(ellipse 110% 90% at 40% 45%, transparent 60%, rgba(150,105,45,.24) 100%), linear-gradient(180deg, #f6eed8, var(--paper-base));
+}
+.spread .page.right {
+  border-radius: 0 6px 6px 0;
+  background: linear-gradient(90deg, rgba(40,25,8,.5) 0, rgba(70,45,15,.26) 4%, rgba(255,250,235,.22) 9%, transparent 20%), var(--paper-mottle), var(--paper-grain), radial-gradient(ellipse 110% 90% at 60% 45%, transparent 60%, rgba(150,105,45,.24) 100%), linear-gradient(180deg, #f6eed8, var(--paper-base));
+}
+.spread .gutter { position: relative; width: 6px; background: linear-gradient(90deg, rgba(40,25,8,.55), #1f1308 50%, rgba(40,25,8,.55)); }
+.spread .gutter::before { content: ''; position: absolute; left: 2px; top: 8px; bottom: 8px; width: 2px; background: repeating-linear-gradient(180deg, #e7d6b4 0 9px, transparent 9px 22px); opacity: .85; }
+/* Satin ribbon bookmark hanging over the right page */
+.spread .page.right::before, .page.single::before { content: ''; position: absolute; z-index: 2; top: -2px; width: 16px; height: 150px; pointer-events: none; background: linear-gradient(90deg, #6e1010, #b42a24 35%, #d24a3e 50%, #9c1e1a 70%, #5e0c0c); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 88%, 0 100%); box-shadow: 0 2px 4px rgba(0,0,0,.35); }
+.spread .page.right::before { right: 34px; height: 120px; }
+.spread .page.right .journal-head { padding-right: 46px; }
+.page.single { position: relative; }
+.page.single::before { right: 3px; width: 14px; height: 96px; }
+/* A faint coffee ring, because journals get used */
+.spread .page.left::after, .page.single::after { content: ''; position: absolute; pointer-events: none; width: 110px; height: 110px; border-radius: 50%; mix-blend-mode: multiply; background: radial-gradient(circle, transparent 0 44px, rgba(130,80,25,.14) 45px 47px, rgba(130,80,25,.26) 48px 50px, rgba(130,80,25,.08) 51px 53px, transparent 54px), radial-gradient(circle at 46% 54%, rgba(130,80,25,.05) 0 40px, transparent 41px); rotate: 20deg; }
+.spread .page.left::after { right: 30px; bottom: 26px; }
+.page.single::after { left: 12px; bottom: 90px; opacity: .8; }
+.spread .page > *, .page.single > * { position: relative; z-index: 1; }
+.page-curl { background: linear-gradient(135deg, transparent 49%, #d9c8a2 50%, #f1e6cb 70%, #c2ad83 100%); box-shadow: -3px -3px 6px rgba(0,0,0,.2); border-top-left-radius: 4px; }
+
+/* Torn, translucent masking tape */
+.tape, .receipt-wrap::before, .ticket-wrap::before {
+  background: linear-gradient(180deg, rgba(255,255,255,.25), rgba(255,255,255,0) 40%), var(--paper-grain), rgba(232,214,166,.72);
+  box-shadow: none;
+  -webkit-mask: conic-gradient(from 45deg at left, #0000, #000 1deg 89deg, #0000 90deg) left / 51% 5px repeat-y, conic-gradient(from -135deg at right, #0000, #000 1deg 89deg, #0000 90deg) right / 51% 5px repeat-y;
+  mask: conic-gradient(from 45deg at left, #0000, #000 1deg 89deg, #0000 90deg) left / 51% 5px repeat-y, conic-gradient(from -135deg at right, #0000, #000 1deg 89deg, #0000 90deg) right / 51% 5px repeat-y;
+}
+.tape { height: 22px; width: 72px; }
+
+/* The map as a printed sheet pasted in */
+.taped { background: #fbf6e9; box-shadow: 0 1px 1px rgba(0,0,0,.18), 0 8px 14px -6px rgba(60,40,15,.45), inset 0 0 0 1px rgba(140,110,60,.18); }
+.taped .journal-map { box-shadow: inset 0 0 18px rgba(120,80,30,.35); }
+
+/* Glossy prints with a little curl */
+.polaroid { position: relative; background: linear-gradient(180deg, #fffefa, #f6f1e4); box-shadow: 0 1px 1px rgba(0,0,0,.18), 0 10px 14px -8px rgba(60,40,15,.55), 0 2px 6px rgba(0,0,0,.15); }
+.polaroid::after { content: ''; position: absolute; left: 7px; right: 7px; top: 7px; height: 110px; pointer-events: none; background: linear-gradient(125deg, rgba(255,255,255,.28) 0%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 70%, rgba(255,255,255,.12) 100%); }
+
+/* Notebook ruling with a red margin and slightly bled ink */
+.ruled { padding-left: 34px; color: var(--pen); text-shadow: 0 0 .6px rgba(36,48,92,.55); background: linear-gradient(90deg, transparent 0 24px, rgba(200,60,60,.42) 24px 25px, transparent 25px 27px, rgba(200,60,60,.25) 27px 28px, transparent 28px), repeating-linear-gradient(180deg, transparent 0 28px, rgba(70,110,170,.28) 28px 29px); }
+
+/* Stuck-on paper labels instead of flat pills */
+.chip { border: 0; border-radius: 2px; background: linear-gradient(180deg, #fffaf0, #efe3c6); box-shadow: 0 1px 1px rgba(0,0,0,.25), inset 0 0 0 1px rgba(140,110,70,.3); }
+.chip:nth-child(odd) { rotate: -1.2deg; }
+.chip:nth-child(even) { rotate: 1deg; }
+
+/* Rubber-stamp ink is never perfectly even */
+.return-stamp, .suggested-stamp, .recommend-stamp { -webkit-mask-image: var(--ink-mask); mask-image: var(--ink-mask); -webkit-mask-size: 160px 60px; mask-size: 160px 60px; }
+
+/* Gold stickers get a foil sheen */
+.sticker.on { background: radial-gradient(circle at 32% 28%, #fff4c0 0 12%, transparent 30%), conic-gradient(from 210deg, #f4c94a, #ffe9a0, #d9a21c, #ffe08a, #c98a10, #f4c94a); }
+
+/* Embossed leather buttons */
+.leather-pill { background: var(--leather-grain), linear-gradient(180deg, #6e4428, #4a2b17); box-shadow: 0 2px 4px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,230,190,.2), inset 0 -2px 3px rgba(0,0,0,.35); text-shadow: 0 -1px 0 rgba(0,0,0,.6); }
+.paper-pill { background: var(--paper-grain), linear-gradient(180deg, #fffaf0, #efe3c6); box-shadow: 0 1px 2px rgba(0,0,0,.3), inset 0 1px 0 #fff; }
+
+@media (prefers-reduced-motion: reduce) { .chip { rotate: none; } }
+
+/* Long journal entries on a computer: the left page (map, photos, receipt) stays in view
+   while the writing on the right scrolls past it. */
+.spread .page.left { align-self: stretch; }
+.spread .page.left > .left-stick { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 16px; }
+.spread .page.left > .left-stick.no-stick { position: static; }
+.spread .page > .page-curl { position: absolute; right: 0; bottom: 0; z-index: 2; }
+
+/* ---------- The journal as a thick book, on a computer ----------
+   The open book lies on its leather cover; page edges stack up on both sides (more on the
+   left the further into the journal you are), long entries turn over onto more pages. */
+.spread.paged { --ld: 10px; --rd: 10px; position: relative; overflow: hidden; min-height: 0; padding: 7px calc(var(--rd) + 7px) 10px calc(var(--ld) + 7px); border-radius: 8px; background: var(--leather-grain), radial-gradient(ellipse at 50% 0%, rgba(255,230,190,.08), transparent 60%), #3a2414; box-shadow: inset 0 0 0 1px rgba(0,0,0,.5), inset 0 3px 8px rgba(0,0,0,.5); transition: padding .35s ease; }
+/* Page edges: fine lines of paper, slightly shaded, on the outside of each page */
+.spread.paged::before, .spread.paged::after { content: ''; position: absolute; top: 9px; bottom: 6px; z-index: 0; pointer-events: none; transition: width .35s ease; background: repeating-linear-gradient(90deg, #efe3c4 0 1px, #cdb98f 1px 2px), #e6d6b0; }
+.spread.paged::before { left: 7px; width: var(--ld); border-radius: 6px 0 0 8px; box-shadow: inset -3px 0 4px rgba(60,40,15,.35), inset 0 -2px 2px rgba(60,40,15,.25), -2px 2px 4px rgba(0,0,0,.4); }
+.spread.paged::after { right: 7px; width: var(--rd); border-radius: 0 6px 8px 0; box-shadow: inset 3px 0 4px rgba(60,40,15,.35), inset 0 -2px 2px rgba(60,40,15,.25), 2px 2px 4px rgba(0,0,0,.4); }
+.spread.paged > .page { position: relative; z-index: 1; overflow: hidden; height: 100%; padding: 22px 24px 30px; box-shadow: 0 3px 0 -1px #e8dbb9, 0 5px 0 -2px #cbb68c, 0 7px 6px -3px rgba(0,0,0,.4); }
+.spread.paged > .page.left { overflow-y: auto; scrollbar-width: thin; }
+/* A page holding something taller than a page (a big picture) scrolls rather than cutting it off. */
+.spread.paged > .page.tall { overflow-y: auto; scrollbar-width: thin; }
+.spread.paged > .gutter { z-index: 1; }
+.spread.paged .page-flow { display: flex; flex-direction: column; gap: 14px; }
+.spread.paged .left-stick { position: static; display: flex; flex-direction: column; gap: 16px; }
+.spread.paged .page.probe { position: absolute; top: 0; left: 0; visibility: hidden; pointer-events: none; }
+.page-no { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font-size: 15px; color: #8a7458; }
+.hand.cont { font-size: 17px; color: #8a7458; }
+.ruled .carry { margin-bottom: 0 !important; }
+.page.right.blank { display: flex; align-items: center; justify-content: center; }
+.hand.fin { font-size: 22px; color: #a08a6a; }
+/* Turning the page: a curled corner you can click */
+.page-turn { position: absolute; z-index: 3; bottom: 0; width: 64px; height: 64px; padding: 0; border: 0; background: none; cursor: pointer; }
+.page-turn.next { right: 0; }
+.page-turn.prev { left: 0; }
+.page-turn::before { content: ''; position: absolute; bottom: 0; width: 38px; height: 38px; transition: width .2s, height .2s; box-shadow: -3px -3px 6px rgba(0,0,0,.22); }
+.page-turn.next::before { right: 0; background: linear-gradient(135deg, transparent 49%, #d9c8a2 50%, #f4ead2 72%, #c2ad83 100%); border-top-left-radius: 4px; }
+.page-turn.prev::before { left: 0; background: linear-gradient(225deg, transparent 49%, #d9c8a2 50%, #f4ead2 72%, #c2ad83 100%); border-top-right-radius: 4px; box-shadow: 3px -3px 6px rgba(0,0,0,.22); }
+.page-turn:hover::before, .page-turn:focus-visible::before { width: 50px; height: 50px; }
+.page-turn .hand { position: absolute; bottom: 42px; white-space: nowrap; font-size: 16px; color: #7a5a3a; opacity: .85; }
+.page-turn.next .hand { right: 6px; }
+.page-turn.prev .hand { left: 6px; }
+/* Turning a page: the sheet swings over the spine, front and back, with shadows on the pages
+   it uncovers and falls onto. Drawn on top of the pages and gone once it lands. */
+.spread.paged { touch-action: pan-y pinch-zoom; }
+.spread.paged > .leaf, .spread.paged > .under, .spread.paged > .turn-cast { position: absolute; pointer-events: none; }
+.spread.paged > .under { z-index: 2; }
+.spread.paged > .turn-cast { z-index: 3; opacity: 0; }
+.spread.paged > .turn-cast.spine-left { background: linear-gradient(90deg, rgba(40,24,8,.55), rgba(40,24,8,.18) 35%, transparent 70%); }
+.spread.paged > .turn-cast.spine-right { background: linear-gradient(270deg, rgba(40,24,8,.55), rgba(40,24,8,.18) 35%, transparent 70%); }
+.spread.paged > .leaf { z-index: 4; perspective: 2400px; transform-style: preserve-3d; }
+.spread.paged > .under > .page { position: absolute; inset: 0; height: auto; overflow: hidden; padding: 22px 24px 30px; }
+.leaf .strip { position: absolute; top: 0; transform-style: preserve-3d; will-change: transform; }
+.leaf .face { position: absolute; inset: 0; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.leaf .face.back { transform: rotateY(180deg); }
+.leaf .face > .page.slice { position: absolute; top: 0; overflow: hidden; padding: 22px 24px 30px; box-shadow: none; }
+/* light and shade on the curve of the paper */
+.turn-shade { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0; background: rgba(60,36,10,.9); }
+@media (prefers-reduced-motion: reduce) { .spread.paged, .spread.paged::before, .spread.paged::after { transition: none; } }
+
+/* On a phone: the single page gets page edges along the right and bottom, like a thick notebook */
+.paper { box-shadow: 1px 0 0 #efe3c4, 2px 0 0 #cdb98f, 3px 0 0 #efe3c4, 4px 0 0 #c4ae84, 5px 1px 0 #e9dcbb, 6px 1px 0 #bea77c, 0 1px 0 #e9dcbb, 0 2px 0 #cbb88f, 0 3px 0 #ebdfc0, 0 4px 0 #c2ad83, 0 5px 0 #e6d8b6, 0 10px 18px rgba(0,0,0,.5); }
+.spread .page > .page-turn, .spread .page > .page-no { position: absolute; }
+.spread.paged:not(.at-first) .page.right::before { display: none; }
+/* On a tablet the book fills the leather case: no extra paper behind it. */
+.tablet .paper:has(> .spread.paged) { overflow: hidden; background: none; box-shadow: none; }
+.tablet .paper > .spread.paged { border-radius: 6px; }
+
+/* Bits of the place tucked into the margins of later pages; the writing flows around them. */
+.ruled .page-deco { margin: 4px 0 10px; font-size: 16px; line-height: 1.2; }
+.ruled .page-deco.deco-right { float: right; margin-left: 14px; rotate: 2deg; }
+.ruled .page-deco.deco-left { float: left; margin-right: 14px; rotate: -2deg; }
+/* Lists sit beside a margin piece without their numbers running under it; tables and code
+   start below it, so their columns keep their width. */
+.ruled > ol, .ruled > ul { display: flow-root; }
+.ruled > table, .ruled > pre { clear: both; }
+.deco-weather { width: 128px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 8px 10px; background: linear-gradient(180deg, #fffaf0, #efe3c6); box-shadow: 0 1px 2px rgba(0,0,0,.3); border-top: 3px solid #2a6fd6; color: #2b1d12; text-align: center; }
+.deco-weather .dw-top { font: 9px Oswald, sans-serif; letter-spacing: 2px; color: #2a6fd6; }
+.deco-weather .hand { font-size: 19px; line-height: 1.05; }
+.deco-weather small { font-family: Georgia, serif; font-size: 10px; color: #7a6a52; }
+.deco-weather svg { width: 26px; height: 26px; }
+.ruled .deco-floppy { width: 150px; }
+.ruled .deco-floppy .fd-say { font-size: 16px; }
+.deco-postmark { width: 140px; opacity: .8; mix-blend-mode: multiply; -webkit-mask-image: var(--ink-mask); mask-image: var(--ink-mask); -webkit-mask-size: 150px 70px; mask-size: 150px 70px; }
+.deco-postmark svg { display: block; width: 140px; height: auto; }
+.ruled .deco-photo { width: 130px; }
+.ruled .deco-photo img { height: 96px; }
+.ruled .deco-photo .hand { font-size: 15px; }
+.deco-rating { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.deco-rating .hand { font-size: 18px; color: #6b5640; }
+.deco-rating .sticker { width: 24px; height: 24px; }
+.deco-rating .sticker svg { width: 14px; height: 14px; }
+
+/* ---------- The shelf of journals, one per year ---------- */
+.jshelf-wrap { display: flex; flex-direction: column; gap: 14px; padding: 18px 16px 24px; min-height: 100%; }
+.jshelf-head h2 { margin: 0; font-size: 22px; }
+.jshelf { position: relative; padding: 18px 16px 0; border-radius: 6px; background: repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 2px, transparent 2px 7px), repeating-linear-gradient(88deg, rgba(60,30,10,.07) 0 1px, transparent 1px 23px), linear-gradient(180deg, #6e4422, #4a2b14); box-shadow: inset 0 8px 18px rgba(0,0,0,.55), inset 0 -2px 0 rgba(255,220,170,.1), 0 3px 8px rgba(0,0,0,.35); }
+.jshelf-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 22px 6px; padding-bottom: 18px; background: repeating-linear-gradient(180deg, transparent 0 210px, #c48a52 210px 212px, #8a5630 212px 224px, #3a2010 224px 228px, rgba(0,0,0,.35) 228px 234px); background-size: 100% 234px; }
+.jbook { position: relative; width: var(--w); height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; padding: 14px 6px; border-radius: 4px 6px 6px 4px; color: #f3dcab; text-decoration: none; rotate: var(--tilt); transform-origin: bottom left; background: var(--leather-grain), linear-gradient(90deg, rgba(0,0,0,.35), rgba(255,235,200,.12) 18%, rgba(0,0,0,0) 40%, rgba(0,0,0,.25) 100%), var(--cover); box-shadow: inset 0 0 0 1px rgba(0,0,0,.5), 3px 0 6px rgba(0,0,0,.45); transition: translate .2s; }
+.jbook:hover, .jbook:focus-visible { translate: 0 -8px; outline: none; }
+.jb-band { position: absolute; left: 0; right: 0; height: 5px; background: linear-gradient(180deg, #e9c983, #a8782a); box-shadow: 0 1px 1px rgba(0,0,0,.4); }
+.jb-band.top { top: 22px; }
+.jb-band.bottom { bottom: 26px; }
+.jb-year { margin-top: 18px; font: 700 20px 'Libre Baskerville', Georgia, serif; letter-spacing: 1px; color: #f1d08a; text-shadow: 0 -1px 0 rgba(0,0,0,.6), 0 1px 0 rgba(255,240,200,.2); writing-mode: vertical-rl; transform: rotate(180deg); }
+.jb-label { display: flex; flex-direction: column; align-items: center; padding: 3px 4px; background: #f3e8cf; color: #3a2414; border-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,.4); text-align: center; }
+.jb-label .hand { font-size: 15px; line-height: 1; }
+.jb-label small { font-size: 9px; color: #6b5640; }
+.jb-codes { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
+.jb-codes span { padding: 0 3px; border: 1px solid rgba(243,220,171,.6); border-radius: 2px; font: 9px Oswald, sans-serif; letter-spacing: .5px; color: #f3dcab; }
+.jshelf-floppy { align-self: flex-end; flex-direction: row-reverse; align-items: flex-end; gap: 8px; margin-top: -6px; margin-right: 10px; }
+.jshelf-floppy .fd-say { max-width: 170px; background: #fbf6e9; }
+.jshelf-floppy .fd-pic { filter: none; opacity: 1; mix-blend-mode: normal; rotate: 0deg; }
+.jshelf-wrap.wide { max-width: 980px; margin: 0 auto; }
+
+/* ---------- A year's contents page ---------- */
+.year-cover { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 10px; text-align: center; }
+.yc-year { font: 700 64px/1 'Libre Baskerville', Georgia, serif; color: #6b4a2a; letter-spacing: 2px; text-shadow: 0 1px 0 rgba(255,255,255,.6), 0 -1px 0 rgba(0,0,0,.15); }
+.yc-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; font-family: Georgia, serif; color: #4a3826; }
+.yc-stats b { font-size: 20px; }
+.yc-cities { margin: 0; font-size: 18px; color: #6b5640; }
+.contents { display: flex; flex-direction: column; gap: 9px; font-family: 'Libre Baskerville', Georgia, serif; }
+.ct-month-h { margin: 8px 0 0; font-size: 24px; font-weight: normal; color: #b0301c; border-bottom: 1px solid rgba(176,48,28,.3); }
+.ct-item { display: flex; flex-direction: column; }
+.ct-item a { display: flex; align-items: baseline; gap: 6px; color: #2b1d12; text-decoration: none; font-size: 16px; }
+.ct-item a:hover .ct-title { text-decoration: underline; }
+.ct-title { min-width: 0; overflow-wrap: anywhere; }
+.ct-dots { flex: 1; min-width: 12px; border-bottom: 2px dotted #b9a27a; translate: 0 -4px; }
+.ct-page { flex: none; font-family: Caveat, cursive; font-size: 19px; color: #6b5640; }
+.ct-item small { font-family: Caveat, cursive; font-size: 17px; color: #8a7458; margin-top: -2px; }
+/* In the book, the links under an entry are small paper tabs, so they fit under the writing. */
+.spread .journal-links { gap: 6px; justify-content: flex-start; }
+.spread .journal-links a { min-height: 30px; padding: 0 10px; font-size: 12px; }
+.spread .page-nav .leather-pill { min-height: 36px; }
+
+
+/* ---------- Photos and keepsakes through the journal ----------
+   On a computer or tablet: under the map on the first page while there's room, then one in the
+   margin of each page of writing, then scrapbook pages. On a phone: between paragraphs. */
+.spread.paged > .page.left > .left-stick { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 16px 14px; }
+.spread.paged .left-stick > .taped { flex: 1 1 100%; align-self: stretch; }
+/* the map at its everyday size, so a photo or two and a keepsake share the page with it */
+.spread.paged .left-stick .journal-map { height: 200px; }
+.spread.paged .left-stick > .ticket-wrap, .spread.paged .left-stick > .receipt-wrap { flex: 0 1 190px; }
+.spread.paged .left-stick > .also-in { flex: 0 1 200px; }
+.spread.paged .left-stick > .wristband { flex: 1 1 100%; max-width: none; }
+.ruled .page-deco.scrap-deco.ticket-wrap, .ruled .page-deco.scrap-deco.receipt-wrap { width: 44%; max-width: 205px; zoom: .88; }
+.ruled .page-deco.scrap-deco.polaroid { width: 140px; }
+.ruled .page-deco.scrap-deco.also-in { width: 44%; }
+.ruled .page-deco.deco-wide { float: none; width: 100%; max-width: none; margin: 6px 0 14px; rotate: -1deg; }
+.ruled .page-deco.scrap-deco .rc-items, .ruled .page-deco.scrap-deco li { line-height: 1.35; }
+.scrap-page { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 22px 16px; padding: 8px 0 30px; } /* clear of the curled corner */
+.scrap-page > .ticket-wrap, .scrap-page > .receipt-wrap, .scrap-page > .also-in { flex: 0 1 190px; }
+.scrap-page { gap: 16px 12px; }
+.scrap-page > .wristband { flex: 1 1 100%; max-width: none; }
+/* a phone: one thing at a time between paragraphs, leaning one way then the other */
+.scrap-inline { display: flex; justify-content: center; margin: 18px 0 20px; clear: both; }
+.scrap-inline > * { max-width: min(260px, 82%); }
+.scrap-inline.lean-l > * { translate: -10px 0; }
+.scrap-inline.lean-r > * { translate: 10px 0; }
+.scrap-inline > .wristband { max-width: none; width: 100%; translate: none; }
+.scrap-end { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 20px 14px; }
+.scrap-end > .ticket-wrap, .scrap-end > .receipt-wrap, .scrap-end > .also-in { flex: 0 1 220px; }
+.scrap-end > .wristband { flex: 1 1 100%; max-width: none; }
+
+/* ---------- Outdoors keepsakes ---------- */
+.ticket-wrap.pitch { max-width: 130px; rotate: -4deg; }
+.ks-pitch { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 22px 10px 10px; border-radius: 6px 6px 12px 12px; text-align: center; color: #fff; background: linear-gradient(180deg, #3f8a4f, #2c6a3a); font-family: Oswald, sans-serif; }
+.pt-hole { position: absolute; top: 7px; left: 50%; width: 10px; height: 10px; translate: -50% 0; border-radius: 50%; background: #e9dcbc; box-shadow: 0 0 0 2px #cfd6cf; }
+.pt-kind { font-size: 10px; letter-spacing: 4px; opacity: .85; }
+.pt-no { font: 700 38px/1 Oswald, sans-serif; }
+.pt-name { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; overflow-wrap: anywhere; }
+.pt-lines { margin: 2px 0 0; padding: 0; list-style: none; font: 10px/1.3 'Share Tech Mono', monospace; }
+.ticket-wrap.trailmap { max-width: 220px; rotate: 2deg; }
+.ks-trailmap { position: relative; display: flex; flex-direction: column; background: repeating-linear-gradient(0deg, transparent 0 34px, rgba(120,90,40,.12) 34px 35px), repeating-linear-gradient(90deg, transparent 0 34px, rgba(120,90,40,.12) 34px 35px), #efe2bf;
+  clip-path: polygon(0 3%, 12% 0, 30% 4%, 48% 0, 66% 3%, 84% 0, 100% 4%, 98% 30%, 100% 55%, 97% 80%, 100% 100%, 80% 97%, 60% 100%, 38% 96%, 18% 100%, 0 97%, 3% 70%, 0 45%, 2% 20%); }
+.tm-map { display: block; height: 130px; }
+.tm-note { display: flex; flex-direction: column; padding: 0 12px 12px; font: 17px/1.1 Caveat, cursive; color: var(--pen); }
+.ticket-wrap.parkpass { max-width: 210px; rotate: -1.5deg; }
+.ks-parkpass { display: flex; flex-direction: column; gap: 2px; overflow: hidden; border-radius: 8px; color: #1f3a28; background: #f3efdc; font-family: Oswald, sans-serif; }
+.pp-band { display: block; background: linear-gradient(180deg, #9fd0e8, #d8eef6); line-height: 0; }
+.ks-parkpass > :not(.pp-band) { padding: 0 12px; }
+.pp-kind { margin-top: 6px; font-size: 10px; letter-spacing: 4px; color: #3f7a4f; }
+.pp-name { margin-bottom: 3px; font: 700 18px/1.3 Oswald, sans-serif; overflow-wrap: anywhere; }
+.pp-sub { font: 10px 'Share Tech Mono', monospace; }
+.pp-lines { margin: 2px 0 10px; list-style: none; font: 11px/1.35 'Share Tech Mono', monospace; }
+.ks-parkpass > :last-child:not(.pp-lines) { padding-bottom: 10px; }
+.ticket-wrap.patch { max-width: 150px; rotate: 5deg; }
+.pa-art { display: flex; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
+.ticket-wrap.summit { max-width: 150px; rotate: -6deg; }
+.ks-summit { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 16px; border-radius: 50%; text-align: center; color: #5a3a1a; background: radial-gradient(circle, #ffd25c 0 62%, #fff 63% 66%, #f0a83a 67%); font-family: Oswald, sans-serif; }
+.su-top { font: 700 12px/1.1 Oswald, sans-serif; letter-spacing: 1px; }
+.su-name { font-size: 9px; letter-spacing: 2px; overflow-wrap: anywhere; }
+.su-line { font: 10px 'Share Tech Mono', monospace; }
+.ticket-wrap.signpost { max-width: 210px; rotate: 0deg; }
+.ks-signpost { position: relative; display: flex; flex-direction: column; align-items: flex-start; padding: 6px 0 0 30px; height: 120px; }
+.sp-arm { position: relative; z-index: 1; display: flex; flex-direction: column; padding: 6px 30px 6px 12px; color: #fff4dc; background: repeating-linear-gradient(90deg, rgba(0,0,0,.06) 0 3px, transparent 3px 9px), linear-gradient(180deg, #9a6a3a, #6e4622); clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%); font-family: Oswald, sans-serif; }
+.sp-arm b { font-size: 15px; letter-spacing: 1px; text-transform: uppercase; }
+.sp-arm small { font-size: 11px; opacity: .9; }
+.sp-post { position: absolute; left: 40px; top: 0; bottom: 0; width: 12px; background: repeating-linear-gradient(0deg, rgba(0,0,0,.08) 0 4px, transparent 4px 11px), linear-gradient(90deg, #6e4622, #9a6a3a, #6e4622); border-radius: 3px 3px 0 0; }
+.ticket-wrap.leaf, .ticket-wrap.marshmallow, .ticket-wrap.compass { max-width: 210px; }
+.ticket-wrap.leaf { rotate: 3deg; }
+.ticket-wrap.marshmallow { rotate: -3deg; }
+.ticket-wrap.compass { rotate: 2deg; }
+.ks-leaf, .ks-marshmallow, .ks-compass { display: flex; align-items: center; gap: 8px; padding: 6px 8px; }
+.lf-art, .mm-art, .cp-art { flex: none; display: flex; filter: drop-shadow(0 2px 2px rgba(0,0,0,.25)); }
+.lf-art { mix-blend-mode: multiply; }
+.ticket-wrap.tides { max-width: 190px; rotate: -2deg; }
+.ks-tides { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px 8px; border-radius: 4px; color: #1d3a55; background: #e8f3f6; border: 1px solid #b9d4de; font-family: Oswald, sans-serif; }
+.td-kind { font-size: 10px; letter-spacing: 3px; color: #2a6fa8; }
+.td-name { font: 700 16px/1.1 Oswald, sans-serif; overflow-wrap: anywhere; }
+.td-day { font: 10px 'Share Tech Mono', monospace; }
+.td-lines { margin: 4px 0 0; padding: 0; list-style: none; font: 12px/1.4 'Share Tech Mono', monospace; }
+.td-wave { display: block; margin-top: 4px; line-height: 0; }
+
+/* ---------- Keepsakes for books, the screen and music ---------- */
+.ticket-wrap.bookmark { max-width: 90px; rotate: 4deg; }
+.ks-bookmark { position: relative; display: flex; flex-direction: column; align-items: center; }
+.bm-tassel { width: 4px; height: 26px; background: linear-gradient(180deg, #8a1a1a, #c0392b); box-shadow: 4px 18px 0 -1px #c0392b, -4px 18px 0 -1px #c0392b; border-radius: 0 0 2px 2px; }
+.bm-body { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 70px; min-height: 160px; padding: 12px 6px; text-align: center; color: #f6e2b0; background: repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 2px, transparent 2px 5px), #2f4a3a; border: 2px solid #d9b25c; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 90%, 0 100%); }
+.bm-body b { font: 700 11px/1.15 'Libre Baskerville', Georgia, serif; overflow-wrap: break-word; hyphens: auto; }
+.bm-body em { font: 15px/1.1 Caveat, cursive; color: #fff4d8; }
+.ticket-wrap.librarycard { max-width: 160px; rotate: -3deg; }
+.ks-librarycard { display: flex; flex-direction: column; gap: 3px; padding: 10px 10px 12px; color: #3a2c1c; background: repeating-linear-gradient(180deg, transparent 0 20px, rgba(60,90,160,.35) 20px 21px), #f3ead2; font-family: 'Share Tech Mono', monospace; }
+.lc-head { font: 600 11px Oswald, sans-serif; letter-spacing: 3px; color: #8a1a1a; border-bottom: 2px solid #8a1a1a; }
+.lc-title { font: italic 11px 'Libre Baskerville', Georgia, serif; overflow-wrap: anywhere; }
+.lc-stamps { margin: 2px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; }
+.lc-stamps li { align-self: flex-start; padding: 0 6px; border: 2px solid rgba(80,60,160,.55); border-radius: 3px; color: rgba(80,60,160,.8); font-size: 12px; letter-spacing: 1px; rotate: var(--r); }
+.ticket-wrap.bookplate { max-width: 170px; rotate: 1deg; }
+.ks-bookplate { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 12px; text-align: center; color: #2f4a3a; background: #fbf6e6; box-shadow: inset 0 0 0 4px #fbf6e6, inset 0 0 0 5px #2f4a3a, inset 0 0 0 7px #fbf6e6, inset 0 0 0 8px rgba(47,74,58,.5); }
+.bp2-ex { font: italic 700 18px 'Libre Baskerville', Georgia, serif; }
+.bp2-orn { font-size: 18px; color: #8a6a3a; }
+.bp2-who { font: 20px/1.1 Caveat, cursive; color: var(--pen); }
+.bp2-line { font: 11px 'Libre Baskerville', Georgia, serif; }
+.ticket-wrap.note { max-width: 170px; rotate: -3deg; }
+.ks-note { padding: 14px 12px 16px; min-height: 110px; background: linear-gradient(180deg, #fff59a, #ffe96a); box-shadow: 0 6px 10px -4px rgba(0,0,0,.3); }
+.sn-text { display: flex; flex-direction: column; font: 18px/1.15 Caveat, cursive; color: var(--pen); }
+.ticket-wrap.popcorn { max-width: 120px; rotate: -4deg; }
+.ks-popcorn { display: flex; flex-direction: column; align-items: center; }
+.pc2-pop { width: 96px; height: 34px; margin-bottom: -6px; background: radial-gradient(circle at 15% 70%, #fff6dc 0 12px, transparent 13px), radial-gradient(circle at 40% 45%, #fff3c4 0 14px, transparent 15px), radial-gradient(circle at 65% 60%, #fffaf0 0 13px, transparent 14px), radial-gradient(circle at 88% 70%, #f6e2b0 0 11px, transparent 12px); }
+.pc2-box { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 90px; height: 100px; color: #fff; background: repeating-linear-gradient(90deg, #d6332b 0 15px, #fff 15px 30px); clip-path: polygon(0 0, 100% 0, 88% 100%, 12% 100%); font-family: Oswald, sans-serif; }
+.pc2-box b { padding: 2px 6px; font-size: 14px; letter-spacing: 2px; background: #1d3f8a; }
+.pc2-box small { margin-top: 4px; max-width: 70px; padding: 1px 4px; font-size: 9px; text-align: center; background: #1d3f8a; }
+.ticket-wrap.rental { max-width: 170px; rotate: 3deg; }
+.ks-rental { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 12px; border-radius: 10px; text-align: center; color: #1b1b1b; background: #ffdf3a; box-shadow: inset 0 0 0 3px #1d3f8a; font-family: Oswald, sans-serif; }
+.rn-shop { font-size: 10px; letter-spacing: 3px; color: #1d3f8a; }
+.rn-big { font: 700 15px/1.05 Oswald, sans-serif; color: #c0392b; }
+.rn-line { font: 10px 'Share Tech Mono', monospace; }
+.ticket-wrap.tvguide { max-width: 200px; rotate: -2deg; }
+.ks-tvguide { padding: 8px 12px 10px; color: #222; background: #f4f1e8; font: 12px/1.5 Georgia, serif; clip-path: polygon(0 2%, 30% 0, 60% 3%, 100% 0, 98% 50%, 100% 100%, 70% 97%, 40% 100%, 0 98%, 2% 50%); }
+.tg-head { display: block; font: 700 11px Oswald, sans-serif; letter-spacing: 3px; border-bottom: 2px solid #222; }
+.tg-rows { margin: 4px 0 0; padding: 0; list-style: none; }
+.tg-circled { position: relative; display: inline-block; margin-top: 2px; padding: 0 6px; font-weight: bold; }
+.tg-circled::after { content: ''; position: absolute; inset: -4px -8px; border: 2px solid rgba(192,57,43,.8); border-radius: 50%; rotate: -3deg; }
+.ticket-wrap.headphones, .ticket-wrap.remote, .ticket-wrap.glasses3d { max-width: 220px; }
+.ticket-wrap.gig { max-width: 210px; rotate: 2deg; }
+.ks-gig { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-radius: 4px; color: #fff; background: linear-gradient(135deg, #2b1055, #7a1f6e); border-left: 6px dotted rgba(255,255,255,.5); font-family: Oswald, sans-serif; }
+.gg-kind { font-size: 10px; letter-spacing: 4px; color: #ffd25c; }
+.gg-name { font: 700 18px/1.05 Oswald, sans-serif; letter-spacing: 1px; overflow-wrap: anywhere; }
+.gg-sub { font: 10px 'Share Tech Mono', monospace; opacity: .9; }
+.gg-lines { margin: 2px 0 0; padding: 0; list-style: none; font: 11px/1.35 'Share Tech Mono', monospace; }
+.gg-lines li { display: flex; gap: 4px; }
+.gg-no { margin-top: 2px; font: 9px 'Share Tech Mono', monospace; opacity: .7; }
+.ticket-wrap.pick { max-width: 100px; rotate: 12deg; }
+.gp-pick { display: flex; align-items: center; justify-content: center; width: 80px; height: 90px; padding: 0 10px 18px; color: #fff; background: radial-gradient(circle at 35% 30%, #ff9a5a, #d6332b 70%); border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%; clip-path: polygon(50% 100%, 0 30%, 10% 6%, 50% 0, 90% 6%, 100% 30%); text-align: center; }
+.gp-pick b { font: 700 11px/1.1 Oswald, sans-serif; letter-spacing: 1px; text-transform: uppercase; overflow-wrap: anywhere; }
+.ticket-wrap.setlist { max-width: 170px; rotate: -2deg; }
+.ks-setlist { padding: 10px 14px 12px; color: #111; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.sl-head { display: block; font: 700 12px Oswald, sans-serif; letter-spacing: 2px; border-bottom: 2px solid #111; }
+.sl-songs { margin: 6px 0 0; padding-left: 18px; font: 700 15px/1.25 'Permanent Marker', Caveat, cursive; text-transform: uppercase; }
+
+/* ---------- More keepsakes for books, the screen and music ---------- */
+.ticket-wrap.busticket { max-width: 150px; rotate: -5deg; }
+.ks-busticket { display: flex; flex-direction: column; gap: 1px; padding: 8px 10px; color: #233; background: #cfe8d2; border: 1px dashed rgba(34,51,51,.35); font: 11px/1.3 'Share Tech Mono', monospace; }
+.bt-top { display: flex; justify-content: space-between; font: 600 11px Oswald, sans-serif; letter-spacing: 2px; }
+.bt-fare { font: 700 14px Oswald, sans-serif; }
+.bt-no { font-size: 9px; opacity: .75; }
+.ticket-wrap.coffeering { max-width: 180px; rotate: 3deg; }
+.ks-coffeering { position: relative; min-height: 130px; padding: 14px 14px 12px; background: repeating-linear-gradient(180deg, transparent 0 19px, rgba(120,100,70,.2) 19px 20px), #f6efdf; clip-path: polygon(0 0, 100% 4%, 96% 100%, 3% 96%); }
+.cr-ring { position: absolute; left: 30px; top: 12px; width: 92px; height: 92px; border-radius: 50%; box-shadow: inset 0 0 0 6px rgba(120,72,30,.32), 0 0 0 2px rgba(120,72,30,.12); }
+.cr-note { position: relative; display: flex; flex-direction: column; margin-top: 56px; font: 17px/1.1 Caveat, cursive; color: var(--pen); }
+.ticket-wrap.signature { max-width: 190px; rotate: -2deg; }
+.ks-signature { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 14px 16px; background: #fffdf6; box-shadow: inset 0 0 0 1px #e2d6b8; }
+.sg-to { font: 22px/1 Caveat, cursive; color: var(--pen); }
+.sg-wish { font: italic 11px 'Libre Baskerville', Georgia, serif; color: #7a6a52; }
+.sg-name { margin-top: 4px; font: 26px/1 Caveat, cursive; color: #1f2f6e; rotate: -4deg; }
+.sg-line { font: 15px Caveat, cursive; color: var(--pen); }
+.ticket-wrap.bookclub { max-width: 190px; rotate: 2deg; }
+.ks-bookclub { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 14px; text-align: center; color: #3a2c1c; background: #f3e1e1; box-shadow: inset 0 0 0 4px #f3e1e1, inset 0 0 0 5px #b05a5a; }
+.bc-kind { font: 600 10px Oswald, sans-serif; letter-spacing: 4px; color: #b05a5a; }
+.bc-next { font: italic 11px 'Libre Baskerville', Georgia, serif; }
+.bc-title { font: 700 15px/1.2 'Libre Baskerville', Georgia, serif; overflow-wrap: anywhere; }
+.bc-by { font: 11px 'Libre Baskerville', Georgia, serif; }
+.bc-line { font: 16px Caveat, cursive; color: var(--pen); }
+.ticket-wrap.dogear { max-width: 140px; rotate: -3deg; }
+.ks-dogear { position: relative; min-height: 120px; padding: 12px; background: #f8f1df; clip-path: polygon(0 0, calc(100% - 34px) 0, 100% 34px, 100% 100%, 0 100%); }
+.de-lines { position: absolute; inset: 14px 12px 30px; background: repeating-linear-gradient(180deg, rgba(60,50,40,.25) 0 1px, transparent 1px 9px); }
+.de-fold { position: absolute; right: 0; top: 0; width: 34px; height: 34px; background: linear-gradient(225deg, transparent 50%, #e6d8b4 50%); box-shadow: -2px 2px 3px rgba(0,0,0,.15); }
+.de-page { position: absolute; right: 10px; bottom: 6px; font: italic 12px 'Libre Baskerville', Georgia, serif; color: #5a4632; }
+.de-note { position: absolute; left: 10px; bottom: 6px; font: 15px Caveat, cursive; color: var(--pen); }
+.ticket-wrap.stubpair { max-width: 210px; }
+.ks-stubpair { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0; }
+.sp2-stub { display: flex; flex-direction: column; align-items: center; width: 92px; padding: 8px 6px; margin: 0 -6px; text-align: center; color: #5a1420; background: #ffd9de; border: 1px dashed rgba(90,20,32,.3); font: 10px/1.2 'Share Tech Mono', monospace; box-shadow: 0 2px 3px rgba(0,0,0,.2); }
+.sp2-stub b { font: 700 11px Oswald, sans-serif; letter-spacing: 2px; color: #c21f35; }
+.sp2-stub span { overflow-wrap: anywhere; }
+.ks-stubpair .pf-note { flex-basis: 100%; margin-top: 8px; text-align: center; }
+.ticket-wrap.programme { max-width: 230px; rotate: 1deg; }
+.ks-programme { display: flex; color: #2b1d12; }
+.pg-panel { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: 110px; padding: 8px; background: #f7f1e1; box-shadow: inset -1px 0 0 rgba(0,0,0,.12); font: 15px/1.1 Caveat, cursive; color: var(--pen); }
+.pg-panel small { font: 600 9px Oswald, sans-serif; letter-spacing: 2px; color: #8a1a1a; }
+.pg-panel.mid { flex: 1.3; background: #8a1a1a; color: #fff3d6; text-align: center; transform: perspective(300px) rotateY(-6deg); }
+.pg-panel.mid b { font: 700 14px/1.1 'Libre Baskerville', Georgia, serif; }
+.pg-panel.mid small { color: #f2d48a; }
+.ticket-wrap.picknmix { max-width: 120px; rotate: 4deg; }
+.ks-picknmix { display: flex; flex-direction: column; align-items: center; }
+.pm-sweets { width: 80px; height: 28px; margin-bottom: -8px; background: radial-gradient(circle at 15% 70%, #e2322b 0 8px, transparent 9px), radial-gradient(circle at 38% 40%, #ffd23c 0 9px, transparent 10px), radial-gradient(circle at 60% 66%, #3fb37a 0 8px, transparent 9px), radial-gradient(ellipse 10px 6px at 84% 55%, #8a4a2a 98%, transparent); }
+.pm-bag { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 86px; height: 100px; color: #fff; background: repeating-linear-gradient(90deg, #ff6fa3 0 10px, #fff 10px 20px); clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%); }
+.pm-bag b { padding: 1px 4px; font: 700 10px Oswald, sans-serif; letter-spacing: 1px; background: #7a1f6e; }
+.pm-bag small { margin-top: 3px; padding: 0 4px; font: 9px 'Share Tech Mono', monospace; background: #7a1f6e; }
+.ticket-wrap.drivein { max-width: 160px; rotate: -3deg; }
+.ks-drivein { display: flex; align-items: center; gap: 6px; }
+.di-speaker { width: 60px; height: 74px; border-radius: 8px; background: radial-gradient(circle, #555 0 1.6px, transparent 2px) 0 0 / 8px 8px, linear-gradient(180deg, #8a8f96, #5a5f66); box-shadow: inset 0 0 0 4px #4a4f56; }
+.di-tag { display: flex; flex-direction: column; padding: 6px 8px; border-radius: 4px; color: #1b1b1b; background: #ffdf3a; font-family: Oswald, sans-serif; }
+.di-tag b { font-size: 15px; }
+.di-tag small { font-size: 8px; letter-spacing: 1px; overflow-wrap: anywhere; }
+.ticket-wrap.tally { max-width: 180px; rotate: 2deg; }
+.ks-tally { display: flex; flex-direction: column; gap: 4px; padding: 10px 14px; background: #fffdf6; box-shadow: 0 2px 4px rgba(0,0,0,.15); color: var(--pen); }
+.ty-head, .ty-n { font: 16px Caveat, cursive; }
+.ty-marks { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.ty-gate { position: relative; font: 700 22px/1 Caveat, cursive; letter-spacing: 2px; }
+.ty-gate.full::after { content: ''; position: absolute; left: -2px; right: -4px; top: 50%; border-top: 2px solid currentColor; rotate: -24deg; }
+.ticket-wrap.takeaway { max-width: 180px; rotate: -2deg; }
+.ks-takeaway { padding: 10px 12px; color: #2a2a2a; background: #fff6d6; border-top: 6px solid #d6332b; font: 12px/1.5 Georgia, serif; }
+.tk2-head { display: block; font: 600 9px Oswald, sans-serif; letter-spacing: 2px; color: #d6332b; }
+.tk2-items { margin: 4px 0 0; padding-left: 16px; }
+.tk2-items .circled { position: relative; font-weight: bold; }
+.tk2-items .circled::after { content: ''; position: absolute; inset: -3px -10px -3px -8px; border: 2px solid rgba(31,47,110,.7); border-radius: 50%; rotate: 2deg; }
+.ticket-wrap.nospoil { max-width: 170px; rotate: 4deg; }
+.ks-nospoil { padding: 12px 12px 14px; background: linear-gradient(180deg, #ffb3c8, #ff9ab6); box-shadow: 0 6px 10px -4px rgba(0,0,0,.3); }
+.ns-big { display: block; font: 700 16px Oswald, sans-serif; letter-spacing: 1px; color: #b3133a; }
+.ticket-wrap.jcard { max-width: 210px; rotate: -2deg; }
+.ks-jcard { display: flex; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.jc-spine { writing-mode: vertical-rl; rotate: 180deg; padding: 6px 4px; color: #fff; background: #c8402a; font: 600 10px Oswald, sans-serif; letter-spacing: 2px; text-align: center; overflow: hidden; max-height: 140px; }
+.jc-face { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: linear-gradient(180deg, #f2e6c8 0 34%, #fff 34%); }
+.jc-face b { font: 700 13px/1.1 Oswald, sans-serif; overflow-wrap: anywhere; }
+.jc-face small { font: 10px 'Share Tech Mono', monospace; }
+.jc-notes { display: flex; flex-direction: column; margin-top: 6px; font: 15px/1.15 Caveat, cursive; color: var(--pen); }
+.ticket-wrap.walkmap { max-width: 210px; rotate: 2deg; }
+.ks-walkmap { display: flex; flex-direction: column; background: #eaf2df; clip-path: polygon(0 2%, 100% 0, 98% 100%, 2% 97%); }
+.wm-map { display: block; height: 100px; }
+.ticket-wrap.napkin { max-width: 180px; rotate: -4deg; }
+.ks-napkin { display: flex; flex-direction: column; gap: 4px; padding: 16px 14px; background: radial-gradient(circle at 50% 50%, #fff 60%, #f1f1ee), #fff; box-shadow: inset 0 0 0 6px #fff, inset 0 0 0 7px rgba(0,0,0,.06); border-radius: 2px; }
+.nk-text { display: flex; flex-direction: column; font: 18px/1.15 Caveat, cursive; color: var(--pen); }
+.nk-who { align-self: flex-end; font: 13px Caveat, cursive; color: #6a6a6a; }
+.ticket-wrap.vinyllabel { max-width: 160px; rotate: 0deg; }
+.vl-disc { display: grid; place-items: center; width: 150px; height: 150px; border-radius: 50%; background: repeating-radial-gradient(circle, #1b1b1b 0 2px, #262626 2px 4px); box-shadow: 0 4px 8px rgba(0,0,0,.35); }
+.vl-label { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 70px; height: 70px; border-radius: 50%; padding: 6px; text-align: center; color: #fff; background: radial-gradient(circle, #1b1b1b 0 3px, #e8692c 3.5px); }
+.vl-label b { font: 700 9px/1.05 Oswald, sans-serif; overflow-wrap: anywhere; }
+.vl-label small { font: 7px Oswald, sans-serif; letter-spacing: 1px; }
+.ticket-wrap.mixtape { max-width: 200px; rotate: 3deg; }
+.ks-mixtape { padding: 8px 12px 10px; background: repeating-linear-gradient(180deg, transparent 0 17px, rgba(60,90,160,.3) 17px 18px), #fffef7; border-top: 8px solid #e8692c; box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.mx-title { display: block; font: 700 20px/1 Caveat, cursive; color: var(--pen); }
+.mx-tracks { margin: 4px 0 0; padding-left: 18px; font: 16px/1.1 Caveat, cursive; color: var(--pen); }
+.ticket-wrap.backstage { max-width: 150px; rotate: -3deg; }
+.ks-backstage { display: flex; flex-direction: column; align-items: center; }
+.bs-strap { width: 70px; height: 34px; border: 6px solid #1d3f8a; border-bottom: 0; border-radius: 40px 40px 0 0; }
+.bs-card { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 120px; padding: 10px 8px; border-radius: 8px; text-align: center; color: #fff; background: linear-gradient(135deg, #111 0 60%, #333), #111; box-shadow: inset 0 0 0 2px rgba(255,255,255,.35), 0 3px 6px rgba(0,0,0,.35); font-family: Oswald, sans-serif; }
+.bs-card b { padding: 1px 6px; font-size: 12px; letter-spacing: 3px; color: #111; background: #ffd23c; }
+.bs-card strong { font-size: 14px; letter-spacing: 1px; overflow-wrap: anywhere; }
+.bs-card small { font-size: 9px; letter-spacing: 2px; opacity: .85; }
+.ticket-wrap.lighter { max-width: 200px; rotate: 2deg; }
+.ks-lighter { display: flex; align-items: center; gap: 8px; padding: 6px 8px; }
+.ks-glasses3d, .ks-remote, .ks-headphones, .ks-battery { display: flex; align-items: center; gap: 8px; padding: 6px 8px; }
+/* keepsakes keep their own ink, whatever shelf or page they're stuck on */
+.ks-jcard, .jc-face b, .jc-face small { color: #222; }
+.bc-title { color: #3a2c1c; }
+.vl-label { padding-top: 10px; }
+.vl-label b { margin-bottom: 6px; }
+
+/* ---------- Keepsakes for thoughts ---------- */
+.card-keeps { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 16px 14px; padding: 4px 12px 14px; }
+.card-keeps > .ticket-wrap { flex: 0 1 190px; }
+.card-keeps > :nth-child(2n) { rotate: 2deg; }
+.ticket-wrap.sky { max-width: 150px; rotate: -3deg; }
+.ks-sky { margin: 0; padding: 7px 7px 4px; background: #fffdf8; box-shadow: 0 3px 6px rgba(0,0,0,.25); }
+.sk-photo { display: block; height: 110px; }
+.ks-sky figcaption { padding-top: 3px; font: 17px Caveat, cursive; text-align: center; color: var(--pen); }
+.ticket-wrap.diary { max-width: 200px; rotate: 2deg; }
+.ks-diary { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px 16px 26px; color: var(--pen); background: linear-gradient(90deg, transparent 0 16px, rgba(200,60,60,.35) 16px 17px, transparent 17px), repeating-linear-gradient(180deg, transparent 0 19px, rgba(70,110,170,.28) 19px 20px), #fffef6; clip-path: polygon(0 0, 100% 0, 100% 92%, 94% 100%, 86% 95%, 76% 100%, 64% 94%, 52% 100%, 40% 95%, 28% 100%, 16% 94%, 6% 100%, 0 95%); }
+.dy-date { font: italic 10px 'Libre Baskerville', Georgia, serif; color: #7a6a52; }
+.dy-dear { font: 20px/1 Caveat, cursive; }
+.dy-text { display: flex; flex-direction: column; font: 17px/1.15 Caveat, cursive; }
+.ticket-wrap.moodring, .ticket-wrap.cootie, .ticket-wrap.doodle { max-width: 210px; }
+.ks-moodring, .ks-cootie, .ks-doodle { display: flex; align-items: center; gap: 8px; padding: 6px 8px; }
+.ks-cootie small { font: 12px Caveat, cursive; color: #7a6a52; }
+.dd-art { display: flex; }
+.ticket-wrap.forecast { max-width: 180px; rotate: -2deg; }
+.ks-forecast { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 12px; text-align: center; color: #222; background: #f2efe6; font-family: Georgia, serif; clip-path: polygon(0 3%, 25% 0, 55% 3%, 100% 0, 98% 50%, 100% 100%, 70% 97%, 35% 100%, 0 97%, 2% 50%); }
+.fc-head { font: 700 10px Oswald, sans-serif; letter-spacing: 2px; border-bottom: 2px solid #222; }
+.fc-icon svg { width: 30px; height: 30px; }
+.fc-text { font: italic 700 13px/1.25 Georgia, serif; }
+.fc-line { font-size: 11px; }
+.ticket-wrap.lyric { max-width: 190px; rotate: 3deg; }
+.ks-lyric { position: relative; padding: 12px 14px 12px 30px; background: #fffef6; clip-path: polygon(0 4%, 20% 0, 50% 5%, 80% 0, 100% 4%, 97% 100%, 70% 96%, 40% 100%, 3% 96%); }
+.ly-note { position: absolute; left: 10px; top: 8px; font-size: 18px; color: #c0392b; }
+.ly-text { display: flex; flex-direction: column; font: 18px/1.15 Caveat, cursive; color: var(--pen); }
+
+
+/* ---------- Keepsakes for events ---------- */
+.ticket-wrap.handstamp { max-width: 200px; rotate: -2deg; }
+.ks-handstamp { display: flex; align-items: center; gap: 8px; }
+.hs-skin { flex: none; display: grid; place-items: center; width: 110px; height: 84px; border-radius: 46% 54% 48% 52% / 56% 50% 50% 44%; background: radial-gradient(circle at 40% 35%, #f3cfae, #dfae86 70%, #c99470); }
+.hs-stamp { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 70px; height: 52px; border: 3px double rgba(70,40,150,.7); border-radius: 10px; color: rgba(70,40,150,.75); text-align: center; rotate: -12deg; mix-blend-mode: multiply; filter: blur(.3px); }
+.hs-stamp small { max-width: 64px; font: 7px Oswald, sans-serif; letter-spacing: 1px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.hs-stamp b { font: 700 15px/1 Oswald, sans-serif; letter-spacing: 1px; overflow-wrap: anywhere; }
+.ticket-wrap.glowstick, .ticket-wrap.partyballoon, .ticket-wrap.funfair, .ticket-wrap.sparkler, .ticket-wrap.confetti { max-width: 210px; }
+.ticket-wrap.glowstick { rotate: 8deg; }
+.ticket-wrap.partyballoon { rotate: -3deg; }
+.ticket-wrap.funfair { rotate: 3deg; }
+.ticket-wrap.sparkler { rotate: -4deg; }
+.ks-glowstick, .ks-partyballoon, .ks-funfair, .ks-sparkler { display: flex; align-items: center; gap: 8px; padding: 6px 8px; }
+.gs-art { filter: drop-shadow(0 0 6px var(--glow)) drop-shadow(0 0 2px var(--glow)); }
+.sk-art { filter: drop-shadow(0 0 4px #ffd25c); }
+.ticket-wrap.racebib { max-width: 190px; rotate: 2deg; }
+.ks-racebib { position: relative; display: flex; flex-direction: column; align-items: center; padding: 0 14px 10px; text-align: center; color: #111; background: #fbfbf6; box-shadow: inset 0 0 0 1px #ddd; font-family: Oswald, sans-serif; }
+.rb-band { align-self: stretch; margin: 0 -14px; padding: 5px 10px 4px; font-size: 11px; letter-spacing: 2px; color: #fff; background: #e8432c; overflow-wrap: anywhere; }
+.rb-no { font: 700 52px/1.05 Oswald, sans-serif; letter-spacing: 2px; }
+.rb-lines { font: 10px 'Share Tech Mono', monospace; overflow-wrap: anywhere; }
+.rb-pin { position: absolute; width: 14px; height: 5px; border-radius: 3px; background: linear-gradient(180deg, #eee, #999); box-shadow: 0 1px 1px rgba(0,0,0,.3); }
+.rb-pin.p0 { top: 30px; left: 6px; rotate: -30deg; }
+.rb-pin.p1 { top: 30px; right: 6px; rotate: 30deg; }
+.rb-pin.p2 { bottom: 6px; left: 6px; rotate: 30deg; }
+.rb-pin.p3 { bottom: 6px; right: 6px; rotate: -30deg; }
+.ticket-wrap.ceremony { max-width: 190px; rotate: -1.5deg; }
+.ks-ceremony { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 14px 12px; text-align: center; color: #3a2c1c; background: linear-gradient(90deg, #fffdf6 49.5%, #efe7d4 50%, #fffdf6 51%); box-shadow: inset 0 0 0 5px #fffdf6, inset 0 0 0 6px #d9c79a; }
+.os-head { font: italic 15px 'Libre Baskerville', Georgia, serif; }
+.os-orn { color: #b08a3a; }
+.os-where { font: 700 13px/1.2 'Libre Baskerville', Georgia, serif; overflow-wrap: anywhere; }
+.os-day { font: italic 10px 'Libre Baskerville', Georgia, serif; color: #7a6a52; }
+.os-parts { margin: 6px 0 0; padding: 0; list-style: none; font: 17px/1.15 Caveat, cursive; color: var(--pen); }
+.ks-confetti { position: relative; min-height: 96px; padding: 30px 12px 10px; }
+.cf-bits { position: absolute; inset: 0; }
+.cf-bits i { position: absolute; width: 8px; height: 5px; box-shadow: 0 1px 1px rgba(0,0,0,.2); }
+.ks-confetti .pf-note { position: relative; }
+.ticket-wrap.matchday { max-width: 230px; rotate: 1.5deg; }
+.ks-matchday { display: flex; overflow: hidden; border-radius: 4px; color: #1a1a1a; background: #f2efe4; font-family: Oswald, sans-serif; }
+.md-stripe { flex: none; width: 16px; background: repeating-linear-gradient(180deg, #1f55b8 0 10px, #fff 10px 20px); }
+.md-body { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border-left: 2px dashed rgba(0,0,0,.25); }
+.md-kind { font-size: 9px; letter-spacing: 3px; color: #1f55b8; }
+.md-match { font: 700 17px/1.1 Oswald, sans-serif; overflow-wrap: anywhere; }
+.md-sub { font: 10px 'Share Tech Mono', monospace; }
+.md-lines { margin: 2px 0 0; padding: 0; list-style: none; font: 11px/1.35 'Share Tech Mono', monospace; }
+.md-lines li { display: flex; gap: 4px; }
+.md-no { margin-top: 2px; font: 9px 'Share Tech Mono', monospace; opacity: .7; }
+.ticket-wrap.rosette { max-width: 200px; rotate: 4deg; }
+.ks-rosette { position: relative; display: flex; align-items: center; gap: 8px; padding: 4px 4px 40px; }
+.ro-ruff { position: relative; z-index: 1; flex: none; display: grid; place-items: center; width: 108px; height: 108px; border-radius: 50%; background: repeating-conic-gradient(var(--c) 0 6deg, color-mix(in srgb, var(--c), #000 25%) 6deg 12deg); box-shadow: 0 2px 3px rgba(0,0,0,.3); }
+.ro-face { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; text-align: center; color: #3a2c1c; background: radial-gradient(circle, #fff8e6, #f0e2bd); box-shadow: 0 0 0 3px #d4a23a; }
+.ro-face b { font: 700 15px/1 'Libre Baskerville', Georgia, serif; overflow-wrap: anywhere; }
+.ro-face small { max-width: 56px; font: 6px Oswald, sans-serif; letter-spacing: 1px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ro-tails { position: absolute; left: 30px; top: 70px; width: 50px; height: 70px; }
+.ro-tails::before, .ro-tails::after { content: ''; position: absolute; top: 0; width: 22px; height: 70px; background: var(--c); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%); }
+.ro-tails::before { left: 0; rotate: 12deg; }
+.ro-tails::after { right: 0; rotate: -12deg; }
+.ticket-wrap.namebadge { max-width: 180px; rotate: -3deg; }
+.ks-namebadge { display: flex; flex-direction: column; overflow: hidden; border-radius: 10px; text-align: center; background: #d6332b; box-shadow: 0 2px 4px rgba(0,0,0,.25); }
+.nb-top { display: flex; flex-direction: column; padding: 6px 8px 4px; color: #fff; }
+.nb-top b { font: 700 22px/1 Oswald, sans-serif; letter-spacing: 3px; }
+.nb-top small { font: 11px Oswald, sans-serif; letter-spacing: 1px; }
+.nb-name { display: block; margin: 0 6px; padding: 10px 6px; background: #fff; font: 30px/1 'Permanent Marker', Caveat, cursive; color: #1a1a1a; overflow-wrap: anywhere; }
+.nb-foot { display: block; min-height: 12px; padding: 3px 8px 5px; font: 9px Oswald, sans-serif; letter-spacing: 1px; color: #fff; text-transform: uppercase; overflow-wrap: anywhere; }
+.ticket-wrap.flyer { max-width: 190px; rotate: -2deg; }
+.ks-flyer { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 16px 12px 10px; text-align: center; color: #111; background: repeating-linear-gradient(0deg, rgba(0,0,0,.035) 0 1px, transparent 1px 3px), #f1f1ea; font-family: Oswald, sans-serif; clip-path: polygon(0 0, 100% 2%, 98% 100%, 2% 97%); }
+.fy-tape { position: absolute; top: -2px; width: 44px; height: 16px; background: rgba(240,230,190,.75); }
+.fy-tape.a { left: -6px; rotate: -30deg; }
+.fy-tape.b { right: -6px; rotate: 30deg; }
+.fy-live { padding: 0 8px; font: 700 13px Oswald, sans-serif; letter-spacing: 4px; color: #f1f1ea; background: #111; }
+.fy-name { font: 700 26px/1 Oswald, sans-serif; letter-spacing: 1px; overflow-wrap: anywhere; filter: contrast(1.4); }
+.fy-at { font: italic 12px 'Libre Baskerville', Georgia, serif; }
+.fy-day { font: 11px 'Share Tech Mono', monospace; }
+.fy-line { font: 700 12px/1.2 Oswald, sans-serif; text-transform: uppercase; }
+.fy-foot { margin-top: 4px; font-size: 8px; letter-spacing: 2px; opacity: .7; }
+
+/* ---------- More for concerts ---------- */
+.ticket-wrap.tourtee { max-width: 200px; rotate: -2deg; }
+.tt2-shirt { display: flex; flex-direction: column; align-items: center; width: 190px; min-height: 190px; padding: 44px 46px 16px; text-align: center; color: #f4f1e8; background: radial-gradient(circle at 50% 30%, #333, #161616 75%); clip-path: polygon(24% 0, 38% 5%, 62% 5%, 76% 0, 100% 16%, 90% 34%, 79% 28%, 79% 100%, 21% 100%, 21% 28%, 10% 34%, 0 16%); }
+.tt2-shirt b { font: 700 14px Oswald, sans-serif; letter-spacing: 3px; color: #ffd23c; }
+.tt2-dates { margin: 6px 0 0; padding: 0; list-style: none; font: 9px/1.5 'Share Tech Mono', monospace; text-transform: uppercase; overflow-wrap: anywhere; }
+.ticket-wrap.earplugs, .ticket-wrap.buttonbadge, .ticket-wrap.lozenge, .ticket-wrap.masks, .ticket-wrap.mic, .ticket-wrap.interval, .ticket-wrap.operaglasses { max-width: 220px; }
+.ticket-wrap.earplugs { rotate: 3deg; }
+.ticket-wrap.buttonbadge { rotate: -6deg; }
+.ticket-wrap.lozenge { rotate: 4deg; }
+.ticket-wrap.drumstick { max-width: 240px; rotate: -8deg; }
+.ks-earplugs, .ks-buttonbadge, .ks-lozenge, .ks-masks, .ks-mic, .ks-interval, .ks-operaglasses, .ks-drumstick { display: flex; align-items: center; gap: 8px; padding: 6px 8px; }
+.ks-drumstick { flex-direction: column; align-items: flex-start; }
+.ticket-wrap.seatplan { max-width: 220px; rotate: 1.5deg; }
+.ks-seatplan { display: flex; flex-direction: column; background: #f3ead2; box-shadow: inset 0 0 0 1px #d9c79a; }
+.sp2-map { display: block; height: 128px; padding: 6px 6px 0; }
+
+/* ---------- Stage and comedy ---------- */
+.ticket-wrap.masks { rotate: -3deg; }
+.ticket-wrap.stageprog { max-width: 180px; rotate: 2deg; }
+.ks-stageprog { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 14px 16px; text-align: center; color: #f6e2b0; background: radial-gradient(circle at 50% 20%, #8a1a2a, #5a0e1a 80%); box-shadow: inset 0 0 0 4px #5a0e1a, inset 0 0 0 5px #d9b25c; }
+.tp-kind { font: 600 10px Oswald, sans-serif; letter-spacing: 4px; color: #d9b25c; }
+.tp-orn { font-size: 22px; line-height: 1.2; }
+.tp-show { font: 700 17px/1.15 'Libre Baskerville', Georgia, serif; color: #fff4d8; overflow-wrap: anywhere; }
+.tp-at, .tp-day { font: italic 10px 'Libre Baskerville', Georgia, serif; }
+.tp-line { font: 16px/1.1 Caveat, cursive; color: #fff4d8; }
+.ticket-wrap.comedyticket { max-width: 220px; rotate: -2deg; }
+.ks-comedyticket { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-radius: 4px; color: #1a1a1a; background: radial-gradient(circle at 0 50%, transparent 7px, #ffd23c 8px) left / 51% 100% no-repeat, radial-gradient(circle at 100% 50%, transparent 7px, #ffd23c 8px) right / 51% 100% no-repeat; font-family: Oswald, sans-serif; }
+.ct-kind { font-size: 9px; letter-spacing: 3px; color: #8a1a1a; }
+.ct-name { font: 700 19px/1.1 Oswald, sans-serif; letter-spacing: 1px; }
+.ct-sub { font: 10px 'Share Tech Mono', monospace; overflow-wrap: anywhere; }
+.ct-lines { margin: 2px 0 0; padding: 0; list-style: none; font: 11px/1.35 'Share Tech Mono', monospace; }
+.ct-no { margin-top: 2px; font: 8px 'Share Tech Mono', monospace; opacity: .7; }
+.ticket-wrap.mic { rotate: 2deg; }
+.ticket-wrap.interval { rotate: -3deg; }
+.ticket-wrap.operaglasses { rotate: 3deg; }
+.ticket-wrap.curtain { max-width: 220px; rotate: -1deg; }
+.ks-curtain { display: flex; flex-direction: column; overflow: hidden; border-radius: 4px; background: #1a1210; }
+.cc-valance { height: 18px; background: radial-gradient(circle at 50% 0, #b3263a 12px, transparent 13px) 0 0 / 26px 18px repeat-x, linear-gradient(180deg, #d9b25c 0 4px, #8a1a2a 4px); }
+.cc-stage { position: relative; display: flex; align-items: stretch; min-height: 96px; }
+.cc-drape { flex: none; width: 46px; background: repeating-linear-gradient(90deg, #6e0e1c 0 4px, #b3263a 4px 10px, #8a1a2a 10px 14px); }
+.cc-drape.l { border-radius: 0 0 60% 0; }
+.cc-drape.r { border-radius: 0 0 0 60%; }
+.cc-lights { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px 4px; text-align: center; background: radial-gradient(ellipse at 50% 100%, rgba(255,220,140,.35), transparent 70%); }
+.cc-lights b { padding: 3px 6px; font: 700 13px/1.1 Oswald, sans-serif; letter-spacing: 2px; color: #fff3c4; text-shadow: 0 0 6px #ffb347; border: 2px dotted #ffd25c; overflow-wrap: anywhere; }
+.cc-lights small { font: 9px 'Share Tech Mono', monospace; color: #e9dcbc; }
+.cc-notes { display: flex; flex-direction: column; padding: 6px 12px 10px; text-align: center; font: 17px/1.15 Caveat, cursive; color: #fff4d8; }
+.ticket-wrap.laughmeter { max-width: 190px; rotate: 2deg; }
+.ks-laughmeter { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 12px 10px; border-radius: 10px; background: #f3ead2; box-shadow: inset 0 0 0 2px #3a2c1c; }
+.lm-head { font: 700 11px Oswald, sans-serif; letter-spacing: 3px; color: #3a2c1c; }
+.lm-dial { display: flex; }
+.lm-n { font: 700 13px 'Share Tech Mono', monospace; color: #c0392b; }
+.ks-laughmeter .pf-note { text-align: center; }
+.ticket-wrap.joke { max-width: 200px; rotate: -3deg; }
+.ks-joke { position: relative; display: flex; flex-direction: column; padding: 12px 14px 14px; background: repeating-linear-gradient(180deg, transparent 0 19px, rgba(60,90,160,.3) 19px 20px), #fffef4; clip-path: polygon(0 4%, 6% 0, 14% 3%, 22% 0, 30% 3%, 38% 0, 46% 3%, 54% 0, 62% 3%, 70% 0, 78% 3%, 86% 0, 94% 3%, 100% 0, 100% 100%, 0 100%); }
+.jk-head { font: 11px 'Share Tech Mono', monospace; color: #7a6a52; }
+.jk-text { display: flex; flex-direction: column; font: 19px/1.1 Caveat, cursive; color: var(--pen); }
+.jk-ha { position: absolute; right: 10px; bottom: 6px; font: 700 18px Caveat, cursive; color: #c0392b; rotate: -12deg; }

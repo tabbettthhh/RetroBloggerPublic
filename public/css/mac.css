@@ -1,0 +1,89 @@
+/* Retro Mac era: the atlas and the wishlist. */
+.mac-phone, .dw-mac { font-family: var(--font-mac); font-size: 13px; color: #111; }
+.mac-phone { background: var(--lamp, none), radial-gradient(ellipse 80% 50% at 25% 25%, rgba(140,200,255,.75), transparent 70%), radial-gradient(ellipse 90% 60% at 85% 75%, rgba(10,40,120,.8), transparent 70%), linear-gradient(160deg, #3a7ee0 0%, #1a4fb0 55%, #0b2a72 100%); }
+.menubar { position: relative; z-index: 20; height: 28px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 12px; background: linear-gradient(180deg, #fbfbfb, #e2e2e2); border-bottom: 1px solid #8e8e8e; }
+.menubar-logo { display: flex; }
+.menubar .clock { margin-left: auto; }
+.menu-mac .go-btn { height: 28px; padding: 0 8px; margin: 0 -8px; border: 0; background: transparent; color: #111; cursor: pointer; }
+.menu-mac.open .go-btn { background: linear-gradient(180deg, #6aa6f8, #2f6fe0); color: #fff; }
+.menu-mac .menu-panel { left: -8px; top: 28px; width: 250px; padding: 4px 0; background: rgba(250,250,250,.97); border: 1px solid #a0a0a0; border-top: 0; border-radius: 0 0 6px 6px; box-shadow: 0 8px 18px rgba(0,0,0,.35); }
+.menu-mac .menu-item { min-height: 36px; gap: 8px; padding: 0 16px 0 6px; }
+.menu-mac .menu-item:hover, .menu-mac .menu-item.current, .menu-mac .menu-item:focus-visible { background: linear-gradient(180deg, #6aa6f8, #2f6fe0); color: #fff; outline: none; }
+.menu-mac .menu-item:hover .shortcut, .menu-mac .menu-item.current .shortcut { color: #fff; }
+.menu-mac .tick { width: 14px; display: inline-flex; justify-content: center; color: inherit; }
+.menu-mac .swatch { width: 16px; height: 16px; }
+.menu-mac .menu-sep { background: #d0d0d0; margin: 4px 0; }
+.menu-heading { padding: 2px 28px 4px; font-size: 11px; color: #777; }
+.shortcut { font-size: 12px; color: #777; }
+.mac-window { flex: 1; min-height: 0; display: flex; flex-direction: column; margin: 12px 8px 8px; border: 1px solid #6f6f6f; border-radius: 8px 8px 4px 4px; overflow: hidden; box-shadow: 0 12px 30px rgba(0,0,0,.55); background: repeating-linear-gradient(180deg, #f6f6f6 0 2px, #ececec 2px 4px); }
+.mac-title { height: 26px; flex: none; position: relative; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #a9a9a9; background: linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,0) 60%), repeating-linear-gradient(180deg, #ededed 0 1px, #dcdcdc 1px 2px); text-shadow: 0 1px 0 #fff; color: #222; }
+.lights { position: absolute; left: 9px; top: 6px; display: flex; gap: 7px; }
+.lights i, .lights .wbtn { width: 13px; height: 13px; border-radius: 50%; padding: 0; border: 0; box-shadow: 0 0 0 .5px rgba(0,0,0,.5); }
+.lights .r, .lights .close { background: radial-gradient(circle at 50% 30%, #ffd0c8 0 18%, #ff4b3a 55%, #a8160c 100%); }
+.lights .y, .lights .min { background: radial-gradient(circle at 50% 30%, #fff1c4 0 18%, #ffbd2e 55%, #a06a00 100%); }
+.lights .g, .lights .max { background: radial-gradient(circle at 50% 30%, #d8f7c4 0 18%, #46c42a 55%, #1f7210 100%); }
+.mac-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.mac-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid #b5b5b5; }
+.mac-pad { display: flex; flex-direction: column; gap: 10px; padding: 10px; }
+.segmented { display: flex; }
+.seg { height: 28px; display: inline-flex; align-items: center; padding: 0 16px; border: 1px solid #8f8f8f; background: linear-gradient(180deg, #fff 0%, #f1f1f1 48%, #dcdcdc 52%, #f7f7f7 100%); color: #111; text-decoration: none; font-size: 12px; }
+.seg:first-child { border-radius: 14px 0 0 14px; }
+.seg:last-child { border-radius: 0 14px 14px 0; border-left: 0; }
+.seg.on { border-color: #2b5fa8; background: linear-gradient(180deg, #d6ebff 0%, #8cc2f7 48%, #4f9bec 52%, #9dd0ff 100%); font-weight: bold; color: #0a1f44; }
+.aqua-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.aqua-pill { min-height: 32px; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; border: 1px solid #8f8f8f; border-radius: 16px; background: linear-gradient(180deg, #fff 0%, #f1f1f1 48%, #dcdcdc 52%, #f7f7f7 100%); color: #111; font-size: 12px; text-decoration: none; cursor: pointer; }
+.aqua-pill.on { border-color: #2b5fa8; background: linear-gradient(180deg, #d6ebff 0%, #8cc2f7 48%, #4f9bec 52%, #9dd0ff 100%); font-weight: bold; color: #0a1f44; }
+.aqua-pill.small { align-self: flex-start; margin-top: 4px; }
+.atlas-map-frame { border: 1px solid #7d7d7d; box-shadow: inset 0 0 0 1px #fff, 0 1px 2px rgba(0,0,0,.2); background: #fff; padding: 3px; }
+.atlas-map { height: 300px; }
+.dw-mac .atlas-map { height: 340px; }
+.finder { border: 1px solid #9a9a9a; background: #fff; }
+.finder-head, .finder-row { display: grid; grid-template-columns: 1fr 110px 50px; align-items: center; padding: 0 8px; }
+.finder-head { height: 22px; background: linear-gradient(180deg, #fff, #dedede); border-bottom: 1px solid #9a9a9a; font-size: 11px; color: #333; }
+.finder-head span:last-child, .finder-row span:last-child { text-align: right; }
+.finder-row { min-height: 38px; color: #111; text-decoration: none; font-size: 12px; }
+.finder-row:nth-child(odd) { background: #edf3fe; }
+.finder-row:hover { background: #3875d7; color: #fff; }
+/* the place you came from, selected the way Finder selects a file */
+.finder-row.found { background: #3875d7; color: #fff; }
+.finder-row > span:first-child { display: flex; align-items: center; gap: 6px; }
+.finder-row.empty { display: block; padding: 10px 8px; color: #555; }
+.suggest { display: flex; flex-direction: column; gap: 8px; }
+.suggest-row { display: flex; gap: 8px; }
+.suggest-row > input { flex: 1; min-width: 0; }
+.suggest > input { flex: none; }
+.aqua-field { flex: 1; min-width: 0; height: 32px; padding: 0 12px; border: 1px solid #8a8a8a; border-radius: 16px; background: #fff; box-shadow: inset 0 1px 3px rgba(0,0,0,.3); font: inherit; font-size: 13px; }
+.form-msg { margin: 0; font-size: 12px; color: #1a4fb0; min-height: 1em; }
+.mac-label { margin: 6px 0 0; font-size: 13px; color: #333; text-shadow: 0 1px 0 #fff; }
+.wish { display: flex; gap: 10px; padding: 10px; border: 1px solid #b5b5b5; border-radius: 6px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+.wish.done { background: #f7f9fd; }
+.wish.done strong { text-decoration: line-through; color: #555; }
+.aqua-check { width: 18px; height: 18px; flex: none; margin-top: 1px; border: 1px solid #7a7a7a; border-radius: 3px; background: linear-gradient(180deg, #fff, #dedede); display: flex; align-items: center; justify-content: center; color: #0a1f44; }
+.aqua-check.on { border-color: #2b5fa8; background: linear-gradient(180deg, #d6ebff 0%, #8cc2f7 48%, #4f9bec 52%, #9dd0ff 100%); }
+.wish-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.wish-text .muted { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.dock { flex: none; margin: 0 14px 8px; margin-bottom: calc(8px + env(safe-area-inset-bottom)); height: 68px; display: flex; align-items: center; justify-content: center; gap: 12px; border-radius: 12px 12px 4px 4px; border: 1px solid rgba(255,255,255,.55); background: linear-gradient(180deg, rgba(255,255,255,.45), rgba(255,255,255,.18) 60%, rgba(255,255,255,.3)); box-shadow: 0 4px 12px rgba(0,0,0,.35); }
+.dock-slot { display: flex; flex-direction: column; align-items: center; gap: 3px; transition: transform .15s; }
+a.dock-slot:hover { transform: translateY(-4px) scale(1.08); }
+.dock-dot { width: 5px; height: 5px; border-radius: 50%; background: #fff; box-shadow: 0 0 4px #9cf; }
+
+/* App icons, shared by the dock, desktop and start menu */
+.dock-icon { width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 5px rgba(0,0,0,.4); position: relative; }
+.dock-icon.small { width: 30px; height: 30px; box-shadow: 0 1px 2px rgba(0,0,0,.35); }
+.di-home, .di-thoughts { border-radius: 10px; background: radial-gradient(circle at 35% 30%, #fffbe0, #fff3a0 50%, #e2c93a); }
+.di-home::after, .di-thoughts::after { content: ''; width: 55%; height: 40%; border-radius: 4px; background: #fff; border: 1.5px solid #8a7a1a; }
+.di-journal { border-radius: 6px; background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.18), transparent 50%), #5a3620; box-shadow: inset 0 0 0 3px #5a3620, inset 0 0 0 4px #e3c38e, 0 3px 5px rgba(0,0,0,.4); }
+.di-journal::after { content: 'J'; font-family: Georgia, serif; font-weight: bold; font-size: 20px; color: #ecca8a; }
+.dock-icon.small.di-journal::after { font-size: 14px; }
+.di-atlas { border-radius: 50%; background: radial-gradient(circle at 35% 30%, #e6f6ff 0 10%, #5fb4f0 35%, #1c6fc0 70%, #0d3f7a); }
+.di-atlas::after { content: ''; width: 40%; height: 35%; border-radius: 40% 60% 50% 45%; background: #7fc25a; transform: translate(-10%, -5%) rotate(-15deg); }
+.di-wish { border-radius: 4px; background: linear-gradient(180deg, #fff7b0, #f2d84a); }
+.di-wish::after { content: ''; width: 60%; height: 50%; background: repeating-linear-gradient(180deg, #6b5a10 0 2px, transparent 2px 7px); }
+.di-guest { border-radius: 10px; background: linear-gradient(180deg, #b6e04a, #6e9a10); }
+.di-guest::after { content: ''; width: 58%; height: 46%; border-radius: 2px; background: #fff; border: 1.5px solid #3d5a05; }
+.di-photos { border-radius: 3px; background: #8aa6c4; box-shadow: inset 0 0 0 4px #fffdf8, inset 0 -12px 0 4px #fffdf8, 4px 4px 0 -1px #e8e2d2, 0 3px 6px rgba(0,0,0,.4); }
+.di-passport { border-radius: 6px; background: radial-gradient(circle at 50% 50%, transparent 0 9px, rgba(168,50,31,.75) 9px 11px, transparent 11px), #eef1e4; box-shadow: inset 0 0 0 3px #5a3620, 0 3px 5px rgba(0,0,0,.4); }
+.dock-icon.small.di-passport { background: radial-gradient(circle at 50% 50%, transparent 0 6px, rgba(168,50,31,.75) 6px 7.5px, transparent 7.5px), #eef1e4; }
+.di-about { border-radius: 6px; background: linear-gradient(180deg, #ffe7b8, #f2bf6b); box-shadow: inset 0 0 0 3px #fff, 0 3px 5px rgba(0,0,0,.4); }
+.di-about::after { content: ''; width: 34%; height: 34%; border-radius: 50%; border: 2px solid #7a4a12; transform: translateY(-15%); }
+.di-friends { border-radius: 10px; background: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Cdefs%3E%3ClinearGradient id=%22cf-base%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%236c9cf0%22/%3E%3Cstop offset=%221%22 stop-color=%22%231d4fb8%22/%3E%3C/linearGradient%3E%3ClinearGradient id=%22cf-card%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23fffdf5%22/%3E%3Cstop offset=%221%22 stop-color=%22%23ece4c9%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d=%22M2.6 17.2h18.8l-1.7 4.3H4.3z%22 fill=%22url(%23cf-base)%22 stroke=%22%23173f8f%22 stroke-width=%22.8%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M5 18.4h14%22 stroke=%22%23fff%22 stroke-opacity=%22.45%22 stroke-width=%22.7%22/%3E%3Crect x=%225.4%22 y=%224.2%22 width=%2213.2%22 height=%2212%22 rx=%221.2%22 fill=%22%23efe5c8%22 stroke=%22%238a7a52%22 stroke-width=%22.7%22 transform=%22rotate(-9 12 16)%22/%3E%3Crect x=%225.4%22 y=%224.2%22 width=%2213.2%22 height=%2212%22 rx=%221.2%22 fill=%22%23f5eed8%22 stroke=%22%238a7a52%22 stroke-width=%22.7%22 transform=%22rotate(7 12 16)%22/%3E%3Cpath d=%22M7.2 5.2V3.5h4.6v1.7%22 fill=%22%23f6c84c%22 stroke=%22%23a07a18%22 stroke-width=%22.6%22 stroke-linejoin=%22round%22/%3E%3Crect x=%225%22 y=%225%22 width=%2214%22 height=%2212%22 rx=%221.2%22 fill=%22url(%23cf-card)%22 stroke=%22%237a6a42%22 stroke-width=%22.8%22/%3E%3Ccircle cx=%229.4%22 cy=%2210.2%22 r=%222.5%22 fill=%22%23ffd34d%22 stroke=%22%23b8860b%22 stroke-width=%22.6%22/%3E%3Ccircle cx=%228.65%22 cy=%229.8%22 r=%22.38%22 fill=%22%235a4210%22/%3E%3Ccircle cx=%2210.15%22 cy=%229.8%22 r=%22.38%22 fill=%22%235a4210%22/%3E%3Cpath d=%22M8.5 10.9q.9.8 1.8 0%22 fill=%22none%22 stroke=%22%235a4210%22 stroke-width=%22.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M13 9.2h4M13 11h3.2M7.2 14.3h9.6%22 stroke=%22%2393a3c4%22 stroke-width=%22.8%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8.4 17v1.2M15.6 17v1.2%22 stroke=%22%234a4a4a%22 stroke-width=%221%22/%3E%3C/svg%3E") center / 70% no-repeat, linear-gradient(180deg, #f4f8ff, #c9dcf7); box-shadow: inset 0 0 0 2px #fff, 0 3px 5px rgba(0,0,0,.4); }

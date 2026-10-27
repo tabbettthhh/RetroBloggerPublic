@@ -1,0 +1,36 @@
+MIT License
+
+Copyright (c) 2026 tabbettthhh
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+Third-party parts included in public/ keep their own licences:
+- Leaflet (map library): BSD 2-Clause, (c) Volodymyr Agafonkin and contributors
+- Fonts via Fontsource: Caveat, Libre Baskerville, Oswald, Special Elite, Open Sans, Share Tech Mono, PT Sans, Pixelify Sans,
+  VT323, Silkscreen, Fredoka, Nunito, Comic Neue, Gaegu, Press Start 2P,
+  Source Sans 3 and Arimo (SIL Open Font License 1.1), and DejaVu Sans (Bitstream Vera / DejaVu font licence)
+- The cursors in public/cursors/ are original drawings made for this project, in the spirit of each era
+- Map tiles are served by OpenStreetMap: (c) OpenStreetMap contributors, ODbL
+- heic-to 1.6.6 (iPhone HEIC/HEIF photo decoder, public/vendor/heic-to/): LGPL-3.0, wrapping
+  libheif and libde265 (LGPL-3.0). It is a separate, unmodified file that can be swapped for any
+  other build; source: https://github.com/hoppergee/heic-to. Licence text in public/vendor/heic-to/LICENSE.
+- fflate (zip reader for imports, public/vendor/fflate/): MIT
+Libraries bundled into the server: marked (MIT), yaml (ISC), fflate (MIT).

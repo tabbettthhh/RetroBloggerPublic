@@ -1,0 +1,181 @@
+/* ---------- Studying ---------- */
+.ticket-wrap.flashcard { max-width: 210px; rotate: -2deg; }
+.ks-flashcard { display: flex; flex-direction: column; background: #fffef6; box-shadow: 0 2px 4px rgba(0,0,0,.25); }
+.fc3-q, .fc3-a { display: flex; gap: 8px; align-items: baseline; padding: 8px 12px; font: 18px/1.15 Caveat, cursive; color: var(--pen); }
+.fc3-q { border-top: 6px solid #e8433a; background: repeating-linear-gradient(180deg, transparent 0 21px, rgba(60,90,160,.25) 21px 22px); }
+.fc3-a { border-top: 1px dashed #b9a98a; background: #f4f8ff; }
+.fc3-q small, .fc3-a small { flex: none; font: 700 11px Oswald, sans-serif; color: #e8433a; }
+.fc3-a small { color: #2a63e0; }
+.fc3-more { padding: 0 12px 8px; font: 15px Caveat, cursive; color: var(--pen); background: #f4f8ff; }
+.ticket-wrap.highlighter { max-width: 230px; rotate: 1deg; }
+.ks-highlighter { position: relative; padding: 12px 14px 22px; background: repeating-linear-gradient(180deg, transparent 0 23px, rgba(60,90,160,.2) 23px 24px), #fffdf6; box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.hl-page { display: flex; flex-direction: column; gap: 4px; font: 13px/1.5 'Libre Baskerville', Georgia, serif; color: #2b2b2b; }
+.hl-page mark { padding: 0 3px; color: inherit; background: linear-gradient(100deg, transparent 0 2%, var(--hl) 3% 97%, transparent 98%); border-radius: 3px; }
+.hl-pen { position: absolute; right: -6px; bottom: -4px; width: 80px; height: 16px; border-radius: 4px 9px 9px 4px; background: linear-gradient(90deg, #2b2b2b 0 18%, var(--hl) 18% 100%); rotate: -20deg; box-shadow: 0 2px 3px rgba(0,0,0,.3); }
+.ticket-wrap.pagetabs { max-width: 200px; rotate: -2deg; }
+.ks-pagetabs { position: relative; display: flex; padding: 10px 0 10px 8px; }
+.pt2-book { width: 100px; height: 120px; border-radius: 2px 6px 6px 2px; background: linear-gradient(90deg, #5a3418 0 10px, #8a5a2a 10px); box-shadow: inset -6px 0 0 #f3ead2, inset -7px 0 0 #c9b48a, 0 2px 4px rgba(0,0,0,.3); }
+.pt2-tabs { display: flex; flex-direction: column; gap: 4px; margin: 8px 0 0 -6px; }
+.pt2-tab { padding: 2px 8px 2px 10px; border-radius: 0 4px 4px 0; font: 600 11px Oswald, sans-serif; color: #2b2b2b; background: var(--tc); box-shadow: 1px 1px 2px rgba(0,0,0,.25); rotate: calc((var(--k) - 2) * 1deg); }
+.ticket-wrap.timetable { max-width: 250px; rotate: 1deg; }
+.ks-timetable { padding: 8px 10px 10px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.tt3-head { display: block; margin-bottom: 4px; font: 600 10px Oswald, sans-serif; letter-spacing: 2px; color: #2a63e0; }
+.tt3-grid { display: grid; grid-template-columns: auto repeat(var(--cols), 1fr); gap: 2px; align-items: center; }
+.tt3-grid b { font: 600 9px Oswald, sans-serif; text-align: center; color: #555; }
+.tt3-grid b.now { color: #e8433a; }
+.tt3-grid em { padding-right: 4px; font: 14px/1 Caveat, cursive; font-style: normal; color: var(--pen); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70px; }
+.tt3-grid i { height: 14px; border: 1px solid #d6dff5; border-radius: 2px; }
+.tt3-grid i.done { background: #9dd88a; border-color: #6ab45a; }
+.tt3-grid i.done::after { content: '✓'; display: block; font: 10px/12px sans-serif; text-align: center; color: #2a6a2a; }
+.tt3-grid i.now { background: #fff35c; border-color: #e0c83a; }
+.ticket-wrap.examslip { max-width: 220px; rotate: -1deg; }
+.ks-examslip { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; color: #1a1a1a; background: #eef3f8; border: 1px solid #b9c8d8; box-shadow: 0 2px 4px rgba(0,0,0,.2); font-family: 'Share Tech Mono', monospace; }
+.ex-head { font: 600 9px Oswald, sans-serif; letter-spacing: 2px; color: #1f55b8; border-bottom: 1px solid #b9c8d8; padding-bottom: 3px; }
+.ex-row { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; }
+.ex-row small { color: #555; }
+.ex-row b { text-align: right; overflow-wrap: anywhere; }
+.ex-note { font: 15px Caveat, cursive; color: var(--pen); }
+.ex-quiet { margin-top: 3px; font: 8px Oswald, sans-serif; letter-spacing: 1px; color: #8a1a1a; text-align: center; }
+.ticket-wrap.pomodoro, .ticket-wrap.desklamp, .ticket-wrap.pencil, .ticket-wrap.gradcap, .ticket-wrap.stopwatch, .ticket-wrap.calculator, .ticket-wrap.laptop, .ticket-wrap.briefcase, .ticket-wrap.stapler, .ticket-wrap.paperclips, .ticket-wrap.wfh { max-width: 240px; }
+.ks-pomodoro, .ks-desklamp, .ks-pencil, .ks-gradcap, .ks-stopwatch, .ks-calculator, .ks-laptop, .ks-briefcase, .ks-stapler, .ks-paperclips, .ks-wfh { display: flex; align-items: center; gap: 8px; padding: 6px 8px; }
+.ks-pencil, .ks-paperclips { flex-direction: column; align-items: flex-start; }
+.ticket-wrap.pomodoro { rotate: 3deg; }
+.ticket-wrap.pencil { rotate: -6deg; }
+.ticket-wrap.stapler { rotate: 2deg; }
+.po-tally { font-size: 12px; letter-spacing: 1px; }
+.ticket-wrap.librarypass { max-width: 220px; rotate: 2deg; }
+.ks-librarypass { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto 1fr; gap: 6px 10px; padding: 10px 12px; border-radius: 8px; color: #fff; background: linear-gradient(135deg, #1f3a6e, #2f5aa8); box-shadow: 0 2px 4px rgba(0,0,0,.3); font-family: Oswald, sans-serif; }
+.lp-head { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: baseline; }
+.lp-head b { font-size: 15px; letter-spacing: 3px; }
+.lp-head small { font-size: 8px; letter-spacing: 1px; color: #ffd23c; }
+.lp-photo { width: 44px; height: 54px; border-radius: 3px; background: radial-gradient(circle at 50% 38%, #c9d4ea 0 26%, transparent 27%), radial-gradient(ellipse at 50% 100%, #c9d4ea 0 45%, transparent 46%), #3a5a9a; }
+.lp-lines { display: flex; flex-direction: column; gap: 3px; font: 10px 'Share Tech Mono', monospace; }
+.lp-code { height: 16px; margin-top: auto; background: repeating-linear-gradient(90deg, #fff 0 2px, transparent 2px 3px, #fff 3px 4px, transparent 4px 7px); }
+.ticket-wrap.grade { max-width: 210px; rotate: -2deg; }
+.ks-grade { position: relative; min-height: 120px; padding: 14px 14px 12px 70px; background: #fffef6; box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.gr-lines { position: absolute; inset: 12px 12px 12px 70px; background: repeating-linear-gradient(180deg, transparent 0 10px, rgba(0,0,0,.18) 10px 11px); }
+.gr-mark { position: absolute; left: 10px; top: 16px; display: grid; place-items: center; min-width: 50px; height: 50px; padding: 0 6px; border: 3px solid #d6332b; border-radius: 50%; font: 700 22px/1 Caveat, cursive; color: #d6332b; rotate: -10deg; }
+.gr-comment { position: relative; display: flex; flex-direction: column; margin-top: 52px; font: 18px/1.05 Caveat, cursive; color: #d6332b; rotate: -3deg; }
+.gr-tick { position: absolute; right: 14px; top: 10px; font: 700 28px Caveat, cursive; color: #d6332b; }
+.ticket-wrap.casecard { max-width: 220px; rotate: 1.5deg; }
+.ks-casecard { padding: 8px 12px 10px; background: repeating-linear-gradient(180deg, transparent 0 19px, rgba(60,90,160,.28) 19px 20px), #fff; border-top: 22px solid #fff; box-shadow: inset 0 22px 0 -21px #e8433a, 0 2px 4px rgba(0,0,0,.2); }
+.cc2-name { display: block; margin-top: -20px; font: 600 13px/1.2 'Libre Baskerville', Georgia, serif; color: #1a1a1a; overflow-wrap: anywhere; }
+.cc2-notes { margin: 6px 0 0; padding-left: 16px; font: 17px/20px Caveat, cursive; color: var(--pen); }
+.ticket-wrap.mindmap { max-width: 250px; rotate: -1deg; }
+.ks-mindmap { position: relative; height: 170px; background: #fffef6; box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.mmp-lines { position: absolute; inset: 0; }
+.mmp-lines svg { width: 100%; height: 100%; display: block; }
+.mmp-centre { position: absolute; left: 50%; top: 50%; translate: -50% -50%; max-width: 46%; padding: 4px 10px; border: 2px solid #d6332b; border-radius: 50%; text-align: center; font: 700 16px/1.05 Caveat, cursive; color: #d6332b; background: #fffef6; }
+.mmp-twig { position: absolute; translate: -50% -50%; max-width: 38%; padding: 0 4px; text-align: center; font: 15px/1.05 Caveat, cursive; color: var(--pen); background: #fffef6; border-radius: 6px; }
+.ticket-wrap.revisionlist { max-width: 210px; rotate: 2deg; }
+.ks-revisionlist { padding: 10px 12px; background: #fff6a8; box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.rv-head { display: block; font: 700 18px Caveat, cursive; color: var(--pen); }
+.rv-rows { margin: 2px 0 0; padding: 0; list-style: none; font: 17px/1.3 Caveat, cursive; color: var(--pen); }
+.rv-rows li { display: flex; align-items: center; gap: 6px; }
+.rv-rows i { flex: none; width: 12px; height: 12px; border: 1.5px solid var(--pen); border-radius: 2px; }
+.rv-rows li.done { text-decoration: line-through; text-decoration-color: rgba(214,51,43,.7); }
+.rv-rows li.done i::after { content: '✓'; display: block; margin: -6px 0 0 1px; font: 700 14px sans-serif; color: #d6332b; }
+.ca-body { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 8px; background: linear-gradient(180deg, #3a3a3a, #222); box-shadow: 0 2px 4px rgba(0,0,0,.35); }
+.ca-lcd { padding: 3px 6px; text-align: right; font: 18px 'Share Tech Mono', monospace; color: #1a2a1a; background: #a8c49a; border-radius: 3px; overflow: hidden; }
+.ca-keys { display: grid; grid-template-columns: repeat(4, 18px); gap: 3px; }
+.ca-keys i { display: grid; place-items: center; height: 14px; font: 9px sans-serif; font-style: normal; color: #fff; background: #555; border-radius: 3px; }
+.ticket-wrap.diploma { max-width: 230px; rotate: -2deg; }
+.ks-diploma { position: relative; display: flex; align-items: center; }
+.dp-roll { flex: none; width: 22px; height: 120px; border-radius: 10px; background: linear-gradient(90deg, #e9dcbc, #fffdf2 40%, #d9c79a); box-shadow: 0 2px 3px rgba(0,0,0,.25); }
+.dp-sheet { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; margin-left: -4px; padding: 14px 16px 18px; text-align: center; background: #fffdf2; box-shadow: inset 0 0 0 4px #fffdf2, inset 0 0 0 5px #c9952a, 0 2px 4px rgba(0,0,0,.2); }
+.dp-sheet small { font: 8px Oswald, sans-serif; letter-spacing: 2px; color: #7a6a52; }
+.dp-sheet b { font: 700 15px/1.15 'Libre Baskerville', Georgia, serif; color: #3a2c1c; overflow-wrap: anywhere; }
+.dp-line { font: 15px Caveat, cursive !important; letter-spacing: 0 !important; color: var(--pen) !important; }
+.dp-seal { position: absolute; right: -8px; bottom: -10px; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: #ffd6d0; background: radial-gradient(circle at 35% 30%, #e0645a, #a8231b); box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+.ticket-wrap.lecturenotes { max-width: 210px; rotate: 1deg; }
+.ks-lecturenotes { position: relative; padding: 10px 12px 12px 30px; background: repeating-linear-gradient(180deg, transparent 0 21px, rgba(60,90,160,.3) 21px 22px), #fffef6; box-shadow: inset 24px 0 0 -22px #e8433a, 0 2px 4px rgba(0,0,0,.2); }
+.ln-head { display: flex; justify-content: space-between; align-items: baseline; font: 700 19px Caveat, cursive; color: var(--pen); }
+.ln-head small { font: 13px Caveat, cursive; }
+.ln-rows { margin: 0; padding-left: 14px; font: 17px/22px Caveat, cursive; color: var(--pen); }
+.ln-doodle { position: absolute; left: 6px; top: 40px; font: 16px Caveat, cursive; color: #d6332b; rotate: -15deg; }
+.ticket-wrap.doordnd { max-width: 150px; rotate: 4deg; }
+.ks-doordnd { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 52px 12px 16px; text-align: center; border-radius: 10px 10px 4px 4px; color: #fff; background: #d6332b; box-shadow: 0 2px 4px rgba(0,0,0,.3); }
+.dn-hole { position: absolute; top: 10px; left: 50%; width: 38px; height: 30px; translate: -50% 0; border-radius: 50%; background: #e9dcbc; box-shadow: inset 0 2px 3px rgba(0,0,0,.35); }
+.dn-big { font: 700 17px/1.05 Oswald, sans-serif; letter-spacing: 1px; }
+.dn-why { font: 18px/1 Caveat, cursive; }
+.dn-why.small { font-size: 15px; opacity: .9; }
+.ticket-wrap.readinglist { max-width: 210px; rotate: -1.5deg; }
+.ks-readinglist { position: relative; padding: 22px 12px 12px; background: #fff; border-radius: 4px; box-shadow: 0 0 0 6px #b98444, 0 2px 6px rgba(0,0,0,.35); }
+.rd-clip { position: absolute; top: -10px; left: 50%; width: 54px; height: 18px; translate: -50% 0; border-radius: 4px; background: linear-gradient(180deg, #d9dde3, #9aa1a8); }
+.rd-head { font: 600 11px Oswald, sans-serif; letter-spacing: 2px; color: #555; }
+.rd-rows { margin: 4px 0 0; padding-left: 18px; font: 17px/1.3 Caveat, cursive; color: var(--pen); }
+.rd-rows li.done { text-decoration: line-through; text-decoration-color: rgba(47,158,90,.8); }
+
+/* ---------- Work ---------- */
+.ticket-wrap.idbadge { max-width: 150px; rotate: -3deg; }
+.ks-idbadge { display: flex; flex-direction: column; align-items: center; }
+.ib-strap { width: 70px; height: 34px; border: 6px solid #2a63e0; border-bottom: 0; border-radius: 40px 40px 0 0; }
+.ib-card { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 116px; padding: 8px; border-radius: 8px; text-align: center; color: #1a1a1a; background: #fff; box-shadow: inset 0 22px 0 #2a63e0, 0 3px 6px rgba(0,0,0,.3); font-family: Oswald, sans-serif; }
+.ib-top { height: 16px; font-size: 10px; letter-spacing: 3px; color: #fff; }
+.ib-photo { width: 44px; height: 52px; border-radius: 3px; background: radial-gradient(circle at 50% 38%, #9aa1a8 0 26%, transparent 27%), radial-gradient(ellipse at 50% 100%, #9aa1a8 0 45%, transparent 46%), #e9eef3; }
+.ib-card b { font-size: 13px; overflow-wrap: anywhere; }
+.ib-code { width: 90%; height: 14px; background: repeating-linear-gradient(90deg, #1a1a1a 0 2px, transparent 2px 3px, #1a1a1a 3px 4px, transparent 4px 7px); }
+.ticket-wrap.timecard { max-width: 200px; rotate: 2deg; }
+.ks-timecard { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #f2e6c8; box-shadow: 0 2px 4px rgba(0,0,0,.2); font-family: 'Share Tech Mono', monospace; }
+.tc2-head { font: 700 13px Oswald, sans-serif; letter-spacing: 3px; color: #3a2c1c; border-bottom: 2px solid #3a2c1c; }
+.tc2-row { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.tc2-row small { color: #7a6a52; }
+.tc2-row b { color: #1f3a8a; rotate: -1deg; }
+.tc2-row b.out { color: #c0392b; rotate: 1deg; }
+.ticket-wrap.meetinginvite { max-width: 230px; rotate: -1deg; }
+.ks-meetinginvite { display: flex; flex-direction: column; gap: 3px; overflow: hidden; padding-bottom: 8px; border: 1px solid #7a96df; border-radius: 6px 6px 3px 3px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); font: 12px Tahoma, sans-serif; color: #1a1a1a; }
+.mi-bar { display: flex; justify-content: space-between; padding: 4px 8px; color: #fff; background: linear-gradient(180deg, #3d8ef7, #1f5fd6); font-weight: 700; }
+.mi-x { display: grid; place-items: center; width: 16px; height: 16px; border-radius: 3px; background: #e8433a; font-size: 12px; }
+.mi-title { padding: 2px 8px 0; font-size: 14px; overflow-wrap: anywhere; }
+.mi-when, .mi-line { padding: 0 8px; color: #444; }
+.mi-btns { display: flex; gap: 4px; padding: 4px 8px 0; }
+.mi-btns i { padding: 2px 6px; font-style: normal; font-size: 11px; border: 1px solid #7a96df; border-radius: 3px; background: linear-gradient(180deg, #fff, #e6edfa); }
+.mi-btns i.no { color: #8c1f12; }
+.ticket-wrap.outofoffice { max-width: 200px; rotate: 3deg; }
+.ks-outofoffice { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; background: #fff6a8; box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.oo-head { font: 700 14px Oswald, sans-serif; letter-spacing: 2px; color: #c0392b; }
+.oo-text { display: flex; flex-direction: column; font: 18px/1.1 Caveat, cursive; color: var(--pen); }
+.oo-sun { position: absolute; right: 8px; top: 6px; font-size: 22px; color: #f2b81c; }
+.ticket-wrap.businesscard { max-width: 220px; rotate: -2deg; }
+.ks-businesscard { display: flex; flex-direction: column; gap: 2px; padding: 16px 16px 14px; background: #fbfaf5; box-shadow: 0 2px 4px rgba(0,0,0,.25); }
+.bc3-name { font: 700 16px 'Libre Baskerville', Georgia, serif; color: #1a1a1a; overflow-wrap: anywhere; }
+.bc3-role { font: 10px Oswald, sans-serif; letter-spacing: 2px; text-transform: uppercase; color: #7a6a52; }
+.bc3-rule { width: 40px; margin: 6px 0; border-top: 2px solid #c9952a; }
+.bc3-line { font: 10px 'Share Tech Mono', monospace; color: #444; overflow-wrap: anywhere; }
+.ticket-wrap.inboxzero { max-width: 190px; rotate: 1deg; }
+.ks-inboxzero { display: flex; flex-direction: column; align-items: center; gap: 2px; padding-bottom: 8px; overflow: hidden; border: 1px solid #7a96df; border-radius: 6px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.iz-bar { align-self: stretch; padding: 4px 8px; font: 700 12px Tahoma, sans-serif; color: #fff; background: linear-gradient(180deg, #3d8ef7, #1f5fd6); }
+.iz-n { font: 700 40px/1.1 Oswald, sans-serif; color: #1f5fd6; }
+.iz-sub { font: 12px Tahoma, sans-serif; color: #555; }
+.ks-inboxzero .pf-note { padding: 0 8px; }
+.ticket-wrap.deskplate { max-width: 220px; rotate: 0deg; }
+.ks-deskplate { display: flex; flex-direction: column; align-items: center; }
+.dk-plate { display: flex; flex-direction: column; align-items: center; padding: 8px 18px; color: #f2d27a; background: linear-gradient(180deg, #3a2414, #1f130a); border: 3px solid #c9952a; box-shadow: 0 2px 4px rgba(0,0,0,.35); font-family: 'Libre Baskerville', Georgia, serif; text-align: center; }
+.dk-plate b { font-size: 15px; letter-spacing: 1px; overflow-wrap: anywhere; }
+.dk-plate small { font: 10px Oswald, sans-serif; letter-spacing: 2px; }
+.dk-base { width: 90%; height: 10px; background: linear-gradient(180deg, #5a3418, #2b1a10); clip-path: polygon(4% 0, 96% 0, 100% 100%, 0 100%); }
+.ticket-wrap.memo { max-width: 220px; rotate: -1.5deg; }
+.ks-memo { display: flex; flex-direction: column; gap: 3px; padding: 10px 14px 14px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); font: 12px 'Special Elite', 'Courier New', monospace; color: #1a1a1a; }
+.me-head { font-size: 18px; letter-spacing: 6px; border-bottom: 2px solid #1a1a1a; margin-bottom: 4px; }
+.me-row { display: flex; gap: 6px; overflow-wrap: anywhere; }
+.me-row small { flex: none; width: 44px; color: #555; }
+.me-body { margin-top: 4px; }
+.ticket-wrap.tgif { max-width: 220px; rotate: -5deg; }
+.ks-tgif { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 6px; }
+.tg2-stamp { display: flex; flex-direction: column; align-items: center; padding: 6px 14px; border: 3px solid #2f9e5a; border-radius: 50px; color: #2f9e5a; text-align: center; opacity: .88; mix-blend-mode: multiply; -webkit-mask-image: var(--ink-mask); mask-image: var(--ink-mask); }
+.tg2-stamp b { font: 700 24px/1.05 Oswald, sans-serif; letter-spacing: 2px; }
+.tg2-stamp small { font: 8px Oswald, sans-serif; letter-spacing: 2px; }
+.ticket-wrap.deadline { max-width: 200px; rotate: 1.5deg; }
+.ks-deadline { padding: 0 10px 10px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.25); }
+.dl-head { display: block; margin: 0 -10px 6px; padding: 4px 10px; font: 600 10px Oswald, sans-serif; letter-spacing: 2px; color: #fff; background: #1a1a1a; }
+.dl-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.dl-grid i { position: relative; font: 10px/16px 'Share Tech Mono', monospace; font-style: normal; text-align: center; color: #555; }
+.dl-grid i.due { font-weight: 700; color: #d6332b; }
+.dl-grid i.due::after { content: ''; position: absolute; inset: -3px -1px; border: 2px solid #d6332b; border-radius: 50%; rotate: -8deg; }
+.dl-note { display: block; margin-top: 6px; text-align: center; font: 700 18px Caveat, cursive; color: #d6332b; }
+.ticket-wrap.employeemonth { max-width: 170px; rotate: 2deg; }
+.ks-employeemonth { padding: 8px; background: linear-gradient(135deg, #c9952a, #fff1b8 40%, #a87a14); box-shadow: 0 3px 6px rgba(0,0,0,.35); }
+.em-frame { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; text-align: center; background: #fffdf2; font-family: Oswald, sans-serif; color: #3a2c1c; }
+.em-frame small { font-size: 8px; letter-spacing: 2px; }
+.em-photo { display: grid; place-items: center; width: 70px; height: 70px; font-size: 40px; color: #7a6a52; background: #e9e3d2; }
+.em-frame b { font: 700 13px 'Libre Baskerville', Georgia, serif; overflow-wrap: anywhere; }

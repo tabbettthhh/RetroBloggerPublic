@@ -1,0 +1,36 @@
+{
+  // The Worker's name on Cloudflare: your site lives at https://<name>.<your-subdomain>.workers.dev
+  "name": "my-corner",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-09-01",
+  // Talking to friends' sites goes out over the public internet, even when a friend's site
+  // happens to live in the same Cloudflare account as yours.
+  "compatibility_flags": ["global_fetch_strictly_public"],
+
+  // The design: HTML, CSS, JavaScript, fonts and cursors. Your posts are NOT in here.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+
+  // Your posts and photos live in this R2 bucket.
+  "r2_buckets": [
+    { "binding": "CONTENT", "bucket_name": "my-corner-content" }
+  ],
+
+  // Post times in your files are read in this time zone (summer time handled automatically).
+  "vars": {
+    "TIMEZONE": "Europe/London"
+  },
+
+  // The back-office lock (ACCESS_TEAM_DOMAIN, ACCESS_AUD, ADMIN_EMAIL, CONTACT_EMAIL) is set in the
+  // Cloudflare dashboard, never in this file, so a public copy of the code holds nothing personal.
+  // This line stops each deploy from wiping those dashboard settings.
+  "keep_vars": true,
+
+  // Every half hour your site reads your friends' sites for new posts and statuses.
+  "triggers": { "crons": ["*/30 * * * *"] },
+
+  "observability": { "enabled": true }
+}

@@ -1,0 +1,43 @@
+/* Retro Android era: the guestbook. */
+.droid-phone, .dw-android { font-family: var(--font-droid); color: #fff; background: #000; }
+.droid-bar { height: 56px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 6px 0 4px; background: linear-gradient(180deg, #4a4a4a 0%, #2c2c2c 50%, #1c1c1c 51%, #141414 100%); border-bottom: 2px solid #99cc00; position: relative; z-index: 20; }
+.droid-back { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #fff; }
+.droid-back svg { width: 18px; height: 18px; }
+.droid-icon { width: 34px; height: 34px; flex: none; border-radius: 6px; background: linear-gradient(180deg, #b6e04a, #6e9a10); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 1px 3px rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; }
+.droid-icon svg { width: 20px; height: 18px; }
+.droid-title { flex: 1; font-size: 19px; font-weight: 700; }
+.droid-overflow { width: 44px; height: 44px; border: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.dots3 { display: flex; flex-direction: column; gap: 4px; }
+.dots3 i { width: 4px; height: 4px; border-radius: 50%; background: #ddd; }
+.menu-droid .menu-panel { right: 4px; top: 50px; width: 240px; background: #1e1e1e; border: 1px solid #444; box-shadow: 0 8px 20px rgba(0,0,0,.7); }
+.menu-droid .menu-item { min-height: 48px; color: #fff; border-bottom: 1px solid #2e2e2e; font-size: 15px; }
+.menu-droid .menu-item:hover, .menu-droid .menu-item:focus-visible { background: #ff8a00; outline: none; }
+.menu-droid .menu-item.current { color: #b4e33d; }
+.menu-droid .menu-sep { display: none; }
+.droid-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.guestbook { flex: 1; min-height: 0; display: flex; flex-direction: column; height: 100%; }
+.gb-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.counter { margin: 14px; padding: 14px; border-radius: 8px; border: 1px solid #3a3a3a; background: linear-gradient(180deg, #1d1d1d, #0d0d0d); box-shadow: inset 0 1px 0 rgba(255,255,255,.08); display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.counter-label { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; color: #b5b5b5; }
+.counter-sub { font-size: 12px; color: #9a9a9a; }
+.led { display: flex; gap: 4px; }
+.led span { width: 34px; height: 46px; border-radius: 4px; background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 49%, #050505 51%, #121212 100%); border: 1px solid #333; display: flex; align-items: center; justify-content: center; font-family: 'Share Tech Mono', monospace; font-size: 30px; color: #b4e33d; text-shadow: 0 0 6px rgba(160,220,40,.7); }
+.droid-section { padding: 4px 14px; background: #2e2e2e; font-size: 12px; font-weight: 700; letter-spacing: 1px; color: #c8c8c8; }
+.gb-entry { display: flex; gap: 12px; padding: 14px; border-bottom: 1px solid #2a2a2a; }
+.gb-avatar { width: 48px; height: 48px; flex: none; border: 2px solid #5a5a5a; background: linear-gradient(180deg, #c9e8ff, #6fb3ea); display: flex; align-items: center; justify-content: center; }
+.gb-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.gb-top { display: flex; align-items: baseline; gap: 8px; }
+.gb-top strong { flex: 1; font-size: 16px; font-weight: 600; }
+.gb-date { font-size: 12px; color: #9a9a9a; }
+.gb-text p { margin: 0; font-size: 14px; line-height: 1.45; color: #d0d0d0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.gb-reply { margin-top: 6px; padding: 8px 10px; border-radius: 4px; background: #1b1b1b; font-size: 13px; line-height: 1.4; color: #c8c8c8; }
+.gb-reply strong { color: #a8d84a; }
+.gb-empty { padding: 16px; color: #9a9a9a; }
+.gb-form { flex: none; display: flex; flex-direction: column; gap: 6px; padding: 8px 10px 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, #2e2e2e, #1a1a1a); border-top: 1px solid #4a4a4a; }
+.gb-label { font-size: 12px; color: #a8a8a8; }
+.gb-form > .droid-field { flex: none; }
+.gb-row { display: flex; gap: 8px; }
+.droid-field { flex: 1; min-width: 0; height: 44px; padding: 0 10px; border: 1px solid #8a8a8a; border-radius: 4px; background: #fff; box-shadow: inset 0 2px 3px rgba(0,0,0,.3); font: inherit; font-size: 16px; color: #111; }
+.droid-btn { height: 44px; padding: 0 18px; border: 1px solid #6a6a6a; border-radius: 4px; background: linear-gradient(180deg, #f4f4f4 0%, #dcdcdc 50%, #c4c4c4 51%, #d6d6d6 100%); font-weight: 600; font-size: 15px; color: #111; cursor: pointer; }
+.droid-btn:active { background: #ff8a00; color: #fff; }
+.gb-form .form-msg { color: #b4e33d; }
