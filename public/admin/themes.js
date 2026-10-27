@@ -4,7 +4,7 @@
 // profile header, the menu, the taskbar and scroll bars, icons and sounds, charms, the pointer
 // and stickers. Saved as theme.md, which can be downloaded, shared and installed.
 import { h } from '/js/util.js';
-import { SKINS, WALLPAPERS, CHARMS, CHARM_NAMES, resolveSkin, wallpaperCss, charmUrl, pointerSvgs, themeColour, TITLE_STOPS, inks, mix, emojiList, EMOJI_LAYOUTS, STICKER_SPOTS, STICKER_SIZES, OPTIONS, HIDEABLE, SECTIONS, DEFAULT_MENU, FONT_FAMILIES, APPS, APP_LOOKS, APP_EXTRAS, cleanApps, hexHsl, hslHex, SEASONS, FESTIVALS, FALLING_CHOICES, cleanMyDays, MAX_MY_DAYS, cleanFestivalDates, nextFestival, LABELS, LABEL_GROUPS, cleanLabels, GLASS_PLACES, SCENERY_PLACES, lookOf, cleanLooks, MAX_LOOK_CHARMS, seasonOf } from '/js/skins.js';
+import { SKINS, SKIN_GROUPS, WALLPAPERS, CHARMS, CHARM_NAMES, resolveSkin, wallpaperCss, charmUrl, pointerSvgs, themeColour, TITLE_STOPS, inks, mix, emojiList, EMOJI_LAYOUTS, STICKER_SPOTS, STICKER_SIZES, OPTIONS, HIDEABLE, SECTIONS, DEFAULT_MENU, FONT_FAMILIES, APPS, APP_LOOKS, APP_EXTRAS, cleanApps, hexHsl, hslHex, SEASONS, FESTIVALS, FALLING_CHOICES, cleanMyDays, MAX_MY_DAYS, cleanFestivalDates, nextFestival, LABELS, LABEL_GROUPS, cleanLabels, GLASS_PLACES, SCENERY_PLACES, lookOf, cleanLooks, MAX_LOOK_CHARMS, seasonOf } from '/js/skins.js';
 import { FLOPPY_PIECES, FLOPPY_DRESS, outfitFor, dressFloppy, cleanFloppy } from '/js/floppy-look.js';
 import { FLOPPY } from '/js/helper.js';
 
@@ -25,6 +25,8 @@ let ownOpen = false;
 // Opens a page of the site in the preview (set while the Themes page is showing).
 let showInPreview = () => {};
 let draft = null;
+// Theme groups opened or closed by hand (otherwise only the current theme's group is open).
+const groupOpen = new Map();
 let device = 'phone';
 let pickerFor = null;
 const MAX_STICKERS = 16;
@@ -236,15 +238,13 @@ function themeControls(ctx, saved, redraw, preview) {
   const d = draft;
   const t = resolveSkin({ ...themeFile(d), picture: d.picture, pictureUrl: d.blob || undefined });
   const c = inks(t);
-  const cards = h(
-    'div',
-    { class: 'tm-cards', role: 'radiogroup', 'aria-label': 'Themes' },
-    Object.entries(SKINS).flatMap(([id, s]) => {
+  // The themes, in groups that fold away: only the group with the current theme is open to start
+  // with; each folded one is a single line with a strip of its colours.
+  const card = (id) => {
+      const s = SKINS[id];
       const st = resolveSkin({ theme: id });
       const on = d.theme === id;
-      // The calm, neutral ones get a little heading of their own.
-      const heading = id === 'classic' ? 'Cute and colourful' : id === 'graphite' ? 'Calm and neutral' : '';
-      const card = h(
+      return h(
         'button',
         { type: 'button', role: 'radio', 'aria-checked': String(on), class: 'tm-card' + (on ? ' on' : ''), style: st.pointer !== 'none' ? { cursor: `${pointerSvgs(st).arrow} 3 3, pointer` } : null, onclick: () => {
           // A new theme brings all of its own parts (your stickers and emoji stay).
@@ -255,7 +255,24 @@ function themeControls(ctx, saved, redraw, preview) {
         h('b', null, s.name),
         h('small', null, s.vibe)
       );
-      return heading ? [h('div', { class: 'tm-group', role: 'presentation' }, heading), card] : [card];
+  };
+  const cards = h(
+    'div',
+    { class: 'tm-groups', role: 'radiogroup', 'aria-label': 'Themes' },
+    SKIN_GROUPS.map(([name, ids]) => {
+      const here = ids.includes(d.theme);
+      return h(
+        'details',
+        { class: 'tm-gbox' + (here ? ' here' : ''), open: (groupOpen.get(name) ?? here) || null, ontoggle: (e) => (e.currentTarget.open === here ? groupOpen.delete(name) : groupOpen.set(name, e.currentTarget.open)) },
+        h(
+          'summary',
+          null,
+          h('b', null, name),
+          h('small', null, here ? `${SKINS[d.theme].name} · ${ids.length} themes` : `${ids.length} themes`),
+          h('span', { class: 'tm-swatches', 'aria-hidden': 'true' }, ids.map((id) => h('i', { style: { background: `linear-gradient(135deg, ${SKINS[id].main} 50%, ${SKINS[id].accent} 50%)` } })))
+        ),
+        h('div', { class: 'tm-cards' }, ids.map(card))
+      );
     })
   );
   const colour = (key, label) => {

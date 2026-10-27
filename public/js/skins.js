@@ -78,6 +78,17 @@ export const SKINS = {
   boba: { name: 'Boba', vibe: 'Brown sugar milk tea', main: '#a4734c', accent: '#e3a26f', paper: '#f7eee2', leather: '#6b4426', wallpaper: 'boba', decoration: 'boba', pointer: 'boba', title_font: 'rounded', corners: 'round' },
   peach: { name: 'Peach Fizz', vibe: 'Peachy, bubbly and warm', main: '#f2946a', accent: '#f1c453', paper: '#fff2ea', leather: '#c26845', wallpaper: 'bubbles', decoration: 'peach', pointer: 'peach', title_font: 'bubbly', corners: 'round' },
   moonlit: { name: 'Moonlit', vibe: 'Moons, stars and soft lilac', main: '#3e3a64', accent: '#b9a8ff', paper: '#ecebf4', leather: '#2b283f', wallpaper: 'moons', decoration: 'moon', pointer: 'moon', title_font: 'elegant', scrollbar: 'themed' },
+  // Bold and loud: nothing minimal. Big colour, big pattern, big personality.
+  neon: { name: 'Neon Boulevard', vibe: 'Pink neon, palm trees and a striped 80s sunset', main: '#ff2e97', accent: '#19d3f5', paper: '#fff0fa', leather: '#4b136b', wallpaper: 'sunset', decoration: 'palm', pointer: 'palm', title_font: 'arcade', name_style: 'glow', selector: 'gradient', scrollbar: 'themed', trail: 'stars', sounds: 'chip' },
+  empire: { name: 'Empire', vibe: 'Emerald stripes, gold laurels and a little grandeur', main: '#1f5a44', accent: '#c8a042', paper: '#f7f0dc', leather: '#5a1e22', wallpaper: 'laurels', decoration: 'laurel', pointer: 'laurel', font: 'elegant', title_font: 'elegant', name_style: 'glitter', corners: 'square', header: 'card' },
+  rococo: { name: 'Rococo', vibe: 'Sugared pastels, gilt scrolls, pearls and a fan', main: '#e48fb3', accent: '#7fc8b0', paper: '#fff6f2', leather: '#b9787f', wallpaper: 'rococo', decoration: 'fan', pointer: 'fan', font: 'elegant', title_font: 'handwritten', name_style: 'glitter', corners: 'round', trail: 'sparkles', falling: 'petals' },
+  disco: { name: 'Disco Inferno', vibe: 'Mirror ball, magenta and gold on the dance floor', main: '#c2186b', accent: '#ffb000', paper: '#fff3e6', leather: '#5a1238', wallpaper: 'disco', decoration: 'discoball', pointer: 'discoball', title_font: 'bubbly', name_style: 'chrome', selector: 'gradient', scrollbar: 'themed', trail: 'stars', falling: 'confetti' },
+  popart: { name: 'Pop Art', vibe: 'Comic dots, POW! and primary colours', main: '#e3262f', accent: '#1e5bd8', paper: '#fffbe0', leather: '#1a1a1a', wallpaper: 'benday', decoration: 'boom', pointer: 'boom', font: 'comic', title_font: 'comic', name_style: 'wordart', bars: 'flat', corners: 'square', selector: 'invert' },
+  memphis: { name: 'Memphis Party', vibe: 'Squiggles, zigzags and clashing shapes', main: '#1fb5b0', accent: '#ff5ca8', paper: '#fffbea', leather: '#2a2a2a', wallpaper: 'memphis', decoration: 'squiggle', pointer: 'squiggle', font: 'rounded', title_font: 'bubbly', name_style: 'rainbow', bars: 'stripes', corners: 'round', falling: 'confetti' },
+  leopard: { name: 'Wild Thing', vibe: 'Leopard print, hot pink and a kiss', main: '#e0218a', accent: '#c8873a', paper: '#fff3e8', leather: '#3a2416', wallpaper: 'leopard', decoration: 'lips', pointer: 'lips', title_font: 'handwritten', name_style: 'glitter', selector: 'gradient', trail: 'hearts' },
+  opera: { name: 'Velvet Opera', vibe: 'Crimson velvet, gold damask and a chandelier', main: '#8e1b2b', accent: '#d4a64a', paper: '#fbf3e4', leather: '#4a0f18', wallpaper: 'damask', decoration: 'chandelier', pointer: 'chandelier', font: 'elegant', title_font: 'elegant', name_style: 'outline', scrollbar: 'themed', header: 'card' },
+  blocky: { name: 'Block World', vibe: 'Grass, dirt and stone blocks, and a pickaxe', main: '#5d9e2f', accent: '#9c6a38', paper: '#f1ead8', leather: '#5b3a1e', wallpaper: 'blocks', decoration: 'pickaxe', pointer: 'pickaxe', title_font: 'pixel', bars: 'pixel', corners: 'square', selector: 'outline', icons: 'colour', sounds: 'chip', trail: 'pixels' },
+  bigtop: { name: 'Big Top', vibe: 'Circus stripes, bunting and showtime', main: '#d7263d', accent: '#f4b400', paper: '#fff8e7', leather: '#3b2a6b', wallpaper: 'bigtop', decoration: 'tent', pointer: 'tent', title_font: 'condensed', name_style: 'wordart', bars: 'stripes', selector: 'gradient', falling: 'confetti' },
   // Calm and neutral: nothing cute, just a quiet look.
   graphite: { name: 'Graphite', vibe: 'Cool greys, nothing extra', main: '#5d646e', accent: '#8f8676', paper: '#eeeeec', leather: '#3d3f43', wallpaper: 'plain', decoration: 'none', pointer: 'plain', font: 'modern', title_font: 'modern', bars: 'flat' },
   paper: { name: 'Paper', vibe: 'Black ink on off-white', main: '#33312e', accent: '#b5462f', paper: '#f7f5ef', leather: '#2b2a28', wallpaper: 'dots', decoration: 'none', pointer: 'plain', title_font: 'elegant', bars: 'flat', corners: 'square' },
@@ -87,6 +98,13 @@ export const SKINS = {
   navy: { name: 'Navy', vibe: 'Deep navy and brass', main: '#22345a', accent: '#b8975a', paper: '#eeebe3', leather: '#1c2740', wallpaper: 'grain', decoration: 'none', pointer: 'plain', title_font: 'elegant' },
   mono: { name: 'Mono', vibe: 'Black, white and grey', main: '#3a3a3a', accent: '#8a8a8a', paper: '#f2f2f2', leather: '#2a2a2a', wallpaper: 'graph', decoration: 'none', pointer: 'plain', font: 'modern', title_font: 'condensed', bars: 'flat', corners: 'square', icons: 'mono' }
 };
+
+// How the themes are grouped in the back office (each group folds away).
+export const SKIN_GROUPS = [
+  ['Cute and colourful', ['classic', 'bunny', 'matcha', 'chrome', 'arcade', 'lemonade', 'cherry', 'cloud', 'froggy', 'boba', 'peach', 'moonlit']],
+  ['Bold and loud', ['neon', 'empire', 'rococo', 'disco', 'popart', 'memphis', 'leopard', 'opera', 'blocky', 'bigtop']],
+  ['Calm and neutral', ['graphite', 'paper', 'slate', 'sand', 'olive', 'navy', 'mono']]
+];
 
 // ---------- little drawings: charms for title bars, pointers and patterns ----------
 
@@ -159,9 +177,31 @@ export const CHARMS = {
   tanzaku: (c) => `<path d="M3 1.4c2.4 1.6 3.6 6 3.8 13" stroke="#5aa043" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M4.2 3.6 6.4 2.6M5.2 6.4l2.4-.6" stroke="#5aa043" stroke-width=".8"/><path d="M7.6 4.6v.8" stroke="${c.ink}" stroke-width=".5"/><rect x="6.4" y="5.4" width="2.6" height="7" rx=".3" fill="#ff9ac4" stroke="${c.ink}" stroke-width=".5" transform="rotate(8 7.7 9)"/><path d="M11.8 2.6v.8" stroke="${c.ink}" stroke-width=".5"/><rect x="10.6" y="3.4" width="2.6" height="7" rx=".3" fill="#9fd4ff" stroke="${c.ink}" stroke-width=".5" transform="rotate(-6 11.9 7)"/><path d="m13.4 11.6.5 1.1 1.1.5-1.1.5-.5 1.1-.5-1.1-1.1-.5 1.1-.5z" fill="#ffd23f"/>`,
   dragonboat: (c) => `<path d="M1 9.6h12.6l1.6-2.6.4 1.4-1.2 3.4H3.2z" fill="#e23b3b" stroke="${c.ink}" stroke-width=".6" stroke-linejoin="round"/><path d="M13.6 9.6c.4-2 .2-3.6-.8-4.6 1.4.2 2.4 1 2.6 2l-.2 1z" fill="#2fa36b" stroke="${c.ink}" stroke-width=".5"/><circle cx="14.2" cy="6.6" r=".4" fill="#222"/><path d="M2.6 9.6 1 7.4" stroke="${c.ink}" stroke-width=".6"/><g stroke="#f6c431" stroke-width=".6"><path d="M4.4 9.6 3.6 6.8M7 9.6 6.2 6.8M9.6 9.6 8.8 6.8"/></g><path d="M0 13.4q2-1 4 0t4 0 4 0 4 0" stroke="#4facfe" stroke-width="1.1" fill="none"/>`,
   zongzi: (c) => `<path d="M8 1.6 14.2 13H1.8z" fill="#7cb85a" stroke="${c.ink}" stroke-width=".7" stroke-linejoin="round"/><path d="M8 1.6 5.4 13M8 1.6 10.6 13" stroke="#5a9440" stroke-width=".6"/><path d="M3 10.6h10" stroke="#d9a05b" stroke-width="1.2"/><path d="M8 10.6l-1 3.2M8 10.6l1 3.2" stroke="#d9a05b" stroke-width=".8"/>`,
-  koinobori: (c) => `<path d="M1.6 1v14.4" stroke="#8a5a33" stroke-width="1" stroke-linecap="round"/><circle cx="1.6" cy="1" r=".7" fill="#f6c431"/><path d="M2.2 2.4h9.6l3 1.9-3 1.9H2.2z" fill="#4facfe" stroke="${c.ink}" stroke-width=".5" stroke-linejoin="round"/><circle cx="4" cy="4.3" r=".9" fill="#fff" stroke="${c.ink}" stroke-width=".4"/><path d="M2.2 7.6h8l2.8 1.8-2.8 1.8h-8z" fill="#ff5f6d" stroke="${c.ink}" stroke-width=".5" stroke-linejoin="round"/><circle cx="4" cy="9.4" r=".8" fill="#fff" stroke="${c.ink}" stroke-width=".4"/><path d="M6.4 3.4q.6.9 0 1.8M8.4 3.4q.6.9 0 1.8M6.2 8.6q.6.8 0 1.6M8 8.6q.6.8 0 1.6" stroke="#fff" stroke-width=".5" fill="none"/>`
+  koinobori: (c) => `<path d="M1.6 1v14.4" stroke="#8a5a33" stroke-width="1" stroke-linecap="round"/><circle cx="1.6" cy="1" r=".7" fill="#f6c431"/><path d="M2.2 2.4h9.6l3 1.9-3 1.9H2.2z" fill="#4facfe" stroke="${c.ink}" stroke-width=".5" stroke-linejoin="round"/><circle cx="4" cy="4.3" r=".9" fill="#fff" stroke="${c.ink}" stroke-width=".4"/><path d="M2.2 7.6h8l2.8 1.8-2.8 1.8h-8z" fill="#ff5f6d" stroke="${c.ink}" stroke-width=".5" stroke-linejoin="round"/><circle cx="4" cy="9.4" r=".8" fill="#fff" stroke="${c.ink}" stroke-width=".4"/><path d="M6.4 3.4q.6.9 0 1.8M8.4 3.4q.6.9 0 1.8M6.2 8.6q.6.8 0 1.6M8 8.6q.6.8 0 1.6" stroke="#fff" stroke-width=".5" fill="none"/>`,
+  // Bold and loud: the big personalities.
+  palm: (c) => `<path d="M8.6 15.6c-.4-3.8.1-7 1.1-9.6" fill="none" stroke="#8a5a2b" stroke-width="1.5" stroke-linecap="round"/><g fill="#2fbf71" stroke="${c.ink}" stroke-width=".5" stroke-linejoin="round"><path d="M9.6 6C7 3.6 4 3.6 1.4 5.4 4.4 5 6.8 5.4 9.6 6z"/><path d="M9.6 6c1.4-3 4-4 6-3-2.4.4-4.2 1.4-6 3z"/><path d="M9.6 6c2.6-.6 4.8.6 5.8 2.8-2-1-3.8-1.8-5.8-2.8z"/><path d="M9.6 6C8 7.6 6 8.8 3.2 9 4.8 7.4 7 6.4 9.6 6z"/><path d="M9.6 6c-.8-2.4 0-4.4 1.6-5.6-.2 2-.6 3.8-1.6 5.6z"/></g><circle cx="9.2" cy="6.8" r=".8" fill="#8a5a2b"/>`,
+  laurel: (c) => `<g fill="none" stroke="#a87c22" stroke-width=".8" stroke-linecap="round"><path d="M7.4 14.4C3.6 12.6 2 8.6 3.6 3.6"/><path d="M8.6 14.4c3.8-1.8 5.4-5.8 3.8-10.8"/></g><g fill="#e0b84a" stroke="${c.ink}" stroke-width=".45">${[[4.8, 12.6, -40], [3.4, 10, -70], [3, 7.2, -95], [3.6, 4.6, -120], [6.2, 13.6, -15]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="1.7" ry=".75" transform="rotate(${r} ${x} ${y})"/><ellipse cx="${16 - x}" cy="${y}" rx="1.7" ry=".75" transform="rotate(${-r} ${16 - x} ${y})"/>`).join('')}</g><path d="M6.6 14.2 8 15.4l1.4-1.2" fill="none" stroke="${c.accent}" stroke-width="1" stroke-linecap="round"/>`,
+  fan: (c) => `<path d="M8 13.6 1.4 6.8a9.4 9.4 0 0 1 13.2 0z" fill="${mix(c.main, '#ffffff', 0.45)}" stroke="${c.ink}" stroke-width=".8" stroke-linejoin="round"/><g stroke="${c.ink}" stroke-width=".45" opacity=".7">${[2.6, 4.3, 6.1, 8, 9.9, 11.7, 13.4].map((x) => `<path d="M8 13.4 ${x} ${x < 4 || x > 12 ? 5.2 : x < 6 || x > 10 ? 3.8 : 3.4}"/>`).join('')}</g><path d="M1.4 6.8q1.1-1.3 2.4-1.4 1-1.4 2.6-1.6 1.6-1 3.2 0 1.6.2 2.6 1.6 1.3.1 2.4 1.4" fill="none" stroke="#d4a640" stroke-width=".9"/><circle cx="8" cy="13.4" r="1.1" fill="#d4a640" stroke="${c.ink}" stroke-width=".5"/><path d="M8 14.5v1.2" stroke="${c.accent}" stroke-width=".9" stroke-linecap="round"/>`,
+  discoball: (c) => `<path d="M8 0v2.4" stroke="${c.ink}" stroke-width=".7"/><circle cx="8" cy="8.6" r="6.2" fill="#d9dde8" stroke="${c.ink}" stroke-width=".8"/><g fill="#fff">${[[5, 5.4], [8, 4.2], [10.6, 6.6], [6.4, 8.6], [9.4, 10.4], [4.6, 11]].map(([x, y]) => `<rect x="${x}" y="${y}" width="1.8" height="1.6"/>`).join('')}</g><g fill="${c.accent}" opacity=".75"><rect x="11.4" y="9.2" width="1.6" height="1.5"/><rect x="7" y="11.6" width="1.7" height="1.5"/></g><g fill="none" stroke="${c.ink}" stroke-width=".35" opacity=".55"><ellipse cx="8" cy="8.6" rx="2.8" ry="6.2"/><path d="M1.8 8.6h12.4M2.6 5.6h10.8M2.6 11.6h10.8M8 2.4v12.4"/></g><path d="m13.6 1.4.5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5z" fill="#fff" stroke="${c.ink}" stroke-width=".3"/>`,
+  boom: (c) => {
+    const pts = (r1, r2, n = 12) => Array.from({ length: n * 2 }, (_, i) => { const a = (Math.PI * i) / n - Math.PI / 2; const r = i % 2 ? r2 : r1 * (i % 4 ? 0.92 : 1); return `${(8 + r * Math.cos(a)).toFixed(2)},${(8 + r * Math.sin(a)).toFixed(2)}`; }).join(' ');
+    return `<polygon points="${pts(7.8, 4.6)}" fill="#ffe14d" stroke="${c.ink}" stroke-width=".8" stroke-linejoin="round"/><polygon points="${pts(4.8, 2.8, 9)}" fill="#e3262f"/><path d="M7.6 5.4h1l-.2 3.4h-.6zM7.5 9.6h1.1v1.1H7.5z" fill="#fff"/>`;
+  },
+  squiggle: (c) => `<path d="M1.2 6.4l2.4-2.6 2.4 2.6 2.4-2.6 2.4 2.6 2.4-2.6 2.4 2.6" fill="none" stroke="#ff5ca8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 14.6 5.6 8.4l3.6 6.2z" fill="#1fb5b0" stroke="${c.ink}" stroke-width=".7" stroke-linejoin="round"/><circle cx="12.2" cy="11.6" r="2.6" fill="#ffd23f" stroke="${c.ink}" stroke-width=".7"/><g fill="${c.ink}"><circle cx="9.6" cy="9" r=".5"/><circle cx="14.6" cy="8" r=".5"/><circle cx="11" cy="15.2" r=".5"/></g>`,
+  lips: (c) => `<path d="M1.2 8.2C3.2 5 5.6 4.2 8 6c2.4-1.8 4.8-1 6.8 2.2-1.8 3.6-4.4 4.8-6.8 4.8S3 11.8 1.2 8.2z" fill="#e0218a" stroke="${c.ink}" stroke-width=".8" stroke-linejoin="round"/><path d="M2 8.3Q8 10.2 14 8.3" fill="none" stroke="#8c0f52" stroke-width=".9" stroke-linecap="round"/><path d="M5 6.4q1.4-.6 2.2.4" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width=".7" stroke-linecap="round"/><path d="M5.6 11.2q2.4 1 4.8 0" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width=".7" stroke-linecap="round"/>`,
+  chandelier: (c) => `<path d="M8 0v3.6" stroke="#a87c22" stroke-width=".8"/><g fill="none" stroke="#d4a640" stroke-width="1" stroke-linecap="round"><path d="M8 5.2C8 9 3.6 9.6 2.4 7.4M8 5.2c0 3.8 4.4 4.4 5.6 2.2M8 5.2v5.6"/><path d="M4.4 11.6Q8 13.4 11.6 11.6"/></g><circle cx="8" cy="4.6" r="1.4" fill="#e0b84a" stroke="${c.ink}" stroke-width=".5"/><g fill="#fff8e1" stroke="${c.ink}" stroke-width=".4">${[[2.4, 7.4], [13.6, 7.4], [8, 10.8]].map(([x, y]) => `<rect x="${x - 0.6}" y="${y - 2.8}" width="1.2" height="2.6"/>`).join('')}</g><g fill="#ffb84d">${[[2.4, 4.2], [13.6, 4.2], [8, 7.6]].map(([x, y]) => `<path d="M${x} ${y}c-.5-.6-.4-1.2 0-1.8.4.6.5 1.2 0 1.8z"/>`).join('')}</g><g fill="${mix(c.accent, '#ffffff', 0.4)}" stroke="${c.ink}" stroke-width=".3">${[[4.4, 12.8], [8, 14.4], [11.6, 12.8]].map(([x, y]) => `<path d="M${x} ${y - 1}l.8 1-.8 1.2-.8-1.2z"/>`).join('')}</g>`,
+  pickaxe: () => {
+    // Pixel art on a 16 × 16 grid: the head, then the handle.
+    const map = ['................', '...aaaaaaa......', '..abbbbbbba.....', '.abccc..cbba....', '.ac......cba....', '.a......ddcba...', '.......dd..cba..', '......dd....ca..', '.....dd......a..', '....dd..........', '...dd...........', '..dd............', '.dd.............', '.d..............', '................', '................'];
+    const col = { a: '#3a3a3a', b: '#7fe6e0', c: '#c9fff9', d: '#8a5a2b' };
+    return `<g shape-rendering="crispEdges">${map.flatMap((row, y) => [...row].map((k, x) => (col[k] ? `<rect x="${x}" y="${y}" width="1" height="1" fill="${col[k]}"/>` : ''))).join('')}</g>`;
+  },
+  tent: (c) => {
+    const xs = [1.6, 3.2, 4.8, 6.4, 8, 9.6, 11.2, 12.8, 14.4];
+    return `<path d="M8 2.2 1.6 13.4h12.8z" fill="#fff6e3" stroke="${c.ink}" stroke-width=".8" stroke-linejoin="round"/><g fill="#d7263d">${[0, 2, 4, 6].map((i) => `<path d="M8 2.2 ${xs[i]} 13.4h1.6z"/>`).join('')}</g><path d="M8 2.2 1.6 13.4h12.8z" fill="none" stroke="${c.ink}" stroke-width=".8" stroke-linejoin="round"/><path d="M6.8 13.4 8 9.6l1.2 3.8z" fill="#3b2a6b"/><path d="M8 2.2V.4l2.6.8L8 2" fill="#f4b400" stroke="${c.ink}" stroke-width=".4"/><path d="M1 13.6h14" stroke="${c.ink}" stroke-width=".8" stroke-linecap="round"/>`;
+  }
 };
-export const CHARM_NAMES = { none: 'None', heart: 'Heart', ears: 'Bunny ears', bunny: 'Bunny', bow: 'Bow', leaf: 'Leaf', sparkle: 'Sparkle', star: 'Star', daisy: 'Daisy', cherry: 'Cherries', cloud: 'Cloud', frog: 'Frog', boba: 'Boba', peach: 'Peach', moon: 'Moon', rainbow: 'Rainbow', pal: 'Bunny friend', twinkle: 'Twinkles', hearts: 'Hearts', snowman: 'Snowman', snowflake: 'Snowflake', mitten: 'Mitten', santa: 'Santa', fir: 'Festive tree', present: 'Present', tulip: 'Tulip', chick: 'Chick', bee: 'Bee', sun: 'Sunshine', icelolly: 'Ice lolly', watermelon: 'Watermelon', maple: 'Maple leaf', acorn: 'Acorn', pumpkin: 'Pumpkin', jack: 'Jack-o’-lantern', ghost: 'Little ghost', lantern: 'Red lantern', blossom: 'Blossom', sabzeh: 'Spring sprouts', goldfish: 'Goldfish', fanous: 'Lantern', mooncake: 'Mooncake', diya: 'Diya lamp', splash: 'Colour splash', dreidel: 'Dreidel', pomegranate: 'Pomegranate', marigold: 'Marigold', papel: 'Paper bunting', mask: 'Carnival mask', crown: 'Crown', egg: 'Painted egg', shamrock: 'Shamrock', flowercrown: 'Flower crown', firework: 'Firework', tanzaku: 'Wish papers', dragonboat: 'Dragon boat', zongzi: 'Rice dumpling', koinobori: 'Carp streamers', plain: 'Plain (no charm)', dot: 'Dot', ring: 'Ring', diamond: 'Diamond', plus: 'Plus', asterisk: 'Asterisk', chevron: 'Chevron' };
+export const CHARM_NAMES = { none: 'None', heart: 'Heart', ears: 'Bunny ears', bunny: 'Bunny', bow: 'Bow', leaf: 'Leaf', sparkle: 'Sparkle', star: 'Star', daisy: 'Daisy', cherry: 'Cherries', cloud: 'Cloud', frog: 'Frog', boba: 'Boba', peach: 'Peach', moon: 'Moon', rainbow: 'Rainbow', pal: 'Bunny friend', twinkle: 'Twinkles', hearts: 'Hearts', snowman: 'Snowman', snowflake: 'Snowflake', mitten: 'Mitten', santa: 'Santa', fir: 'Festive tree', present: 'Present', tulip: 'Tulip', chick: 'Chick', bee: 'Bee', sun: 'Sunshine', icelolly: 'Ice lolly', watermelon: 'Watermelon', maple: 'Maple leaf', acorn: 'Acorn', pumpkin: 'Pumpkin', jack: 'Jack-o’-lantern', ghost: 'Little ghost', lantern: 'Red lantern', blossom: 'Blossom', sabzeh: 'Spring sprouts', goldfish: 'Goldfish', fanous: 'Lantern', mooncake: 'Mooncake', diya: 'Diya lamp', splash: 'Colour splash', dreidel: 'Dreidel', pomegranate: 'Pomegranate', marigold: 'Marigold', papel: 'Paper bunting', mask: 'Carnival mask', crown: 'Crown', egg: 'Painted egg', shamrock: 'Shamrock', flowercrown: 'Flower crown', firework: 'Firework', tanzaku: 'Wish papers', dragonboat: 'Dragon boat', zongzi: 'Rice dumpling', koinobori: 'Carp streamers', plain: 'Plain (no charm)', dot: 'Dot', ring: 'Ring', diamond: 'Diamond', plus: 'Plus', asterisk: 'Asterisk', chevron: 'Chevron', palm: 'Palm tree', laurel: 'Laurel wreath', fan: 'Hand fan', discoball: 'Mirror ball', boom: 'POW!', squiggle: 'Memphis shapes', lips: 'Lips', chandelier: 'Chandelier', pickaxe: 'Pickaxe', tent: 'Circus tent' };
 
 // The colours a theme draws its little pictures with.
 export function inks(t) {
@@ -219,6 +259,114 @@ export const WALLPAPERS = {
   linen: { name: 'Linen', css: (t) => `repeating-linear-gradient(0deg, ${mix(t.paper, t.main, 0.12)} 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, ${mix(t.paper, t.main, 0.1)} 0 1px, transparent 1px 4px), ${mix(t.paper, t.main, 0.06)}` },
   contours: { name: 'Contour lines', tile: 160, draw: (c, t) => `<g fill="none" stroke="${mix(t.paper, t.main, 0.35)}" stroke-width="1">${[0, 1, 2, 3, 4, 5].map((i) => `<path d="M-10 ${20 + i * 26} C 30 ${4 + i * 26}, 60 ${44 + i * 26}, 90 ${22 + i * 26} S 150 ${2 + i * 26}, 170 ${20 + i * 26}"/>`).join('')}</g>`, ground: (t) => mix(t.paper, t.main, 0.06) },
   grain: { name: 'Grain', tile: 200, draw: () => `<filter id="g"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .12 0"/></filter><rect width="100%" height="100%" filter="url(#g)"/>`, ground: (t) => mix(t.main, '#000000', 0.15) },
+  // Bold and loud
+  sunset: {
+    name: 'Neon sunset',
+    css: (t, c) => {
+      const night = hslHex(hsl(t.main)[0] + 40, 0.6, 0.1);
+      const palm = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})" fill="${night}"><path d="M44 220C46 170 52 120 64 76l5 1c-10 43-16 93-16 143z"/><path d="M66 76C40 54 12 56 0 74c22-8 44-8 66 2zM66 76C70 46 94 30 118 38 94 44 78 58 66 76zM66 76c28-14 56-8 70 14-24-12-46-14-70-14zM66 76C46 88 26 106 22 132 34 108 50 92 66 76zM66 76c4-30-8-56-30-66 16 18 24 40 30 66zM66 76c18 8 32 26 34 50-10-20-22-36-34-50z"/></g>`;
+      const palms = svgUrl(palm(10, 0, 1) + palm(196, 66, 0.7), 300, 220);
+      return `${palms} 0 100% / 300px 220px repeat-x, repeating-linear-gradient(0deg, ${c.main}cc 0 2px, transparent 2px 26px) 0 100% / 100% 30% no-repeat, repeating-linear-gradient(90deg, ${c.accent}88 0 2px, transparent 2px 56px) 0 100% / 100% 30% no-repeat, repeating-linear-gradient(0deg, transparent 0 9px, ${night} 9px 12px) 50% 58% / 220px 110px no-repeat, radial-gradient(circle 110px at 50% 64%, #ffd166 0, #ff8a5c 45%, ${c.main} 80%, transparent 81%), linear-gradient(180deg, ${night} 0%, ${hslHex(hsl(t.main)[0] - 40, 0.7, 0.24)} 38%, ${c.main} 62%, #ff8a5c 70%, ${night} 70.2%)`;
+    }
+  },
+  laurels: {
+    name: 'Empire stripes and laurels',
+    css: (t, c) => {
+      const deep = hslHex(hsl(t.main)[0], 0.5, 0.2);
+      const mid = hslHex(hsl(t.main)[0], 0.45, 0.27);
+      const wreaths = svgUrl(place('laurel', c, 30, 30, 3.2) + place('star', { ...c, accent: '#e0b84a' }, 70, 60, 0.7) + place('star', { ...c, accent: '#e0b84a' }, 10, 110, 0.5), 112, 140);
+      return `${wreaths} 0 0 / 112px 140px, repeating-linear-gradient(90deg, ${deep} 0 26px, #c8a042 26px 28px, ${mid} 28px 54px, #c8a042 54px 56px)`;
+    }
+  },
+  rococo: {
+    name: 'Rococo scrolls',
+    tile: 120,
+    ground: (t) => mix(t.main, '#ffffff', 0.72),
+    draw: (c) => `<g fill="none" stroke="#d4a640" stroke-width="2" stroke-linecap="round"><path d="M14 64c0-18 14-28 26-20s6 24-8 22c-8-1-8-10-2-12"/><path d="M106 56c0 18-14 28-26 20s-6-24 8-22c8 1 8 10 2 12"/><path d="M40 44c10-14 30-16 40-2"/><path d="M46 100c8 10 22 10 28 0"/></g><g fill="#fff" stroke="#d4a640" stroke-width=".8">${[[60, 30], [52, 34], [68, 34], [60, 110], [8, 8], [112, 112]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.4"/>`).join('')}</g>${place('heart', c, 54, 64, 0.8)}<g transform="translate(96 96)"><circle r="7" fill="${c.accent}" stroke="${c.ink}" stroke-width=".8"/><path d="M0-4c3 0 4 3 2 4s-4-1-2-2" fill="none" stroke="${c.ink}" stroke-width=".8"/></g><g transform="translate(22 100)"><circle r="6" fill="${mix(c.main, '#ffffff', 0.25)}" stroke="${c.ink}" stroke-width=".8"/><path d="M0-3c2.5 0 3.5 2.5 1.7 3.4S-1.8-.4 0-1.6" fill="none" stroke="${c.ink}" stroke-width=".7"/></g>`
+  },
+  disco: {
+    name: 'Mirror ball',
+    tile: 48,
+    dark: true,
+    draw: (c) => {
+      const tint = [0.08, 0.2, 0.34, 0.5, 0.12, 0.42];
+      let n = 7;
+      const rnd = () => ((n = (n * 1103515245 + 12345) % 2147483648) / 2147483648);
+      let out = '';
+      for (let y = 0; y < 48; y += 8) for (let x = 0; x < 48; x += 8) {
+        const r = rnd();
+        const fill = r > 0.9 ? c.accent : r > 0.8 ? mix(c.main, '#ffffff', 0.5) : '#ffffff';
+        out += `<rect x="${x + 0.6}" y="${y + 0.6}" width="6.8" height="6.8" rx=".8" fill="${fill}" fill-opacity="${r > 0.8 ? 0.85 : tint[Math.floor(rnd() * tint.length)]}"/>`;
+      }
+      return out + place('sparkle', c, 30, 6, 0.6);
+    }
+  },
+  benday: {
+    name: 'Pop-art dots',
+    css: (t, c) => {
+      const bursts = svgUrl(place('boom', c, 20, 24, 4.2) + place('boom', c, 150, 130, 2.6, 18) + place('star', { ...c, accent: '#1e5bd8' }, 160, 30, 1.2), 240, 220);
+      const dot = mix(c.main, '#ffffff', 0.15);
+      return `${bursts} 0 0 / 240px 220px, radial-gradient(${dot} 3px, transparent 3.6px) 0 0 / 16px 16px, radial-gradient(${dot} 3px, transparent 3.6px) 8px 8px / 16px 16px, #ffe14d`;
+    }
+  },
+  memphis: {
+    name: 'Memphis squiggles',
+    tile: 140,
+    ground: (t) => mix(t.paper, '#ffffff', 0.3),
+    draw: (c) => `<g fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 24l9-9 9 9 9-9 9 9" stroke="#ff5ca8"/><path d="M80 110c8-10 16 10 24 0s16 10 24 0" stroke="#1fb5b0"/><path d="M96 20a14 14 0 0 1 28 0" stroke="${c.ink}" stroke-width="3"/></g><path d="M20 120l14-24 14 24z" fill="#ffd23f" stroke="${c.ink}" stroke-width="2" stroke-linejoin="round"/><circle cx="70" cy="58" r="12" fill="#1fb5b0" stroke="${c.ink}" stroke-width="2"/><rect x="108" y="56" width="14" height="14" fill="#ff5ca8" stroke="${c.ink}" stroke-width="2" transform="rotate(20 115 63)"/><g fill="${c.ink}">${[[44, 40], [52, 40], [44, 48], [52, 48], [120, 92], [128, 92], [120, 100], [128, 100], [10, 70], [62, 128]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.8"/>`).join('')}</g><g stroke-width="4" stroke-linecap="round"><path d="M30 80l8 6" stroke="#ff5ca8"/><path d="M90 80l-4 9" stroke="#ffd23f"/><path d="M56 100l9-2" stroke="#7a5cff"/></g>`
+  },
+  leopard: {
+    name: 'Leopard print',
+    tile: 120,
+    ground: () => '#e7bd84',
+    draw: () => {
+      const spot = (x, y, s, r) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${s})"><path d="M0-6C5-7 8-2 6 3 4 7-3 7-6 3-8-1-5-6 0-6z" fill="#b8702c"/><g fill="none" stroke="#2a1a10" stroke-width="2.4" stroke-linecap="round"><path d="M-7-2C-8-6-4-9 0-8.6"/><path d="M4-8c3 1 5 4 4.6 7"/><path d="M7.4 3C6 7 2 9-1.6 8.6"/><path d="M-4.4 7.6C-6.6 6.4-8 4.6-8.2 2.6"/></g></g>`;
+      return [[18, 18, 1.3, 10], [70, 26, 1.1, -30], [104, 70, 1.25, 50], [40, 66, 1, 80], [16, 102, 1.15, -10], [78, 104, 0.95, 20]].map((p) => spot(...p)).join('') + `<g fill="#2a1a10">${[[48, 12, 2.4], [98, 14, 2], [8, 54, 2.2], [60, 92, 2.6], [112, 106, 2], [34, 40, 1.6]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * 0.8}"/>`).join('')}</g>`;
+    }
+  },
+  damask: {
+    name: 'Velvet damask',
+    tile: 96,
+    dark: true,
+    draw: () => {
+      const half = '<path d="M48 8c-6 10-18 14-18 28 0 10 8 16 14 12-6 0-8-6-6-10 2-6 10-8 10-18 0 10 8 12 10 18 2 4 0 10-6 10 6 4 14-2 14-12 0-14-12-18-18-28z"/><path d="M48 52c-4 6-14 8-16 16 4-2 10-2 12 2-4 0-6 4-4 8 2-6 8-8 8-14 0 6 6 8 8 14 2-4 0-8-4-8 2-4 8-4 12-2-2-8-12-10-16-16z"/><circle cx="48" cy="90" r="3"/>';
+      return `<g fill="#d4a64a" fill-opacity=".38">${half}<g transform="translate(-48 -48)">${half}</g><g transform="translate(48 -48)">${half}</g><g transform="translate(-48 48)">${half}</g><g transform="translate(48 48)">${half}</g></g>`;
+    }
+  },
+  blocks: {
+    name: 'Blocky landscape',
+    css: (t, c) => {
+      let n = 11;
+      const rnd = () => ((n = (n * 1103515245 + 12345) % 2147483648) / 2147483648);
+      const px = (x, y, fill) => `<rect x="${x}" y="${y}" width="4" height="4" fill="${fill}"/>`;
+      let ground = '';
+      const grass = ['#5d9e2f', '#6fb33a', '#4f8a27'];
+      const dirt = ['#8b5a2b', '#9c6a38', '#7a4c22', '#6b4220'];
+      const stone = ['#8a8a8a', '#9c9c9c', '#777777', '#6a6a6a'];
+      // Each layer's own colour, then a speckle of its other shades (and the odd ore in the stone).
+      ground += `<rect width="64" height="8" fill="${grass[0]}"/><rect y="8" width="64" height="40" fill="${dirt[0]}"/><rect y="48" width="64" height="48" fill="${stone[0]}"/>`;
+      for (let y = 0; y < 96; y += 4) for (let x = 0; x < 64; x += 4) {
+        const r = rnd();
+        const pal = y < 8 || (y < 14 && r > 0.6) ? grass : y < 48 ? dirt : stone;
+        const ore = y >= 56 && r > 0.965 ? (r > 0.985 ? '#7fe6e0' : '#2b2b2b') : null;
+        const shade = rnd() > 0.62 ? 1 + Math.floor(rnd() * (pal.length - 1)) : 0;
+        if (ore || shade || (y >= 8 && y < 14 && pal === grass)) ground += px(x, y, ore || pal[shade]);
+      }
+      ground += `<g fill="none" stroke="#000" stroke-opacity=".18"><path d="M32 0v96M0 32h64M0 64h64"/></g>`;
+      const strip = svgUrl(`<g shape-rendering="crispEdges">${ground}</g>`, 64, 96);
+      const cloud = (x, y) => `<g fill="#fff" shape-rendering="crispEdges"><rect x="${x}" y="${y}" width="48" height="8"/><rect x="${x + 8}" y="${y - 8}" width="24" height="8"/><rect x="${x - 8}" y="${y + 8}" width="64" height="8" fill-opacity=".85"/></g>`;
+      const clouds = svgUrl(cloud(20, 30) + cloud(150, 80), 240, 140);
+      return `${strip} 0 100% / 64px 96px repeat-x, ${clouds} 0 0 / 240px 140px, linear-gradient(180deg, #6fb8ff, ${mix('#bfe3ff', c.paper, 0.3)})`;
+    }
+  },
+  bigtop: {
+    name: 'Circus stripes',
+    css: (t, c) => {
+      const flags = svgUrl(['#d7263d', '#f4b400', '#3b2a6b', '#1fb5b0'].map((f, i) => `<path d="M${i * 20} 0h20l-10 18z" fill="${f}" stroke="${c.ink}" stroke-width=".8"/>`).join('') + '<path d="M0 0.6h80" stroke="#3a3a3a" stroke-width="1.2"/>', 80, 22);
+      const stars = svgUrl(place('star', { ...c, accent: '#f4b400' }, 30, 60, 1.2) + place('star', { ...c, accent: '#fff6e3' }, 120, 20, 0.8), 160, 160);
+      return `${flags} 0 0 / 80px 22px repeat-x, ${stars} 0 30px / 160px 160px, repeating-conic-gradient(from -90deg at 50% -20%, ${c.main} 0 5deg, #fff6e3 5deg 10deg)`;
+    }
+  },
   emoji: { name: 'Emoji' },
   picture: { name: 'My own picture' }
 };
