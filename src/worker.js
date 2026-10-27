@@ -436,6 +436,9 @@ async function apiAll(request, env, ctx) {
     const pals = await friends.publicFriends(env).catch(() => ({ buddies: [], posts: [] }));
     data.buddies = pals.buddies;
     data.friendPosts = pals.posts;
+    // (Their keepsake designs and place categories, for drawing their posts as on their site.)
+    data.friendKeepsakes = pals.keepsakes || [];
+    data.friendCategories = pals.categories || [];
     // (No Friends tab when you don't show friends' posts; the friends list, if shown, is on About.)
     data.friendsTab = !!pals.postsShown;
     res = json(data, 200, { 'Cache-Control': 'public, max-age=300' });

@@ -42,8 +42,7 @@ function keepFresh(data, redraw) {
       seen = now;
       for (const k of Object.keys(data)) if (!(k in fresh)) delete data[k];
       Object.assign(data, fresh);
-      registerCategories(data.categories);
-      registerKeepsakes(data.keepsakes?.custom);
+      registerDesigns(data);
       if (!previewing) setSoundPack(applySkin(data.theme).sounds);
       redraw();
     } catch {
@@ -59,6 +58,14 @@ function keepFresh(data, redraw) {
 // Whether the reader is at (or near) the top of what's showing, so drawing it again won't move
 // anything they're reading.
 const nearTop = (el) => [el, ...el.querySelectorAll('*')].every((x) => x.scrollTop < 80) && (document.scrollingElement?.scrollTop || 0) < 80;
+
+// Your place categories and keepsake designs, and your friends' (for drawing their posts as on
+// their own sites; yours come first, so a name you both use keeps yours).
+function registerDesigns(data) {
+  registerCategories(data.categories);
+  registerCategories(data.friendCategories || []);
+  registerKeepsakes([...(data.keepsakes?.custom || []), ...(data.friendKeepsakes || [])]);
+}
 
 function fail() {
   root.replaceChildren(
@@ -130,8 +137,7 @@ async function main() {
   }
   const { startDesktop } = isDesktop ? layout : {};
   const { renderPhone } = isDesktop ? {} : layout;
-  registerCategories(data.categories);
-  registerKeepsakes(data.keepsakes?.custom);
+  registerDesigns(data);
   if (!previewing) {
     setSoundPack(applySkin(data.theme).sounds);
     try {

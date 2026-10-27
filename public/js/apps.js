@@ -259,7 +259,7 @@ function feed(filter, withProfile) {
 
 // In the feed, a very long post shows its first part with a fade and "Keep reading", which
 // opens the rest in place. The post's own page always shows everything.
-function foldLong(el, post) {
+export function foldLong(el, post) {
   const body = el.querySelector('.card-body, .list-body, .quote-body');
   if (!body || SHELF_TYPES.includes(post.type) || post.type === 'places') return el;
   body.classList.add('foldable');

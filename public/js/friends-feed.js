@@ -4,6 +4,7 @@ import { h } from './util.js';
 import { presenceDot, ago } from './statusbar.js';
 import { withEmoticons } from './emoticons.js';
 import { friendHtml } from './friend-html.js';
+import { card, foldLong } from './apps.js';
 
 const TYPE = { thoughts: ['💭', 'Thought'], places: ['📍', 'Place'], photos: ['📷', 'Photos'], lists: ['📝', 'List'], quotes: ['❝', 'Quote'], books: ['📖', 'Book'], films: ['🎬', 'Film'], podcasts: ['🎧', 'Podcast'], music: ['🎵', 'Music'], tv: ['📺', 'TV'] };
 const AVATAR = ['#3a86e8', '#4bb043', '#e8692c', '#b0306a', '#7a4ab8', '#1f9d8f', '#d4a017', '#2a6fd6'];
@@ -92,6 +93,38 @@ function postCard(p) {
   return card;
 }
 
+// A post that came in full is drawn just as it looks on your friend's site (keepsakes, a
+// memory's ribbon, its font and all), with who it's from on top. Its links go to their site.
+function friendCard(p) {
+  const who = p.friend || {};
+  const site = safeUrl(who.url);
+  let el = null;
+  try {
+    // (Their writing, made into HTML by your own site, goes through the friends' cleaner too.)
+    el = card({ ...p.full, html: friendHtml(p.full.html, 'x').innerHTML });
+  } catch (e) {
+    console.error(e);
+  }
+  if (!el) return postCard(p);
+  for (const a of el.querySelectorAll('a[href]')) {
+    const href = a.getAttribute('href') || '';
+    if (href.startsWith('#/') && site) Object.assign(a, { href: site + '/' + href, target: '_blank', rel: 'noopener noreferrer' });
+    else if (!/^https?:\/\//i.test(href)) a.removeAttribute('href');
+  }
+  el.classList.add('ff-full');
+  el.prepend(
+    h(
+      'div',
+      { class: 'ff-head ff-from' },
+      avatar(who),
+      h('span', { class: 'ff-who' }, site ? h('a', { href: site, target: '_blank', rel: 'noopener noreferrer' }, h('b', null, who.name)) : h('b', null, who.name), h('small', null, ago(p.ts)))
+    )
+  );
+  const link = safeUrl(p.url);
+  if (link) el.append(h('a', { class: 'ff-open', href: link, target: '_blank', rel: 'noopener noreferrer' }, `See it on ${who.owner || who.name}’s site ↗`));
+  return foldLong(el, p.full);
+}
+
 export function friendsApp(ctx) {
   const buddies = ctx.data.buddies || [];
   const all = ctx.data.friendPosts || [];
@@ -112,7 +145,7 @@ export function friendsApp(ctx) {
           )
         : null,
       posts.length
-        ? posts.map(postCard)
+        ? posts.map((p) => (p.full ? friendCard(p) : postCard(p)))
         : ctx.data.friendsTab === false
           ? h('div', { class: 'card ff-empty' }, h('p', null, `${ctx.data.site.owner || 'This site'} keeps friends’ posts private.`))
           : h('div', { class: 'card ff-empty' }, h('p', null, buddies.length ? 'No posts from friends yet.' : `${ctx.data.site.owner || 'This site'} hasn’t added any friends yet.`), h('p', { class: 'muted small' }, 'Friends are people who run their own copy of this site.'))
