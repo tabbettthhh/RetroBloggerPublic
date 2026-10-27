@@ -45,13 +45,17 @@ export default {
     }
     return finish(res, new URL(request.url).pathname);
   },
-  // Every half hour: read your friends' sites for new posts and statuses.
+  // Every 10 minutes: read your friends' sites for new posts and statuses (in case one was
+  // offline when it had news), and tell them about a post of yours that has just gone live.
   async scheduled(event, env, ctx) {
     ctx.waitUntil(
-      friends
-        .refreshFriends(env)
-        .then((r) => r.of && bumpVersion(env))
-        .catch((e) => console.error(e))
+      Promise.all([
+        friends
+          .refreshFriends(env)
+          .then((r) => r.of && bumpVersion(env))
+          .catch((e) => console.error(e)),
+        friends.shareNews(env, buildEverything).catch((e) => console.error(e))
+      ])
     );
   }
 };
@@ -91,7 +95,13 @@ async function route(request, env, ctx) {
   if (p === '/admin' || p.startsWith('/admin/')) {
     const check = await adminCheck(request, env);
     if (!check.ok) return lockedPage(check, url, p.startsWith('/admin/api/'));
-    if (p.startsWith('/admin/api/')) return adminApi(request, env, url, ctx);
+    if (p.startsWith('/admin/api/')) {
+      const res = await adminApi(request, env, url, ctx);
+      // Anything saved might be news for your friends: their sites hear straight away (and
+      // nothing is sent when what they see hasn't changed).
+      if (method !== 'GET' && res.ok) ctx.waitUntil(friends.shareNews(env, buildEverything).catch((e) => console.error(e)));
+      return res;
+    }
     const res = await env.ASSETS.fetch(request);
     const out = new Response(res.body, res);
     out.headers.set('Cache-Control', 'no-store');
@@ -115,7 +125,7 @@ async function route(request, env, ctx) {
     return friends.friendPhotoForVisitor(env, parts[0], parts.slice(1).join('/'));
   }
   // Friends' sites talking to yours (every request signed with the secret you share).
-  if (p.startsWith('/api/friends/')) return friends.friendsApi(request, env, p, { buildEverything, mediaForFriend: (key) => friendMedia(env, key), changed: () => bumpVersion(env) });
+  if (p.startsWith('/api/friends/')) return friends.friendsApi(request, env, p, { buildEverything, mediaForFriend: (key) => friendMedia(env, key), changed: () => bumpVersion(env), waitUntil: (work) => ctx.waitUntil(work) });
   if (p.startsWith('/api/')) return json({ error: 'Not found' }, 404);
 
   return staticFile(request, env, p);

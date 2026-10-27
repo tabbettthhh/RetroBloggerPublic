@@ -292,6 +292,7 @@ function themeControls(ctx, saved, redraw, preview) {
   const charmLook = (id) => h('span', { class: 'tm-swatch charm', style: id === 'none' ? null : { background: `${charmUrl(id, t, 22)} center / 22px no-repeat, ${c.soft}` } }, id === 'none' ? '–' : null);
   const pointerLook = (id) => h('span', { class: 'tm-swatch charm', style: { background: `${id === 'none' ? 'url(/cursors/cursor-xp.svg)' : pointerSvgs({ ...t, pointer: id }).arrow} center / 26px no-repeat, ${c.soft}` } });
   const changed = JSON.stringify(themeFile(d)) !== JSON.stringify(themeFile({ theme: saved.theme in SKINS ? saved.theme : 'classic', ...saved })) || !!d.file;
+  unsaved = changed;
   const walls = Object.entries(WALLPAPERS).map(([id, w]) => [id, w.name]);
   // Each part of the theme in its own tab, like the sections of Rockbox's Theme Settings.
   const opt = (key, extra = {}) =>
@@ -384,9 +385,12 @@ function themeControls(ctx, saved, redraw, preview) {
         ? h('button', { type: 'button', class: 'btn small', onclick: () => { for (const k of PARTS) d[k] = ''; Object.assign(d, { hide: [], menu: null, sections_hidden: [], apps: {} }); redraw(); } }, `Back to ${SKINS[d.theme].name} as it comes`)
         : null
     ),
+    // (While there are changes, this row stays in view and says they aren't on the site yet:
+    // picking a theme only changes the preview until it's saved.)
     h(
       'div',
-      { class: 'row' },
+      { class: 'row tm-savebar' + (changed ? ' unsaved' : '') },
+      changed ? h('span', { class: 'tm-unsaved', role: 'status' }, 'Not saved yet: only the preview has changed.') : null,
       h('button', { type: 'button', class: 'btn go', disabled: !changed, onclick: (e) => save(ctx, saved, e.currentTarget, redraw) }, 'Save the theme'),
       h('button', { type: 'button', class: 'btn', disabled: history.length < 2, title: 'Step back one change', onclick: () => {
         history = history.slice(0, -1);
@@ -395,7 +399,7 @@ function themeControls(ctx, saved, redraw, preview) {
       } }, '↶ Undo'),
       h('button', { type: 'button', class: 'btn', title: 'A whole new look, every part of it at random: keep pressing until you love one (Undo goes back)', onclick: () => { draft = surprise(d); ownOpen = true; pictureSets = null; redraw(); } }, '🎲 Surprise me'),
       d.theme !== 'classic' || PARTS.some((k) => d[k]) || d.stickers.length ? h('button', { type: 'button', class: 'btn', onclick: () => { draft = blank(); redraw(); } }, 'Back to Classic') : null,
-      changed ? h('button', { type: 'button', class: 'btn', onclick: () => { draft = null; history = []; ctx.go(); } }, 'Discard changes') : null
+      changed ? h('button', { type: 'button', class: 'btn', onclick: () => { draft = null; history = []; unsaved = false; ctx.go(); } }, 'Discard changes') : null
     )
   ];
 }
@@ -502,6 +506,15 @@ function shareControls(ctx, d, redraw) {
   ];
 }
 
+// Leaving the back office with a theme that isn't saved yet asks first, so it's never lost
+// without a word.
+let unsaved = false;
+window.addEventListener('beforeunload', (e) => {
+  if (!unsaved || !draft) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+
 async function save(ctx, saved, btn, redraw) {
   btn.disabled = true;
   try {
@@ -509,6 +522,7 @@ async function save(ctx, saved, btn, redraw) {
     const file = themeFile(draft);
     await ctx.putFile('theme.md', themeText(file));
     history = [];
+    unsaved = false;
     if (saved.picture && saved.picture !== file.picture) await ctx.delFile(saved.picture).catch(() => {});
     if (draft.blob) URL.revokeObjectURL(draft.blob);
     draft = null;

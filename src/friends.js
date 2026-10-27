@@ -14,14 +14,19 @@
 //   another address (a domain of your own, say), "My site has moved" tells each friend's site,
 //   signed with the secret you share; their site checks you really are at the new address
 //   before it switches, and still recognises the old one.
-// - Your site reads each friend's feed every so often (and when you open Friends) and keeps a
-//   copy. Their photos are fetched through your own site, so your browser never talks to theirs.
+// - When something friends see changes (a post published, edited or deleted, your status, a
+//   scheduled post going live), your site tells each friend's site straight away, and theirs
+//   reads your feed again. Every 10 minutes each site also reads its friends' feeds, in case
+//   one was offline when told. Your site keeps a copy of each feed. Their photos are fetched
+//   through your own site, so your browser never talks to theirs.
 // - Secrets and copies of feeds live under data/_ in your bucket, which the file list, the
 //   export and visitors never see.
 
 import { safeMarkdown } from './content.js';
 
 const STORE = 'data/_friends.json';
+// A fingerprint of the feed your friends last heard about.
+const SENT = 'data/_friendsent';
 const MAX_FRIENDS = 40;
 const SKEW = 5 * 60 * 1000;
 export const FRIEND_UA = 'MyCorner-Friends/1 (a friend site, following)';
@@ -161,7 +166,7 @@ async function verify(request, env, store, body, secrets) {
 
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
 
-// deps: { buildEverything, mediaForFriend }
+// deps: { buildEverything, mediaForFriend, changed, waitUntil }
 export async function friendsApi(request, env, path, deps) {
   const method = request.method;
   const body = method === 'POST' ? await request.text() : '';
@@ -228,9 +233,14 @@ export async function friendsApi(request, env, path, deps) {
   }
 
   // A friend changed something (like whether you may show their posts): read their feed again.
+  // (It answers at once and reads their feed in the background, so their site never gives up
+  // waiting while yours reads theirs.)
   if (path === '/api/friends/changed' && method === 'POST') {
-    await refreshFriends(env, friend.key);
-    await deps.changed?.();
+    const work = refreshFriends(env, friend.key)
+      .then(() => deps.changed?.())
+      .catch((e) => console.error(e));
+    if (deps.waitUntil) deps.waitUntil(work);
+    else await work;
     return reply({ ok: true });
   }
 
@@ -322,6 +332,7 @@ export async function refreshFriends(env, only) {
   const store = await loadFriends(env);
   if (!store.me) return { reached: 0, of: 0 };
   let reached = 0;
+  const names = {};
   const list = only ? store.friends.filter((f) => f.key === only) : store.friends;
   await Promise.all(
     list.map(async (friend) => {
@@ -331,8 +342,7 @@ export async function refreshFriends(env, only) {
         if (!res.ok) throw new Error('status ' + res.status);
         const feed = tidyFeed(await res.json(), friend);
         await env.CONTENT.put(`data/_friendcache/${friend.key}.json`, JSON.stringify({ at, ok: true, feed }));
-        friend.name = feed.name;
-        friend.owner = feed.owner;
+        names[friend.key] = { name: feed.name, owner: feed.owner };
         reached++;
       } catch (e) {
         const old = await env.CONTENT.get(`data/_friendcache/${friend.key}.json`);
@@ -341,8 +351,32 @@ export async function refreshFriends(env, only) {
       }
     })
   );
-  await saveFriends(env, store);
+  // Their names, kept up to date. Read afresh first: friends added or settings changed while
+  // their feeds were being read are kept, not overwritten.
+  const latest = await loadFriends(env);
+  let rename = false;
+  for (const f of latest.friends) {
+    const n = names[f.key];
+    if (n && (n.name !== f.name || n.owner !== f.owner)) Object.assign(f, n), (rename = true);
+  }
+  if (rename) await saveFriends(env, latest);
   return { reached, of: list.length };
+}
+
+// Tells your friends' sites when something they see has changed (a post published, edited or
+// deleted, a scheduled one going live, your status, whether they may show your posts), so they
+// read your feed straight away instead of at their next check. Nothing is sent when nothing
+// they see has changed. Returns how many friends' sites heard.
+export async function shareNews(env, buildEverything) {
+  const store = await loadFriends(env);
+  if (!store.me || !store.friends.length) return { told: 0, of: 0 };
+  const data = await buildEverything(env);
+  const mark = await sha256(JSON.stringify({ ...friendFeed(data, store.me), share: store.letShare }));
+  const before = await env.CONTENT.get(SENT).then((o) => (o ? o.text() : ''), () => '');
+  if (before === mark) return { told: 0, of: store.friends.length };
+  await env.CONTENT.put(SENT, mark);
+  const sent = await Promise.allSettled(store.friends.map((f) => signedFetch(env, store, f, 'POST', '/api/friends/changed', {}).then((r) => r.ok)));
+  return { told: sent.filter((r) => r.status === 'fulfilled' && r.value).length, of: store.friends.length };
 }
 
 // Everything the back office shows: your friends, each with the latest copy of their feed.
@@ -467,12 +501,10 @@ export async function setFriendSettings(env, body) {
   const store = await loadFriends(env);
   if (VISIBILITY.includes(body.visibility)) store.visibility = body.visibility;
   else if (typeof body.showOnSite === 'boolean') store.visibility = body.showOnSite ? 'all' : 'off';
-  const changed = typeof body.letShare === 'boolean' && body.letShare !== store.letShare;
   if (typeof body.letShare === 'boolean') store.letShare = body.letShare;
   delete store.showOnSite;
   await saveFriends(env, store);
-  // Friends' sites hear at once (rather than at their next half-hourly check).
-  if (changed) await Promise.allSettled(store.friends.map((f) => signedFetch(env, store, f, 'POST', '/api/friends/changed', {})));
+  // (Friends' sites hear about a change to letShare at once: see shareNews.)
   return { visibility: store.visibility, letShare: store.letShare };
 }
 // A friend's posts can go on your site only if you show posts and they've said yes.

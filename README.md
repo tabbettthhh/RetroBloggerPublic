@@ -290,7 +290,7 @@ If friends run their own copy of this site, you can follow each other. Under **F
 1. Tap **My friend code** and send it to anyone you want as a friend (a message, an email). It stays the same and never runs out, so you can give it to as many friends as you like. **Make a new code** swaps it (the old one stops working; friends you have stay friends) and **Switch it off** stops anyone new adding you.
 2. They paste it under **Add a friend** on their site. That's it: your two sites now follow each other.
 
-Your site then gets a **Friends** tab next to Home: your friends' posts as one feed you can scroll, newest first, with photos you can swipe through and your friends listed at the top (tap one to see only theirs). The back office lists your friends with how they are (online, away, busy…) and their status, and new posts from friends show in your notifications. Your site checks theirs every half hour, or straight away when you tap **Check now**.
+Your site then gets a **Friends** tab next to Home: your friends' posts as one feed you can scroll, newest first, with photos you can swipe through and your friends listed at the top (tap one to see only theirs). The back office lists your friends with how they are (online, away, busy…) and their status, and new posts from friends show in your notifications. When you post (or edit, delete or change your status), your site tells your friends' sites straight away, so it shows on theirs within moments. A post scheduled for later is shared when it goes live. Your site also checks theirs every 10 minutes, in case one was offline, or straight away when you tap **Check now**. A page that's already open (like the site saved to a phone's home screen) picks up new posts when you come back to it.
 
 It's following only, with no messages. Only published posts are shared: drafts and posts scheduled for later stay private. Every friendship gets its own secret, known only to those two sites, and every request between them is signed with it, so nobody else can read your friend feed or pretend to be your friend. Friends' photos come through your own site, so visitors' browsers never connect to theirs. Secrets and the copies of friends' posts are kept apart from your files and are never in the export. **Remove buddy** unfollows both ways.
 
@@ -388,8 +388,10 @@ Each built-in theme comes with fonts and shapes that suit it, and you can change
 
 - **Winter:** a light snowfall; snow settling on the title bars of every app, on the desktop icons, along the taskbar and the foot of the desktop, and on each post; icicles under the phone's menu; a snowman in the window's corner.
 - **Spring:** drifting petals; petals resting on the title bars, blossom on the icons, grass and flowers by the taskbar and on the desktop, a little garland under the menu.
-- **Summer:** a warm glow with glints of sunshine; a golden sheen on the title bars, glints on the icons, bunting, and a meadow along the desktop.
-- **Autumn:** falling leaves; leaves resting on the title bars and icons, leaf litter by the taskbar and piles on the desktop.
+- **Summer:** a warm glow with glints of sunshine; a golden sheen on the title bars, glints on the icons, a little sun peeking over some posts, bunting, and a meadow along the desktop.
+- **Autumn:** falling leaves; leaves resting on the title bars, icons and some posts, leaf litter by the taskbar and piles on the desktop, and a garland of leaves under the phone's menu.
+
+On a phone, every app's top bar gets the season (the bookshelf, cinema, record crate, album, guestbook and the rest, not only the plain windows), just below the clock and battery so it's never hidden behind them.
 
 Festive days come from around the world. From East Asia: Lunar New Year, cherry blossom, Children's Day, the Dragon Boat Festival, Tanabata and the Mid-Autumn Festival. From South and Central Asia and the Middle East: Nowruz, Holi, Ramadan (just a quiet lantern), Eid al-Fitr, Eid al-Adha, Diwali and Yalda Night. From Latin America: Día de Reyes, Carnival and Día de Muertos. From Europe and beyond: St Patrick's Day, Easter, Midsummer, Bonfire Night, Halloween, Hanukkah and Christmas.
 

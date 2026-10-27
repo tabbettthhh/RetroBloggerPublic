@@ -11,6 +11,15 @@ async function api2(p, opts = {}) {
   if (!r.ok) throw new Error(`${p} → ${r.status} ${JSON.stringify(body)}`);
   return body;
 }
+// Waits (up to a few seconds) for something that happens in the background.
+async function until(fn, what, ms = 15000) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    if (await fn()) return;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  assert(false, what);
+}
 const post_ = (fn, p, body) => fn(p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
 const b64url = (buf) => Buffer.from(buf).toString('base64url');
 function signed(base, method, pathAndQuery, from, secret, { time = Date.now(), body = '' } = {}) {
@@ -222,17 +231,52 @@ await test('you choose who sees your friends, and friends choose whether you can
   eq([d.friendPosts.length > 0, d.friendsTab], [true, true], 'everyone again');
   // Your friend says no to being shown on other sites: their posts leave yours (you still see them).
   eq((await post_(api2, 'friends/settings', { letShare: false })).letShare, false, 'friend says no');
+  await until(async () => (await publicData()).friendPosts.length === 0, 'their posts leave your site (moments later)');
   d = await publicData();
   eq([d.buddies.length, d.friendPosts], [1, []], 'their posts leave your site');
   eq((await fetch(BASE + photo)).status, 404, 'and their photos');
   assert((await api('friends')).friends[0].cache.feed.posts.length > 0, 'you still see them yourself');
   await post_(api2, 'friends/settings', { letShare: true });
-  eq((await publicData()).friendPosts.length > 0, true, 'back when they say yes (straight away)');
+  await until(async () => (await publicData()).friendPosts.length > 0, 'back when they say yes (moments later)');
   // The old setting still works.
   await post_(api, 'friends/settings', { showOnSite: false });
   eq((await api('friends')).visibility, 'off', 'old off');
   await post_(api, 'friends/settings', { showOnSite: true });
   eq((await api('friends')).visibility, 'all', 'old on');
+});
+
+await test('a friend\'s new post reaches your site within moments, and an open page picks it up', async () => {
+  // Your site is open on a phone (like the site saved to its home screen).
+  const browser = await chromium.launch();
+  const site = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
+  site.errors = [];
+  site.on('pageerror', (e) => site.errors.push(e.message));
+  await site.clock.install();
+  await site.addInitScript(() => sessionStorage.setItem('entered', '1'));
+  await site.goto(BASE + '/#/friends');
+  await site.waitForSelector('.ff-post');
+  // Your friend posts. Nobody presses Check now and nobody waits for the 10-minute check.
+  const at = new Date(Date.now() - 60e3).toISOString().slice(0, 16).replace('T', ' ');
+  await fetch(`${BASE2}/admin/api/file?key=thoughts/fresh-news.md`, { method: 'PUT', body: `---\ndate: ${at}\ntitle: Fresh news\n---\nJust now.\n` });
+  await until(async () => (await publicData()).friendPosts.some((p) => p.title === 'Fresh news'), 'their post is on your site within moments');
+  // Editing it: the change follows. Deleting it: it goes.
+  await fetch(`${BASE2}/admin/api/file?key=thoughts/fresh-news.md`, { method: 'PUT', body: `---\ndate: ${at}\ntitle: Fresh news (edited)\n---\nJust now.\n` });
+  await until(async () => (await publicData()).friendPosts.some((p) => p.title === 'Fresh news (edited)'), 'an edit follows');
+  // The page that was already open shows it when you come back to it.
+  assert(!(await site.locator('.ff-post', { hasText: 'Fresh news' }).count()), 'not there before');
+  await site.clock.fastForward(61000);
+  await site.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await site.waitForSelector('.ff-post:has-text("Fresh news (edited)")', { timeout: 10000 });
+  assert(!site.errors.length, site.errors.join('; '));
+  await browser.close();
+  await fetch(`${BASE2}/admin/api/file?key=thoughts/fresh-news.md`, { method: 'DELETE' });
+  await until(async () => !(await publicData()).friendPosts.some((p) => p.title.startsWith('Fresh news')), 'a deleted post goes');
+  // Saving something friends don't see (the theme) doesn't bother them.
+  const before = (await api('friends')).friends[0].cache.at;
+  await fetch(`${BASE2}/admin/api/file?key=theme.md`, { method: 'PUT', body: '---\ntheme: bunny\n---\n' });
+  await new Promise((r) => setTimeout(r, 2500));
+  eq((await api('friends')).friends[0].cache.at, before, 'no news, no message');
+  await fetch(`${BASE2}/admin/api/file?key=theme.md`, { method: 'PUT', body: '---\ntheme: classic\n---\n' });
 });
 
 await test('your site keeps its address, and friends follow when it moves', async () => {
