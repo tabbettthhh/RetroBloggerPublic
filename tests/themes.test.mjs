@@ -57,7 +57,12 @@ await test('picking a theme previews it live, and saving puts it on the site', a
   const page = await adminPage();
   await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
   await page.waitForSelector('.tm-card');
-  eq(await page.locator('.tm-card').count(), 19, 'nineteen themes, cute and neutral');
+  eq(await page.locator('.tm-card').count(), 29, 'twenty-nine themes');
+  // In groups that fold away: only the current theme's group is open to start with.
+  eq(await page.locator('.tm-gbox').count(), 3, 'three groups');
+  eq(await page.locator('.tm-gbox').evaluateAll((g) => g.map((x) => [x.querySelector('summary b').textContent, x.open])), [['Cute and colourful', true], ['Bold and loud', false], ['Calm and neutral', false]], 'only the current one open');
+  eq(await page.locator('.tm-card:visible').count(), 12, 'the others folded away');
+  assert(await page.locator('.tm-gbox:not([open]) .tm-swatches i').count() === 17, 'each folded group shows a strip of its colours');
   await page.locator('.tm-card', { hasText: 'Bunny Hop' }).click();
   const frame = page.frameLocator('.tm-frame');
   await page.waitForFunction(() => document.querySelector('.tm-frame')?.contentDocument?.documentElement.dataset.skin === 'bunny', null, { timeout: 15000 });
@@ -942,6 +947,48 @@ await test('a theme that isn\'t saved yet says so, and leaving asks first; an op
     await p.waitForFunction(() => document.documentElement.dataset.skin === 'bunny', null, { timeout: 10000 });
   }, { desktop: false, reducedMotion: 'reduce', time: new Date() });
   assert(saved !== undefined, 'the remix was saved');
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+});
+
+await test('bold and loud themes: each with its own wallpaper, charm and touches, picked from a group that unfolds', async () => {
+  const skins = await import('../public/js/skins.js');
+  const content = await import('../src/content.js');
+  const bold = skins.SKIN_GROUPS.find(([name]) => name === 'Bold and loud')[1];
+  eq(bold, ['neon', 'empire', 'rococo', 'disco', 'popart', 'memphis', 'leopard', 'opera', 'blocky', 'bigtop'], 'ten of them');
+  eq(skins.SKIN_GROUPS.flatMap(([, ids]) => ids).sort(), Object.keys(skins.SKINS).sort(), 'every theme is in exactly one group');
+  for (const id of bold) {
+    const t = skins.resolveSkin({ theme: id });
+    assert(skins.wallpaperCss(t).length > 200, `${id}: a wallpaper of its own`);
+    assert(t.decoration !== 'none' && skins.CHARMS[t.decoration](skins.inks(t)).includes('<'), `${id}: its charm draws`);
+    assert(skins.CHARM_NAMES[t.decoration], `${id}: its charm has a name`);
+    eq(content.parseTheme(`---\ntheme: ${id}\n---\n`).theme, id, `${id}: the server knows it`);
+  }
+  // Their touches come with them, and can still be changed.
+  const neon = skins.resolveSkin({ theme: 'neon' });
+  eq([neon.name_style, neon.trail, neon.wallpaper], ['glow', 'stars', 'sunset'], 'neon’s own touches');
+  eq(skins.resolveSkin({ theme: 'neon', name_style: 'plain' }).name_style, 'plain', 'still yours to change');
+  // Picking one from the folded group.
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+  const page = await adminPage();
+  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await page.waitForSelector('.tm-gbox');
+  await page.locator('.tm-gbox summary', { hasText: 'Bold and loud' }).click();
+  await page.locator('.tm-card', { hasText: 'Block World' }).click();
+  await page.waitForFunction(() => document.querySelector('.tm-frame')?.contentDocument?.documentElement.dataset.skin === 'blocky', null, { timeout: 15000 });
+  eq(await page.locator('.tm-gbox').evaluateAll((g) => g.map((x) => x.open)), [false, true, false], 'its group stays open, the old one folds');
+  await page.locator('button', { hasText: 'Save the theme' }).click();
+  await page.waitForFunction(() => !document.querySelector('.tm-savebar.unsaved'));
+  eq((await publicData()).theme, { theme: 'blocky' }, 'saved');
+  assert(!page.errors.length, page.errors.join('; '));
+  await page.close();
+  // On the site, each draws without a hitch.
+  for (const id of bold) {
+    await putFile('theme.md', `---\ntheme: ${id}\n---\n`);
+    await siteAt(async (p) => {
+      eq(await p.evaluate(() => document.documentElement.dataset.skin), id, `${id} on`);
+      assert((await p.evaluate(() => getComputedStyle(document.querySelector('.desktop') || document.body).backgroundImage)).includes('url('), `${id}: its wallpaper shows`);
+    }, { reducedMotion: 'reduce' });
+  }
   await putFile('theme.md', '---\ntheme: classic\n---\n');
 });
 
