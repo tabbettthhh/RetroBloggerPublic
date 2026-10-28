@@ -90,7 +90,7 @@ a.shelf-item:hover { transform: translateY(-3px); }
 .shelf-phone, .dw-shelf, .shelf-body { --wood: #a8713f;
   background: var(--lamp, none), repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 2px, transparent 2px 7px), repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, transparent 1px 13px), repeating-linear-gradient(88deg, rgba(60,30,10,.06) 0 1px, transparent 1px 23px), linear-gradient(180deg, #b47c47, #96602f); }
 .shelf-phone, .cinema-phone, .tape-phone, .record-phone, .crt-phone, .dw-shelf .wbar, .dw-cinema .wbar, .dw-tape .wbar, .dw-record .wbar, .dw-crt .wbar, .shelf-back, .cinema-back, .tape-back, .record-back, .crt-back, .shelf-btn, .shelf-field { font-family: var(--font-ios); }
-.shelf-bar { flex: none; position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; height: calc(52px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) 10px 0; color: #fbe9c8; background: repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 2px, transparent 2px 6px), linear-gradient(180deg, #8a5e38, #5c3a1c); border-bottom: 1px solid #2a1808; box-shadow: 0 2px 6px rgba(0,0,0,.45); }
+.shelf-bar { flex: none; position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; height: calc(52px + var(--safe-top)); padding: var(--safe-top) 10px 0; color: #fbe9c8; background: repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 2px, transparent 2px 6px), linear-gradient(180deg, #8a5e38, #5c3a1c); border-bottom: 1px solid #2a1808; box-shadow: 0 2px 6px rgba(0,0,0,.45); }
 .shelf-bar-title { flex: 1; text-align: center; margin-right: 64px; font: 700 18px 'Libre Baskerville', Georgia, serif; text-shadow: 0 -1px 0 rgba(0,0,0,.6); }
 .shelf-back, .cinema-back, .tape-back { height: 32px; display: inline-flex; align-items: center; gap: 4px; padding: 0 10px; border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none; }
 .shelf-back { color: #fff; background: linear-gradient(180deg, #a07650, #6e4826); border: 1px solid #3a2410; box-shadow: inset 0 1px 0 rgba(255,255,255,.25); text-shadow: 0 -1px 0 rgba(0,0,0,.5); }
@@ -106,7 +106,7 @@ a.shelf-item:hover { transform: translateY(-3px); }
 
 /* ---------- Cinema: red velvet and ticket stubs ---------- */
 .cinema-phone, .dw-cinema, .cinema-body { background: var(--lamp, none), radial-gradient(ellipse 80% 40% at 50% 0, rgba(255,200,120,.18), transparent 70%), repeating-linear-gradient(90deg, #4a080e 0, #7d151d 16px, #5c0b12 30px, #3e060b 40px); color: #f6e7c8; }
-.marquee { flex: none; position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; height: calc(64px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) 10px 0; background: #1c0c0c; border-bottom: 3px solid #c99a3a; box-shadow: 0 3px 10px rgba(0,0,0,.6); }
+.marquee { flex: none; position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; height: calc(64px + var(--safe-top)); padding: var(--safe-top) 10px 0; background: #1c0c0c; border-bottom: 3px solid #c99a3a; box-shadow: 0 3px 10px rgba(0,0,0,.6); }
 .marquee::after { content: ''; position: absolute; left: 0; right: 0; bottom: 3px; height: 8px; background: radial-gradient(circle, #fff3c4 0 2.4px, #e0a83a 2.8px, transparent 3.4px) 3px 0 / 14px 8px repeat-x; filter: drop-shadow(0 0 3px rgba(255,210,120,.9)); }
 .marquee-board { flex: 1; margin-right: 70px; padding: 4px 10px; text-align: center; color: #141414; font: 700 18px Oswald, sans-serif; letter-spacing: 4px; text-transform: uppercase; border-radius: 2px; background: repeating-linear-gradient(180deg, transparent 0 7px, rgba(0,0,0,.08) 7px 8px), #f7f3e8; box-shadow: inset 0 0 0 2px #d8d2c2, 0 0 14px rgba(255,220,140,.45); }
 .cinema-back { color: #f6d98a; background: #2a1414; border: 1px solid #c99a3a; }
@@ -119,7 +119,7 @@ a.shelf-item:hover { transform: translateY(-3px); }
 
 /* ---------- Podcasts: a tape rack ---------- */
 .tape-phone, .dw-tape, .tape-body { background: var(--lamp, none), radial-gradient(circle at 50% 50%, #2e2e2e 0 1.6px, transparent 2px) 0 0 / 8px 8px, linear-gradient(180deg, #1f1f1f, #141414); color: #e6e6e6; }
-.deck-bar { flex: none; position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; height: calc(56px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) 10px 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 1px, transparent 1px 3px), linear-gradient(180deg, #e2e4e7, #a7abb1); border-bottom: 1px solid #444; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
+.deck-bar { flex: none; position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; height: calc(56px + var(--safe-top)); padding: var(--safe-top) 10px 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 1px, transparent 1px 3px), linear-gradient(180deg, #e2e4e7, #a7abb1); border-bottom: 1px solid #444; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
 .lcd { flex: 1; margin-right: 64px; padding: 5px 8px; text-align: center; border-radius: 4px; color: #1d2a1d; font: 16px 'Share Tech Mono', monospace; letter-spacing: 3px; background: linear-gradient(180deg, #9fb8a0, #cddfc9); box-shadow: inset 0 1px 3px rgba(0,0,0,.55), 0 1px 0 rgba(255,255,255,.7); }
 .tape-back { color: #222; background: linear-gradient(180deg, #fdfdfd, #c9ccd1); border: 1px solid #7a7e84; box-shadow: inset 0 1px 0 #fff; }
 /* Section names on embossed label-maker tape */
@@ -197,7 +197,7 @@ a.shelf-item:hover { transform: translateY(-3px); }
 .vinyl-single.big { font-size: 18px; }
 
 .record-phone, .dw-record, .record-body { color: #f6e7c8; background: var(--lamp, none), repeating-linear-gradient(90deg, rgba(0,0,0,.18) 0 2px, transparent 2px 42px), repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px 9px), linear-gradient(180deg, #7a4420, #4e2a12); }
-.hifi-bar { flex: none; position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; height: calc(58px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) 12px 0;
+.hifi-bar { flex: none; position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; height: calc(58px + var(--safe-top)); padding: var(--safe-top) 12px 0;
   background: linear-gradient(90deg, #3e220e 0 8px, transparent 8px calc(100% - 8px), #3e220e calc(100% - 8px)), repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 1px, transparent 1px 3px), linear-gradient(180deg, #e4e5e7, #aeb1b6); border-bottom: 1px solid #2a1808; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
 .hifi-dial { flex: 1; margin-right: 64px; padding: 5px 10px 9px; text-align: center; border-radius: 3px; color: #ffb347; font: 15px 'Share Tech Mono', monospace; letter-spacing: 3px; text-transform: uppercase; text-shadow: 0 0 6px rgba(255,170,60,.8);
   background: repeating-linear-gradient(90deg, rgba(255,180,80,.45) 0 1px, transparent 1px 8px) bottom 3px left 0 / 100% 4px no-repeat, linear-gradient(180deg, #120c06, #24170a); box-shadow: inset 0 1px 4px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.7); }
@@ -236,7 +236,7 @@ a.shelf-item:hover { transform: translateY(-3px); }
 .vhs.big { font-size: 16px; }
 
 .crt-phone, .dw-crt, .crt-body { color: #e6e6e6; background: var(--lamp, none), radial-gradient(ellipse 90% 40% at 50% 0, rgba(90,150,210,.2), transparent 70%), repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px), #121418; }
-.tv-bar { flex: none; position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; height: calc(58px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) 10px 0; background: repeating-linear-gradient(90deg, rgba(0,0,0,.12) 0 2px, transparent 2px 9px), linear-gradient(180deg, #7a4a24, #4e2c12); border-bottom: 3px solid #1a1a1a; box-shadow: 0 2px 8px rgba(0,0,0,.6); }
+.tv-bar { flex: none; position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; height: calc(58px + var(--safe-top)); padding: var(--safe-top) 10px 0; background: repeating-linear-gradient(90deg, rgba(0,0,0,.12) 0 2px, transparent 2px 9px), linear-gradient(180deg, #7a4a24, #4e2c12); border-bottom: 3px solid #1a1a1a; box-shadow: 0 2px 8px rgba(0,0,0,.6); }
 .tv-channel { flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 5px 10px; border-radius: 4px; color: #8dff86; font: 15px 'Share Tech Mono', monospace; letter-spacing: 3px; text-transform: uppercase; text-shadow: 0 0 6px rgba(120,255,120,.7); background: #050805; box-shadow: inset 0 1px 4px #000, 0 1px 0 rgba(255,255,255,.15); }
 .tv-led { color: #ff6a4a; font-size: 12px; text-shadow: 0 0 6px rgba(255,90,60,.8); }
 .tv-knobs { display: flex; gap: 6px; }

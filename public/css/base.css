@@ -68,11 +68,20 @@ body { --pen: #24305c; }
 @media (prefers-reduced-motion: reduce) { .phone.arrive #main { animation: none; } }
 .lite .phone.arrive #main { animation: none; }
 
+/* ---------- the top of a phone's screen ----------
+   Opened from the Home Screen, the phone's clock and battery sit over the top of the page (and an
+   iPhone fades the page out beneath them). Every top bar keeps below them with --safe-top, plus
+   any extra room chosen in Back office › Site (see js/top-room.js). */
+:root { --top-room: 0px; --safe-top: calc(env(safe-area-inset-top) + var(--top-room)); }
+:root[data-home-screen][data-top-room="some"] { --top-room: 12px; }
+:root[data-home-screen][data-top-room="more"] { --top-room: 24px; }
+:root[data-home-screen][data-top-room="lots"] { --top-room: 40px; }
+
 /* ---------- phone frame ---------- */
 .phone { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 /* When the site is opened from the home screen, the phone's clock and battery sit on top of the page.
    These keep every era's top bar below them. */
-.mac-phone, .droid-phone { padding-top: env(safe-area-inset-top); }
+.mac-phone, .droid-phone { padding-top: var(--safe-top); }
 
 /* ---------- menus (shared mechanics) ---------- */
 .menu-root { position: relative; display: inline-flex; }
@@ -135,7 +144,7 @@ body { --pen: #24305c; }
   .pv-back { padding: 0; }
   .pv-win { width: 100%; height: 100%; border: 0; border-radius: 0; }
   /* Clear the phone's clock and battery bar, so the close button can be reached. */
-  .pv-win .pv-title { border-radius: 0; height: calc(40px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); }
+  .pv-win .pv-title { border-radius: 0; height: calc(40px + var(--safe-top)); padding-top: var(--safe-top); }
   .pv-title .max, .pv-wide { display: none; }
   .pv-bottom { padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
   .pv-wbtn { width: 34px; height: 34px; }
@@ -149,7 +158,7 @@ body { --pen: #24305c; }
 /* ---------- welcome ---------- */
 .welcome { position: fixed; inset: 0; z-index: 8000; display: flex; flex-direction: column; color: #fff; background: #4a72d6; font-family: var(--font-xp); }
 .welcome-band { flex: none; height: 84px; background: #00309c; }
-.welcome-band.top { display: flex; justify-content: flex-end; align-items: flex-start; box-shadow: 0 2px 0 #8fb4ff; box-sizing: content-box; padding-top: env(safe-area-inset-top); }
+.welcome-band.top { display: flex; justify-content: flex-end; align-items: flex-start; box-shadow: 0 2px 0 #8fb4ff; box-sizing: content-box; padding-top: var(--safe-top); }
 /* The owner's way into the back office: small and quiet in the corner, brighter on hover. */
 .welcome-owner { display: grid; place-items: center; width: 44px; height: 44px; margin: 8px 10px 0 0; border-radius: 6px; opacity: .45; transition: opacity .2s, background .2s; }
 .welcome-owner:hover, .welcome-owner:focus-visible { opacity: 1; background: rgba(255, 255, 255, .12); }

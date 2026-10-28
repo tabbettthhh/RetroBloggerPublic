@@ -1,6 +1,8 @@
 /* Back office: XP dialog style, built for a phone first. */
 .admin { min-height: 100%; }
 .admin-shell { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; padding: 12px 8px; max-width: 880px; margin: 0 auto; }
+/* (Below the phone's clock when opened from the Home Screen, with any extra room chosen in Site.) */
+.admin-shell { padding-top: calc(12px + var(--safe-top)); }
 .admin-window { margin: 0; flex: 1; }
 .admin-tabs { display: flex; gap: 2px; padding: 8px 8px 0; overflow-x: auto; flex: none; }
 .admin-tabs button { flex: none; height: 36px; padding: 0 12px; border: 1px solid #919b9c; border-bottom: 0; border-radius: 3px 3px 0 0; background: linear-gradient(180deg, #fff, #ecebe6); font-size: 13px; color: #1b1b1b; cursor: pointer; white-space: nowrap; }
