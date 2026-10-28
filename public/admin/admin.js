@@ -10,6 +10,7 @@ import { viewFriends } from '/admin/friends.js';
 import { viewThemes } from '/admin/themes.js';
 import { OPTIONS, FONT_FAMILIES, resolveSkin } from '/js/skins.js';
 import { CARD_STYLES, RIBBONS, miniCard, mixMini, themeCard, ownRibbon, ensureOwnCardsCss } from '/js/card-dress.js';
+import { TOP_ROOM, setTopRoom, onHomeScreen } from '/js/top-room.js';
 
 const panel = document.getElementById('panel');
 const tabsEl = document.querySelector('.admin-tabs');
@@ -105,6 +106,7 @@ function toast(msg, err = false) {
 async function refresh() {
   data = await api('overview');
   registerCategories(data.categories);
+  setTopRoom(data.site?.top_room);
   drawTabs();
 }
 
@@ -250,7 +252,7 @@ const stampNow = () => {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 };
 // The fields site.md can hold, kept as they are when only the status changes.
-const SITE_KEYS = ['name', 'owner', 'status', 'presence', 'status_updated', 'now_playing', 'countdown', 'countdown_date', 'countdown_icon', 'tagline', 'comments'];
+const SITE_KEYS = ['name', 'owner', 'status', 'presence', 'status_updated', 'now_playing', 'countdown', 'countdown_date', 'countdown_icon', 'tagline', 'comments', 'top_room'];
 // Changes one setting in site.md, keeping everything else as it is.
 async function setSiteField(key, value) {
   const siteRaw = await readFile('site.md');
@@ -258,6 +260,37 @@ async function setSiteField(key, value) {
   const fm = Object.fromEntries(SITE_KEYS.map((k) => [k, rawField(head, k)]));
   fm[key] = value;
   await putFile('site.md', frontMatter(fm) + body.trim() + '\n');
+}
+// Extra room at the top when the site (or this back office) is opened from a phone's Home Screen,
+// where an iPhone puts its clock over the page and fades out what's beneath it. Saved straight away.
+function topRoomControls() {
+  const now = data.site?.top_room || '';
+  const row = h(
+    'div',
+    { class: 'chip-row', role: 'radiogroup', 'aria-label': 'Room at the top' },
+    Object.entries(TOP_ROOM).map(([v, label]) =>
+      h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-pressed': String(now === v), 'aria-checked': String(now === v), onclick: async (e) => {
+        const chips = [...e.currentTarget.parentElement.children];
+        chips.forEach((b) => { b.setAttribute('aria-pressed', String(b === e.currentTarget)); b.setAttribute('aria-checked', String(b === e.currentTarget)); });
+        setTopRoom(v);
+        try {
+          await setSiteField('top_room', v);
+          await refresh();
+          toast(v ? `Saved: ${label.toLowerCase()} room at the top.` : 'Saved: the top as it is.');
+        } catch (err) {
+          toast(err.message, true);
+        }
+      } }, label)
+    )
+  );
+  return h(
+    'fieldset',
+    { class: 'group' },
+    h('legend', null, 'On a phone’s Home Screen'),
+    h('p', { class: 'hint' }, 'Opened from the Home Screen, an iPhone puts its clock over the top of the page and fades out what’s under it. If the top bar looks washed out, give it more room. This is for the site and this back office, and only when opened from the Home Screen.'),
+    h('div', { class: 'field' }, h('span', { class: 'label' }, 'Room at the top'), row),
+    onHomeScreen() ? h('p', { class: 'hint' }, 'You’re on the Home Screen now, so you can see it change as you choose.') : null
+  );
 }
 // Sets a new status (and adds it to the top of the past statuses), keeping everything else.
 async function setStatus(text) {
@@ -2577,7 +2610,8 @@ function viewSite(part = 'site') {
           countdown_icon: cdLabel.value.trim() && cdDate.value ? cdIcon.value : '',
           tagline: inputs.tagline.value.trim(),
           // (Kept as it is: switched in the Comments tab.)
-          comments: data.site?.comments === false ? 'off' : ''
+          comments: data.site?.comments === false ? 'off' : '',
+          top_room: data.site?.top_room || ''
         };
         await putFile('site.md', frontMatter(fm) + about.value.trim() + '\n');
         // A new status goes to the top of the log (with any [book] filled in as it is today).
@@ -2650,6 +2684,7 @@ function viewSite(part = 'site') {
       ),
       h('fieldset', { class: 'group' }, h('legend', null, 'About the site'), field('Site name', inputs.name, 'Shown on the welcome screen, every title bar, the tab and the home-screen app.'), field('Your name', inputs.owner), field('Tagline', inputs.tagline, 'Shown on the welcome screen.'), field('About you', about, 'Markdown works here too.'), h('div', { class: 'row end' }, saveSite)),
       categoryManager(),
+      topRoomControls(),
       h('fieldset', { class: 'group' }, h('legend', null, 'Wishlist'), h('p', { class: 'hint' }, 'One place per line: "- [ ] Name, City (food) — note". Change [ ] to [x] once you have been.'), wish, h('div', { class: 'row end' }, saveWish))
     ];
     // The first two are the status and past statuses; the rest are the site and wishlist.

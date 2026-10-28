@@ -1,6 +1,6 @@
 // End-to-end checks of the back office: every save should leave the site showing exactly
 // what was saved, with every photo loading and nothing lost.
-import { api, test, report, assert, eq, launch, close, adminPage, newPost, waitPhotos, editPost, clickSave, toastText, publicData, overview, getFile, putFile, fileExists, mediaOk, split, upload, PHOTOS, BASE } from './lib.mjs';
+import { api, test, report, assert, eq, launch, close, adminPage, newPost, waitPhotos, editPost, clickSave, toastText, publicData, overview, getFile, putFile, fileExists, mediaOk, split, upload, PHOTOS, BASE, chromium } from './lib.mjs';
 
 const findPost = async (pred) => (await overview()).posts.find(pred);
 async function photosAllLoad(post) {
@@ -510,6 +510,40 @@ await test('re-opening the post you are editing keeps your changes', async () =>
   await editPost(page, 'Two devices');
   eq(await page.locator('textarea.textarea').first().inputValue(), 'Changes in progress', 'text');
   await page.close();
+});
+
+await test('extra room at the top on a phone’s Home Screen: chosen in Site, kept, and only on the Home Screen', async () => {
+  const content = await import('../src/content.js');
+  eq([content.parseSite('---\ntop_room: more\n---\n').top_room, content.parseSite('---\ntop_room: huge\n---\n').top_room], ['more', ''], 'checked by the server');
+  await putFile('site.md', '---\nname: Test Site\nowner: Tester\nstatus: kept\n---\nAbout me: I like tests.\n');
+  const page = await adminPage();
+  await page.locator('.admin-tabs button', { hasText: 'Site' }).first().click();
+  await page.getByRole('radiogroup', { name: 'Room at the top' }).getByRole('radio', { name: 'More', exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('.toast:not([hidden])')?.textContent.includes('Saved'));
+  const site = await getFile('site.md');
+  assert(/top_room: more/.test(site) && site.includes('status: kept') && site.includes('About me: I like tests.'), 'saved, keeping the rest:\n' + site);
+  assert(!page.errors.length, page.errors.join('; '));
+  await page.close();
+  // The site's top bar on a phone: the same in a browser tab, 24px lower from the Home Screen.
+  const topOf = async (homeScreen) => {
+    const browser = await chromium.launch();
+    const p = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    if (homeScreen) await p.addInitScript(() => Object.defineProperty(Navigator.prototype, 'standalone', { get: () => true }));
+    await p.addInitScript(() => sessionStorage.setItem('entered', '1'));
+    await p.goto(BASE + '/#/');
+    await p.waitForSelector('.xp-phone .xp-title');
+    await p.waitForTimeout(300);
+    const pad = await p.locator('.xp-phone .xp-title').first().evaluate((e) => parseFloat(getComputedStyle(e).paddingTop));
+    // (And the back office the same way.)
+    await p.goto(BASE + '/admin');
+    await p.waitForSelector('.admin-tabs button');
+    const shell = await p.locator('.admin-shell').evaluate((e) => parseFloat(getComputedStyle(e).paddingTop));
+    await browser.close();
+    return [pad, shell];
+  };
+  eq(await topOf(false), [0, 12], 'in a browser tab, as it is');
+  eq(await topOf(true), [24, 36], 'from the Home Screen, more room');
+  await putFile('site.md', '---\nname: Test Site\nowner: Tester\n---\nAbout me: I like tests.\n');
 });
 
 const failed = report();

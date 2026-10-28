@@ -496,6 +496,8 @@ export function parseSite(text) {
     now_playing: !(data.now_playing === false || /^(false|no|off)$/i.test(String(data.now_playing ?? ''))),
     // Visitors can comment on posts (each waits for your approval), unless you switch it off.
     comments: !(data.comments === false || /^(false|no|off)$/i.test(String(data.comments ?? ''))),
+    // Extra room at the top when opened from a phone's Home Screen ('' as it is).
+    top_room: ['some', 'more', 'lots'].includes(String(data.top_room ?? '').trim()) ? String(data.top_room).trim() : '',
     tagline: data.tagline ? String(data.tagline) : '',
     about_html: safeMarkdown(body)
   };

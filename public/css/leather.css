@@ -5,7 +5,7 @@
   font-family: 'Libre Baskerville', Georgia, serif;
   color: #2b1d12;
 }
-.leather-phone { padding: 12px; padding-top: calc(12px + env(safe-area-inset-top)); padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+.leather-phone { padding: 12px; padding-top: calc(12px + var(--safe-top)); padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
 .stitched { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 12px; border: 2px dashed #e3c38e; border-radius: 16px; }
 .leather-head { display: flex; align-items: center; gap: 12px; flex: none; }
 .paper-tab { min-height: 44px; display: inline-flex; align-items: center; gap: 4px; padding: 0 12px; border-radius: 6px; background: linear-gradient(180deg, #f7efdc, #e4d6b6); box-shadow: 0 2px 4px rgba(0,0,0,.45), inset 0 1px 0 #fff; color: #3a2414; text-decoration: none; font-size: 13px; }

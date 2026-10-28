@@ -903,7 +903,7 @@ await test('on a phone the season settles on every app\'s top bar, below the clo
   }
   // The bars that run up under a phone's clock keep it clear: the scenery starts below it.
   const css = fs.readFileSync(new URL('../public/css/skins.css', import.meta.url), 'utf8');
-  assert(/\[data-settle~="bars"\] :is\(\.xp-phone \.xp-title, \.phone :is\(\.al-bar[^)]*\)\)::before \{ top: env\(safe-area-inset-top, 0px\); \}/.test(css), 'kept below the clock');
+  assert(/\[data-settle~="bars"\] :is\(\.xp-phone \.xp-title, \.phone :is\(\.al-bar[^)]*\)\)::before \{ top: var\(--safe-top, 0px\); \}/.test(css), 'kept below the clock');
   // On a computer the app's own bar sits inside its window, under the window's bar: only the window's bar gets it.
   await putFile('theme.md', '---\ntheme: arcade\nseasons: autumn\n---\n');
   await siteAt(async (p) => {
