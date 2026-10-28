@@ -57,12 +57,12 @@ await test('picking a theme previews it live, and saving puts it on the site', a
   const page = await adminPage();
   await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
   await page.waitForSelector('.tm-card');
-  eq(await page.locator('.tm-card').count(), 29, 'twenty-nine themes');
+  eq(await page.locator('.tm-card').count(), 34, 'thirty-four themes');
   // In groups that fold away: only the current theme's group is open to start with.
-  eq(await page.locator('.tm-gbox').count(), 3, 'three groups');
-  eq(await page.locator('.tm-gbox').evaluateAll((g) => g.map((x) => [x.querySelector('summary b').textContent, x.open])), [['Cute and colourful', true], ['Bold and loud', false], ['Calm and neutral', false]], 'only the current one open');
+  eq(await page.locator('.tm-gbox').count(), 4, 'four groups');
+  eq(await page.locator('.tm-gbox').evaluateAll((g) => g.map((x) => [x.querySelector('summary b').textContent, x.open])), [['Cute and colourful', true], ['Bold and loud', false], ['The four seasons', false], ['Calm and neutral', false]], 'only the current one open');
   eq(await page.locator('.tm-card:visible').count(), 12, 'the others folded away');
-  assert(await page.locator('.tm-gbox:not([open]) .tm-swatches i').count() === 17, 'each folded group shows a strip of its colours');
+  assert(await page.locator('.tm-gbox:not([open]) .tm-swatches i').count() === 22, 'each folded group shows a strip of its colours');
   await page.locator('.tm-card', { hasText: 'Bunny Hop' }).click();
   const frame = page.frameLocator('.tm-frame');
   await page.waitForFunction(() => document.querySelector('.tm-frame')?.contentDocument?.documentElement.dataset.skin === 'bunny', null, { timeout: 15000 });
@@ -975,7 +975,7 @@ await test('bold and loud themes: each with its own wallpaper, charm and touches
   await page.locator('.tm-gbox summary', { hasText: 'Bold and loud' }).click();
   await page.locator('.tm-card', { hasText: 'Block World' }).click();
   await page.waitForFunction(() => document.querySelector('.tm-frame')?.contentDocument?.documentElement.dataset.skin === 'blocky', null, { timeout: 15000 });
-  eq(await page.locator('.tm-gbox').evaluateAll((g) => g.map((x) => x.open)), [false, true, false], 'its group stays open, the old one folds');
+  eq(await page.locator('.tm-gbox').evaluateAll((g) => g.map((x) => x.open)), [false, true, false, false], 'its group stays open, the old one folds');
   await page.locator('button', { hasText: 'Save the theme' }).click();
   await page.waitForFunction(() => !document.querySelector('.tm-savebar.unsaved'));
   eq((await publicData()).theme, { theme: 'blocky' }, 'saved');
@@ -1147,6 +1147,43 @@ await test('post cards of your own: made from parts in Themes, for every post or
     eq(await card.evaluate((e) => getComputedStyle(e).borderTopWidth), '7px', 'drawn from its parts');
     eq(await card.evaluate((e) => getComputedStyle(e, '::after').borderRadius.length > 0), true, 'with its seal');
   }, { desktop: false, reducedMotion: 'reduce' });
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+});
+
+await test('the four seasons: a theme for each, with its own wallpaper and scenery, and one that follows the year', async () => {
+  const skins = await import('../public/js/skins.js');
+  const content = await import('../src/content.js');
+  const group = skins.SKIN_GROUPS.find(([name]) => name === 'The four seasons')[1];
+  eq(group, ['seasonal', 'wintry', 'springtime', 'summery', 'autumnal'], 'five of them');
+  const own = { wintry: ['frost', 'winter', 'snow'], springtime: ['blossoms', 'spring', 'petals'], summery: ['seaside', 'summer', 'sunshine'], autumnal: ['harvest', 'autumn', 'leaves'] };
+  for (const [id, [wall, season, falling]] of Object.entries(own)) {
+    const t = skins.resolveSkin({ theme: id });
+    eq([t.wallpaper, t.seasons, t.falling], [wall, season, falling], `${id}: its wallpaper, its season settling on everything, and what falls`);
+    assert(skins.wallpaperCss(t).length > 1000, `${id}: a wallpaper of its own`);
+    eq(content.parseTheme(`---\ntheme: ${id}\n---\n`).theme, id, `${id}: the server knows it`);
+  }
+  // Through the year: whichever season it is (the other way round south of the equator).
+  eq(['2027-01-10', '2027-04-10', '2027-07-10', '2027-10-10'].map((d) => skins.seasonalSkin(false, new Date(d)).wallpaper), ['frost', 'blossoms', 'seaside', 'harvest'], 'each season in turn');
+  eq(skins.seasonalSkin(true, new Date('2027-01-10')).wallpaper, 'seaside', 'south of the equator, January is summer');
+  const now = skins.seasonOf(new Date());
+  eq([skins.resolveSkin({ theme: 'seasonal' }).wallpaper, skins.resolveSkin({ theme: 'seasonal' }).seasons], [own[{ winter: 'wintry', spring: 'springtime', summer: 'summery', autumn: 'autumnal' }[now]][0], 'auto'], 'today’s, with the seasons on');
+  eq(content.parseTheme('---\ntheme: seasonal\n---\n').theme, 'seasonal', 'the server knows it');
+  // Picked in the back office, it's on the site with its season.
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+  const page = await adminPage();
+  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await page.waitForSelector('.tm-gbox');
+  await page.locator('.tm-gbox summary', { hasText: 'The four seasons' }).click();
+  await page.locator('.tm-card', { hasText: 'Winter Frost' }).click();
+  await page.waitForFunction(() => document.querySelector('.tm-frame')?.contentDocument?.documentElement.dataset.skin === 'wintry', null, { timeout: 15000 });
+  await page.locator('button', { hasText: 'Save the theme' }).click();
+  await page.waitForFunction(() => !document.querySelector('.tm-savebar.unsaved'));
+  eq((await publicData()).theme, { theme: 'wintry' }, 'saved');
+  assert(!page.errors.length, page.errors.join('; '));
+  await page.close();
+  await siteAt(async (p) => {
+    eq(await p.evaluate(() => [document.documentElement.dataset.skin, document.documentElement.dataset.season]), ['wintry', 'winter'], 'snow settles on the site');
+  }, { reducedMotion: 'reduce' });
   await putFile('theme.md', '---\ntheme: classic\n---\n');
 });
 
