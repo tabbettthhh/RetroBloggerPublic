@@ -8,6 +8,7 @@ import { startTheme } from './theme.js';
 import { applySkin } from './skins.js';
 import { sound, setSoundPack } from './sound.js';
 import { setTopRoom } from './top-room.js';
+import { startBarDecor } from './bar-decor.js';
 
 const root = document.getElementById('app');
 const desktopQuery = window.matchMedia('(min-width: 900px) and (pointer: fine)');
@@ -148,6 +149,11 @@ async function main() {
   document.title = data.site.name;
   // (Extra room at the top, opened from a phone's Home Screen.)
   setTopRoom(data.site.top_room);
+  // (Bunting and stickers on the apps' top bars.)
+  if (!startBarDecor.started) {
+    startBarDecor.started = true;
+    startBarDecor();
+  }
   // The name a phone uses when you add the site to your home screen.
   let appTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
   if (!appTitle) {

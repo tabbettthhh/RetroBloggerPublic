@@ -646,7 +646,8 @@ export const THEME_OPTIONS = {
   card_festive: ['on', 'off'],
   card_corner: ['none', 'season', 'charm'],
   page: ['layered', 'pattern', 'wallpaper', 'tint', 'plain'],
-  page_strength: ['medium', 'soft', 'strong']
+  page_strength: ['medium', 'soft', 'strong'],
+  wall_time: ['day', 'still']
 };
 export const THEME_HIDEABLE = ['lastpost', 'status', 'playing', 'countdown', 'nudge', 'clock', 'traystatus'];
 export const THEME_SECTIONS = ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about'];
@@ -734,10 +735,24 @@ export function parseTheme(text) {
       if (THEME_OPTIONS.falling.includes(String(o.falling))) one.falling = String(o.falling);
       const where = [...new Set((Array.isArray(o.where) ? o.where : []).map(String).filter((x) => STICKER_SPOTS.includes(x)))];
       if (where.length) one.where = where;
-      if (Array.isArray(o.settle)) one.settle = [...new Set(o.settle.map(String).filter((x) => ['bars', 'icons', 'taskbar', 'ground', 'posts', 'menu'].includes(x)))];
+      if (Array.isArray(o.settle)) one.settle = [...new Set(o.settle.map(String).filter((x) => ['bars', 'icons', 'taskbar', 'ground', 'posts', 'menu', 'profile'].includes(x)))];
       if (Object.keys(one).length) looks[id] = one;
     }
     if (Object.keys(looks).length) out.looks = looks;
+  }
+  // What each app's top bar wears (these match BAR_APPS and BAR_DECOR in public/js/skins.js):
+  // 'random', 'none', or 'mine' with up to three drawings or emoji; the day's is the default.
+  if (data.bar_decor && typeof data.bar_decor === 'object' && !Array.isArray(data.bar_decor)) {
+    const bars = {};
+    for (const [app, o] of Object.entries(data.bar_decor)) {
+      if (!(app === 'windows' || THEME_APPS[app]) || !o || typeof o !== 'object' || !['random', 'mine', 'none'].includes(o.mode)) continue;
+      if (o.mode !== 'mine') bars[app] = { mode: o.mode };
+      else {
+        const charms = [...new Set((Array.isArray(o.charms) ? o.charms : []).map((x) => (THEME_CHARMS.includes(String(x)) && !['none', 'plain'].includes(x) ? String(x) : emojiOnly(x, 1)[0])).filter(Boolean))].slice(0, 3);
+        if (charms.length) bars[app] = { mode: 'mine', charms };
+      }
+    }
+    if (Object.keys(bars).length) out.bar_decor = bars;
   }
   // Days of your own: a name, from and to (month-day, every year), a drawing or emoji, and something falling.
   const okMd = (v) => /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(String(v ?? '')) && +String(v).slice(3) <= new Date(2024, +String(v).slice(0, 2), 0).getDate();

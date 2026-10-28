@@ -17,7 +17,7 @@ import { musicMakers } from './music-keepsakes.js';
 import { studyMakers } from './study-keepsakes.js';
 import { albumApp } from './album.js';
 import { friendsApp } from './friends-feed.js';
-import { dressCard } from './card-dress.js';
+import { dressCard, profileDecor } from './card-dress.js';
 import { commentLink, commentsBlock, commentsButton } from './comments.js';
 import { activeSkin, resolveSkin, word, postFontAttrs } from './skins.js';
 
@@ -204,16 +204,19 @@ function cardInner(post, open) {
 // `here`: on the About page itself, where the picture doesn't need to link anywhere.
 function profileTile(data, here = false) {
   const latest = data.posts[0];
+  // (Bunting and stickers for the season or festive day: shown by skins.css while one is on.)
+  const decor = profileDecor();
   return h(
     'div',
     { class: 'profile-tile' },
+    decor.bunting,
     // Your picture opens your profile: the About page, with your photo grid after the bio.
     here ? h('span', { class: 'avatar', html: ICON.person() }) : h('a', { class: 'avatar', href: '#/about', title: 'Profile', 'aria-label': `${data.site.owner || data.site.name}: profile`, html: ICON.person() }),
     h(
       'div',
       { class: 'profile-text' },
       h('div', { class: 'profile-name' }, h('strong', null, data.site.owner || data.site.name), nudgeButton(data.site)),
-      latest ? h('span', { class: 'small' }, 'Last post · ' + niceDate(latest.date)) : null,
+      h('div', { class: 'profile-sub' }, latest ? h('span', { class: 'small' }, 'Last post · ' + niceDate(latest.date)) : null, decor.stickers),
       statusBlock(data)
     )
   );
