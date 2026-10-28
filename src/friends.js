@@ -259,7 +259,7 @@ export async function friendsApi(request, env, path, deps) {
 // What a friend's site gets: your name and status, and your latest posts (newest first).
 // The parts of a post a friend's site can show it with, as it looks on yours: everything but
 // what's already sent on its own (or never leaves your site), and nothing left at its default.
-const NOT_SENT = new Set(['body', 'files', 'key', 'error', 'extra', 'html', 'excerpt', 'draft', 'photos', 'captions']);
+const NOT_SENT = new Set(['body', 'files', 'key', 'error', 'extra', 'html', 'excerpt', 'draft', 'photos', 'captions', 'comments']);
 function fullPost(p) {
   const base = TYPES.includes(p.type) ? blank(p.type) : {};
   const out = {};

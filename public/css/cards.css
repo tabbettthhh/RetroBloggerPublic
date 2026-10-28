@@ -1,0 +1,132 @@
+/* ---------- post cards, dressed (see card-dress.js) ----------
+   Each design follows the theme's colours (--sk-main, --sk-accent, --sk-soft, --sk-ink) and
+   works in dark mode. Posts shown as "a list with lines" stay plain. A memory keeps its old
+   paper underneath whatever design it wears. */
+:root { --sk-main: #0054e3; --sk-accent: #3a9a3a; --sk-soft: #cfe6cf; --sk-ink: #14244a; --card-paper: #ffffff; --card-text: #222222; --card-hand: 'Caveat', 'Gaegu', cursive; }
+[data-theme="dark"] { --card-paper: #242424; --card-text: #e8e8e8; }
+
+:root:not([data-sk-posts="lines"]) .card[data-card] { position: relative; }
+:root:not([data-sk-posts="lines"]) .card[data-card] > .card-head { background: transparent; }
+
+/* Polaroid: a thick white frame, the date written along the bottom, a little tilt. */
+:root:not([data-sk-posts="lines"]) .card[data-card="polaroid"] { padding: 10px 10px 36px; border: 0; border-radius: 3px; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .18), 0 6px 14px rgba(0, 0, 0, .16); transform: rotate(var(--card-tilt, 0deg)); overflow: visible; }
+:root:not([data-sk-posts="lines"]) .card[data-card="polaroid"]::after { content: attr(data-day); position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font: 22px/1 var(--card-hand); color: #3a3a3a; pointer-events: none; }
+:root:not([data-sk-posts="lines"]) .card[data-card="polaroid"] > .card-head { border-bottom: 0; padding: 2px 4px 8px; }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="polaroid"] { background: #f4f1ea; color: #222; }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="polaroid"] :is(.card-body, .card-title, .card-head strong, .place-name) { color: #222; }
+
+/* Scrapbook: cream paper, held on with two strips of washi tape in the theme's colours. */
+:root:not([data-sk-posts="lines"]) .card[data-card="scrapbook"] { overflow: visible; border: 1px solid #e4d5b5; border-radius: 2px; transform: rotate(var(--card-tilt, 0deg)); box-shadow: 0 3px 8px rgba(70, 50, 20, .18); }
+:root:not([data-sk-posts="lines"]) .card[data-card="scrapbook"]:not(.memory) { background: radial-gradient(circle at 18% 22%, rgba(255, 255, 255, .7), transparent 40%), repeating-linear-gradient(0deg, rgba(160, 120, 60, .035) 0 2px, transparent 2px 5px), #fbf3e2; }
+:root:not([data-sk-posts="lines"]) .card[data-card="scrapbook"]::before, :root:not([data-sk-posts="lines"]) .card[data-card="scrapbook"]::after { content: ''; position: absolute; z-index: 2; top: -9px; width: 74px; height: 20px; opacity: .88; pointer-events: none; background: repeating-linear-gradient(45deg, var(--sk-soft) 0 6px, color-mix(in srgb, var(--sk-accent) 55%, #ffffff) 6px 12px); box-shadow: 0 1px 2px rgba(0, 0, 0, .15); -webkit-mask: linear-gradient(90deg, transparent 0 2px, #000 2px calc(100% - 2px), transparent calc(100% - 2px)); }
+:root:not([data-sk-posts="lines"]) .card[data-card="scrapbook"]::before { left: 14px; transform: rotate(-7deg); }
+:root:not([data-sk-posts="lines"]) .card[data-card="scrapbook"]::after { right: 14px; transform: rotate(6deg); background: repeating-linear-gradient(-45deg, color-mix(in srgb, var(--sk-main) 45%, #ffffff) 0 5px, #ffffff 5px 10px); }
+:root:not([data-sk-posts="lines"]) .card[data-card="scrapbook"] > .card-head { border-bottom: 1px dashed rgba(120, 90, 40, .3); font-family: var(--card-hand); font-size: 15px; }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="scrapbook"]:not(.memory) { color: #3a2a14; }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="scrapbook"] :is(.card-body, .card-title, .card-head strong, .place-name) { color: #3a2a14; }
+
+/* Notebook: lined paper, a red margin and punched holes down the side. */
+:root:not([data-sk-posts="lines"]) .card[data-card="notebook"] { padding-left: 30px; border: 1px solid #d9dde6; border-radius: 3px; background: linear-gradient(90deg, transparent 27px, rgba(226, 92, 92, .75) 27px 28.5px, transparent 28.5px), repeating-linear-gradient(180deg, transparent 0 25px, color-mix(in srgb, var(--sk-main) 22%, transparent) 25px 26px), #fffef9; }
+:root:not([data-sk-posts="lines"]) .card[data-card="notebook"]::before { content: ''; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 12px; pointer-events: none; background: radial-gradient(circle at 6px 6px, rgba(0, 0, 0, .22) 0 4.6px, transparent 5px) 0 0 / 12px 34px repeat-y; }
+:root:not([data-sk-posts="lines"]) .card[data-card="notebook"] > .card-head { border-bottom: 2px solid color-mix(in srgb, var(--sk-main) 45%, transparent); }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="notebook"] { color: #222; }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="notebook"] :is(.card-body, .card-title, .card-head strong, .place-name, .list-body) { color: #222; }
+
+/* Postcard: an airmail border in the theme's colours, a stamp and a postmark. */
+:root:not([data-sk-posts="lines"]) .card[data-card="postcard"] { border: 8px solid transparent; border-radius: 4px; background: linear-gradient(#fffaf0, #fffaf0) padding-box, repeating-linear-gradient(-45deg, var(--sk-main) 0 9px, #ffffff 9px 16px, var(--sk-accent) 16px 25px, #ffffff 25px 32px) border-box; box-shadow: 0 3px 8px rgba(0, 0, 0, .14); }
+:root:not([data-sk-posts="lines"]) .card[data-card="postcard"]::before { content: ''; position: absolute; z-index: 2; top: 6px; right: 8px; width: 40px; height: 48px; pointer-events: none; background: var(--card-pic, none) center 40% / 24px no-repeat, linear-gradient(var(--sk-soft), var(--sk-soft)); border: 3px dotted #fffaf0; outline: 1px solid rgba(0, 0, 0, .18); transform: rotate(4deg); }
+:root:not([data-sk-posts="lines"]) .card[data-card="postcard"]::after { content: ''; position: absolute; z-index: 3; top: 22px; right: 26px; width: 34px; height: 34px; border: 2px solid rgba(40, 40, 90, .42); border-radius: 50%; pointer-events: none; background: repeating-linear-gradient(0deg, transparent 0 6px, rgba(40, 40, 90, .35) 6px 7.5px) 30px 6px / 34px 26px no-repeat; }
+:root:not([data-sk-posts="lines"]) .card[data-card="postcard"] > .card-head { border-bottom: 1px solid rgba(0, 0, 0, .1); padding-right: 76px; font-family: var(--card-hand); font-size: 15px; }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="postcard"] :is(.card-body, .card-title, .card-head strong, .place-name, .list-body) { color: #222; }
+
+/* Sticky note: a square of colour, taped on, with its corner curling. */
+:root:not([data-sk-posts="lines"]) .card[data-card="sticky"] { overflow: visible; border: 0; border-radius: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--sk-accent) 30%, #fff7a8), color-mix(in srgb, var(--sk-accent) 38%, #ffef8a)); box-shadow: 0 10px 12px -8px rgba(0, 0, 0, .35); transform: rotate(var(--card-tilt, 0deg)); color: #2a2410; }
+:root:not([data-sk-posts="lines"]) .card[data-card="sticky"]::before { content: ''; position: absolute; z-index: 2; top: -10px; left: calc(50% - 40px); width: 80px; height: 22px; pointer-events: none; background: rgba(255, 255, 255, .55); box-shadow: 0 1px 2px rgba(0, 0, 0, .12); transform: rotate(-2deg); }
+:root:not([data-sk-posts="lines"]) .card[data-card="sticky"]::after { content: ''; position: absolute; right: 0; bottom: 0; width: 30px; height: 30px; pointer-events: none; background: linear-gradient(315deg, transparent 0 48%, rgba(0, 0, 0, .14) 50%, rgba(255, 255, 255, .55) 52%, color-mix(in srgb, var(--sk-accent) 20%, #fff7c0) 100%); }
+:root:not([data-sk-posts="lines"]) .card[data-card="sticky"] > .card-head { border-bottom: 0; font-family: var(--card-hand); font-size: 16px; }
+:root:not([data-sk-posts="lines"]) .card[data-card="sticky"] :is(.card-body, .card-title, .card-head strong, .card-date, .place-name, .list-body) { color: #2a2410; }
+
+/* Ticket: notches cut where it tears, a perforation, and a stub along the bottom. */
+:root:not([data-sk-posts="lines"]) .card[data-card="ticket"] { border: 0; border-radius: 6px; padding-bottom: 20px; background: radial-gradient(circle at 0 34px, transparent 11px, var(--card-paper) 11.5px) 0 0 / 51% 100% no-repeat, radial-gradient(circle at 100% 34px, transparent 11px, var(--card-paper) 11.5px) 100% 0 / 51% 100% no-repeat; filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .2)) drop-shadow(0 4px 6px rgba(0, 0, 0, .12)); }
+:root:not([data-sk-posts="lines"]) .card[data-card="ticket"] > .card-head { min-height: 22px; margin: 0 16px; padding-left: 0; padding-right: 0; border-bottom: 2px dashed color-mix(in srgb, var(--sk-ink) 30%, transparent); }
+:root:not([data-sk-posts="lines"]) .card[data-card="ticket"]::after { content: 'ADMIT ONE ★ ADMIT ONE ★ ADMIT ONE ★ ADMIT ONE ★ ADMIT ONE ★ ADMIT ONE'; position: absolute; left: 0; right: 0; bottom: 0; height: 18px; overflow: hidden; white-space: nowrap; font: bold 10px/18px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 2px; text-align: center; color: #ffffff; background: var(--sk-main); border-radius: 0 0 6px 6px; pointer-events: none; }
+
+/* Torn page: ripped along the bottom. */
+:root:not([data-sk-posts="lines"]) .card[data-card="torn"] { border: 0; border-radius: 2px; padding-bottom: 20px; background: linear-gradient(0deg, rgba(120, 90, 40, .28) 0 10px, rgba(120, 90, 40, .08) 18px, transparent 30px), linear-gradient(180deg, var(--card-paper), color-mix(in srgb, var(--card-paper) 90%, #c8b48a)); -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 13px) no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='14' viewBox='0 0 44 14'%3E%3Cpath d='M0 0h44v5l-4 7-5-8-3 9-6-7-4 8-4-9-5 7-3-8-6 9-4-6v3z'/%3E%3C/svg%3E") bottom / 44px 14px repeat-x; mask: linear-gradient(#000 0 0) top / 100% calc(100% - 13px) no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='14' viewBox='0 0 44 14'%3E%3Cpath d='M0 0h44v5l-4 7-5-8-3 9-6-7-4 8-4-9-5 7-3-8-6 9-4-6v3z'/%3E%3C/svg%3E") bottom / 44px 14px repeat-x; }
+:root:not([data-sk-posts="lines"]) .card[data-card="torn"] > .card-head { border-bottom: 1px solid rgba(0, 0, 0, .08); }
+
+/* Comic panel: heavy ink, a hard shadow, and halftone dots along the top. */
+:root:not([data-sk-posts="lines"]) .card[data-card="comic"] { border: 3px solid #111; border-radius: 2px; box-shadow: 6px 6px 0 #111; margin-right: 6px; background: var(--card-paper); }
+:root:not([data-sk-posts="lines"]) .card[data-card="comic"] > .card-head { background: radial-gradient(circle, color-mix(in srgb, var(--sk-accent) 70%, transparent) 1.5px, transparent 1.9px) 0 0 / 7px 7px, var(--sk-soft); border-bottom: 3px solid #111; text-transform: uppercase; letter-spacing: .6px; }
+:root:not([data-sk-posts="lines"]) .card[data-card="comic"] > .card-head strong { font: 900 13px/1 'Comic Neue', 'Comic Sans MS', sans-serif; color: #111; }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="comic"] { border-color: #f0f0f0; box-shadow: 6px 6px 0 #000; }
+
+/* Neon: a dark card glowing in the theme's accent. */
+:root:not([data-sk-posts="lines"]) .card[data-card="neon"] { border: 2px solid var(--sk-accent); border-radius: 10px; background: linear-gradient(180deg, #17142a, #0f0d1b); color: #f1eaff; box-shadow: 0 0 5px var(--sk-accent), 0 0 18px color-mix(in srgb, var(--sk-accent) 55%, transparent), inset 0 0 14px color-mix(in srgb, var(--sk-accent) 30%, transparent); }
+:root:not([data-sk-posts="lines"]) .card[data-card="neon"] > .card-head { border-bottom: 1px solid color-mix(in srgb, var(--sk-accent) 55%, transparent); }
+:root:not([data-sk-posts="lines"]) .card[data-card="neon"] :is(.card-head strong, .card-title, .place-name) { color: #ffffff; text-shadow: 0 0 6px var(--sk-accent), 0 0 12px var(--sk-accent); }
+:root:not([data-sk-posts="lines"]) .card[data-card="neon"] :is(.card-body, .list-body, .quote-body, figcaption, .card-date, .muted, .place-info, p, li, h3) { color: #e9e2fb; }
+
+/* Letter: soft writing paper, a handwritten heading, and a wax seal. */
+:root:not([data-sk-posts="lines"]) .card[data-card="letter"] { border: 0; border-radius: 3px; padding-bottom: 44px; background: linear-gradient(180deg, #fffdf6, #f8f0dc); box-shadow: 0 0 0 1px rgba(150, 120, 80, .2), 0 3px 8px rgba(80, 60, 30, .15); color: #3b2f22; }
+:root:not([data-sk-posts="lines"]) .card[data-card="letter"] > .card-head { border-bottom: 1px solid rgba(150, 120, 80, .25); font-family: var(--card-hand); font-size: 16px; }
+:root:not([data-sk-posts="lines"]) .card[data-card="letter"] :is(.card-body, .card-title, .card-head strong, .card-date, .place-name, .list-body, .quote-body) { color: #3b2f22; }
+:root:not([data-sk-posts="lines"]) .card[data-card="letter"]::after { content: ''; position: absolute; right: 14px; bottom: 6px; width: 38px; height: 38px; border-radius: 47% 53% 50% 50% / 52% 46% 54% 48%; pointer-events: none; background: var(--card-pic, none) center / 18px no-repeat, radial-gradient(circle at 36% 30%, color-mix(in srgb, var(--sk-main) 50%, #ffffff), var(--sk-main) 55%, color-mix(in srgb, var(--sk-main) 70%, #000000)); box-shadow: 0 2px 3px rgba(0, 0, 0, .3), inset 0 0 0 5px color-mix(in srgb, var(--sk-main) 80%, #000000); transform: rotate(-12deg); opacity: .95; }
+
+/* Film frame: a strip of film, sprocket holes along the top and bottom. */
+:root:not([data-sk-posts="lines"]) .card[data-card="film"] { border: 0; border-radius: 2px; padding: 18px 0; background: #fdfaf3; box-shadow: 0 0 0 4px #1b1b1b, 0 4px 10px rgba(0, 0, 0, .3); margin: 4px; }
+:root:not([data-sk-posts="lines"]) .card[data-card="film"]::before, :root:not([data-sk-posts="lines"]) .card[data-card="film"]::after { content: ''; position: absolute; left: 0; right: 0; height: 16px; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='16' viewBox='0 0 22 16'%3E%3Crect width='22' height='16' fill='%231b1b1b'/%3E%3Crect x='6' y='4' width='10' height='8' rx='2' fill='%23f6efdf'/%3E%3C/svg%3E") 0 0 / 22px 16px repeat-x; }
+:root:not([data-sk-posts="lines"]) .card[data-card="film"]::before { top: 0; }
+:root:not([data-sk-posts="lines"]) .card[data-card="film"]::after { bottom: 0; }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="film"] :is(.card-body, .card-title, .card-head strong, .place-name, .list-body) { color: #222; }
+
+/* 8-bit: stepped pixel corners, a solid title strip in the theme's colour. */
+:root:not([data-sk-posts="lines"]) .card[data-card="pixel"] { margin: 4px; border: 0; border-radius: 0; background: var(--card-paper); box-shadow: 0 -4px 0 0 #222, 0 4px 0 0 #222, -4px 0 0 0 #222, 4px 0 0 0 #222, inset -4px -4px 0 0 rgba(0, 0, 0, .14), inset 4px 4px 0 0 rgba(255, 255, 255, .55); }
+:root:not([data-sk-posts="lines"]) .card[data-card="pixel"] > .card-head { background: var(--sk-main); border-bottom: 4px solid #222; font-family: 'Pixelify Sans', monospace; }
+:root:not([data-sk-posts="lines"]) .card[data-card="pixel"] > .card-head :is(strong, .card-date) { color: var(--sk-bar-text, #ffffff); }
+
+/* Chrome glass: frosted, with a shine across it and a silvery edge. */
+:root:not([data-sk-posts="lines"]) .card[data-card="chrome"] { border: 0; border-radius: 14px; background: linear-gradient(135deg, rgba(255, 255, 255, .92), rgba(232, 238, 250, .72) 45%, rgba(255, 255, 255, .88)); -webkit-backdrop-filter: blur(6px) saturate(1.3); backdrop-filter: blur(6px) saturate(1.3); box-shadow: 0 0 0 1px rgba(150, 165, 205, .7), inset 0 1px 0 #ffffff, 0 8px 20px rgba(30, 40, 90, .18); }
+:root:not([data-sk-posts="lines"]) .card[data-card="chrome"]::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .55) 42%, transparent 52%); }
+:root:not([data-sk-posts="lines"]) .card[data-card="chrome"] > .card-head { background: linear-gradient(180deg, rgba(255, 255, 255, .75), rgba(255, 255, 255, .15)); border-bottom: 1px solid rgba(150, 165, 205, .45); }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="chrome"] { background: linear-gradient(135deg, rgba(60, 64, 80, .9), rgba(36, 38, 50, .78) 45%, rgba(60, 64, 80, .88)); box-shadow: 0 0 0 1px rgba(170, 180, 220, .5), inset 0 1px 0 rgba(255, 255, 255, .25), 0 8px 20px rgba(0, 0, 0, .4); }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="chrome"]::before { background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .12) 42%, transparent 52%); }
+
+/* ---------- ribbons ---------- */
+.card-ribbon { position: relative; z-index: 2; display: flex; margin: 8px 10px 2px; pointer-events: none; }
+.card-ribbon .rb-text { font: bold 12px/1.25 var(--font-xp-title, inherit); letter-spacing: .6px; overflow-wrap: anywhere; }
+/* Folded banner: notched ends, a fold behind each. */
+.rb-banner .rb-text { position: relative; padding: 5px 20px; color: var(--rb-text, #fff); background: var(--rb); text-transform: uppercase; clip-path: polygon(0 0, 100% 0, calc(100% - 9px) 50%, 100% 100%, 0 100%, 9px 50%); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .15); }
+/* Corner sash: across the top corner. */
+.card-ribbon.rb-sash { position: absolute; top: 18px; right: -42px; z-index: 4; margin: 0; width: 160px; justify-content: center; transform: rotate(35deg); }
+.rb-sash .rb-text { width: 100%; padding: 4px 0; text-align: center; color: var(--rb-text, #fff); background: var(--rb); text-transform: uppercase; font-size: 10px; box-shadow: 0 2px 4px rgba(0, 0, 0, .25); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card:has(> .rb-sash) { overflow: hidden !important; }
+.card:has(> .rb-sash) > .card-head { padding-right: 88px; }
+.card:has(> .rb-sticker) > .card-head { padding-right: 56px; }
+/* Rubber stamp: inked, at a slant. */
+.card-ribbon.rb-stamp { justify-content: flex-end; }
+.rb-stamp .rb-text { padding: 3px 10px; border: 3px double var(--rb); border-radius: 4px; color: var(--rb); font-family: 'Special Elite', 'Courier New', monospace; text-transform: uppercase; transform: rotate(-6deg); opacity: .9; -webkit-mask: radial-gradient(circle at 30% 40%, #000 60%, rgba(0, 0, 0, .75) 100%); }
+/* Neon sign. */
+.rb-neon .rb-text { padding: 5px 12px; border: 1.5px solid var(--rb); border-radius: 7px; color: #ffffff; background: #15121f; box-shadow: 0 0 8px var(--rb), inset 0 0 6px color-mix(in srgb, var(--rb) 60%, transparent); text-shadow: 0 0 4px var(--rb), 0 0 10px var(--rb); font-size: 13px; }
+/* Round sticker: a burst in the corner. */
+.card-ribbon.rb-sticker { position: absolute; z-index: 4; top: -12px; right: -8px; margin: 0; }
+.card:has(> .rb-sticker) { overflow: visible !important; }
+.rb-sticker .rb-text { display: grid; place-items: center; width: 62px; height: 62px; padding: 8px; box-sizing: border-box; text-align: center; font-size: 10px; line-height: 1.1; color: var(--rb-text, #fff); background: var(--rb); text-transform: uppercase; clip-path: polygon(50% 0, 61% 12%, 75% 6%, 79% 21%, 94% 25%, 88% 39%, 100% 50%, 88% 61%, 94% 75%, 79% 79%, 75% 94%, 61% 88%, 50% 100%, 39% 88%, 25% 94%, 21% 79%, 6% 75%, 12% 61%, 0 50%, 12% 39%, 6% 25%, 21% 21%, 25% 6%, 39% 12%); transform: rotate(12deg); }
+
+/* A post written on a festive day (or one of your own days), in that day's colours. */
+.card-festive { position: relative; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 8px 10px 2px; padding: 5px 10px; border-radius: 6px; color: #ffffff; text-shadow: 0 1px 2px rgba(0, 0, 0, .45); background: radial-gradient(circle, rgba(255, 255, 255, .35) 1px, transparent 1.6px) 0 0 / 11px 11px, linear-gradient(100deg, var(--f1), var(--f2) 55%, var(--f3)); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .12); }
+.card-festive .fr-pic { flex: none; width: 22px; height: 22px; background: center / contain no-repeat; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .3)); }
+.card-festive .fr-what { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; opacity: .9; }
+.card-festive .fr-name { font: bold 15px/1.1 var(--font-xp-title, inherit); }
+/* (A quiet day keeps it soft.) */
+.card-festive.quiet { color: var(--sk-ink); text-shadow: none; background: color-mix(in srgb, var(--f1) 16%, transparent); box-shadow: none; }
+[data-theme="dark"] .card-festive.quiet { color: #eee; }
+
+/* The mark in the corner: in the heading, by the date, like a postmark. */
+.card-corner { flex: none; width: 20px; height: 20px; margin-left: 6px; background: center / contain no-repeat; transform: rotate(-8deg); filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .2)); }
+.card-head > .card-corner { margin-left: auto; }
+.card-head > .card-corner + .card-date { margin-left: 6px; }
+.card > .card-corner { position: absolute; top: 6px; right: 8px; }
+
+@media (prefers-reduced-motion: reduce) { .card[data-card] { transform: none !important; } }
+@media print { .card[data-card] { transform: none !important; box-shadow: none !important; } }

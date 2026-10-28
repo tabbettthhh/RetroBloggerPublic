@@ -8,7 +8,8 @@ import { visaCard, visaLook, VISA_DESIGNS, VISA_STRIPS, VISA_EMBLEMS, VISA_WORLD
 import { customKeepsake, SHAPES, SHAPE_COLOURS } from '/js/keepsake-maker.js';
 import { viewFriends } from '/admin/friends.js';
 import { viewThemes } from '/admin/themes.js';
-import { OPTIONS, FONT_FAMILIES } from '/js/skins.js';
+import { OPTIONS, FONT_FAMILIES, resolveSkin } from '/js/skins.js';
+import { CARD_STYLES, RIBBONS, miniCard, ownRibbon } from '/js/card-dress.js';
 
 const panel = document.getElementById('panel');
 const tabsEl = document.querySelector('.admin-tabs');
@@ -178,6 +179,7 @@ function loadProblem(e, what) {
 function drawTabs() {
   const pending = data.pendingGuestbook.length;
   const sugg = data.suggestions.length;
+  const waitingComments = (data.pendingComments || []).length;
   const unread = unreadCount();
   document.title = (unread ? `(${unread}) ` : '') + 'Back office';
   const defs = [
@@ -186,6 +188,7 @@ function drawTabs() {
     ['friends', 'Friends'],
     ['posts', 'Posts'],
     ['new', editor && editor.key ? 'Edit post' : 'New post'],
+    ['comments', 'Comments', waitingComments],
     ['guestbook', 'Guestbook', pending],
     ['suggestions', 'Suggestions', sugg],
     ['site', 'Site & wishlist'],
@@ -213,7 +216,7 @@ function go(id, friend) {
 }
 
 function draw() {
-  const views = { notifications: viewNotifications, posts: viewPosts, new: viewEditor, guestbook: viewGuestbook, suggestions: viewSuggestions, status: () => viewSite('status'), friends: () => { const k = friendToOpen; friendToOpen = null; return viewFriends(friendsCtx, k); }, site: () => viewSite('site'), designs: viewDesigns, themes: () => viewThemes(themesCtx), travel: viewTravel, files: viewFiles };
+  const views = { notifications: viewNotifications, posts: viewPosts, new: viewEditor, guestbook: viewGuestbook, comments: viewComments, suggestions: viewSuggestions, status: () => viewSite('status'), friends: () => { const k = friendToOpen; friendToOpen = null; return viewFriends(friendsCtx, k); }, site: () => viewSite('site'), designs: viewDesigns, themes: () => viewThemes(themesCtx), travel: viewTravel, files: viewFiles };
   panel.replaceChildren(views[tab]());
 }
 
@@ -247,7 +250,15 @@ const stampNow = () => {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 };
 // The fields site.md can hold, kept as they are when only the status changes.
-const SITE_KEYS = ['name', 'owner', 'status', 'presence', 'status_updated', 'now_playing', 'countdown', 'countdown_date', 'countdown_icon', 'tagline'];
+const SITE_KEYS = ['name', 'owner', 'status', 'presence', 'status_updated', 'now_playing', 'countdown', 'countdown_date', 'countdown_icon', 'tagline', 'comments'];
+// Changes one setting in site.md, keeping everything else as it is.
+async function setSiteField(key, value) {
+  const siteRaw = await readFile('site.md');
+  const { head, body } = splitFM(siteRaw ?? '');
+  const fm = Object.fromEntries(SITE_KEYS.map((k) => [k, rawField(head, k)]));
+  fm[key] = value;
+  await putFile('site.md', frontMatter(fm) + body.trim() + '\n');
+}
 // Sets a new status (and adds it to the top of the past statuses), keeping everything else.
 async function setStatus(text) {
   const siteRaw = await readFile('site.md');
@@ -541,7 +552,7 @@ function draftBanner(inEditor = false) {
 }
 
 function newEditor(type) {
-  return { key: null, type, date: nowLocal(), title: '', body: '', draft: false, pinned: false, photos: [], removed: [], area: '', city: '', country: '', country_code: '', lat: null, lon: null, category: '', rating: null, would_return: false, weather: '', source: '', stamp: '', creator: '', year: '', episode: '', format: 'album', album: '', season: '', network: '', episodes: [], pages: '', page: '', reading_log: [], status: SHELF[type] ? SHELF[type].states[0][0] : '', recommend: false, rewatch: false, quote: '', suggested_by: '', font: '', floppy: [], floppy_journal: [], ordered: [], bought: [], tickets: [], rides: [], keep: {}, memory: '', extra: {}, raw: null };
+  return { key: null, type, date: nowLocal(), title: '', body: '', draft: false, pinned: false, photos: [], removed: [], area: '', city: '', country: '', country_code: '', lat: null, lon: null, category: '', rating: null, would_return: false, weather: '', source: '', stamp: '', creator: '', year: '', episode: '', format: 'album', album: '', season: '', network: '', episodes: [], pages: '', page: '', reading_log: [], status: SHELF[type] ? SHELF[type].states[0][0] : '', recommend: false, rewatch: false, quote: '', suggested_by: '', font: '', card: '', ribbon: '', ribbon_style: 'banner', ribbon_colour: '', floppy: [], floppy_journal: [], ordered: [], bought: [], tickets: [], rides: [], keep: {}, memory: '', extra: {}, raw: null };
 }
 
 async function edit(p) {
@@ -574,6 +585,10 @@ async function edit(p) {
     pinned: !!p.pinned,
     profile: !!p.profile,
     font: p.font || '',
+    card: p.card || '',
+    ribbon: p.ribbon || '',
+    ribbon_style: p.ribbon_style || 'banner',
+    ribbon_colour: p.ribbon_colour || '',
     photos: p.files.map((name, i) => ({ name, url: p.photos[i], caption: p.captions[i] || '', cover: i > 0 && i === p.grid_cover })),
     removed: [],
     area: p.area,
@@ -717,6 +732,11 @@ function buildText(s) {
   fm.draft = s.draft;
   fm.pinned = s.pinned;
   fm.font = s.font || null;
+  // How its card is dressed, and a ribbon of its own (only what's been chosen is written).
+  fm.card = s.card || null;
+  fm.ribbon = s.ribbon?.trim() || null;
+  fm.ribbon_style = fm.ribbon && s.ribbon_style && s.ribbon_style !== 'banner' ? s.ribbon_style : null;
+  fm.ribbon_colour = fm.ribbon && s.ribbon_colour ? s.ribbon_colour : null;
   fm.profile = s.profile && s.photos.length ? true : null;
   // The grid's thumbnail, when it isn't the first photo (it stays chosen even off the grid).
   const cover = kept.find((ph) => ph.cover);
@@ -1045,6 +1065,52 @@ function fontPicker(s, box) {
   );
   queueMicrotask(show);
   return h('div', { class: 'field' }, h('span', { class: 'label' }, 'Font for this post'), row, h('span', { class: 'hint' }, 'Write this one in a font of its own. Left on the site’s font, it follows your theme.'));
+}
+
+// How this post's card is dressed: a design of its own (or the theme's), and a ribbon of your own
+// words in one of the ribbon styles, in the theme's colour or one of your own. Shown as they'll
+// look, in the site's own card designs.
+function dressPicker(s) {
+  const t = resolveSkin(data.theme || {});
+  const box = h('div', { class: 'field dress' });
+  const preview = h('div');
+  const showRibbon = () => {
+    const rb = ownRibbon({ ribbon: s.ribbon, ribbon_style: s.ribbon_style, ribbon_colour: s.ribbon_colour }, t);
+    preview.replaceChildren(rb ? h('div', { class: 'card', 'data-card': s.card && s.card !== 'classic' ? s.card : null }, h('div', { class: 'card-head' }, h('strong', null, 'Preview')), rb, h('div', { class: 'card-body' }, 'Your post goes here.')) : h('span', { class: 'hint' }, 'Write a few words to see the ribbon.'));
+  };
+  const draw = () => {
+    const picks = [['', `The theme’s (${CARD_STYLES[t.card_style] || 'Classic'})`, t.card_style], ...Object.entries(CARD_STYLES).map(([id, name]) => [id, name, id])];
+    const grid = h(
+      'div',
+      { class: 'dress-grid', role: 'radiogroup', 'aria-label': 'Card design for this post' },
+      picks.map(([id, name, look]) => h('button', { type: 'button', role: 'radio', class: 'dress-pick' + ((s.card || '') === id ? ' on' : ''), 'aria-checked': String((s.card || '') === id), onclick: () => { s.card = id; draw(); } }, miniCard(look, t), h('small', null, name)))
+    );
+    const words = h('input', { class: 'input', value: s.ribbon || '', maxlength: 40, placeholder: 'e.g. Big news!', 'aria-label': 'Ribbon words' });
+    words.addEventListener('input', () => {
+      s.ribbon = words.value;
+      showRibbon();
+    });
+    const styles = h(
+      'div',
+      { class: 'chip-row', role: 'radiogroup', 'aria-label': 'Ribbon style' },
+      Object.entries(RIBBONS).map(([id, name]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-pressed': String((s.ribbon_style || 'banner') === id), onclick: () => { s.ribbon_style = id; draw(); } }, name))
+    );
+    const colour = h('input', { type: 'color', value: s.ribbon_colour || t.accent, 'aria-label': 'Ribbon colour' });
+    colour.addEventListener('input', () => {
+      s.ribbon_colour = colour.value;
+      showRibbon();
+    });
+    const themes = h('button', { type: 'button', class: 'btn small', disabled: !s.ribbon_colour, onclick: () => { s.ribbon_colour = ''; draw(); } }, 'The theme’s colour');
+    box.replaceChildren(
+      h('span', { class: 'label' }, 'Dress this post'),
+      grid,
+      h('span', { class: 'hint' }, 'A design of its own for this post’s card. Left on the theme’s, it follows Themes.'),
+      h('div', { class: 'dress-ribbon' }, h('span', { class: 'label' }, 'A ribbon (optional)'), words, styles, h('div', { class: 'row' }, colour, themes), preview)
+    );
+    showRibbon();
+  };
+  draw();
+  return box;
 }
 
 function field(label, input, hint) {
@@ -1736,6 +1802,7 @@ function viewEditor() {
   body.value = s.body;
   body.addEventListener('input', () => (s.body = body.value));
   wrap.append(fontPicker(s, body));
+  wrap.append(dressPicker(s));
   wrap.append(field(s.type === 'places' || SHELF[s.type] ? 'Review' : s.type === 'quotes' ? 'Quote' : 'Text', body, 'Markdown works: *italic*, **bold**, [links](https://…), "> " for a quote, "1." for a list.'));
 
   if (s.type === 'thoughts' || s.type === 'photos') wrap.append(memoryPicker(s, rerender));
@@ -2079,6 +2146,76 @@ async function fetchWeather(s, rerender, quiet) {
 
 // ---------- guestbook ----------
 
+// ---------- comments ----------
+// Visitors' comments on posts wait here (comments-pending/…) until approved, which moves them
+// onto the site (comments/…). Your reply is kept with the comment it answers.
+const postOfComment = (c) => data.posts.find((p) => `${p.type}/${p.slug}` === c.post);
+const approveComment = (c) => api(`move?key=${enc(c.key)}&to=${enc(c.key.replace(/^comments-pending\//, 'comments/'))}`, { method: 'POST' });
+function commentText(c, reply) {
+  return `---\nname: ${JSON.stringify(c.name)}\ndate: ${JSON.stringify(c.date)}\n${c.reply_to ? `reply_to: ${JSON.stringify(c.reply_to)}\n` : ''}${reply ? `reply: ${JSON.stringify(reply)}\n` : ''}---\n${c.message}\n`;
+}
+function viewComments() {
+  const act = async (fn, msg) => {
+    try {
+      await fn();
+      toast(msg);
+      await refresh();
+      draw();
+    } catch (e) {
+      toast(e.message, true);
+    }
+  };
+  const on = data.site?.comments !== false;
+  // What a comment is on, and what it answers.
+  const context = (c) => {
+    const post = postOfComment(c);
+    const parent = c.reply_to ? (data.approvedComments || []).find((x) => x.post === c.post && x.id === c.reply_to) : null;
+    return h(
+      'div',
+      { class: 'cm-context hint' },
+      'On ',
+      post ? h('b', null, post.title || (post.excerpt ? `“${post.excerpt.length > 50 ? post.excerpt.slice(0, 48) + '…' : post.excerpt}”` : 'a post')) : 'a post that’s gone',
+      parent ? [', replying to ', h('b', null, parent.name), ': “', parent.message.length > 80 ? parent.message.slice(0, 78) + '…' : parent.message, '”'] : null
+    );
+  };
+  const pending = (data.pendingComments || []).map((c) =>
+    h(
+      'div',
+      { class: 'gb-pending cm-admin' },
+      h('div', { class: 'row' }, h('strong', { class: 'grow' }, c.name), h('small', { class: 'hint' }, niceDate(c.date, true))),
+      context(c),
+      h('p', null, c.message),
+      h('div', { class: 'row end' }, h('button', { type: 'button', class: 'btn small danger', onclick: () => act(() => delFile(c.key), 'Deleted.') }, 'Delete'), h('button', { type: 'button', class: 'btn small go', onclick: () => act(() => approveComment(c), 'Approved. It is on the site now.') }, 'Approve'))
+    )
+  );
+  const approved = (data.approvedComments || []).map((c) => {
+    const reply = h('textarea', { class: 'textarea cm-reply', rows: 2, placeholder: 'Write a reply (optional): it shows under their comment, from you', 'aria-label': `Reply to ${c.name}` });
+    reply.value = c.reply || '';
+    return h(
+      'div',
+      { class: 'gb-pending cm-admin' },
+      h('div', { class: 'row' }, h('strong', { class: 'grow' }, c.name), h('small', { class: 'hint' }, niceDate(c.date, true))),
+      context(c),
+      h('p', null, c.message),
+      reply,
+      h('div', { class: 'row end' }, h('button', { type: 'button', class: 'btn small danger', onclick: () => act(() => delFile(c.key), 'Deleted.') }, 'Delete'), h('button', { type: 'button', class: 'btn small go', onclick: () => act(() => putFile(c.key, commentText(c, reply.value.trim())), reply.value.trim() ? 'Reply saved. It is on the site now.' : 'Reply removed.') }, 'Save reply'))
+    );
+  });
+  const toggle = h('input', { type: 'checkbox', checked: on });
+  toggle.addEventListener('change', () => act(() => setSiteField('comments', toggle.checked ? '' : 'off'), toggle.checked ? 'Comments are on.' : 'Comments are off: none show, and visitors can’t leave any.'));
+  return h(
+    'div',
+    { class: 'field' },
+    h('h2', { class: 'section-title' }, 'Comments'),
+    h('p', { class: 'hint' }, 'Visitors can comment on any post, or reply to a comment, with just a name (any name: nothing else about them is asked for or kept). Each one waits here until you approve it. Your replies show under the comment they answer.'),
+    h('label', { class: 'row check' }, toggle, h('span', null, h('b', null, 'Let visitors comment on posts'), h('small', { class: 'hint' }, ' (switch off to hide them all; nothing is deleted)'))),
+    h('h3', null, `Waiting for you (${pending.length})`),
+    pending.length ? pending : h('p', { class: 'hint' }, 'Nothing waiting.'),
+    h('h3', null, `On the site (${approved.length})`),
+    approved.length ? approved : h('p', { class: 'hint' }, 'No comments on the site yet.')
+  );
+}
+
 function gbText(name, date, reply, message) {
   return `---\nname: ${JSON.stringify(name)}\ndate: ${JSON.stringify(date)}\n${reply ? `reply: ${JSON.stringify(reply)}\n` : ''}---\n${message}\n`;
 }
@@ -2170,6 +2307,7 @@ function notifications() {
   const items = [];
   for (const sg of data.suggestions) items.push({ kind: 'suggestion', ts: utcTs(sg.date), sg });
   for (const g of data.pendingGuestbook) items.push({ kind: 'guestbook', ts: utcTs(g.date), g });
+  for (const c of data.pendingComments || []) items.push({ kind: 'comment', ts: utcTs(c.date), c });
   const log = [...(data.nudges?.log || [])].sort((a, b) => a - b);
   for (const t of log) {
     const last = items.findLast?.((x) => x.kind === 'nudge') ?? [...items].reverse().find((x) => x.kind === 'nudge');
@@ -2236,6 +2374,15 @@ function viewNotifications() {
       actions = [
         h('button', { type: 'button', class: 'btn small danger', onclick: () => act(() => delFile(g.key), 'Deleted.') }, 'Delete'),
         h('button', { type: 'button', class: 'btn small go', onclick: () => act(() => api(`move?key=${enc(g.key)}&to=${enc(g.key.replace('guestbook-pending/', 'guestbook/'))}`, { method: 'POST' }), 'Approved. It is on the site now.') }, 'Approve')
+      ];
+    } else if (n.kind === 'comment') {
+      const c = n.c;
+      const post = postOfComment(c);
+      title = h('span', null, h('b', null, c.name || 'Someone'), c.reply_to ? ' replied to a comment on ' : ' commented on ', h('b', null, post?.title || (post?.excerpt ? `“${post.excerpt.slice(0, 40)}${post.excerpt.length > 40 ? '…' : ''}”` : 'a post')));
+      body = h('p', null, c.message);
+      actions = [
+        h('button', { type: 'button', class: 'btn small danger', onclick: () => act(() => delFile(c.key), 'Deleted.') }, 'Delete'),
+        h('button', { type: 'button', class: 'btn small go', onclick: () => act(() => approveComment(c), 'Approved. It is on the site now.') }, 'Approve')
       ];
     } else if (n.kind === 'friendpost') {
       const fp = n.fp;
@@ -2421,7 +2568,9 @@ function viewSite(part = 'site') {
           countdown: cdLabel.value.trim() && cdDate.value ? cdLabel.value.trim() : '',
           countdown_date: cdLabel.value.trim() && cdDate.value ? cdDate.value : '',
           countdown_icon: cdLabel.value.trim() && cdDate.value ? cdIcon.value : '',
-          tagline: inputs.tagline.value.trim()
+          tagline: inputs.tagline.value.trim(),
+          // (Kept as it is: switched in the Comments tab.)
+          comments: data.site?.comments === false ? 'off' : ''
         };
         await putFile('site.md', frontMatter(fm) + about.value.trim() + '\n');
         // A new status goes to the top of the log (with any [book] filled in as it is today).

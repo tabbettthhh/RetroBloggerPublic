@@ -44,6 +44,8 @@ const before = (await overview()).posts.filter((p) => !p.error);
 const page = await adminPage();
 for (const p of before) {
   await test(`open and save unchanged: ${p.key}`, async () => {
+    // (The last save's refresh finishes first, so it can't redraw over the next editor.)
+    await page.waitForLoadState('networkidle');
     await page.locator('.admin-tabs button', { hasText: 'Posts' }).click();
     // Older posts are folded away by month: open every month so all the rows are there.
     await page.evaluate(() => document.querySelectorAll('.month-fold').forEach((d) => (d.open = true)));

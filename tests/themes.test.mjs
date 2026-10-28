@@ -992,6 +992,115 @@ await test('bold and loud themes: each with its own wallpaper, charm and touches
   await putFile('theme.md', '---\ntheme: classic\n---\n');
 });
 
+await test('behind the posts: layered with the theme, its pattern and the season, or as you choose', async () => {
+  const bg = (p) => p.evaluate(() => getComputedStyle(document.querySelector('.xp-phone .xp-body, .dw-xp .wbody')).backgroundImage);
+  // Layered (the usual): the season's drawings on top, a wash, then the theme's pattern.
+  await putFile('theme.md', '---\ntheme: bunny\nseasons: winter\n---\n');
+  await siteAt(async (p) => {
+    const b = await bg(p);
+    eq((b.match(/url\(/g) || []).length >= 2, true, 'the season’s drawings and the bunny pattern');
+    assert(b.includes('linear-gradient'), 'with a wash between');
+    const card = await p.evaluate(() => getComputedStyle(document.querySelector('.feed > .card:not(.memory)')).backgroundColor);
+    assert(/rgba\(255, 255, 255, 0\.8/.test(card), 'posts are frosted, so a little shows through: ' + card);
+  }, { desktop: false, reducedMotion: 'reduce' });
+  // Pattern only: no season drawings.
+  await putFile('theme.md', '---\ntheme: bunny\nseasons: winter\npage: pattern\n---\n');
+  await siteAt(async (p) => eq(((await bg(p)).match(/url\(/g) || []).length, 1, 'just the pattern'), { desktop: false, reducedMotion: 'reduce' });
+  // Classic (the sky has no pattern): soft dots on the theme's colours. And on a computer too.
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+  await siteAt(async (p) => assert((await bg(p)).includes('radial-gradient'), 'classic gets soft dots'), { reducedMotion: 'reduce' });
+  // Plain: white, as before.
+  await putFile('theme.md', '---\ntheme: bunny\npage: plain\n---\n');
+  await siteAt(async (p) => {
+    eq(await bg(p), 'none', 'plain white');
+    eq(await p.evaluate(() => getComputedStyle(document.querySelector('.feed > .card')).backgroundColor), 'rgb(255, 255, 255)', 'solid posts');
+  }, { desktop: false, reducedMotion: 'reduce' });
+  // Saved and checked by the server.
+  await putFile('theme.md', '---\ntheme: bunny\npage: wallpaper\npage_strength: strong\n---\n');
+  eq([(await publicData()).theme.page, (await publicData()).theme.page_strength], ['wallpaper', 'strong'], 'kept');
+  await putFile('theme.md', '---\ntheme: bunny\npage: nonsense\n---\n');
+  eq((await publicData()).theme.page, undefined, 'an unknown choice is dropped');
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+});
+
+await test('post cards: designs for every post or just one, ribbons of your own, festive ribbons and a corner mark', async () => {
+  const content = await import('../src/content.js');
+  const { RIBBONS } = await import('../public/js/card-dress.js');
+  eq(content.RIBBON_STYLES, Object.keys(RIBBONS), 'the server knows the same ribbons');
+  const p = content.buildPost('thoughts', 'thoughts/x.md', '---\ncard: Postcard\nribbon: "  Big news!  "\nribbon_style: stamp\nribbon_colour: "#FF0080"\n---\nHi\n', 'Europe/London');
+  eq([p.card, p.ribbon, p.ribbon_style, p.ribbon_colour], ['postcard', 'Big news!', 'stamp', '#ff0080'], 'read from the file');
+  const q = content.buildPost('thoughts', 'thoughts/y.md', '---\ncard: wobbly\nribbon_style: nope\nribbon_colour: red\nribbon: "' + 'x'.repeat(80) + '"\n---\nHi\n', 'Europe/London');
+  eq([q.card, q.ribbon.length, q.ribbon_style, q.ribbon_colour], ['', 40, 'banner', ''], 'odd values fall back');
+
+  const at = (d) => d + ' 12:00';
+  await putFile('thoughts/card-own.md', `---\ndate: ${at('2026-10-20')}\ntitle: Own card\ncard: postcard\nribbon: Big news!\nribbon_style: sticker\nribbon_colour: "#ffe14d"\n---\nHi.\n`);
+  await putFile('thoughts/card-theme.md', `---\ndate: ${at('2026-10-19')}\ntitle: Theme card\n---\nHi.\n`);
+  await putFile('thoughts/card-halloween.md', `---\ndate: ${at('2025-10-31')}\ntitle: Spooky\n---\nBoo.\n`);
+  await putFile('thoughts/card-ourday.md', `---\ndate: ${at('2026-06-01')}\ntitle: Cake\n---\nYum.\n`);
+  await putFile('theme.md', '---\ntheme: bunny\ncard_style: polaroid\ncard_corner: season\nfestivals: ["halloween"]\nmy_days: [{"name": "Our day", "from": "06-01", "to": "06-01", "what": "🎂"}]\n---\n');
+  const cardOf = (pg, title) => pg.locator('.feed > .card', { hasText: title });
+  await siteAt(async (pg) => {
+    await pg.goto(BASE + '/#/thoughts');
+    await pg.waitForSelector('.feed > .card');
+    eq(await cardOf(pg, 'Theme card').getAttribute('data-card'), 'polaroid', 'the theme’s design on every post');
+    eq(await cardOf(pg, 'Own card').getAttribute('data-card'), 'postcard', 'a post’s own design wins');
+    const rb = cardOf(pg, 'Own card').locator('.card-ribbon.rb-sticker');
+    eq(await rb.innerText(), 'BIG NEWS!', 'its ribbon');
+    eq(await rb.evaluate((e) => e.style.getPropertyValue('--rb-text')), '#2a2a2a', 'dark words on a light ribbon');
+    eq(await cardOf(pg, 'Theme card').locator('.card-ribbon').count(), 0, 'no ribbon unless you write one');
+    const halloween = cardOf(pg, 'Spooky').locator('.card-festive');
+    assert((await halloween.innerText()).includes('Halloween'), 'a post written on a ticked festive day gets its ribbon');
+    assert((await cardOf(pg, 'Cake').locator('.card-festive').innerText()).includes('Our day'), 'and one written on your own day');
+    eq(await cardOf(pg, 'Theme card').locator('.card-festive').count(), 0, 'an ordinary day doesn’t');
+    eq(await cardOf(pg, 'Spooky').locator('.card-head .card-corner').getAttribute('aria-label'), 'Written in autumn', 'the season it was written in, by the date');
+    eq(await cardOf(pg, 'Cake').locator('.card-corner').getAttribute('aria-label'), 'Written in summer', 'summer for June');
+    eq(await cardOf(pg, 'Theme card').evaluate((e) => getComputedStyle(e, '::after').content), '"19 Oct 2026"', 'a Polaroid writes its day along the bottom');
+  }, { desktop: false, reducedMotion: 'reduce' });
+  // Off, none, and posts as a list with lines stay plain.
+  await putFile('theme.md', '---\ntheme: bunny\ncard_style: neon\ncard_festive: off\nposts: lines\nfestivals: ["halloween"]\n---\n');
+  await siteAt(async (pg) => {
+    await pg.goto(BASE + '/#/thoughts');
+    await pg.waitForSelector('.feed > .card');
+    eq(await pg.locator('.card-festive').count(), 0, 'festive ribbons off');
+    eq(await pg.locator('.card-corner').count(), 0, 'no corner mark');
+    eq(await cardOf(pg, 'Theme card').evaluate((e) => getComputedStyle(e).boxShadow), 'none', 'as a list, posts stay plain');
+  }, { desktop: false, reducedMotion: 'reduce' });
+  // Every design draws (light and dark) without a hitch.
+  for (const style of Object.keys((await import('../public/js/skins.js')).OPTIONS.card_style.choices)) {
+    await putFile('theme.md', `---\ntheme: classic\ncard_style: ${style}\n---\n`);
+    await siteAt(async (pg) => {
+      await pg.goto(BASE + '/#/thoughts');
+      await pg.waitForSelector('.feed > .card');
+      eq(await cardOf(pg, 'Theme card').getAttribute('data-card'), style === 'classic' ? null : style, style);
+    }, { desktop: true, reducedMotion: 'reduce' });
+  }
+  // Chosen in the editor: a post's own design and ribbon are saved in its file.
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+  const page = await adminPage();
+  await newPost(page, 'Thought');
+  await page.locator('textarea').first().fill('Dressed up.');
+  await page.locator('.dress-pick', { hasText: 'Comic panel' }).click();
+  await page.getByRole('textbox', { name: 'Ribbon words' }).fill('Hot take');
+  await page.locator('.dress .chip-btn', { hasText: 'Neon sign' }).click();
+  eq(await page.locator('.dress-ribbon .card-ribbon.rb-neon').innerText(), 'Hot take', 'previewed as you type');
+  await page.locator('button', { hasText: /^Publish/ }).first().click();
+  await page.waitForFunction(() => document.querySelector('.toast:not([hidden])'));
+  const saved = (await publicData()).posts.find((x) => x.ribbon === 'Hot take');
+  eq([saved?.card, saved?.ribbon_style], ['comic', 'neon'], 'saved with the post');
+  // And for every post, in Themes.
+  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await page.waitForSelector('.tm-own');
+  if (!(await page.locator('.tm-own').evaluate((e) => e.open))) await page.locator('.tm-own summary').click();
+  await page.locator('.tm-tab', { hasText: 'Post cards' }).click();
+  await page.locator('.tm-tabpanel .dress-pick', { hasText: 'Scrapbook' }).click();
+  await page.locator('button', { hasText: 'Save the theme' }).click();
+  await page.waitForFunction(() => !document.querySelector('.tm-savebar.unsaved'));
+  eq((await publicData()).theme.card_style, 'scrapbook', 'every post’s card, saved');
+  assert(!page.errors.length, page.errors.join('; '));
+  await page.close();
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+});
+
 const failed = report();
 await close();
 process.exit(failed ? 1 : 0);

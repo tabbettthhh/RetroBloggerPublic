@@ -1,0 +1,48 @@
+/* ---------- comments (see comments.js) ---------- */
+.comments { margin: 4px 0 12px; padding: 12px 12px 14px; border: 1px solid var(--sk-line, #c7c3ae); border-radius: 6px; background: var(--card-paper, #fff); color: var(--card-text, #222); }
+.cm-title { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font: bold 15px/1.2 var(--font-xp-title, inherit); color: var(--sk-bar, #0054e3); }
+.cm-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.cm-list.replies { margin: 8px 0 0 18px; padding-left: 10px; border-left: 3px solid var(--sk-soft, #cfe6cf); }
+.cm-item { padding: 8px 10px; border-radius: 8px; background: color-mix(in srgb, var(--sk-soft, #cfe6cf) 30%, transparent); }
+.cm-list.replies .cm-item { background: transparent; padding: 4px 0 0 4px; }
+.cm-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.cm-head small { color: #777; font-size: 11px; }
+.cm-avatar { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font: bold 12px/1 var(--font-xp-title, inherit); color: #fff; background: var(--sk-accent, #3a9a3a); flex: none; }
+.cm-avatar.owner { background: var(--sk-main, #0054e3); }
+.cm-text { margin: 6px 0 2px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; }
+.cm-owner { margin: 8px 0 0 14px; padding: 6px 10px; border-left: 3px solid var(--sk-main, #0054e3); border-radius: 0 6px 6px 0; background: color-mix(in srgb, var(--sk-main, #0054e3) 8%, transparent); }
+.cm-badge { padding: 1px 6px; border-radius: 8px; color: #fff !important; background: var(--sk-main, #0054e3); }
+.cm-reply-btn { margin-top: 4px; padding: 0; border: 0; background: none; color: var(--sk-bar, #0054e3); font: inherit; font-size: 12px; cursor: pointer; text-decoration: underline; }
+.cm-empty { margin: 0 0 6px; color: #777; font-style: italic; }
+.cm-leave { margin: 14px 0 6px; font-size: 13px; }
+.cm-form { display: grid; gap: 8px; }
+.cm-form.reply { margin-top: 8px; padding: 8px; border: 1px dashed var(--sk-line, #c7c3ae); border-radius: 6px; }
+.cm-label { display: grid; gap: 3px; font-size: 12px; font-weight: bold; }
+.cm-input { width: 100%; box-sizing: border-box; padding: 7px 8px; border: 1px solid #a5acb5; border-radius: 4px; background: #fff; color: #222; font: inherit; font-weight: normal; }
+textarea.cm-input { resize: vertical; min-height: 64px; }
+.cm-trap { position: absolute !important; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.cm-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.cm-hint { color: #777; font-size: 11px; flex: 1 1 200px; }
+.cm-note { margin: 0; color: #b0302a; font-size: 12px; }
+.cm-note:empty { display: none; }
+.cm-thanks { margin: 6px 0 0; padding: 8px 10px; border-radius: 6px; background: color-mix(in srgb, var(--sk-accent, #3a9a3a) 15%, transparent); font-weight: bold; }
+[data-theme="dark"] .cm-input { background: #1b1b1b; color: #eee; border-color: #555; }
+[data-theme="dark"] :is(.cm-head small, .cm-hint, .cm-empty) { color: #aaa; }
+[data-theme="dark"] .cm-title { color: #8fb4ff; }
+[data-theme="dark"] .cm-reply-btn { color: #8fb4ff; }
+
+/* On a card in the feed: how many comments. */
+.card > .card-comments { display: inline-flex; align-items: center; gap: 5px; margin: 0 10px 8px; padding: 2px 9px; border-radius: 10px; font-size: 12px; text-decoration: none; color: var(--sk-bar, #0054e3); background: color-mix(in srgb, var(--sk-soft, #cfe6cf) 45%, transparent); }
+.card > .card-comments:hover { text-decoration: underline; }
+.card[data-card="neon"] > .card-comments { color: #fff; }
+[data-theme="dark"] .card > .card-comments { color: #8fb4ff; }
+
+/* In a little window (for the journal and the shelves). */
+.cm-dialog { width: min(560px, calc(100vw - 24px)); max-height: calc(100dvh - 40px); padding: 0; border: 0; border-radius: 10px; background: transparent; overflow: visible; }
+.cm-dialog::backdrop { background: rgba(0, 0, 0, .45); }
+.cm-dialog-body { max-height: calc(100dvh - 40px); overflow: auto; border-radius: 10px; }
+.cm-dialog .comments { margin: 0; box-shadow: 0 10px 30px rgba(0, 0, 0, .4); }
+.cm-close { position: absolute; top: -12px; right: -8px; z-index: 2; width: 30px; height: 30px; border: 2px solid #fff; border-radius: 50%; color: #fff; background: #d6443a; font: bold 18px/1 sans-serif; cursor: pointer; }
+.shelf-comments { display: flex; justify-content: center; margin: 10px 0; }
+.cm-open { display: inline-flex; align-items: center; gap: 5px; }
+.journal-links .cm-open { font-size: 12px; }
