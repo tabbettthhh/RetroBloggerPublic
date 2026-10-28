@@ -9,7 +9,7 @@ import { customKeepsake, SHAPES, SHAPE_COLOURS } from '/js/keepsake-maker.js';
 import { viewFriends } from '/admin/friends.js';
 import { viewThemes } from '/admin/themes.js';
 import { OPTIONS, FONT_FAMILIES, resolveSkin } from '/js/skins.js';
-import { CARD_STYLES, RIBBONS, miniCard, ownRibbon, ensureOwnCardsCss } from '/js/card-dress.js';
+import { CARD_STYLES, RIBBONS, miniCard, mixMini, themeCard, ownRibbon, ensureOwnCardsCss } from '/js/card-dress.js';
 
 const panel = document.getElementById('panel');
 const tabsEl = document.querySelector('.admin-tabs');
@@ -1082,11 +1082,15 @@ function dressPicker(s) {
     // (Your own cards too, made in Themes › Post cards.)
     ensureOwnCardsCss(t);
     const ownName = (id) => t.cards.find((c) => c.id === id)?.name;
-    const picks = [['', `The theme’s (${CARD_STYLES[t.card_style] || ownName(t.card_style) || 'Classic'})`, t.card_style], ...Object.entries(CARD_STYLES).map(([id, name]) => [id, name, id]), ...t.cards.map((c) => [c.id, c.name, c.id])];
+    // (Mixed at random: the design this post draws, once it's saved and has its name.)
+    const mixing = t.card_style === 'mix';
+    const drawn = mixing && s.key ? themeCard({ type: s.type, slug: s.key.split('/').pop().replace(/\.md$/i, '') }, t) : '';
+    const theirs = mixing ? (drawn ? `mixed: ${CARD_STYLES[drawn] || ownName(drawn)}` : 'mixed at random') : CARD_STYLES[t.card_style] || ownName(t.card_style) || 'Classic';
+    const picks = [['', `The theme’s (${theirs})`, mixing ? drawn || 'mix' : t.card_style], ...Object.entries(CARD_STYLES).map(([id, name]) => [id, name, id]), ...t.cards.map((c) => [c.id, c.name, c.id])];
     const grid = h(
       'div',
       { class: 'dress-grid', role: 'radiogroup', 'aria-label': 'Card design for this post' },
-      picks.map(([id, name, look]) => h('button', { type: 'button', role: 'radio', class: 'dress-pick' + ((s.card || '') === id ? ' on' : ''), 'aria-checked': String((s.card || '') === id), onclick: () => { s.card = id; draw(); } }, miniCard(look, t), h('small', null, name)))
+      picks.map(([id, name, look]) => h('button', { type: 'button', role: 'radio', class: 'dress-pick' + ((s.card || '') === id ? ' on' : ''), 'aria-checked': String((s.card || '') === id), onclick: () => { s.card = id; draw(); } }, look === 'mix' ? mixMini(t) : miniCard(look, t), h('small', null, name)))
     );
     const words = h('input', { class: 'input', value: s.ribbon || '', maxlength: 40, placeholder: 'e.g. Big news!', 'aria-label': 'Ribbon words' });
     words.addEventListener('input', () => {

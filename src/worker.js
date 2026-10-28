@@ -449,6 +449,7 @@ async function apiAll(request, env, ctx) {
     const pals = await friends.publicFriends(env).catch(() => ({ buddies: [], posts: [] }));
     data.buddies = pals.buddies;
     data.friendPosts = pals.posts;
+    data.friendLooks = pals.looks || {};
     // (Their keepsake designs and place categories, for drawing their posts as on their site.)
     data.friendKeepsakes = pals.keepsakes || [];
     data.friendCategories = pals.categories || [];

@@ -22,7 +22,8 @@
 // - Secrets and copies of feeds live under data/_ in your bucket, which the file list, the
 //   export and visitors never see.
 
-import { safeMarkdown, buildPost, TYPES, THEME_OPTIONS, KEEPSAKE_SHAPES } from './content.js';
+import { safeMarkdown, buildPost, TYPES, THEME_OPTIONS, KEEPSAKE_SHAPES, THEMES, THEME_CHARMS } from './content.js';
+import { cleanCards, OWN_CARD, MIX, cleanMix, cleanSeed } from '../public/js/card-parts.js';
 
 const STORE = 'data/_friends.json';
 // A fingerprint of the feed your friends last heard about.
@@ -309,6 +310,9 @@ export function friendFeed(data, origin) {
     })),
     // Your own keepsake designs (their pictures stay on your site) and place categories.
     keepsakes: (data.keepsakes?.custom || []).map(({ picture, ...d }) => d),
+    // How your post cards look: the card you chose (or your mix), your colours and charm, and the
+    // cards you've made, so your posts wear them on your friends' sites too.
+    cards_look: cardLook(data.theme),
     categories: data.categories || []
   };
 }
@@ -372,8 +376,8 @@ function fullFrom(p, friend, id) {
   const ck = out.custom_keepsakes && typeof out.custom_keepsakes === 'object' ? out.custom_keepsakes : {};
   out.custom_keepsakes = Object.fromEntries(Object.entries(ck).filter(([, lines]) => Array.isArray(lines)).slice(0, 20).map(([k, lines]) => [designId(friend, k), lines]));
   if (!FONTS.has(out.font)) out.font = '';
-  // (A card of their own making is theirs: here it's drawn in your theme's card.)
-  if (/^c\d+$/.test(out.card)) out.card = '';
+  // (A card of their own making is drawn from their cards_look; see publicFriends.)
+  if (!OWN_CARD.test(out.card) && !THEME_OPTIONS.card_style.includes(out.card)) out.card = '';
   out.category = /^[a-z0-9-]{0,30}$/.test(out.category) ? out.category : '';
   out.slug = (/^[a-z0-9][a-z0-9._-]{0,120}$/i.test(String(p.full.slug || '')) ? String(p.full.slug) : id.split('/')[1] || 'post').slice(0, 120);
   out.type = type;
@@ -392,6 +396,24 @@ function categoriesFrom(list) {
     .slice(0, 60)
     .filter((c) => c && /^[a-z0-9-]{1,30}$/.test(String(c.key || '')))
     .map((c) => ({ key: c.key, label: words(clean(c.label, 30)) || c.key, color: /^#[0-9a-f]{6}$/i.test(String(c.color || '')) ? c.color : '' }));
+}
+
+// The part of a theme that dresses post cards: the theme, its colours and charm, the card for
+// every post (or "mix", with the designs in it and the shuffle), and cards of your own. Only
+// known choices and plain colours; the same on the way out and on the way in.
+export function cardLook(theme) {
+  const t = theme && typeof theme === 'object' ? theme : {};
+  const hex = (v) => (/^#[0-9a-f]{6}$/i.test(String(v ?? '')) ? String(v).toLowerCase() : '');
+  const out = { theme: THEMES.includes(t.theme) ? t.theme : 'classic' };
+  for (const k of ['main', 'accent']) if (hex(t[k])) out[k] = hex(t[k]);
+  if (THEME_CHARMS.includes(t.decoration)) out.decoration = t.decoration;
+  const cards = cleanCards(t.cards, THEME_OPTIONS.title_font);
+  if (cards.length) out.cards = cards;
+  if (t.card_style === MIX || THEME_OPTIONS.card_style.includes(t.card_style) || cards.some((c) => c.id === t.card_style)) out.card_style = t.card_style;
+  const mix = cleanMix(t.card_mix, THEME_OPTIONS.card_style, cards);
+  if (mix.length) out.card_mix = mix;
+  if (cleanSeed(t.card_seed)) out.card_seed = cleanSeed(t.card_seed);
+  return out;
 }
 
 // Tidies a feed from a friend's site before keeping it: plain values only, sizes capped.
@@ -426,7 +448,9 @@ export function tidyFeed(f, friend) {
     share: f?.share !== false,
     posts,
     keepsakes: designsFrom(f?.keepsakes, friend),
-    categories: categoriesFrom(f?.categories)
+    categories: categoriesFrom(f?.categories),
+    // (Their post cards, from a site new enough to send them.)
+    cards_look: f?.cards_look && typeof f.cards_look === 'object' && !Array.isArray(f.cards_look) ? cardLook(f.cards_look) : null
   };
 }
 
@@ -632,12 +656,14 @@ export async function friendPhoto(env, key, photoKey) {
 // site (see friendPhotoForVisitor), as the site only ever loads pictures from itself.
 export async function publicFriends(env) {
   const store = await loadFriends(env);
-  if (store.visibility === 'off' || !store.friends.length) return { buddies: [], posts: [], postsShown: store.visibility === 'all' };
+  if (store.visibility === 'off' || !store.friends.length) return { buddies: [], posts: [], looks: {}, postsShown: store.visibility === 'all' };
   const caches = await Promise.all(store.friends.map((f) => readCache(env, f.key)));
   const buddies = [];
   const posts = [];
   const keepsakes = [];
   const categories = [];
+  // Each friend's post cards, once (their posts name theirs as f0, f1…).
+  const looks = {};
   store.friends.forEach((f, i) => {
     const c = caches[i];
     const feed = c?.feed;
@@ -647,15 +673,20 @@ export async function publicFriends(env) {
     if (!postsShown(store, feed)) return;
     keepsakes.push(...(feed?.keepsakes || []));
     categories.push(...(feed?.categories || []));
+    const look = feed?.cards_look ? `f${i}` : '';
+    if (look) looks[look] = feed.cards_look;
+    const from = look ? { ...who, look } : who;
     for (const p of feed?.posts || []) {
       const photos = p.photos.map((k) => `/friends-media/${encodeURIComponent(f.key)}/${k.split('/').map(encodeURIComponent).join('/')}`);
       // (In full: drawn as it looks on their site, with these photos and their own writing.)
       const full = p.full ? { ...p.full, title: words(p.title), date: words(p.date), ts: p.ts, html: p.html, excerpt: p.excerpt, photos, captions: p.captions || [] } : null;
-      posts.push({ ...p, friend: who, photos, full });
+      // (A card of their own making, from a site that didn't send its cards: the theme's here.)
+      if (full && !look && OWN_CARD.test(full.card || '')) full.card = '';
+      posts.push({ ...p, friend: from, photos, full });
     }
   });
   posts.sort((a, b) => b.ts - a.ts);
-  return { buddies, posts: posts.slice(0, 60), keepsakes, categories, postsShown: store.visibility === 'all' };
+  return { buddies, posts: posts.slice(0, 60), keepsakes, categories, looks, postsShown: store.visibility === 'all' };
 }
 
 async function readCache(env, key) {

@@ -4,8 +4,8 @@
 // profile header, the menu, the taskbar and scroll bars, icons and sounds, charms, the pointer
 // and stickers. Saved as theme.md, which can be downloaded, shared and installed.
 import { h } from '/js/util.js';
-import { CARD_STYLES, miniCard, isOwnCard, ensureOwnCardsCss } from '/js/card-dress.js';
-import { CARD_PARTS, CARD_COLOURS, MAX_CARDS, cleanCards, nextCardId } from '/js/card-parts.js';
+import { CARD_STYLES, miniCard, mixMini, isOwnCard, ensureOwnCardsCss } from '/js/card-dress.js';
+import { CARD_PARTS, CARD_COLOURS, MAX_CARDS, cleanCards, nextCardId, MIX, MAX_SEED, cleanMix, cleanSeed } from '/js/card-parts.js';
 import { SKINS, SKIN_GROUPS, WALLPAPERS, CHARMS, CHARM_NAMES, resolveSkin, wallpaperCss, charmUrl, pointerSvgs, themeColour, TITLE_STOPS, inks, mix, emojiList, EMOJI_LAYOUTS, STICKER_SPOTS, STICKER_SIZES, OPTIONS, HIDEABLE, SECTIONS, DEFAULT_MENU, FONT_FAMILIES, APPS, APP_LOOKS, APP_EXTRAS, cleanApps, hexHsl, hslHex, SEASONS, FESTIVALS, FALLING_CHOICES, cleanMyDays, MAX_MY_DAYS, cleanFestivalDates, nextFestival, LABELS, LABEL_GROUPS, cleanLabels, GLASS_PLACES, SCENERY_PLACES, lookOf, cleanLooks, MAX_LOOK_CHARMS, seasonOf } from '/js/skins.js';
 import { FLOPPY_PIECES, FLOPPY_DRESS, outfitFor, dressFloppy, cleanFloppy } from '/js/floppy-look.js';
 import { FLOPPY } from '/js/helper.js';
@@ -35,7 +35,7 @@ const MAX_STICKERS = 16;
 // Emoji to start from (any emoji from the keyboard works too).
 const SUGGESTED = ['⚪', '⚫', '🤍', '🖤', '🤎', '◽', '➕', '✳️', '〰️', '🌿', '☕', '📎', '📌', '🕯️', '🪴', '🐰', '🎀', '💖', '✨', '🌈', '⭐', '🍓', '🌸', '☁️', '🫧', '🍄', '🦋', '🐸', '🧋', '🍑', '🌙', '💫', '🍒', '🌼', '🐻', '🐱', '🍰', '🎧', '💿', '📼', '🪐', '🌷', '🧸', '💌', '🫶'];
 const DOODLES = Object.keys(CHARM_NAMES).filter((k) => !['none', 'ears', 'plain'].includes(k));
-const blank = () => ({ theme: 'classic', ...Object.fromEntries(PARTS.map((k) => [k, ''])), picture: '', file: null, blob: '', emoji: '', emoji_layout: '', cards: [], stickers: [], hide: [], menu: null, sections_hidden: [], apps: {}, festivals: [], my_days: [], festival_dates: {}, labels: {}, glass: [], looks: {}, floppy: { dress: 'off', colour: 'classic', own: {} } });
+const blank = () => ({ theme: 'classic', ...Object.fromEntries(PARTS.map((k) => [k, ''])), picture: '', file: null, blob: '', emoji: '', emoji_layout: '', cards: [], card_mix: [], card_seed: 0, stickers: [], hide: [], menu: null, sections_hidden: [], apps: {}, festivals: [], my_days: [], festival_dates: {}, labels: {}, glass: [], looks: {}, floppy: { dress: 'off', colour: 'classic', own: {} } });
 
 // What goes in theme.md: the theme's name, and only the parts you've changed.
 function themeFile(d) {
@@ -50,6 +50,10 @@ function themeFile(d) {
   const cards = cleanCards(d.cards, Object.keys(OPTIONS.title_font.choices));
   if (cards.length) out.cards = cards;
   if (/^c\d+$/.test(out.card_style || '') && !cards.some((c) => c.id === out.card_style)) delete out.card_style;
+  // (Mixed at random: the designs ticked, and the shuffle.)
+  const mixed = cleanMix(d.card_mix, Object.keys(CARD_STYLES), cards);
+  if (mixed.length) out.card_mix = mixed;
+  if (cleanSeed(d.card_seed)) out.card_seed = cleanSeed(d.card_seed);
   if (d.stickers?.length) out.stickers = d.stickers.map(({ what, where, size, tilt, x, y }) => (where === 'desktop' ? { what, where, size, tilt, x, y } : { what, where, size, tilt }));
   if (d.hide?.length) out.hide = [...d.hide];
   if (d.menu && JSON.stringify(d.menu) !== JSON.stringify(DEFAULT_MENU)) out.menu = [...d.menu];
@@ -73,7 +77,7 @@ function themeFile(d) {
 
 // A draft to edit, from theme.md's settings (saved, or from a theme file being installed).
 function fromSettings(st) {
-  return { ...blank(), theme: st.theme in SKINS ? st.theme : 'classic', ...Object.fromEntries(PARTS.map((k) => [k, st[k] || ''])), picture: st.picture || '', emoji: st.emoji || '', emoji_layout: st.emoji_layout || '', cards: JSON.parse(JSON.stringify(st.cards || [])), stickers: (st.stickers || []).map((x) => ({ x: 50, y: 50, ...x })), hide: [...(st.hide || [])], menu: st.menu ? [...st.menu] : null, sections_hidden: [...(st.sections_hidden || [])], apps: JSON.parse(JSON.stringify(st.apps || {})), festivals: [...(st.festivals || [])], my_days: JSON.parse(JSON.stringify(st.my_days || [])), festival_dates: JSON.parse(JSON.stringify(st.festival_dates || {})), labels: { ...(st.labels || {}) }, glass: [...(st.glass || [])], looks: JSON.parse(JSON.stringify(st.looks || {})), floppy: JSON.parse(JSON.stringify(st.floppy || { dress: 'off', colour: 'classic', own: {} })) };
+  return { ...blank(), theme: st.theme in SKINS ? st.theme : 'classic', ...Object.fromEntries(PARTS.map((k) => [k, st[k] || ''])), picture: st.picture || '', emoji: st.emoji || '', emoji_layout: st.emoji_layout || '', cards: JSON.parse(JSON.stringify(st.cards || [])), card_mix: [...(st.card_mix || [])], card_seed: st.card_seed || 0, stickers: (st.stickers || []).map((x) => ({ x: 50, y: 50, ...x })), hide: [...(st.hide || [])], menu: st.menu ? [...st.menu] : null, sections_hidden: [...(st.sections_hidden || [])], apps: JSON.parse(JSON.stringify(st.apps || {})), festivals: [...(st.festivals || [])], my_days: JSON.parse(JSON.stringify(st.my_days || [])), festival_dates: JSON.parse(JSON.stringify(st.festival_dates || {})), labels: { ...(st.labels || {}) }, glass: [...(st.glass || [])], looks: JSON.parse(JSON.stringify(st.looks || {})), floppy: JSON.parse(JSON.stringify(st.floppy || { dress: 'off', colour: 'classic', own: {} })) };
 }
 // theme.md as text: colours, emoji and lists in quotes or as JSON (which is valid YAML).
 function themeText(file) {
@@ -253,7 +257,7 @@ function themeControls(ctx, saved, redraw, preview) {
         'button',
         { type: 'button', role: 'radio', 'aria-checked': String(on), class: 'tm-card' + (on ? ' on' : ''), style: st.pointer !== 'none' ? { cursor: `${pointerSvgs(st).arrow} 3 3, pointer` } : null, onclick: () => {
           // A new theme brings all of its own parts (your stickers and emoji stay).
-          draft = { ...blank(), theme: id, picture: d.picture, file: d.file, blob: d.blob, emoji: d.emoji, emoji_layout: d.emoji_layout, stickers: d.stickers, cards: d.cards, hide: d.hide, menu: d.menu, sections_hidden: d.sections_hidden, apps: d.apps, festivals: d.festivals, my_days: d.my_days, festival_dates: d.festival_dates, labels: d.labels, glass: d.glass, looks: d.looks, floppy: d.floppy, ...Object.fromEntries(KEEP_ON_SWITCH.map((k) => [k, d[k]])) };
+          draft = { ...blank(), theme: id, picture: d.picture, file: d.file, blob: d.blob, emoji: d.emoji, emoji_layout: d.emoji_layout, stickers: d.stickers, cards: d.cards, card_mix: d.card_mix, card_seed: d.card_seed, ...(d.card_style === MIX ? { card_style: MIX } : {}), hide: d.hide, menu: d.menu, sections_hidden: d.sections_hidden, apps: d.apps, festivals: d.festivals, my_days: d.my_days, festival_dates: d.festival_dates, labels: d.labels, glass: d.glass, looks: d.looks, floppy: d.floppy, ...Object.fromEntries(KEEP_ON_SWITCH.map((k) => [k, d[k]])) };
           redraw();
         } },
         mini(st),
@@ -360,11 +364,7 @@ function themeControls(ctx, saved, redraw, preview) {
     words: ['Fonts', () => [opt('font', { font: true }), opt('title_font', { font: true }), opt('text_size')]],
     shapes: ['Bars & corners', () => [opt('bars'), opt('corners'), h('p', { class: 'hint' }, 'Bar styles show in light mode; dark mode keeps its own dark bars.')]],
     cards: ['Post cards', () => [
-      h('div', { class: 'design-field wide' }, h('span', null, 'Every post’s card'), h(
-        'div',
-        { class: 'dress-grid', role: 'radiogroup', 'aria-label': 'Post cards' },
-        [...Object.entries(CARD_STYLES), ...t.cards.map((c) => [c.id, c.name])].map(([id, name]) => h('button', { type: 'button', role: 'radio', class: 'dress-pick' + (t.card_style === id ? ' on' : ''), 'aria-checked': String(t.card_style === id), onclick: () => { d.card_style = id; redraw(); } }, miniCard(id, t), h('small', null, name)))
-      )),
+      cardChoice(d, t, redraw),
       cardMaker(d, t, redraw),
       opt('card_festive'),
       opt('card_corner'),
@@ -1317,6 +1317,61 @@ function floppyControls(d, t, redraw) {
     chips(FLOPPY_PIECES.colour.name, f.colour || 'classic', FLOPPY_PIECES.colour.choices, (v) => (f.colour = v)),
     f.colour === 'own' ? h('label', { class: 'colour-pick' }, colour, h('span', null, 'His colour')) : null
   ].flat();
+}
+
+// ---------- every post's card ----------
+// One design for every post, or mixed at random: each post draws one of the designs ticked (the
+// site's and your own) and keeps it, and Shuffle deals them out again. Either way, a post dressed
+// in a design of its own (Dress this post) keeps it.
+function cardChoice(d, t, redraw) {
+  const mixing = t.card_style === MIX;
+  const designs = [...Object.entries(CARD_STYLES), ...t.cards.map((c) => [c.id, c.name])];
+  const single = mixing ? (CARD_STYLES[SKINS[d.theme]?.card_style] ? SKINS[d.theme].card_style : 'classic') : t.card_style;
+  const mode = h(
+    'div',
+    { class: 'dress-grid cards-mode', role: 'radiogroup', 'aria-label': 'How posts wear them' },
+    h('button', { type: 'button', role: 'radio', class: 'dress-pick' + (mixing ? '' : ' on'), 'aria-checked': String(!mixing), onclick: () => { if (mixing) { d.card_style = ''; redraw(); } } }, miniCard(single, t), h('small', null, 'One design for every post')),
+    h('button', { type: 'button', role: 'radio', class: 'dress-pick' + (mixing ? ' on' : ''), 'aria-checked': String(mixing), onclick: () => { if (!mixing) { d.card_style = MIX; redraw(); } } }, mixMini(t, mixing ? t.card_mix : designs.map(([id]) => id).filter((id) => id !== 'classic')), h('small', null, 'Mixed at random'))
+  );
+  if (!mixing)
+    return h('div', { class: 'design-field wide' }, h('span', null, 'Every post’s card'), mode, h(
+      'div',
+      { class: 'dress-grid', role: 'radiogroup', 'aria-label': 'Post cards' },
+      designs.map(([id, name]) => h('button', { type: 'button', role: 'radio', class: 'dress-pick' + (t.card_style === id ? ' on' : ''), 'aria-checked': String(t.card_style === id), onclick: () => { d.card_style = id; redraw(); } }, miniCard(id, t), h('small', null, name)))
+    ));
+  // Mixed: tick the designs that go in (at least one stays ticked).
+  const inMix = t.card_mix;
+  const setMix = (list) => {
+    d.card_mix = designs.map(([id]) => id).filter((id) => list.includes(id));
+    redraw();
+  };
+  return h(
+    'div',
+    { class: 'design-field wide' },
+    h('span', null, 'Every post’s card'),
+    mode,
+    h('p', { class: 'hint' }, `Each post draws one of the designs ticked here and keeps it: it looks the same every time, and only changes if you shuffle or take its design out of the mix. A post you’ve dressed in a design of its own keeps that one. ${inMix.length} in the mix.`),
+    h(
+      'div',
+      { class: 'dress-grid', role: 'group', 'aria-label': 'Designs in the mix' },
+      designs.map(([id, name]) => h('button', { type: 'button', role: 'checkbox', class: 'dress-pick', 'aria-checked': String(inMix.includes(id)), onclick: () => {
+        const now = inMix.includes(id) ? inMix.filter((x) => x !== id) : [...inMix, id];
+        if (now.length) setMix(now);
+      } }, miniCard(id, t), h('small', null, name)))
+    ),
+    h(
+      'div',
+      { class: 'mix-tools' },
+      h('button', { type: 'button', class: 'btn small go', onclick: () => {
+        let seed = t.card_seed;
+        while (seed === t.card_seed) seed = 1 + Math.floor(Math.random() * MAX_SEED);
+        d.card_seed = seed;
+        redraw();
+      } }, '🎲 Shuffle'),
+      h('button', { type: 'button', class: 'btn small', disabled: inMix.length === designs.length || null, onclick: () => setMix(designs.map(([id]) => id)) }, 'Tick them all'),
+      t.cards.length ? h('button', { type: 'button', class: 'btn small', onclick: () => setMix(t.cards.map((c) => c.id)) }, 'Just my own cards') : null
+    )
+  );
 }
 
 // ---------- post cards of your own ----------
