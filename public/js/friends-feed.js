@@ -5,6 +5,10 @@ import { presenceDot, ago } from './statusbar.js';
 import { withEmoticons } from './emoticons.js';
 import { friendHtml } from './friend-html.js';
 import { card, foldLong } from './apps.js';
+import { friendSkin } from './card-dress.js';
+
+// Each friend's post cards (from their site), by the name their posts use.
+let looks = {};
 
 const TYPE = { thoughts: ['💭', 'Thought'], places: ['📍', 'Place'], photos: ['📷', 'Photos'], lists: ['📝', 'List'], quotes: ['❝', 'Quote'], books: ['📖', 'Book'], films: ['🎬', 'Film'], podcasts: ['🎧', 'Podcast'], music: ['🎵', 'Music'], tv: ['📺', 'TV'] };
 const AVATAR = ['#3a86e8', '#4bb043', '#e8692c', '#b0306a', '#7a4ab8', '#1f9d8f', '#d4a017', '#2a6fd6'];
@@ -101,7 +105,9 @@ function friendCard(p) {
   let el = null;
   try {
     // (Their writing, made into HTML by your own site, goes through the friends' cleaner too.)
-    el = card({ ...p.full, html: friendHtml(p.full.html, 'x').innerHTML });
+    // (Their post cards too: the one they chose, from their mix, or one they made.)
+    const skin = friendSkin(who.look, looks[who.look]);
+    el = card({ ...p.full, html: friendHtml(p.full.html, 'x').innerHTML, ...(skin ? { friend_look: skin, friend_id: who.look } : { card: /^c\d+$/.test(p.full.card || '') ? '' : p.full.card }) });
   } catch (e) {
     console.error(e);
   }
@@ -128,6 +134,7 @@ function friendCard(p) {
 export function friendsApp(ctx) {
   const buddies = ctx.data.buddies || [];
   const all = ctx.data.friendPosts || [];
+  looks = ctx.data.friendLooks || {};
   const wrap = h('div', { class: 'feed ff' });
   const redraw = () => {
     const posts = only ? all.filter((p) => p.friend?.url === only) : all;

@@ -1,7 +1,7 @@
 // Themes: picked or made in the back office (saved as theme.md), previewed live, and worn by the
 // whole site: re-coloured stylesheets, a wallpaper, title-bar charms and the mouse pointer.
 import fs from 'node:fs';
-import { test, report, assert, eq, launch, close, adminPage, getFile, putFile, publicData, BASE, chromium, newPost, toastText, editPost } from './lib.mjs';
+import { test, report, assert, eq, launch, close, adminPage, getFile, putFile, delFile, overview, publicData, BASE, chromium, newPost, toastText, editPost } from './lib.mjs';
 
 await launch();
 
@@ -913,7 +913,7 @@ await test('on a phone the season settles on every app\'s top bar, below the clo
   }, { reducedMotion: 'reduce' });
   await putFile('theme.md', '---\ntheme: classic\nseasons: summer\n---\n');
   await siteAt(async (p) => {
-    eq(await p.evaluate(() => [...document.querySelectorAll('.feed > .card .card-head')].some((h) => getComputedStyle(h, '::after').backgroundImage.includes('svg'))), true, 'summer peeks over the posts');
+    eq(await p.evaluate(() => [...document.querySelectorAll('.feed > .card > .card-head > .card-season')].some((s) => getComputedStyle(s).backgroundImage.includes('svg'))), true, 'summer peeks over the posts');
   }, { reducedMotion: 'reduce' });
   await putFile('theme.md', '---\ntheme: classic\n---\n');
 });
@@ -1113,7 +1113,7 @@ await test('post cards of your own: made from parts in Themes, for every post or
   eq(content.buildPost('thoughts', 'thoughts/x.md', '---\ncard: c2\n---\nHi\n', 'Europe/London').card, 'c2', 'a post can wear one');
   const { tidyFeed } = await import('../src/friends.js');
   const fromFriend = tidyFeed({ posts: [{ id: 'thoughts/a', type: 'thoughts', ts: 1, full: { card: 'c1' } }] }, { url: 'https://pal.example', key: 'pal.example', name: 'Pal' });
-  eq(fromFriend.posts[0].full.card, '', 'a friend’s own card is theirs: here it wears your theme’s');
+  eq(fromFriend.posts[0].full.card, 'c1', 'a friend’s own card is kept, to be drawn from their cards (see the friends tests)');
   // Made in the card maker.
   await putFile('theme.md', '---\ntheme: classic\n---\n');
   await putFile('thoughts/maker-post.md', `---\ndate: 2026-10-20 12:00\ntitle: Maker post\n---\nHi.\n`);
@@ -1147,6 +1147,96 @@ await test('post cards of your own: made from parts in Themes, for every post or
     eq(await card.evaluate((e) => getComputedStyle(e).borderTopWidth), '7px', 'drawn from its parts');
     eq(await card.evaluate((e) => getComputedStyle(e, '::after').borderRadius.length > 0), true, 'with its seal');
   }, { desktop: false, reducedMotion: 'reduce' });
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+});
+
+await test('post cards mixed at random: each post keeps its own draw, a dressed post keeps its design, chosen in Themes', async () => {
+  const content = await import('../src/content.js');
+  const { mixPick, cleanMix } = await import('../public/js/card-parts.js');
+  // Checked by the server.
+  const parsed = content.parseTheme('---\ntheme: classic\ncard_style: mix\ncard_mix: ["polaroid", "nope", "c1", "c9"]\ncard_seed: 77\ncards: [{"id": "c1", "name": "Mine"}]\n---\n');
+  eq([parsed.card_style, parsed.card_mix, parsed.card_seed], ['mix', ['polaroid', 'c1'], 77], 'only designs that are there');
+  eq(content.parseTheme('---\ntheme: classic\ncard_seed: -4\n---\n').card_seed, undefined, 'a shuffle is a plain number');
+  // The same post always draws the same design; another design in the mix only takes the posts it wins.
+  const mix = ['polaroid', 'scrapbook', 'ticket', 'letter'];
+  const keys = Array.from({ length: 200 }, (_, i) => `thoughts/p${i}`);
+  const first = keys.map((k) => mixPick(k, mix, 5));
+  eq(keys.map((k) => mixPick(k, mix, 5)), first, 'the same every time');
+  eq(new Set(first).size, 4, 'every design gets posts');
+  const more = keys.map((k) => mixPick(k, [...mix, 'neon'], 5));
+  assert(more.every((d, i) => d === first[i] || d === 'neon'), 'adding a design only moves posts to it');
+  assert(keys.filter((k, i) => mixPick(k, mix, 6) !== first[i]).length > 100, 'a shuffle deals them again');
+  eq(cleanMix('polaroid, x, ticket', ['polaroid', 'ticket']), ['polaroid', 'ticket'], 'tidied');
+  // In Themes: mixed, a few designs ticked out, and a shuffle.
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+  const ago = (m) => new Date(Date.now() - m * 60e3).toISOString().slice(0, 16).replace('T', ' ');
+  for (let i = 0; i < 8; i++) await putFile(`thoughts/mix-${i}.md`, `---\ndate: ${ago(i + 1)}\ntitle: Mix post ${i}\n${i === 0 ? 'card: neon\n' : ''}---\nHi.\n`);
+  const page = await adminPage();
+  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await page.waitForSelector('.tm-own');
+  if (!(await page.locator('.tm-own').evaluate((e) => e.open))) await page.locator('.tm-own summary').click();
+  await page.locator('.tm-tab', { hasText: 'Post cards' }).click();
+  await page.getByRole('radiogroup', { name: 'How posts wear them' }).getByRole('radio', { name: 'Mixed at random' }).click();
+  const inMix = page.getByRole('group', { name: 'Designs in the mix' });
+  eq(await inMix.getByRole('checkbox', { checked: true }).count(), 13, 'every design but the plain one, to start');
+  for (const name of ['Neon', '8-bit', 'Chrome glass', 'Comic panel', 'Film frame', 'Ticket', 'Torn page', 'Notebook', 'Sticky note', 'Postcard']) await inMix.getByRole('checkbox', { name }).click();
+  eq(await inMix.getByRole('checkbox', { checked: true }).count(), 3, 'ticked out');
+  await page.locator('button', { hasText: 'Shuffle' }).click();
+  await page.locator('button', { hasText: 'Save the theme' }).click();
+  await page.waitForFunction(() => !document.querySelector('.tm-savebar.unsaved'));
+  const theme = (await publicData()).theme;
+  eq([theme.card_style, theme.card_mix], ['mix', ['polaroid', 'scrapbook', 'letter']], 'saved');
+  assert(theme.card_seed > 0, 'with the shuffle');
+  // Dress this post says what a post drew.
+  await newPost(page, 'Thought');
+  assert((await page.locator('.dress-pick').first().innerText()).includes('mixed at random'), 'a new post: drawn once it’s saved');
+  assert(!page.errors.length, page.errors.join('; '));
+  await page.close();
+  const want = (i) => (i === 0 ? 'neon' : mixPick(`thoughts/mix-${i}`, theme.card_mix, theme.card_seed));
+  const seen = async () => siteAt(async (pg) => {
+    await pg.goto(BASE + '/#/thoughts');
+    await pg.locator('.feed > .card', { hasText: 'Mix post 7' }).first().waitFor();
+    return pg.evaluate(() => Object.fromEntries([...document.querySelectorAll('.feed > .card')].filter((c) => c.offsetParent).map((c) => [c.querySelector('.card-title')?.textContent.trim(), c.dataset.card])));
+  }, { desktop: false, reducedMotion: 'reduce' });
+  const once = await seen();
+  eq(Array.from({ length: 8 }, (_, i) => once[`Mix post ${i}`]), Array.from({ length: 8 }, (_, i) => want(i)), 'each post wears its draw, and a dressed post its own');
+  assert(new Set(Object.values(once)).size > 2, 'a mix');
+  eq(await seen(), once, 'and the same next time');
+  for (let i = 0; i < 8; i++) await delFile(`thoughts/mix-${i}.md`);
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+});
+
+await test('seasons and festive days settle on every card design, your own too', async () => {
+  await putFile('theme.md', '---\ntheme: classic\nseasons: winter\ncard_style: mix\ncards: [{"id": "c1", "name": "Mine", "edge": "stripes", "deco": "tape"}]\n---\n');
+  // (The earlier tests' posts go, so all of these fit on the first page. This is the group's last test.)
+  for (const f of (await overview()).files) if (/^(thoughts|photos|lists|quotes)\/[^/]+\.md$/.test(f.key)) await delFile(f.key);
+  const designs = ['classic', 'polaroid', 'scrapbook', 'notebook', 'postcard', 'sticky', 'ticket', 'torn', 'comic', 'neon', 'letter', 'film', 'pixel', 'chrome', 'c1'];
+  for (const [i, d] of designs.entries()) await putFile(`thoughts/season-${String(i).padStart(2, '0')}.md`, `---\ndate: ${new Date(Date.now() - i * 60e3).toISOString().slice(0, 16).replace('T', ' ')}\ntitle: Season ${d}\ncard: ${d}\n---\nHi.\n`);
+  const look = (pg) => pg.evaluate(() => [...document.querySelectorAll('.feed > .card')].filter((c) => c.offsetParent && c.querySelector('.card-title')?.textContent.startsWith('Season')).map((c) => {
+    const snow = c.querySelector(':scope > .card-snow');
+    const s = snow && getComputedStyle(snow);
+    const pic = c.querySelector(':scope > .card-head > .card-season');
+    const p = pic && getComputedStyle(pic);
+    const box = c.getBoundingClientRect();
+    const sb = snow?.getBoundingClientRect();
+    return { card: c.dataset.card || 'classic', snow: !!s && s.display === 'block' && s.backgroundImage.includes('svg') && Math.abs(sb.top - box.top) < 9 && sb.width > box.width * 0.8, pic: !!p && p.display === 'block' && p.backgroundImage !== 'none' && pic.getBoundingClientRect().width > 10 };
+  }));
+  await siteAt(async (pg) => {
+    await pg.goto(BASE + '/#/thoughts');
+    await pg.locator('.feed > .card', { hasText: 'Season c1' }).first().waitFor();
+    const winter = await look(pg);
+    eq(winter.map((c) => c.card), designs, 'every design');
+    eq(winter.filter((c) => !c.snow).map((c) => c.card), [], 'winter: snow along the top of each');
+  }, { desktop: false, reducedMotion: 'reduce' });
+  await putFile('theme.md', '---\ntheme: classic\nseasons: christmas\ncards: [{"id": "c1", "name": "Mine", "edge": "stripes", "deco": "stamp"}]\n---\n');
+  await siteAt(async (pg) => {
+    await pg.goto(BASE + '/#/thoughts');
+    await pg.locator('.feed > .card', { hasText: 'Season c1' }).first().waitFor();
+    const festive = await look(pg);
+    assert(festive.filter((c) => c.pic).length >= 6, 'a festive day: its drawing by the date, every other card: ' + JSON.stringify(festive));
+    eq(festive.filter((c) => c.snow).length, 0, 'and no winter snow');
+  }, { desktop: false, reducedMotion: 'reduce' });
+  for (let i = 0; i < designs.length; i++) await delFile(`thoughts/season-${String(i).padStart(2, '0')}.md`);
   await putFile('theme.md', '---\ntheme: classic\n---\n');
 });
 

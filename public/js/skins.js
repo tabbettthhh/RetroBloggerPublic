@@ -12,7 +12,7 @@
 
 import { startEffects, TRAILS, FALLING } from './effects.js';
 import { cleanFloppy } from './floppy-look.js';
-import { cleanCards, OWN_CARD } from './card-parts.js';
+import { cleanCards, OWN_CARD, MIX, cleanMix, fullMix, cleanSeed } from './card-parts.js';
 export { FALLING as FALLING_CHOICES };
 
 // ---------- colours ----------
@@ -1247,6 +1247,14 @@ export function resolveSkin(settings = {}) {
   // Post cards of your own, and one of them for every post if you've chosen it.
   t.cards = cleanCards(settings.cards, Object.keys(OPTIONS.title_font.choices));
   if (OWN_CARD.test(String(settings.card_style)) && t.cards.some((c) => c.id === settings.card_style)) t.card_style = settings.card_style;
+  // …or every post a different one, mixed at random from the designs ticked (all, if none are).
+  const builtIn = Object.keys(OPTIONS.card_style.choices);
+  t.card_mix = cleanMix(settings.card_mix, builtIn, t.cards);
+  t.card_seed = cleanSeed(settings.card_seed);
+  if (settings.card_style === MIX) {
+    t.card_style = MIX;
+    if (!t.card_mix.length) t.card_mix = fullMix(builtIn, t.cards);
+  }
   t.custom = [...['main', 'accent', 'paper', 'leather', 'wallpaper', 'decoration', 'pointer', 'tab_icon', 'night_theme'], ...Object.keys(OPTIONS)].some((k) => settings[k] != null && settings[k] !== '' && settings[k] !== base[k]) || t.stickers.length > 0 || Object.keys(t.apps).length > 0 || ['hide', 'menu', 'sections_hidden', 'festivals', 'my_days'].some((k) => Array.isArray(settings[k]) && settings[k].length);
   return t;
 }
@@ -1300,7 +1308,7 @@ export function ownCardsCss(t) {
     css += `${P} :is(.card-body, .card-title, .card-head strong, .card-date, .place-name, .list-body, .quote-body, .muted, figcaption) { color: ${ink}; }`;
     // The heading.
     const headRule = { plain: `background: transparent; border-bottom: 1px solid ${rgba(ink, 0.15)}`, solid: `background: ${head}; border-bottom: 0`, halftone: `background: radial-gradient(${rgba(head, 0.5)} 1.4px, transparent 1.9px) 0 0 / 7px 7px, ${rgba(head, 0.12)}; border-bottom: 1px solid ${rgba(head, 0.4)}`, stripes: `background: repeating-linear-gradient(135deg, ${rgba(head, 0.28)} 0 6px, transparent 6px 12px); border-bottom: 1px solid ${rgba(head, 0.4)}`, none: 'background: transparent; border-bottom: 0' }[c.head];
-    css += `${P} > .card-head { ${headRule}; ${c.deco === 'stamp' ? 'padding-right: 58px;' : ''} }`;
+    css += `${P} > .card-head { ${headRule}; ${c.deco === 'stamp' ? 'padding-right: 58px;' : c.deco === 'sparkles' ? 'padding-right: 30px;' : ''} }`;
     if (c.head === 'solid') css += `${P} > .card-head :is(strong, .card-date) { color: ${headInk}; }`;
     if (FONT_FAMILIES[c.font]) css += `${P} :is(.card-head strong, .card-title, .place-name) { font-family: ${FONT_FAMILIES[c.font]}; }`;
     // What's on top.

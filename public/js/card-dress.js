@@ -4,10 +4,14 @@
 // (the season it was written in, or the theme's charm). All drawn from the theme's colours, so
 // they suit any theme, light or dark. The looks themselves are in css/cards.css.
 import { h } from './util.js';
-import { activeSkin, OPTIONS, FESTIVALS, FESTIVE_COLOURS, festivalOn, lookOf, seasonOf, drawingUrl, SEASONS, luminance, ownCardsCss } from './skins.js';
+import { activeSkin, resolveSkin, OPTIONS, FESTIVALS, FESTIVE_COLOURS, festivalOn, lookOf, seasonOf, drawingUrl, SEASONS, luminance, ownCardsCss, mix } from './skins.js';
+import { MIX, mixPick } from './card-parts.js';
 
 // One of your own card designs (Themes › Post cards).
 export const isOwnCard = (id, t = activeSkin()) => !!id && !!t?.cards?.some((c) => c.id === id);
+// The theme's card for a post: the one for every post, or (mixed at random) the one this post
+// always draws from the mix.
+export const themeCard = (post, t = activeSkin()) => (t?.card_style === MIX ? mixPick(`${post?.type}/${post?.slug || post?.title || ''}`, t.card_mix || [], t.card_seed) : t?.card_style || 'classic');
 // A post's own ribbon: a few words in one of these.
 export const RIBBONS = { banner: 'Folded banner', sash: 'Corner sash', stamp: 'Rubber stamp', neon: 'Neon sign', sticker: 'Round sticker' };
 export const CARD_STYLES = OPTIONS.card_style.choices;
@@ -67,13 +71,44 @@ function cornerMark(post, t) {
   return h('span', { class: 'card-corner', role: label ? 'img' : null, 'aria-label': label || null, 'aria-hidden': label ? null : 'true', title: label || null, style: { backgroundImage: drawingUrl(what, t, 28) } });
 }
 
-// Dresses a card (made by apps.js) for its post. `open`: the post on its own page.
+// ---------- a friend's post cards ----------
+// A friend's post wears the card they chose on their own site: theirs for every post, the one it
+// draws from their mix, or one they made (drawn here as f0-c1 and so on, so it can't be taken for
+// one of yours), in their theme's colours and charm.
+const friendSkins = new Map();
+export function friendSkin(id, look) {
+  if (!/^f\d{1,3}$/.test(String(id)) || !look) return null;
+  if (!friendSkins.has(id) || friendSkins.get(id).look !== look) {
+    const skin = resolveSkin(look);
+    friendSkins.set(id, { look, skin });
+    if (typeof document !== 'undefined') {
+      let style = document.getElementById(`friend-cards-${id}`);
+      if (!style) {
+        style = document.createElement('style');
+        style.id = `friend-cards-${id}`;
+        document.head.append(style);
+      }
+      style.textContent = ownCardsCss({ ...skin, cards: skin.cards.map((c) => ({ ...c, id: `${id}-${c.id}` })) });
+    }
+  }
+  return friendSkins.get(id).skin;
+}
+
+// Dresses a card (made by apps.js) for its post. `open`: the post on its own page. A friend's
+// post (with `friend_look`, their skin, and `friend_id`) wears their card.
 export function dressCard(el, post, open = false) {
   if (!el || !post) return el;
   const t = activeSkin();
-  const style = CARD_STYLES[post.card] || isOwnCard(post.card, t) ? post.card : t?.card_style || 'classic';
-  if (style !== 'classic') el.dataset.card = style;
+  const look = post.friend_look || t;
+  const style = CARD_STYLES[post.card] || isOwnCard(post.card, look) ? post.card : themeCard(post, look);
+  if (style !== 'classic') el.dataset.card = look !== t && isOwnCard(style, look) ? `${post.friend_id}-${style}` : style;
   else delete el.dataset.card;
+  // (In their colours.)
+  if (look !== t && style !== 'classic' && look) {
+    el.style.setProperty('--sk-main', look.main);
+    el.style.setProperty('--sk-accent', look.accent);
+    el.style.setProperty('--sk-soft', mix(look.accent, '#ffffff', 0.72));
+  }
   // A little tilt for the papery ones, different for each post (and none on its own page).
   el.style.setProperty('--card-tilt', open ? '0deg' : `${((hash(post.slug || post.title) % 5) - 2) * 0.45}deg`);
   const ribbons = [ownRibbon(post, t), festiveRibbon(post, t)].filter(Boolean);
@@ -87,7 +122,7 @@ export function dressCard(el, post, open = false) {
   // (Postcards and letters put the theme's charm on their stamp and seal; a Polaroid writes the
   // day along its bottom.)
   if (style !== 'classic') {
-    el.style.setProperty('--card-pic', drawingUrl(t?.decoration && !['none', 'plain'].includes(t.decoration) ? t.decoration : 'heart', t || {}, 28));
+    el.style.setProperty('--card-pic', drawingUrl(look?.decoration && !['none', 'plain'].includes(look.decoration) ? look.decoration : 'heart', look || {}, 28));
     if (post.ts) el.dataset.day = new Date(post.ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   }
   const corner = cornerMark(post, t);
@@ -96,6 +131,11 @@ export function dressCard(el, post, open = false) {
     if (date) date.before(corner);
     else el.append(corner);
   }
+  // Where the season and festive days settle, on any design (drawn by skins.css when one is on):
+  // snow along the card's top, and a little drawing in its heading by the date.
+  if (!el.querySelector(':scope > .card-snow')) el.append(h('span', { class: 'card-snow', 'aria-hidden': 'true' }));
+  const head = el.querySelector(':scope > .card-head');
+  if (head && !head.querySelector(':scope > .card-season')) head.append(h('span', { class: 'card-season', 'aria-hidden': 'true' }));
   return el;
 }
 
@@ -112,6 +152,19 @@ export function miniCard(id, t = activeSkin()) {
       h('span', { class: 'card-body' }, h('i'), h('i'), h('i'))
     )
   );
+}
+
+// "Mixed at random", as a little fan of three of the designs in the mix.
+export function mixMini(t = activeSkin(), mix = t?.card_mix || []) {
+  const three = mix.length ? [0, 1, 2].map((i) => mix[Math.floor((i * mix.length) / 3)]) : ['polaroid', 'scrapbook', 'postcard'];
+  const fan = h('span', { class: 'dress-mini-wrap dress-mix', 'aria-hidden': 'true' });
+  three.forEach((id, i) => {
+    const one = miniCard(id, t).firstChild;
+    one.style.setProperty('--card-tilt', `${(i - 1) * 7}deg`);
+    one.style.setProperty('--mix-at', i);
+    fan.append(one);
+  });
+  return fan;
 }
 
 // In the back office (which doesn't wear the theme), your own cards' looks, so their previews show.

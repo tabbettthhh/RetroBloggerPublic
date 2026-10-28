@@ -38,5 +38,38 @@ export function cleanCards(list, fonts = []) {
   return out;
 }
 
+// ---------- mixed at random ----------
+// Every post's card can be "mixed": each post wears one of the designs in the mix (any of the
+// site's and your own), picked from the post itself, so it wears the same one every time.
+// (Each design draws a number for the post and the highest wins, so ticking another design only
+// moves the posts it wins, and Shuffle, a new `seed`, deals them all again.)
+export const MIX = 'mix';
+export const MAX_SEED = 9999;
+// The designs in the mix: known ones only (the site's `builtIn` ids and your own `cards`).
+export function cleanMix(list, builtIn, cards = []) {
+  const ok = (id) => builtIn.includes(id) || cards.some((c) => c.id === id);
+  return [...new Set((Array.isArray(list) ? list : typeof list === 'string' ? list.split(/[\s,]+/) : []).map((x) => String(x).trim()).filter(ok))];
+}
+// Nothing ticked: every design but the plain one, and all of yours.
+export const fullMix = (builtIn, cards = []) => [...builtIn.filter((id) => id !== 'classic'), ...cards.map((c) => c.id)];
+export const cleanSeed = (v) => (Number.isInteger(+v) && +v > 0 ? Math.min(+v, MAX_SEED) : 0);
+const draw = (s) => {
+  let n = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) n = Math.imul(n ^ s.charCodeAt(i), 0x01000193);
+  n = Math.imul(n ^ (n >>> 16), 0x85ebca6b);
+  n = Math.imul(n ^ (n >>> 13), 0xc2b2ae35);
+  return (n ^ (n >>> 16)) >>> 0;
+};
+// The design a post wears from the mix. `key` names the post (its type and slug).
+export function mixPick(key, mix, seed = 0) {
+  let best = '';
+  let top = -1;
+  for (const id of mix) {
+    const n = draw(`${seed}|${key}|${id}`);
+    if (n > top) [best, top] = [id, n];
+  }
+  return best || 'classic';
+}
+
 // The next free name for a new card.
 export const nextCardId = (cards) => `c${[...Array(MAX_CARDS)].map((_, i) => i + 1).find((n) => !cards.some((c) => c.id === `c${n}`)) || MAX_CARDS}`;
