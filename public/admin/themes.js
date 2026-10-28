@@ -4,13 +4,14 @@
 // profile header, the menu, the taskbar and scroll bars, icons and sounds, charms, the pointer
 // and stickers. Saved as theme.md, which can be downloaded, shared and installed.
 import { h } from '/js/util.js';
+import { CARD_STYLES, miniCard } from '/js/card-dress.js';
 import { SKINS, SKIN_GROUPS, WALLPAPERS, CHARMS, CHARM_NAMES, resolveSkin, wallpaperCss, charmUrl, pointerSvgs, themeColour, TITLE_STOPS, inks, mix, emojiList, EMOJI_LAYOUTS, STICKER_SPOTS, STICKER_SIZES, OPTIONS, HIDEABLE, SECTIONS, DEFAULT_MENU, FONT_FAMILIES, APPS, APP_LOOKS, APP_EXTRAS, cleanApps, hexHsl, hslHex, SEASONS, FESTIVALS, FALLING_CHOICES, cleanMyDays, MAX_MY_DAYS, cleanFestivalDates, nextFestival, LABELS, LABEL_GROUPS, cleanLabels, GLASS_PLACES, SCENERY_PLACES, lookOf, cleanLooks, MAX_LOOK_CHARMS, seasonOf } from '/js/skins.js';
 import { FLOPPY_PIECES, FLOPPY_DRESS, outfitFor, dressFloppy, cleanFloppy } from '/js/floppy-look.js';
 import { FLOPPY } from '/js/helper.js';
 
 const PARTS = ['main', 'accent', 'paper', 'leather', 'wallpaper', 'decoration', 'pointer', 'tab_icon', 'night_theme', ...Object.keys(OPTIONS)];
 // Your own layout choices and extras stay when you switch to another theme; the look comes with the theme.
-const KEEP_ON_SWITCH = ['taskbar', 'text_size', 'header', 'sounds', 'name_style', 'trail', 'falling', 'tab_icon', 'night_theme', 'seasons', 'hemisphere'];
+const KEEP_ON_SWITCH = ['card_festive', 'card_corner', 'page', 'page_strength', 'taskbar', 'text_size', 'header', 'sounds', 'name_style', 'trail', 'falling', 'tab_icon', 'night_theme', 'seasons', 'hemisphere'];
 // Each change, so Undo can step back one at a time (while you're on the Themes page).
 let history = [];
 // Showing the after-dark look in the preview (rather than the daytime one).
@@ -354,7 +355,17 @@ function themeControls(ctx, saved, redraw, preview) {
     ]],
     words: ['Fonts', () => [opt('font', { font: true }), opt('title_font', { font: true }), opt('text_size')]],
     shapes: ['Bars & corners', () => [opt('bars'), opt('corners'), h('p', { class: 'hint' }, 'Bar styles show in light mode; dark mode keeps its own dark bars.')]],
-    feed: ['Feed', () => [opt('posts'), opt('density')]],
+    cards: ['Post cards', () => [
+      h('div', { class: 'design-field wide' }, h('span', null, 'Every post’s card'), h(
+        'div',
+        { class: 'dress-grid', role: 'radiogroup', 'aria-label': 'Post cards' },
+        Object.entries(CARD_STYLES).map(([id, name]) => h('button', { type: 'button', role: 'radio', class: 'dress-pick' + (t.card_style === id ? ' on' : ''), 'aria-checked': String(t.card_style === id), onclick: () => { d.card_style = id; redraw(); } }, miniCard(id, t), h('small', null, name)))
+      )),
+      opt('card_festive'),
+      opt('card_corner'),
+      h('p', { class: 'hint' }, 'A post can wear a design of its own, and a ribbon of your own words: choose them when you write it (Dress this post). Festive ribbons go on posts written on a festive day you’ve ticked, or one of your own days, in that day’s colours and drawings.')
+    ]],
+    feed: ['Feed', () => [opt('posts'), opt('density'), opt('page'), t.page !== 'plain' ? opt('page_strength') : null, h('p', { class: 'hint' }, 'Behind the posts: Layered puts the theme’s colours, its pattern (or your emoji or picture) and, when the seasons are on, the season’s or festive day’s drawings behind your posts, softened so they stay easy to read.')]],
     header: ['Profile header', () => [
       opt('header'),
       h('div', { class: 'design-field wide' }, h('span', null, 'What it shows'), h('div', { class: 'tm-ticks' }, ['lastpost', 'status', 'playing', 'countdown', 'nudge'].map((id) => tick('hide', id, HIDEABLE[id], !t.hide.includes(id)))))
@@ -973,6 +984,11 @@ function surprise(d) {
     corners: choose('corners'),
     posts: choose('posts', ['cards', 'cards', 'lines']),
     density: choose('density'),
+    page: choose('page', ['layered', 'layered', 'pattern', 'wallpaper', 'tint']),
+    card_style: choose('card_style'),
+    card_festive: choose('card_festive', ['on', 'on', 'off']),
+    card_corner: choose('card_corner'),
+    page_strength: choose('page_strength'),
     scrollbar: choose('scrollbar', ['classic', 'themed', 'themed', 'thin']),
     taskbar: d.taskbar,
     icons: choose('icons', ['colour', 'colour', 'soft', 'mono']),

@@ -3,6 +3,7 @@
 import { h, iconEl, ICON, niceDate, monthYear, hash } from './util.js';
 import { sound } from './sound.js';
 import { word, postFontAttrs } from './skins.js';
+import { commentsButton } from './comments.js';
 import { lightbox, suggestForm, suggestedStamp, keepsakeMakers } from './apps.js';
 
 export const SHELF_TYPES = ['books', 'films', 'podcasts', 'music', 'tv'];
@@ -420,6 +421,8 @@ function detailView(type, ctx) {
     reviewKeepsakes(post),
     episodeDiary(post),
     readingLog(post),
+    // (Its comments open in a little window.)
+    commentsButton(post, ctx.data) ? h('div', { class: 'shelf-comments' }, commentsButton(post, ctx.data)) : null,
     nav
   );
 }

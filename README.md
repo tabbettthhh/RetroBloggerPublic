@@ -295,6 +295,12 @@ Write `[book]`, `[film]`, `[podcast]` or `[music]` in your status line (for exam
 
 **Bringing your history:** under **Export & files** you can import a Goodreads export (the .csv) or a Letterboxd export (the .zip). Only titles, authors, years, dates, ratings, shelves and your own reviews are used. Goodreads private notes, Letterboxd profile and account details, and links back to either site are left out. Anything already on your shelf is skipped.
 
+## Comments
+
+Visitors can comment on any post, or reply to someone else's comment, with just a name: any name they like, so they can stay anonymous. Nothing else about them is asked for or kept. On a post's own page the comments sit under it with a form to leave one; places in the journal and reviews on the shelves have a **Comments** button that opens them in a little window; and each card in the feed shows how many comments it has.
+
+Every comment waits in the back office (the **Comments** tab, and your notifications) until you **Approve** it. Once it's on the site you can **reply**: your reply shows under their comment, marked as yours. **Delete** removes one. Untick **Let visitors comment on posts** to hide them all and stop new ones (nothing is deleted). Deleting a post deletes its comments too, and comments never go to friends' sites. The same bot protection as the guestbook applies.
+
 ## Guestbook and suggestions
 
 Visitors can sign the guestbook and suggest a place (on the wishlist page), a book, a film, a podcast or music (on each shelf). Nothing they write appears until you approve it under **Guestbook** or **Suggestions** in the back office, so spam never reaches the site. Add a suggested place to your wishlist, or a suggested book, film, podcast or album straight onto its shelf as "want to…". The visitor's name goes on a **Suggested by** stamp when you review it; for places, the editor offers to add the stamp when the place is on your wishlist.
@@ -381,7 +387,8 @@ Under **Themes** in the back office you can dress the whole site in your own sty
 | Wallpaper | The sky, a pattern, emoji, or your own picture |
 | Fonts | The words and the titles: classic, rounded, bubbly, pixel, terminal, comic, handwritten, typewriter or elegant (titles can also be arcade or tiny pixel), and the text size |
 | Bars & corners | Title bars glossy, flat, striped or in pixel steps; corners classic, square or round |
-| Feed | Posts as cards or as a list with lines, and how close together they sit |
+| Post cards | How every post's card is dressed: **Classic**, **Polaroid** (its date written along the bottom), **Scrapbook** (washi tape), **Notebook** (lined, with holes), **Postcard** (airmail border, stamp and postmark), **Sticky note**, **Ticket**, **Torn page**, **Comic panel**, **Neon**, **Letter** (with a wax seal), **Film frame**, **8-bit** and **Chrome glass**, all in the theme's colours. **Festive ribbons** go on posts written on a festive day you've ticked or one of your own days ("Posted on Diwali", in its colours and drawings), and **a mark in the corner** shows the season a post was written in, or the theme's charm. Any post can also have a design of its own and a ribbon of your own words (a folded banner, a corner sash, a rubber stamp, a neon sign or a round sticker), chosen under **Dress this post** when you write it |
+| Feed | Posts as cards or as a list with lines, how close together they sit, and what's behind them: **Layered** (the usual: the theme's colours, its pattern or your emoji or picture, and the season's or festive day's drawings, with the posts frosted on top), the pattern faintly, the whole wallpaper, just the theme's colours, or plain white, showing softly, medium or strongly |
 | Profile header | A banner, a card, minimal, or hidden; and which parts it shows (last post, status, now playing, countdown, Nudge button) |
 | Menu | Which five sections are in the main bar, in what order, and which sections to leave out of the menus altogether |
 | Taskbar & scrolling | The taskbar at the top or bottom on computers, whether it shows the clock and your status, and scroll bars usual, in the theme's colours, thin or hidden |

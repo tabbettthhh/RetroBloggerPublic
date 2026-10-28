@@ -79,16 +79,16 @@ export const SKINS = {
   peach: { name: 'Peach Fizz', vibe: 'Peachy, bubbly and warm', main: '#f2946a', accent: '#f1c453', paper: '#fff2ea', leather: '#c26845', wallpaper: 'bubbles', decoration: 'peach', pointer: 'peach', title_font: 'bubbly', corners: 'round' },
   moonlit: { name: 'Moonlit', vibe: 'Moons, stars and soft lilac', main: '#3e3a64', accent: '#b9a8ff', paper: '#ecebf4', leather: '#2b283f', wallpaper: 'moons', decoration: 'moon', pointer: 'moon', title_font: 'elegant', scrollbar: 'themed' },
   // Bold and loud: nothing minimal. Big colour, big pattern, big personality.
-  neon: { name: 'Neon Boulevard', vibe: 'Pink neon, palm trees and a striped 80s sunset', main: '#ff2e97', accent: '#19d3f5', paper: '#fff0fa', leather: '#4b136b', wallpaper: 'sunset', decoration: 'palm', pointer: 'palm', title_font: 'arcade', name_style: 'glow', selector: 'gradient', scrollbar: 'themed', trail: 'stars', sounds: 'chip' },
-  empire: { name: 'Empire', vibe: 'Emerald stripes, gold laurels and a little grandeur', main: '#1f5a44', accent: '#c8a042', paper: '#f7f0dc', leather: '#5a1e22', wallpaper: 'laurels', decoration: 'laurel', pointer: 'laurel', font: 'elegant', title_font: 'elegant', name_style: 'glitter', corners: 'square', header: 'card' },
-  rococo: { name: 'Rococo', vibe: 'Sugared pastels, gilt scrolls, pearls and a fan', main: '#e48fb3', accent: '#7fc8b0', paper: '#fff6f2', leather: '#b9787f', wallpaper: 'rococo', decoration: 'fan', pointer: 'fan', font: 'elegant', title_font: 'handwritten', name_style: 'glitter', corners: 'round', trail: 'sparkles', falling: 'petals' },
-  disco: { name: 'Disco Inferno', vibe: 'Mirror ball, magenta and gold on the dance floor', main: '#c2186b', accent: '#ffb000', paper: '#fff3e6', leather: '#5a1238', wallpaper: 'disco', decoration: 'discoball', pointer: 'discoball', title_font: 'bubbly', name_style: 'chrome', selector: 'gradient', scrollbar: 'themed', trail: 'stars', falling: 'confetti' },
-  popart: { name: 'Pop Art', vibe: 'Comic dots, POW! and primary colours', main: '#e3262f', accent: '#1e5bd8', paper: '#fffbe0', leather: '#1a1a1a', wallpaper: 'benday', decoration: 'boom', pointer: 'boom', font: 'comic', title_font: 'comic', name_style: 'wordart', bars: 'flat', corners: 'square', selector: 'invert' },
-  memphis: { name: 'Memphis Party', vibe: 'Squiggles, zigzags and clashing shapes', main: '#1fb5b0', accent: '#ff5ca8', paper: '#fffbea', leather: '#2a2a2a', wallpaper: 'memphis', decoration: 'squiggle', pointer: 'squiggle', font: 'rounded', title_font: 'bubbly', name_style: 'rainbow', bars: 'stripes', corners: 'round', falling: 'confetti' },
-  leopard: { name: 'Wild Thing', vibe: 'Leopard print, hot pink and a kiss', main: '#e0218a', accent: '#c8873a', paper: '#fff3e8', leather: '#3a2416', wallpaper: 'leopard', decoration: 'lips', pointer: 'lips', title_font: 'handwritten', name_style: 'glitter', selector: 'gradient', trail: 'hearts' },
-  opera: { name: 'Velvet Opera', vibe: 'Crimson velvet, gold damask and a chandelier', main: '#8e1b2b', accent: '#d4a64a', paper: '#fbf3e4', leather: '#4a0f18', wallpaper: 'damask', decoration: 'chandelier', pointer: 'chandelier', font: 'elegant', title_font: 'elegant', name_style: 'outline', scrollbar: 'themed', header: 'card' },
-  blocky: { name: 'Block World', vibe: 'Grass, dirt and stone blocks, and a pickaxe', main: '#5d9e2f', accent: '#9c6a38', paper: '#f1ead8', leather: '#5b3a1e', wallpaper: 'blocks', decoration: 'pickaxe', pointer: 'pickaxe', title_font: 'pixel', bars: 'pixel', corners: 'square', selector: 'outline', icons: 'colour', sounds: 'chip', trail: 'pixels' },
-  bigtop: { name: 'Big Top', vibe: 'Circus stripes, bunting and showtime', main: '#d7263d', accent: '#f4b400', paper: '#fff8e7', leather: '#3b2a6b', wallpaper: 'bigtop', decoration: 'tent', pointer: 'tent', title_font: 'condensed', name_style: 'wordart', bars: 'stripes', selector: 'gradient', falling: 'confetti' },
+  neon: { name: 'Neon Boulevard', vibe: 'Pink neon, palm trees and a striped 80s sunset', main: '#ff2e97', accent: '#19d3f5', paper: '#fff0fa', leather: '#4b136b', wallpaper: 'sunset', decoration: 'palm', pointer: 'palm', title_font: 'arcade', name_style: 'glow', selector: 'gradient', scrollbar: 'themed', trail: 'stars', sounds: 'chip', card_style: 'neon' },
+  empire: { name: 'Empire', vibe: 'Emerald stripes, gold laurels and a little grandeur', main: '#1f5a44', accent: '#c8a042', paper: '#f7f0dc', leather: '#5a1e22', wallpaper: 'laurels', decoration: 'laurel', pointer: 'laurel', font: 'elegant', title_font: 'elegant', name_style: 'glitter', corners: 'square', header: 'card', card_style: 'letter' },
+  rococo: { name: 'Rococo', vibe: 'Sugared pastels, gilt scrolls, pearls and a fan', main: '#e48fb3', accent: '#7fc8b0', paper: '#fff6f2', leather: '#b9787f', wallpaper: 'rococo', decoration: 'fan', pointer: 'fan', font: 'elegant', title_font: 'handwritten', name_style: 'glitter', corners: 'round', trail: 'sparkles', falling: 'petals', card_style: 'scrapbook' },
+  disco: { name: 'Disco Inferno', vibe: 'Mirror ball, magenta and gold on the dance floor', main: '#c2186b', accent: '#ffb000', paper: '#fff3e6', leather: '#5a1238', wallpaper: 'disco', decoration: 'discoball', pointer: 'discoball', title_font: 'bubbly', name_style: 'chrome', selector: 'gradient', scrollbar: 'themed', trail: 'stars', falling: 'confetti', card_style: 'chrome' },
+  popart: { name: 'Pop Art', vibe: 'Comic dots, POW! and primary colours', main: '#e3262f', accent: '#1e5bd8', paper: '#fffbe0', leather: '#1a1a1a', wallpaper: 'benday', decoration: 'boom', pointer: 'boom', font: 'comic', title_font: 'comic', name_style: 'wordart', bars: 'flat', corners: 'square', selector: 'invert', card_style: 'comic' },
+  memphis: { name: 'Memphis Party', vibe: 'Squiggles, zigzags and clashing shapes', main: '#1fb5b0', accent: '#ff5ca8', paper: '#fffbea', leather: '#2a2a2a', wallpaper: 'memphis', decoration: 'squiggle', pointer: 'squiggle', font: 'rounded', title_font: 'bubbly', name_style: 'rainbow', bars: 'stripes', corners: 'round', falling: 'confetti', card_style: 'sticky' },
+  leopard: { name: 'Wild Thing', vibe: 'Leopard print, hot pink and a kiss', main: '#e0218a', accent: '#c8873a', paper: '#fff3e8', leather: '#3a2416', wallpaper: 'leopard', decoration: 'lips', pointer: 'lips', title_font: 'handwritten', name_style: 'glitter', selector: 'gradient', trail: 'hearts', card_style: 'polaroid' },
+  opera: { name: 'Velvet Opera', vibe: 'Crimson velvet, gold damask and a chandelier', main: '#8e1b2b', accent: '#d4a64a', paper: '#fbf3e4', leather: '#4a0f18', wallpaper: 'damask', decoration: 'chandelier', pointer: 'chandelier', font: 'elegant', title_font: 'elegant', name_style: 'outline', scrollbar: 'themed', header: 'card', card_style: 'letter' },
+  blocky: { name: 'Block World', vibe: 'Grass, dirt and stone blocks, and a pickaxe', main: '#5d9e2f', accent: '#9c6a38', paper: '#f1ead8', leather: '#5b3a1e', wallpaper: 'blocks', decoration: 'pickaxe', pointer: 'pickaxe', title_font: 'pixel', bars: 'pixel', corners: 'square', selector: 'outline', icons: 'colour', sounds: 'chip', trail: 'pixels', card_style: 'pixel' },
+  bigtop: { name: 'Big Top', vibe: 'Circus stripes, bunting and showtime', main: '#d7263d', accent: '#f4b400', paper: '#fff8e7', leather: '#3b2a6b', wallpaper: 'bigtop', decoration: 'tent', pointer: 'tent', title_font: 'condensed', name_style: 'wordart', bars: 'stripes', selector: 'gradient', falling: 'confetti', card_style: 'ticket' },
   // Calm and neutral: nothing cute, just a quiet look.
   graphite: { name: 'Graphite', vibe: 'Cool greys, nothing extra', main: '#5d646e', accent: '#8f8676', paper: '#eeeeec', leather: '#3d3f43', wallpaper: 'plain', decoration: 'none', pointer: 'plain', font: 'modern', title_font: 'modern', bars: 'flat' },
   paper: { name: 'Paper', vibe: 'Black ink on off-white', main: '#33312e', accent: '#b5462f', paper: '#f7f5ef', leather: '#2b2a28', wallpaper: 'dots', decoration: 'none', pointer: 'plain', title_font: 'elegant', bars: 'flat', corners: 'square' },
@@ -672,7 +672,15 @@ export const OPTIONS = {
   seasons: { name: 'Seasons & festive days', choices: { off: 'Off', auto: 'Automatic, by the date', winter: 'Winter', spring: 'Spring', summer: 'Summer', autumn: 'Autumn', lunar_new_year: 'Lunar New Year', hanami: 'Cherry blossom', childrens_day: 'Children’s Day', dragon_boat: 'Dragon Boat Festival', tanabata: 'Tanabata', mid_autumn: 'Mid-Autumn Festival', nowruz: 'Nowruz', holi: 'Holi', ramadan: 'Ramadan', eid_al_fitr: 'Eid al-Fitr', eid_al_adha: 'Eid al-Adha', diwali: 'Diwali', yalda: 'Yalda Night', dia_de_reyes: 'Día de Reyes', carnival: 'Carnival', dia_de_muertos: 'Día de Muertos', st_patricks: 'St Patrick’s Day', easter: 'Easter', midsummer: 'Midsummer', bonfire_night: 'Bonfire Night', halloween: 'Halloween', hanukkah: 'Hanukkah', christmas: 'Christmas', ...Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`my_${i + 1}`, `My day ${i + 1}`])) } },
   hemisphere: { name: 'Where the seasons are', choices: { north: 'North of the equator', south: 'South of the equator' } },
   glass_style: { name: 'Glass', choices: { season: 'With the season or festive day', winter: 'Frost', spring: 'Petals and bloom', summer: 'Sun flare', autumn: 'Raindrops and a leaf', festive: 'Sparkles', gloss: 'Plain glass' } },
-  glass_strength: { name: 'How strong', choices: { medium: 'Medium', soft: 'Soft', strong: 'Strong' } }
+  glass_strength: { name: 'How strong', choices: { medium: 'Medium', soft: 'Soft', strong: 'Strong' } },
+  // How each post's card is dressed (a post can have its own: `card:` in its file), a ribbon of the
+// day for posts written on a festive day, and a mark in the corner.
+  card_style: { name: 'Post cards', choices: { classic: 'Classic', polaroid: 'Polaroid', scrapbook: 'Scrapbook', notebook: 'Notebook', postcard: 'Postcard', sticky: 'Sticky note', ticket: 'Ticket', torn: 'Torn page', comic: 'Comic panel', neon: 'Neon', letter: 'Letter', film: 'Film frame', pixel: '8-bit', chrome: 'Chrome glass' } },
+  card_festive: { name: 'Festive ribbons', choices: { on: 'On posts written on a festive day or one of your own days', off: 'Off' } },
+  card_corner: { name: 'A mark in the corner', choices: { none: 'None', season: 'The season it was written in', charm: 'The theme’s charm' } },
+  // What's behind the posts in the main windows (rather than plain white).
+  page: { name: 'Behind the posts', choices: { layered: 'Layered: the theme’s colours, its pattern and the season', pattern: 'The theme’s pattern, faintly', wallpaper: 'The whole wallpaper', tint: 'Just the theme’s colours', plain: 'Plain white' } },
+  page_strength: { name: 'How much it shows', choices: { medium: 'Medium', soft: 'Softly', strong: 'Strongly' } }
 };
 
 // ---------- the seasons, and festive days ----------
@@ -792,6 +800,8 @@ function drawing(what, c, x, y, size) {
   if (CHARMS[what]) return place(what, c, x, y, size / 16);
   return `<text x="${x + size / 2}" y="${y + size * 0.86}" font-size="${size * 0.92}" text-anchor="middle" font-family="${EMOJI_FONT}">${what}</text>`;
 }
+// One drawing (or emoji) as a picture, for the cards' ribbons and corners.
+export const drawingUrl = (what, t, size = 20) => svgUrl(drawing(what, inks(t), 0, 0, size), size, size);
 export function festiveScenery(look, id, t) {
   const c = inks(t);
   const ch = look.charms.length ? look.charms : ['twinkle'];
@@ -803,6 +813,30 @@ export function festiveScenery(look, id, t) {
   const garland = svgUrl(`<path d="M0 1.5Q36 6 72 1.5" fill="none" stroke="${c.ink}" stroke-width=".7" opacity=".7"/><path d="M5 2.2l4 8 4-7.6z" fill="${col(0)}"/><path d="M23 3.4l4 8 4-7.8z" fill="${col(1)}"/>${drawing(pick(2), c, 39, 3, 11)}<path d="M57 2.6l4 7.8 4-8.2z" fill="${col(2)}"/>`, 72, 15);
   const ground = svgUrl(`<path d="M0 34V26C30 22 60 24 90 25s60-4 90-1v10z" fill="${mix(col(0), '#ffffff', 0.55)}"/>${drawing(pick(0), c, 18, 6, 22)}${drawing(pick(1), c, 100, 9, 19)}${drawing(pick(2), c, 150, 12, 15)}`, 180, 34);
   return { bar, icon, garland, ground };
+}
+
+// ---------- behind the posts ----------
+// The main windows are layered rather than plain white: on the bottom, a gradient in the theme's
+// colours; then its pattern (or your emoji, or your own picture); then a soft wash so posts stay
+// easy to read; and on top, on Layered, the season's or festive day's drawings scattered faintly.
+// Everything follows the theme, your colours and wallpaper, and the day. (The wash is a colour
+// in skins.css, so dark mode has a dark one.)
+const WASH = { layered: { soft: 0.86, medium: 0.72, strong: 0.52 }, pattern: { soft: 0.86, medium: 0.72, strong: 0.52 }, wallpaper: { soft: 0.55, medium: 0.3, strong: 0 }, tint: { soft: 0.5, medium: 0.3, strong: 0.1 } };
+export function pageLayers(t, look) {
+  if (!WASH[t.page]) return null;
+  const c = inks(t);
+  const tint = `linear-gradient(160deg, ${mix(t.paper, '#ffffff', 0.5)}, ${mix(t.paper, t.main, 0.16)} 55%, ${mix(t.paper, t.accent, 0.2)})`;
+  const quiet = t.wallpaper === 'sky' || !WALLPAPERS[t.wallpaper];
+  const pattern = quiet ? `radial-gradient(${mix(t.paper, t.main, 0.45)} 1.3px, transparent 1.8px) 0 0 / 20px 20px, ${tint}` : wallpaperCss(t);
+  let season = '';
+  if (t.page === 'layered' && look?.charms?.length) {
+    const ch = look.charms;
+    const spots = [[14, 18, 24, -12], [104, 10, 18, 14], [150, 70, 26, 8], [60, 84, 20, -6], [18, 140, 18, 10], [112, 140, 22, -14]];
+    season = `${svgUrl(`<g opacity=".5">${spots.map(([x, y, size, rot], i) => `<g transform="rotate(${rot} ${x + size / 2} ${y + size / 2})">${drawing(ch[i % ch.length], c, x, y, size)}</g>`).join('')}</g>`, 180, 180)} 0 0 / 180px 180px, `;
+  }
+  const wash = WASH[t.page][t.page_strength] ?? WASH[t.page].medium;
+  const base = t.page === 'tint' ? tint : pattern;
+  return { bg: `${season}linear-gradient(var(--page-wash), var(--page-wash)), ${base}`, wash, washColour: mix(t.paper, '#ffffff', 0.55) };
 }
 
 // When two fall together, the shorter, rarer one shows (a few days of Eid over a month of Ramadan).
@@ -1248,7 +1282,10 @@ export function skinCss(t, doc = document) {
     '--sk-line': mix(tc('#ece9d8'), c.ink, 0.22),
     '--sk-thumb': tc('#5d93f5'),
     '--sk-track': mix(tc('#ece9d8'), '#ffffff', 0.4),
-    '--sk-ink': c.ink
+    '--sk-ink': c.ink,
+    '--sk-main': t.main,
+    '--sk-accent': t.accent,
+    '--sk-soft': mix(t.accent, '#ffffff', 0.72)
   };
   // (The classic colours are already the defaults in skins.css.)
   if (!isClassicColours(t)) css += `:root { ${Object.entries(vars).map(([k, v]) => `${k}: ${v}`).join('; ')}; }`;
@@ -1383,6 +1420,14 @@ export function applySkin(settings, doc = document) {
     const sc = festiveScenery(look, festival, t);
     for (const [k, v] of Object.entries(sc)) root.style.setProperty(`--fx-${k}`, v);
   } else for (const k of ['bar', 'icon', 'garland', 'ground']) root.style.removeProperty(`--fx-${k}`);
+
+  // Behind the posts: the layers, with the season's (or festive day's) drawings on top.
+  const page = pageLayers(t, look);
+  if (page) {
+    root.style.setProperty('--page-bg', page.bg);
+    root.style.setProperty('--page-wash-a', String(page.wash));
+    root.style.setProperty('--page-wash-c', hexRgb(page.washColour).slice(0, 3).join(', '));
+  } else for (const k of ['--page-bg', '--page-wash-a', '--page-wash-c']) root.style.removeProperty(k);
 
   root.dataset.skin = t.id;
   // The other settings: rules in skins.css follow these marks on the page.

@@ -152,8 +152,7 @@ function plainExcerpt(md, n = 160) {
 const KNOWN = new Set([
   'date', 'title', 'draft', 'font', 'photos', 'area', 'city', 'country', 'country_code', 'lat', 'lon',
   'category', 'rating', 'would_return', 'weather', 'source', 'caption', 'captions', 'stamp',
-  'author', 'director', 'host', 'episode', 'year', 'status', 'recommend', 'quote', 'rewatch', 'suggested_by', 'artist', 'album', 'format', 'pinned', 'creator', 'season', 'network', 'episodes', 'pages', 'page', 'reading_log', 'floppy', 'floppy_journal', 'ordered', 'bought', 'tickets', 'rides', 'gallery', 'theatre', 'invite', 'boarding', 'cinema', 'cloakroom', 'wristband', 'postcard', 'fortune', 'luggage', 'matchbook', 'coaster', 'roomkey', 'flower', 'postcard_scene', 'pitch', 'trailmap', 'parkpass', 'patch', 'summit', 'signpost', 'leaf', 'marshmallow', 'tides', 'compass', 'bookmark', 'librarycard', 'bookplate', 'note', 'popcorn', 'glasses3d', 'rental', 'tvguide', 'remote', 'headphones', 'gig', 'pick', 'setlist', 'busticket', 'coffeering', 'signature', 'bookclub', 'dogear', 'stubpair', 'programme', 'picknmix', 'drivein', 'tally', 'takeaway', 'nospoil', 'battery', 'jcard', 'walkmap', 'napkin', 'vinyllabel', 'mixtape', 'backstage', 'lighter', 'sky', 'diary', 'moodring', 'doodle', 'cootie', 'forecast', 'lyric', 'handstamp', 'glowstick', 'racebib', 'ceremony', 'confetti', 'balloon', 'matchday', 'funfair', 'rosette', 'namebadge', 'sparkler', 'flyer', 'tourtee', 'earplugs', 'drumstick', 'buttonbadge', 'seatplan', 'lozenge', 'masks', 'stageprog', 'comedyticket', 'mic', 'interval', 'operaglasses', 'curtain', 'laughmeter', 'joke', 'custom_keepsakes', 'memory', 'negatives', 'oldprint', 'calendar', 'vhstape', 'envelope', 'thennow', 'rewind', 'skysunrise', 'skygolden', 'skyrainbow', 'skystorm', 'skysnow', 'skystars', 'skymoon', 'skyaurora', 'skyclouds', 'skyfog', 'skyplane', 'skypink', 'workout', 'gympass', 'personalbest', 'dumbbell', 'steps', 'shaker', 'heartrate', 'setsheet', 'medal', 'waterbottle', 'alarmclock', 'riseshine', 'firstcoffee', 'lunchbreak', 'teatime', 'nightowl', 'sleepmask', 'ledclock', 'discaward', 'trophy', 'chartno1', 'winnercard', 'goldmic', 'autograph', 'fanclub', 'jukebox', 'radiorequest', 'magreview', 'yearonrepeat', 'sevenninch', 'profile', 'grid_photo', 'flashcard', 'highlighter', 'pagetabs', 'timetable', 'examslip', 'pomodoro', 'desklamp', 'librarypass', 'grade', 'casecard', 'mindmap', 'revisionlist', 'pencil', 'calculator', 'gradcap', 'diploma', 'stopwatch', 'lecturenotes', 'doordnd', 'readinglist', 'idbadge', 'timecard', 'meetinginvite', 'outofoffice', 'businesscard', 'inboxzero', 'laptop', 'briefcase', 'deskplate', 'stapler', 'paperclips', 'memo', 'wfh', 'tgif', 'deadline', 'employeemonth'
-]);
+  'author', 'director', 'host', 'episode', 'year', 'status', 'recommend', 'quote', 'rewatch', 'suggested_by', 'artist', 'album', 'format', 'pinned', 'creator', 'season', 'network', 'episodes', 'pages', 'page', 'reading_log', 'floppy', 'floppy_journal', 'ordered', 'bought', 'tickets', 'rides', 'gallery', 'theatre', 'invite', 'boarding', 'cinema', 'cloakroom', 'wristband', 'postcard', 'fortune', 'luggage', 'matchbook', 'coaster', 'roomkey', 'flower', 'postcard_scene', 'pitch', 'trailmap', 'parkpass', 'patch', 'summit', 'signpost', 'leaf', 'marshmallow', 'tides', 'compass', 'bookmark', 'librarycard', 'bookplate', 'note', 'popcorn', 'glasses3d', 'rental', 'tvguide', 'remote', 'headphones', 'gig', 'pick', 'setlist', 'busticket', 'coffeering', 'signature', 'bookclub', 'dogear', 'stubpair', 'programme', 'picknmix', 'drivein', 'tally', 'takeaway', 'nospoil', 'battery', 'jcard', 'walkmap', 'napkin', 'vinyllabel', 'mixtape', 'backstage', 'lighter', 'sky', 'diary', 'moodring', 'doodle', 'cootie', 'forecast', 'lyric', 'handstamp', 'glowstick', 'racebib', 'ceremony', 'confetti', 'balloon', 'matchday', 'funfair', 'rosette', 'namebadge', 'sparkler', 'flyer', 'tourtee', 'earplugs', 'drumstick', 'buttonbadge', 'seatplan', 'lozenge', 'masks', 'stageprog', 'comedyticket', 'mic', 'interval', 'operaglasses', 'curtain', 'laughmeter', 'joke', 'custom_keepsakes', 'memory', 'negatives', 'oldprint', 'calendar', 'vhstape', 'envelope', 'thennow', 'rewind', 'skysunrise', 'skygolden', 'skyrainbow', 'skystorm', 'skysnow', 'skystars', 'skymoon', 'skyaurora', 'skyclouds', 'skyfog', 'skyplane', 'skypink', 'workout', 'gympass', 'personalbest', 'dumbbell', 'steps', 'shaker', 'heartrate', 'setsheet', 'medal', 'waterbottle', 'alarmclock', 'riseshine', 'firstcoffee', 'lunchbreak', 'teatime', 'nightowl', 'sleepmask', 'ledclock', 'discaward', 'trophy', 'chartno1', 'winnercard', 'goldmic', 'autograph', 'fanclub', 'jukebox', 'radiorequest', 'magreview', 'yearonrepeat', 'sevenninch', 'profile', 'grid_photo', 'flashcard', 'highlighter', 'pagetabs', 'timetable', 'examslip', 'pomodoro', 'desklamp', 'librarypass', 'grade', 'casecard', 'mindmap', 'revisionlist', 'pencil', 'calculator', 'gradcap', 'diploma', 'stopwatch', 'lecturenotes', 'doordnd', 'readinglist', 'idbadge', 'timecard', 'meetinginvite', 'outofoffice', 'businesscard', 'inboxzero', 'laptop', 'briefcase', 'deskplate', 'stapler', 'paperclips', 'memo', 'wfh', 'tgif', 'deadline', 'employeemonth', 'card', 'ribbon', 'ribbon_style', 'ribbon_colour']);
 
 export function buildPost(type, key, text, tz) {
   const { data, body } = splitFrontMatter(text);
@@ -181,6 +180,12 @@ export function buildPost(type, key, text, tz) {
     draft: data.draft === true,
     // Pinned posts sit at the top of the feed and their section.
     pinned: data.pinned === true,
+    // How its card is dressed (one of the card designs; empty: the theme's), and a ribbon of its
+    // own: a few words, in one of the ribbon styles, in a colour of its own (or the theme's).
+    card: THEME_OPTIONS.card_style.includes(String(data.card ?? '').trim().toLowerCase()) ? String(data.card).trim().toLowerCase() : '',
+    ribbon: data.ribbon != null ? String(data.ribbon).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 40) : '',
+    ribbon_style: RIBBON_STYLES.includes(String(data.ribbon_style ?? '').trim().toLowerCase()) ? String(data.ribbon_style).trim().toLowerCase() : 'banner',
+    ribbon_colour: /^#[0-9a-f]{6}$/i.test(String(data.ribbon_colour ?? '').trim()) ? String(data.ribbon_colour).trim().toLowerCase() : '',
     // Its own font (one of the theme fonts); empty: the site's font from the theme.
     font: THEME_OPTIONS.font.includes(String(data.font ?? '').trim().toLowerCase()) ? String(data.font).trim().toLowerCase() : '',
     // On the profile grid (the About page): only shows for a post with photos.
@@ -488,6 +493,8 @@ export function parseSite(text) {
     countdown: data.countdown && day ? { label: String(data.countdown).slice(0, 60), date: day[0], icon: /^[a-z]{1,16}$/.test(String(data.countdown_icon ?? '')) ? String(data.countdown_icon) : '' } : null,
     // The "listening to / watching / reading" line, filled from the shelves.
     now_playing: !(data.now_playing === false || /^(false|no|off)$/i.test(String(data.now_playing ?? ''))),
+    // Visitors can comment on posts (each waits for your approval), unless you switch it off.
+    comments: !(data.comments === false || /^(false|no|off)$/i.test(String(data.comments ?? ''))),
     tagline: data.tagline ? String(data.tagline) : '',
     about_html: safeMarkdown(body)
   };
@@ -631,7 +638,12 @@ export const THEME_OPTIONS = {
   seasons: ['off', 'auto', 'winter', 'spring', 'summer', 'autumn', 'lunar_new_year', 'hanami', 'childrens_day', 'dragon_boat', 'tanabata', 'mid_autumn', 'nowruz', 'holi', 'ramadan', 'eid_al_fitr', 'eid_al_adha', 'diwali', 'yalda', 'dia_de_reyes', 'carnival', 'dia_de_muertos', 'st_patricks', 'easter', 'midsummer', 'bonfire_night', 'halloween', 'hanukkah', 'christmas', 'my_1', 'my_2', 'my_3', 'my_4', 'my_5', 'my_6', 'my_7', 'my_8', 'my_9', 'my_10', 'my_11', 'my_12'],
   hemisphere: ['north', 'south'],
   glass_style: ['season', 'winter', 'spring', 'summer', 'autumn', 'festive', 'gloss'],
-  glass_strength: ['medium', 'soft', 'strong']
+  glass_strength: ['medium', 'soft', 'strong'],
+  card_style: ['classic', 'polaroid', 'scrapbook', 'notebook', 'postcard', 'sticky', 'ticket', 'torn', 'comic', 'neon', 'letter', 'film', 'pixel', 'chrome'],
+  card_festive: ['on', 'off'],
+  card_corner: ['none', 'season', 'charm'],
+  page: ['layered', 'pattern', 'wallpaper', 'tint', 'plain'],
+  page_strength: ['medium', 'soft', 'strong']
 };
 export const THEME_HIDEABLE = ['lastpost', 'status', 'playing', 'countdown', 'nudge', 'clock', 'traystatus'];
 export const THEME_SECTIONS = ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about'];
@@ -775,6 +787,8 @@ export function parseTheme(text) {
   return out;
 }
 
+// A post's own ribbon (these match RIBBONS in public/js/card-dress.js).
+export const RIBBON_STYLES = ['banner', 'sash', 'stamp', 'neon', 'sticker'];
 export const KEEPSAKE_SHAPES = ['ticket', 'card', 'tag', 'badge', 'sticker', 'note', 'picture'];
 const SHELF_AND_PLACES = ['places', 'books', 'films', 'tv', 'podcasts', 'music', 'thoughts'];
 // keepsakes.md: built-in keepsakes you've switched off (they leave the back office, though a
@@ -942,6 +956,26 @@ export function parseVisited(text) {
 function isTrue(v) {
   return v === true || /^(true|yes)$/i.test(String(v ?? ''));
 }
+
+// A comment on a post (comments/<type>/<post>/<id>.md, or comments-pending/… while it waits):
+// a name (any name: no email, nothing else about the visitor), when, the comment it answers if
+// it's a reply, your reply to it, and the words.
+const COMMENT_ID = /^[A-Za-z0-9][A-Za-z0-9-]{0,40}$/;
+export function parseComment(key, text) {
+  const [, type = '', slug = '', file = ''] = String(key).split('/');
+  const { data, body } = splitFrontMatter(text || '');
+  return {
+    key,
+    post: `${type}/${slug}`,
+    id: file.replace(/\.md$/i, ''),
+    name: String(data.name || 'Visitor').slice(0, 40),
+    date: data.date ? String(data.date) : '',
+    reply_to: COMMENT_ID.test(String(data.reply_to ?? '')) ? String(data.reply_to) : '',
+    reply: data.reply ? String(data.reply).slice(0, 2000) : '',
+    message: String(body || '').trim().slice(0, 2000)
+  };
+}
+export const isCommentKey = (k, folder = 'comments') => new RegExp(`^${folder}/[a-z]+/[^/]+/[A-Za-z0-9-]+\\.md$`).test(k);
 
 export function parseGuestbookEntry(key, text) {
   const { data, body } = splitFrontMatter(text);

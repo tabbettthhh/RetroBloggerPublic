@@ -17,6 +17,8 @@ import { musicMakers } from './music-keepsakes.js';
 import { studyMakers } from './study-keepsakes.js';
 import { albumApp } from './album.js';
 import { friendsApp } from './friends-feed.js';
+import { dressCard } from './card-dress.js';
+import { commentLink, commentsBlock, commentsButton } from './comments.js';
 import { activeSkin, resolveSkin, word, postFontAttrs } from './skins.js';
 
 const session = storage('session');
@@ -127,6 +129,12 @@ export function card(post, open = false) {
   // (A post written in a font of its own.)
   for (const [k, v] of Object.entries(postFontAttrs(post))) el?.setAttribute(k, v);
   if (post.type === 'thoughts') el?.classList.add('card-is-thought');
+  // (Its design, ribbons and corner mark; and in the feed, how many comments it has.)
+  dressCard(el, post, open);
+  if (!open) {
+    const link = commentLink(post);
+    if (link && el) el.append(link);
+  }
   return el;
 }
 function cardInner(post, open) {
@@ -313,7 +321,7 @@ function single(ctx) {
   const [type, slug] = String(ctx.param || '').split('/');
   const post = ctx.data.posts.find((p) => p.type === type && p.slug === slug);
   if (!post) return h('div', { class: 'feed' }, h('p', { class: 'empty' }, 'That post is not here any more.'), h('a', { class: 'xp-btn', href: '#/' }, '‹ Back home'));
-  return h('div', { class: 'feed' }, card(post, true), h('a', { class: 'xp-btn', href: '#/' }, '‹ Back home'));
+  return h('div', { class: 'feed' }, card(post, true), commentsBlock(post, ctx.data), h('a', { class: 'xp-btn', href: '#/' }, '‹ Back home'));
 }
 
 // ---------- Leather journal ----------
@@ -393,7 +401,8 @@ function journal(ctx) {
     h('a', { class: 'paper-pill', href: `#/journal/year/${year}` }, `${year} contents`),
     h('a', { class: 'paper-pill', href: '#/journal/shelf' }, 'All my journals'),
     h('a', { class: 'paper-pill', href: post.city ? `#/passport/${slug}` : '#/passport' }, 'Passport'),
-    h('a', { class: 'leather-pill', href: mapWrap ? `#/atlas/${slug}` : '#/atlas' }, 'Map of everywhere')
+    h('a', { class: 'leather-pill', href: mapWrap ? `#/atlas/${slug}` : '#/atlas' }, 'Map of everywhere'),
+    commentsButton(post, ctx.data)
   );
   // Photos and keepsakes, in the order they're stuck in; then Floppy and the "Also in" note.
   const scraps = [...scrapOrder(post), () => floppyMargin(post), () => alsoIn(post, all)];

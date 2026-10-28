@@ -503,3 +503,22 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .tm-floppy-pic { width: 128px; height: 150px; display: grid; place-items: center; padding-top: 18px; border: 1px solid #ddd8c4; border-radius: 8px; background: radial-gradient(circle at 50% 40%, #fff, #eef2fb); }
 .tm-floppy-pic svg { width: 96px; height: 105px; overflow: visible; }
 .tm-floppy-side { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 8px; }
+
+/* Card designs, to choose between (in Themes, and for a post of its own). */
+.dress-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
+.dress-pick { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 6px 6px; border: 1px solid #c9c4ae; border-radius: 6px; background: linear-gradient(160deg, #f6f3e8, #e9e4d2); font: inherit; cursor: pointer; }
+.dress-pick:hover { border-color: #7a96df; }
+.dress-pick.on { border: 2px solid #316ac5; padding: 7px 5px 5px; background: #eef4fd; }
+.dress-pick small { font-size: 11px; color: #333; text-align: center; }
+.dress-mini-wrap { display: block; width: 100px; height: 72px; overflow: visible; }
+.dress-mini { display: block; width: 190px; zoom: .52; margin: 6px 0 0 6px; text-align: left; }
+.dress-mini .card-head { display: flex; font-size: 12px; }
+.dress-mini .card-body { display: block; padding: 8px 10px 10px; }
+.dress-mini .card-body i { display: block; height: 7px; margin: 5px 0; border-radius: 4px; background: rgba(0, 0, 0, .14); }
+.dress-mini .card-body i:last-child { width: 60%; }
+.card.dress-mini[data-card="neon"] .card-body i { background: rgba(255, 255, 255, .35); }
+.dress-ribbon { display: grid; gap: 8px; margin-top: 10px; padding: 10px; border: 1px dashed #c9c4ae; border-radius: 6px; }
+.dress-ribbon .card { max-width: 340px; margin: 0; }
+.dress-ribbon .card .card-body { padding: 6px 10px 10px; font-size: 12px; color: #555; }
+.textarea.cm-reply { min-height: 56px; height: 56px; }
+.cm-context { margin: -2px 0 0; }

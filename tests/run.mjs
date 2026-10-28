@@ -19,7 +19,7 @@ const BASE = `http://localhost:${PORT}`;
 const GROUPS = {
   admin: ['admin', 'designs', 'thoughts', 'profile', 'pool', 'themes'],
   roundtrip: ['roundtrip'],
-  server: ['server', 'updater'],
+  server: ['server', 'updater', 'comments'],
   photos: ['photos'],
   import: ['import'],
   journal: ['journal'],

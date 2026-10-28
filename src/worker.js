@@ -4,7 +4,7 @@
 import { Zip, ZipDeflate, ZipPassThrough } from 'fflate';
 import { stripImage, UnsupportedImage, CLEAN_TYPES } from './strip.js';
 import { parseVisited } from './content.js';
-import { TYPES, buildPost, isVisible, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseGuestbookEntry, splitFrontMatter, headerProblem } from './content.js';
+import { TYPES, buildPost, isVisible, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
 import { adminCheck } from './auth.js';
 import * as friends from './friends.js';
 
@@ -111,6 +111,7 @@ async function route(request, env, ctx) {
   if (p === '/api/all' && method === 'GET') return apiAll(request, env, ctx);
   if (p === '/api/visit' && method === 'POST') return visit(request, env);
   if (p === '/api/guestbook' && method === 'POST') return signGuestbook(request, env);
+  if (p === '/api/comment' && method === 'POST') return leaveComment(request, env);
   if (p === '/api/suggest' && method === 'POST') return suggest(request, env);
   if (p === '/api/nudge' && method === 'POST') return nudge(request, env);
   if (p.startsWith('/media/') && (method === 'GET' || method === 'HEAD')) return media(request, env, p);
@@ -383,6 +384,18 @@ async function buildEverything(env, { includeHidden = false } = {}) {
   ]);
 
   const site = parseSite(siteText);
+  // Approved comments, each with its post (and none at all while comments are switched off).
+  const commentKeys = site.comments ? mdKeys.filter((k) => isCommentKey(k)) : [];
+  const commentTexts = await Promise.all(commentKeys.map((k) => readText(env, k)));
+  const byPost = {};
+  commentKeys.forEach((k, i) => {
+    const { key, post, ...c } = parseComment(k, commentTexts[i] || '');
+    (byPost[post] ||= []).push(c);
+  });
+  for (let i = 0; site.comments && i < posts.length; i++) {
+    const list = (byPost[`${posts[i].type}/${posts[i].slug}`] || []).sort((a, b) => String(a.date).localeCompare(String(b.date)) || a.id.localeCompare(b.id));
+    posts[i] = { ...posts[i], comments: list.slice(0, 300) };
+  }
   site.status = fillStatus(site.status, posts);
   // Past statuses, newest first, without the one that's showing now.
   site.history = parseStatusLog(logText)
@@ -582,6 +595,39 @@ async function signGuestbook(request, env) {
   return json({ ok: true, pending: true });
 }
 
+// A visitor's comment on a post (or a reply to another comment). Only a name is asked for, and
+// nothing else about them is kept. It waits for the owner's approval in the back office.
+async function leaveComment(request, env) {
+  if (looksLikeBot(request)) return json({ error: 'Not accepted' }, 400);
+  let body;
+  try {
+    body = await readBody(request);
+  } catch {
+    return json({ error: 'Could not read that.' }, 400);
+  }
+  if (body.website) return json({ ok: true, pending: true }); // honeypot: bots fill hidden fields
+  const name = cleanText(body.name, 40).replace(/\s+/g, ' ');
+  if (!name) return json({ error: 'Write a name first (any name you like).' }, 400);
+  const message = cleanText(body.message, 1000);
+  if (message.length < 2) return json({ error: 'Write a comment first.' }, 400);
+  const [type, slug] = String(body.post || '').split('/');
+  const data = await buildEverything(env);
+  if (!data.site.comments) return json({ error: 'Comments are switched off here.' }, 403);
+  const post = data.posts.find((x) => x.type === type && x.slug === slug);
+  if (!post) return json({ error: 'That post isn’t here any more.' }, 404);
+  // A reply is to a comment that's on the site.
+  const replyTo = String(body.reply_to || '');
+  const answering = replyTo && post.comments.some((c) => c.id === replyTo) ? replyTo : '';
+  if (replyTo && !answering) return json({ error: 'That comment isn’t here any more.' }, 404);
+  const waiting = await env.CONTENT.list({ prefix: 'comments-pending/', limit: 300 });
+  if (waiting.objects.length >= 300) return json({ error: 'Lots of comments are waiting already. Try again later.' }, 429);
+  if (waiting.objects.filter((o) => o.key.startsWith(`comments-pending/${type}/${slug}/`)).length >= 40) return json({ error: 'Lots of comments are waiting on this post already. Try again later.' }, 429);
+  const { iso, file } = stamp();
+  const text = `---\nname: ${yamlString(name)}\ndate: ${yamlString(iso.slice(0, 16).replace('T', ' '))}\n${answering ? `reply_to: ${yamlString(answering)}\n` : ''}---\n${message}\n`;
+  await env.CONTENT.put(`comments-pending/${type}/${slug}/${file}.md`, text, { httpMetadata: { contentType: 'text/markdown; charset=utf-8' } });
+  return json({ ok: true, pending: true });
+}
+
 async function suggest(request, env) {
   if (looksLikeBot(request)) return json({ error: 'Not accepted' }, 400);
   let body;
@@ -639,6 +685,11 @@ async function adminApi(request, env, url, ctx) {
       objects.filter((o) => o.key.startsWith('guestbook/') && o.key.endsWith('.md')).map(async (o) => parseGuestbookEntry(o.key, (await readText(env, o.key)) || ''))
     );
     approvedGb.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    // Comments: the ones waiting for your approval, and the ones on the site (newest first).
+    const commentsIn = (folder) => Promise.all(objects.filter((o) => isCommentKey(o.key, folder)).map(async (o) => parseComment(o.key, (await readText(env, o.key)) || '')));
+    const newest = (list) => list.sort((a, b) => String(b.date).localeCompare(String(a.date)) || b.id.localeCompare(a.id));
+    const pendingComments = newest(await commentsIn('comments-pending'));
+    const approvedComments = newest(await commentsIn('comments'));
     const suggestions = await Promise.all(
       objects.filter((o) => o.key.startsWith('suggestions/')).map(async (o) => {
         const { data: d, body } = splitFrontMatter((await readText(env, o.key)) || '');
@@ -661,7 +712,7 @@ async function adminApi(request, env, url, ctx) {
     } catch {}
     // Your friends' latest posts, for the notifications.
     const friendNotes = await friends.friendNotes(env).catch(() => ({ count: 0, posts: [] }));
-    return json({ ...data, files, pendingGuestbook: pendingGb, approvedGuestbook: approvedGb, suggestions, counter, nudges, notifySeen, friendNotes, now: Date.now() });
+    return json({ ...data, files, pendingGuestbook: pendingGb, approvedGuestbook: approvedGb, pendingComments, approvedComments, suggestions, counter, nudges, notifySeen, friendNotes, now: Date.now() });
   }
 
   // Many Markdown files at once (used by the Goodreads and Letterboxd imports).
@@ -709,7 +760,8 @@ async function adminApi(request, env, url, ctx) {
       const [folder, file, more] = key.split('/');
       if (TYPES.includes(folder) && file && !more && file.endsWith('.md')) {
         const mediaPrefix = `${folder}/${file.replace(/\.md$/, '')}/`;
-        const extra = await listAll(env, mediaPrefix);
+        // (Its photos go with it, and its comments, on the site or waiting.)
+        const extra = [...(await listAll(env, mediaPrefix)), ...(await listAll(env, 'comments/' + mediaPrefix)), ...(await listAll(env, 'comments-pending/' + mediaPrefix))];
         if (extra.length) await env.CONTENT.delete(extra.map((o) => o.key));
       }
       await bumpVersion(env);

@@ -214,3 +214,16 @@
 [data-glass-look="festive"][data-festival] :is(.glass-photo, .glass-card, .glass-item)::after { content: ''; position: absolute; right: 5px; top: 5px; width: 18px; height: 18px; background: var(--fx-icon) center / contain no-repeat; }
 /* (On thoughts the drawing sits in the middle of the heading, clear of the words and the date.) */
 [data-glass-look="festive"][data-festival] .glass-card::after { right: auto; left: calc(50% - 9px); top: 4px; }
+
+/* ---------- behind the posts: layered rather than plain white (see pageLayers in skins.js) ---------- */
+:root { --page-wash: rgba(var(--page-wash-c, 255, 255, 255), var(--page-wash-a, .72)); }
+[data-theme="dark"] { --page-wash: rgba(27, 27, 27, calc(var(--page-wash-a, .72) * .5 + .45)); }
+[data-sk-page]:not([data-sk-page="plain"]) :is(.xp-phone .xp-body, .dw-xp .wbody) { background: var(--page-bg, #fff); }
+/* (The posts sit on top as frosted cards, with a little more lift, so the layers show through
+   them a touch: more when it shows strongly. A memory keeps its own old paper.) */
+:root { --page-card-a: .86; }
+[data-sk-page-strength="soft"] { --page-card-a: .93; }
+[data-sk-page-strength="strong"] { --page-card-a: .76; }
+[data-sk-page]:not([data-sk-page="plain"]) :is(.xp-phone .xp-body, .dw-xp .wbody) .feed > .card:not(.memory):not([data-card]) { background: rgba(255, 255, 255, var(--page-card-a)); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+[data-theme="dark"][data-sk-page]:not([data-sk-page="plain"]) :is(.xp-phone .xp-body, .dw-xp .wbody) .feed > .card:not(.memory):not([data-card]) { background: rgba(36, 36, 36, var(--page-card-a)); }
+[data-sk-page]:not([data-sk-page="plain"]):not([data-sk-posts="lines"]) :is(.xp-phone .xp-body, .dw-xp .wbody) .feed > :is(.card, .profile-tile) { box-shadow: 0 2px 8px rgba(0, 0, 0, .12); }
