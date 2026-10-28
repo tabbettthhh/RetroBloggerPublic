@@ -12,6 +12,7 @@
 
 import { startEffects, TRAILS, FALLING } from './effects.js';
 import { cleanFloppy } from './floppy-look.js';
+import { cleanCards, OWN_CARD } from './card-parts.js';
 export { FALLING as FALLING_CHOICES };
 
 // ---------- colours ----------
@@ -1243,10 +1244,77 @@ export function resolveSkin(settings = {}) {
   t.looks = cleanLooks(settings.looks);
   t.floppy = cleanFloppy(settings.floppy, (x) => (CHARMS[x] && !['none', 'plain'].includes(x) ? x : emojiList(x, 1)[0] || ''));
   Object.assign(t, resolveOptions(settings, base));
+  // Post cards of your own, and one of them for every post if you've chosen it.
+  t.cards = cleanCards(settings.cards, Object.keys(OPTIONS.title_font.choices));
+  if (OWN_CARD.test(String(settings.card_style)) && t.cards.some((c) => c.id === settings.card_style)) t.card_style = settings.card_style;
   t.custom = [...['main', 'accent', 'paper', 'leather', 'wallpaper', 'decoration', 'pointer', 'tab_icon', 'night_theme'], ...Object.keys(OPTIONS)].some((k) => settings[k] != null && settings[k] !== '' && settings[k] !== base[k]) || t.stickers.length > 0 || Object.keys(t.apps).length > 0 || ['hide', 'menu', 'sections_hidden', 'festivals', 'my_days'].some((k) => Array.isArray(settings[k]) && settings[k].length);
   return t;
 }
 const isClassicColours = (t) => t.main === SKINS.classic.main && t.accent === SKINS.classic.accent && t.paper === SKINS.classic.paper && !t.leather;
+
+// ---------- post cards of your own ----------
+// Each card made in Themes › Post cards, drawn from its parts (see card-parts.js). Its colours
+// are its own, or the theme's where it leaves one empty; the writing turns dark or light to suit
+// the paper unless you've chosen its colour.
+// A background's layers, split at its top-level commas.
+const layers = (bg) => {
+  const out = [];
+  let depth = 0;
+  let cur = '';
+  for (const ch of bg) {
+    if (ch === '(') depth++;
+    if (ch === ')') depth--;
+    if (ch === ',' && !depth) (out.push(cur.trim()), (cur = ''));
+    else cur += ch;
+  }
+  return [...out, cur.trim()].filter(Boolean);
+};
+const rgba = (hx, a) => `rgba(${hexRgb(hx).slice(0, 3).join(', ')}, ${a})`;
+const TORN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='14' viewBox='0 0 44 14'%3E%3Cpath d='M0 0h44v5l-4 7-5-8-3 9-6-7-4 8-4-9-5 7-3-8-6 9-4-6v3z'/%3E%3C/svg%3E") bottom / 44px 14px repeat-x`;
+const CLIP = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='40' viewBox='0 0 16 40'%3E%3Cpath d='M11 10v19a4 4 0 0 1-8 0V7a5 5 0 0 1 10 0v24a7 7 0 0 1-14 0' fill='none' stroke='%23808a96' stroke-width='2' stroke-linecap='round' transform='translate(1.5 2)'/%3E%3C/svg%3E")`;
+export function ownCardsCss(t) {
+  let css = '';
+  for (const c of t.cards || []) {
+    const P = `:root:not([data-sk-posts="lines"]) .card[data-card="${c.id}"]`;
+    const paper = c.paper || '#ffffff';
+    const ink = c.ink || (luminance(paper) > 0.45 ? '#232323' : '#f2f2f2');
+    const edge = c.edge_colour || t.main;
+    const deco = c.deco_colour || t.accent;
+    const head = c.head_colour || t.main;
+    const headInk = luminance(head) > 0.5 ? '#232323' : '#ffffff';
+    const texture = { lined: `repeating-linear-gradient(180deg, transparent 0 23px, ${rgba(ink, 0.16)} 23px 24px)`, grid: `linear-gradient(${rgba(ink, 0.1)} 1px, transparent 1px) 0 0 / 18px 18px, linear-gradient(90deg, ${rgba(ink, 0.1)} 1px, transparent 1px) 0 0 / 18px 18px`, dots: `radial-gradient(${rgba(ink, 0.2)} 1.2px, transparent 1.7px) 0 0 / 16px 16px`, kraft: 'repeating-linear-gradient(0deg, rgba(120, 80, 30, .06) 0 2px, transparent 2px 5px), repeating-linear-gradient(90deg, rgba(120, 80, 30, .05) 0 1px, transparent 1px 4px)', linen: `repeating-linear-gradient(0deg, ${rgba(ink, 0.05)} 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, ${rgba(ink, 0.05)} 0 1px, transparent 1px 4px)`, halftone: `radial-gradient(${rgba(deco, 0.3)} 1.4px, transparent 1.9px) 0 0 / 9px 9px` }[c.texture];
+    const ground = [texture, `linear-gradient(${paper}, ${paper})`].filter(Boolean);
+    const shadows = { none: [], soft: ['0 2px 8px rgba(0, 0, 0, .15)'], lifted: ['0 12px 18px -10px rgba(0, 0, 0, .45)'], hard: [`5px 5px 0 ${edge}`] }[c.shadow];
+    const rules = [`color: ${ink}`, `border-radius: ${c.edge === 'pixel' ? 0 : { square: 0, soft: '6px', round: '16px' }[c.corners]}`];
+    if (c.edge === 'stripes') rules.push('border: 7px solid transparent', `background: ${ground.flatMap(layers).map((layer) => `${layer} padding-box`).join(', ')}, repeating-linear-gradient(-45deg, ${edge} 0 9px, #ffffff 9px 16px, ${deco} 16px 25px, #ffffff 25px 32px) border-box`);
+    else rules.push(`background: ${ground.join(', ')}`, `border: ${{ none: '0', line: `1px solid ${edge}`, thick: `3px solid ${edge}`, dashed: `2px dashed ${edge}`, double: `4px double ${edge}`, glow: `2px solid ${edge}`, pixel: '0', torn: '0' }[c.edge]}`);
+    if (c.edge === 'glow') shadows.push(`0 0 6px ${edge}`, `0 0 16px ${rgba(edge, 0.5)}`);
+    if (c.edge === 'pixel') shadows.push(`0 -4px 0 0 ${edge}`, `0 4px 0 0 ${edge}`, `-4px 0 0 0 ${edge}`, `4px 0 0 0 ${edge}`), rules.push('margin: 4px');
+    if (c.edge === 'torn') rules.push('padding-bottom: 20px', `-webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 13px) no-repeat, ${TORN}`, `mask: linear-gradient(#000 0 0) top / 100% calc(100% - 13px) no-repeat, ${TORN}`);
+    if (c.shadow === 'hard') rules.push('margin-right: 5px');
+    rules.push(`box-shadow: ${shadows.length ? shadows.join(', ') : 'none'}`);
+    if (c.tilt === 'slight') rules.push('transform: rotate(var(--card-tilt, 0deg))');
+    if (['tape', 'tapetop', 'pin', 'clip'].includes(c.deco)) rules.push('overflow: visible');
+    if (c.deco === 'seal') rules.push('padding-bottom: 44px');
+    css += `${P} { ${rules.join('; ')}; }`;
+    css += `${P} :is(.card-body, .card-title, .card-head strong, .card-date, .place-name, .list-body, .quote-body, .muted, figcaption) { color: ${ink}; }`;
+    // The heading.
+    const headRule = { plain: `background: transparent; border-bottom: 1px solid ${rgba(ink, 0.15)}`, solid: `background: ${head}; border-bottom: 0`, halftone: `background: radial-gradient(${rgba(head, 0.5)} 1.4px, transparent 1.9px) 0 0 / 7px 7px, ${rgba(head, 0.12)}; border-bottom: 1px solid ${rgba(head, 0.4)}`, stripes: `background: repeating-linear-gradient(135deg, ${rgba(head, 0.28)} 0 6px, transparent 6px 12px); border-bottom: 1px solid ${rgba(head, 0.4)}`, none: 'background: transparent; border-bottom: 0' }[c.head];
+    css += `${P} > .card-head { ${headRule}; ${c.deco === 'stamp' ? 'padding-right: 58px;' : ''} }`;
+    if (c.head === 'solid') css += `${P} > .card-head :is(strong, .card-date) { color: ${headInk}; }`;
+    if (FONT_FAMILIES[c.font]) css += `${P} :is(.card-head strong, .card-title, .place-name) { font-family: ${FONT_FAMILIES[c.font]}; }`;
+    // What's on top.
+    const strip = (side, rot, bg) => `${P}::${side} { content: ''; position: absolute; z-index: 2; top: -9px; ${side === 'before' ? 'left' : 'right'}: 14px; width: 72px; height: 20px; opacity: .9; pointer-events: none; background: ${bg}; box-shadow: 0 1px 2px rgba(0, 0, 0, .15); transform: rotate(${rot}deg); }`;
+    if (c.deco === 'tape') css += strip('before', -7, `repeating-linear-gradient(45deg, ${rgba(deco, 0.85)} 0 6px, rgba(255, 255, 255, .8) 6px 12px)`) + strip('after', 6, `repeating-linear-gradient(-45deg, ${rgba(deco, 0.6)} 0 5px, rgba(255, 255, 255, .85) 5px 10px)`);
+    if (c.deco === 'tapetop') css += `${P}::before { content: ''; position: absolute; z-index: 2; top: -10px; left: calc(50% - 42px); width: 84px; height: 22px; pointer-events: none; background: ${rgba(deco, 0.35)}; box-shadow: 0 1px 2px rgba(0, 0, 0, .12); transform: rotate(-2deg); }`;
+    if (c.deco === 'pin') css += `${P}::before { content: ''; position: absolute; z-index: 3; top: -7px; left: calc(50% - 8px); width: 16px; height: 16px; border-radius: 50%; pointer-events: none; background: radial-gradient(circle at 35% 32%, ${mix(deco, '#ffffff', 0.6)}, ${deco} 55%, ${mix(deco, '#000000', 0.35)}); box-shadow: 2px 3px 3px rgba(0, 0, 0, .35); }`;
+    if (c.deco === 'clip') css += `${P}::before { content: ''; position: absolute; z-index: 3; top: -14px; left: 16px; width: 16px; height: 40px; pointer-events: none; background: ${CLIP} center / contain no-repeat; transform: rotate(8deg); }`;
+    if (c.deco === 'stamp') css += `${P}::before { content: ''; position: absolute; z-index: 2; top: 6px; right: 8px; width: 38px; height: 46px; pointer-events: none; background: var(--card-pic, none) center 40% / 22px no-repeat, ${mix(deco, '#ffffff', 0.7)}; border: 3px dotted ${paper}; outline: 1px solid rgba(0, 0, 0, .18); transform: rotate(4deg); }`;
+    if (c.deco === 'seal') css += `${P}::after { content: ''; position: absolute; right: 14px; bottom: 6px; width: 38px; height: 38px; border-radius: 47% 53% 50% 50% / 52% 46% 54% 48%; pointer-events: none; background: var(--card-pic, none) center / 18px no-repeat, radial-gradient(circle at 36% 30%, ${mix(deco, '#ffffff', 0.5)}, ${deco} 55%, ${mix(deco, '#000000', 0.3)}); box-shadow: 0 2px 3px rgba(0, 0, 0, .3), inset 0 0 0 5px ${mix(deco, '#000000', 0.2)}; transform: rotate(-12deg); }`;
+    if (c.deco === 'sparkles') css += `${P}::before, ${P}::after { position: absolute; z-index: 2; pointer-events: none; color: ${deco}; text-shadow: 0 0 6px ${rgba(deco, 0.6)}; } ${P}::before { content: '✦'; top: 4px; right: 10px; font-size: 18px; } ${P}::after { content: '✧ ✦'; bottom: 4px; left: 10px; font-size: 13px; }`;
+  }
+  return css;
+}
 
 // Builds the stylesheet that dresses the site in a theme ('' for the classic colours).
 export function skinCss(t, doc = document) {
@@ -1293,6 +1361,7 @@ export function skinCss(t, doc = document) {
   if (FONT_FAMILIES[t.font]) css += `html body { --font-xp: ${FONT_FAMILIES[t.font]}; }`;
   if (FONT_FAMILIES[t.title_font]) css += `html body { --font-xp-title: ${FONT_FAMILIES[t.title_font]}; }`;
   css += appsCss(t, doc);
+  css += ownCardsCss(t);
   const wall = wallpaperCss(t);
   if (wall) css += `:root .wall, :root .mode-desktop .wall, :root .phone.wall { background: ${wall}; background-attachment: fixed; }`;
   if (t.decoration && !['none', 'plain'].includes(t.decoration)) {

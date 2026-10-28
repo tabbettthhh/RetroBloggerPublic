@@ -1101,6 +1101,55 @@ await test('post cards: designs for every post or just one, ribbons of your own,
   await putFile('theme.md', '---\ntheme: classic\n---\n');
 });
 
+await test('post cards of your own: made from parts in Themes, for every post or one, checked by the server', async () => {
+  const content = await import('../src/content.js');
+  const { cleanCards } = await import('../public/js/card-parts.js');
+  // Only what a card can be.
+  const odd = cleanCards([{ id: 'c1', name: '<b>Mine</b>', paper: 'red', texture: 'velvet', edge: 'glow', font: 'comic', ink: '#ABCDEF' }, { id: 'c1' }, { id: 'x9' }, { id: 'c13' }], ['comic']);
+  eq(odd.map((c) => [c.id, c.name, c.paper, c.texture, c.edge, c.font, c.ink]), [['c1', 'bMine/b', '#ffffff', 'plain', 'glow', 'comic', '#abcdef']], 'checked');
+  const parsed = content.parseTheme('---\ntheme: classic\ncard_style: c1\ncards: [{"id": "c1", "name": "Mine", "deco": "pin"}]\n---\n');
+  eq([parsed.card_style, parsed.cards[0].deco], ['c1', 'pin'], 'the server keeps them');
+  eq(content.parseTheme('---\ntheme: classic\ncard_style: c4\n---\n').card_style, undefined, 'not one that isn’t there');
+  eq(content.buildPost('thoughts', 'thoughts/x.md', '---\ncard: c2\n---\nHi\n', 'Europe/London').card, 'c2', 'a post can wear one');
+  const { tidyFeed } = await import('../src/friends.js');
+  const fromFriend = tidyFeed({ posts: [{ id: 'thoughts/a', type: 'thoughts', ts: 1, full: { card: 'c1' } }] }, { url: 'https://pal.example', key: 'pal.example', name: 'Pal' });
+  eq(fromFriend.posts[0].full.card, '', 'a friend’s own card is theirs: here it wears your theme’s');
+  // Made in the card maker.
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+  await putFile('thoughts/maker-post.md', `---\ndate: 2026-10-20 12:00\ntitle: Maker post\n---\nHi.\n`);
+  const page = await adminPage();
+  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await page.waitForSelector('.tm-own');
+  if (!(await page.locator('.tm-own').evaluate((e) => e.open))) await page.locator('.tm-own summary').click();
+  await page.locator('.tm-tab', { hasText: 'Post cards' }).click();
+  await page.locator('button', { hasText: '+ Make a card' }).click();
+  await page.getByRole('textbox', { name: 'Name of this card' }).fill('Sunday paper');
+  for (const [part, choice] of [['Paper', 'Grid'], ['Edge', 'Airmail stripes'], ['On top', 'A wax seal'], ['Heading', 'Solid colour']]) await page.getByRole('radiogroup', { name: part }).getByRole('radio', { name: choice }).click();
+  await page.getByLabel('Paper colour').fill('#fff3d1');
+  // (The preview shows it as you go.)
+  eq(await page.locator('.card-maker-preview .card').evaluate((e) => getComputedStyle(e).borderTopWidth), '7px', 'previewed: the airmail edge');
+  await page.locator('button', { hasText: 'Add this card' }).click();
+  assert(await page.locator('.dress-pick', { hasText: 'Sunday paper' }).count(), 'among the cards to choose');
+  await page.locator('button', { hasText: 'Save the theme' }).click();
+  await page.waitForFunction(() => !document.querySelector('.tm-savebar.unsaved'));
+  const theme = (await publicData()).theme;
+  eq([theme.card_style, theme.cards.map((c) => [c.id, c.name, c.texture, c.edge, c.deco, c.head, c.paper])], ['c1', [['c1', 'Sunday paper', 'grid', 'stripes', 'seal', 'solid', '#fff3d1']]], 'saved, and on every post');
+  // And for one post.
+  await newPost(page, 'Thought');
+  assert(await page.locator('.dress-pick', { hasText: 'Sunday paper' }).count(), 'offered for a single post too');
+  assert(!page.errors.length, page.errors.join('; '));
+  await page.close();
+  await siteAt(async (pg) => {
+    await pg.goto(BASE + '/#/thoughts');
+    const card = pg.locator('.feed > .card', { hasText: 'Maker post' });
+    await card.waitFor();
+    eq(await card.getAttribute('data-card'), 'c1', 'wearing it');
+    eq(await card.evaluate((e) => getComputedStyle(e).borderTopWidth), '7px', 'drawn from its parts');
+    eq(await card.evaluate((e) => getComputedStyle(e, '::after').borderRadius.length > 0), true, 'with its seal');
+  }, { desktop: false, reducedMotion: 'reduce' });
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+});
+
 const failed = report();
 await close();
 process.exit(failed ? 1 : 0);

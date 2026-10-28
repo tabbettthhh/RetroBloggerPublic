@@ -9,7 +9,7 @@ import { customKeepsake, SHAPES, SHAPE_COLOURS } from '/js/keepsake-maker.js';
 import { viewFriends } from '/admin/friends.js';
 import { viewThemes } from '/admin/themes.js';
 import { OPTIONS, FONT_FAMILIES, resolveSkin } from '/js/skins.js';
-import { CARD_STYLES, RIBBONS, miniCard, ownRibbon } from '/js/card-dress.js';
+import { CARD_STYLES, RIBBONS, miniCard, ownRibbon, ensureOwnCardsCss } from '/js/card-dress.js';
 
 const panel = document.getElementById('panel');
 const tabsEl = document.querySelector('.admin-tabs');
@@ -1079,7 +1079,10 @@ function dressPicker(s) {
     preview.replaceChildren(rb ? h('div', { class: 'card', 'data-card': s.card && s.card !== 'classic' ? s.card : null }, h('div', { class: 'card-head' }, h('strong', null, 'Preview')), rb, h('div', { class: 'card-body' }, 'Your post goes here.')) : h('span', { class: 'hint' }, 'Write a few words to see the ribbon.'));
   };
   const draw = () => {
-    const picks = [['', `The theme’s (${CARD_STYLES[t.card_style] || 'Classic'})`, t.card_style], ...Object.entries(CARD_STYLES).map(([id, name]) => [id, name, id])];
+    // (Your own cards too, made in Themes › Post cards.)
+    ensureOwnCardsCss(t);
+    const ownName = (id) => t.cards.find((c) => c.id === id)?.name;
+    const picks = [['', `The theme’s (${CARD_STYLES[t.card_style] || ownName(t.card_style) || 'Classic'})`, t.card_style], ...Object.entries(CARD_STYLES).map(([id, name]) => [id, name, id]), ...t.cards.map((c) => [c.id, c.name, c.id])];
     const grid = h(
       'div',
       { class: 'dress-grid', role: 'radiogroup', 'aria-label': 'Card design for this post' },
