@@ -3,6 +3,7 @@
 
 import YAML from 'yaml';
 import { cleanFloppy } from '../public/js/floppy-look.js';
+import { cleanCards, OWN_CARD } from '../public/js/card-parts.js';
 import { marked } from 'marked';
 
 export const TYPES = ['thoughts', 'places', 'photos', 'lists', 'quotes', 'books', 'films', 'podcasts', 'music', 'tv'];
@@ -182,7 +183,7 @@ export function buildPost(type, key, text, tz) {
     pinned: data.pinned === true,
     // How its card is dressed (one of the card designs; empty: the theme's), and a ribbon of its
     // own: a few words, in one of the ribbon styles, in a colour of its own (or the theme's).
-    card: THEME_OPTIONS.card_style.includes(String(data.card ?? '').trim().toLowerCase()) ? String(data.card).trim().toLowerCase() : '',
+    card: THEME_OPTIONS.card_style.includes(String(data.card ?? '').trim().toLowerCase()) || OWN_CARD.test(String(data.card ?? '').trim()) ? String(data.card).trim().toLowerCase() : '',
     ribbon: data.ribbon != null ? String(data.ribbon).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 40) : '',
     ribbon_style: RIBBON_STYLES.includes(String(data.ribbon_style ?? '').trim().toLowerCase()) ? String(data.ribbon_style).trim().toLowerCase() : 'banner',
     ribbon_colour: /^#[0-9a-f]{6}$/i.test(String(data.ribbon_colour ?? '').trim()) ? String(data.ribbon_colour).trim().toLowerCase() : '',
@@ -687,6 +688,10 @@ export function parseTheme(text) {
     .filter(Boolean);
   if (stickers.length) out.stickers = stickers;
   for (const [k, list] of Object.entries(THEME_OPTIONS)) if (pick(data[k], list)) out[k] = pick(data[k], list);
+  // Post cards of your own (made from parts), and one of them for every post.
+  const cards = cleanCards(data.cards, THEME_OPTIONS.title_font);
+  if (cards.length) out.cards = cards;
+  if (OWN_CARD.test(String(data.card_style)) && cards.some((c) => c.id === data.card_style)) out.card_style = data.card_style;
   // The browser tab's icon (a drawing or one emoji), and another theme for after dark.
   const tab = THEME_CHARMS.includes(String(data.tab_icon)) && !['none', 'plain'].includes(data.tab_icon) ? String(data.tab_icon) : emojiOnly(data.tab_icon, 1)[0];
   if (tab) out.tab_icon = tab;

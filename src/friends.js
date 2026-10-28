@@ -372,6 +372,8 @@ function fullFrom(p, friend, id) {
   const ck = out.custom_keepsakes && typeof out.custom_keepsakes === 'object' ? out.custom_keepsakes : {};
   out.custom_keepsakes = Object.fromEntries(Object.entries(ck).filter(([, lines]) => Array.isArray(lines)).slice(0, 20).map(([k, lines]) => [designId(friend, k), lines]));
   if (!FONTS.has(out.font)) out.font = '';
+  // (A card of their own making is theirs: here it's drawn in your theme's card.)
+  if (/^c\d+$/.test(out.card)) out.card = '';
   out.category = /^[a-z0-9-]{0,30}$/.test(out.category) ? out.category : '';
   out.slug = (/^[a-z0-9][a-z0-9._-]{0,120}$/i.test(String(p.full.slug || '')) ? String(p.full.slug) : id.split('/')[1] || 'post').slice(0, 120);
   out.type = type;

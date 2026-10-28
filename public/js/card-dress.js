@@ -4,8 +4,10 @@
 // (the season it was written in, or the theme's charm). All drawn from the theme's colours, so
 // they suit any theme, light or dark. The looks themselves are in css/cards.css.
 import { h } from './util.js';
-import { activeSkin, OPTIONS, FESTIVALS, FESTIVE_COLOURS, festivalOn, lookOf, seasonOf, drawingUrl, SEASONS, luminance } from './skins.js';
+import { activeSkin, OPTIONS, FESTIVALS, FESTIVE_COLOURS, festivalOn, lookOf, seasonOf, drawingUrl, SEASONS, luminance, ownCardsCss } from './skins.js';
 
+// One of your own card designs (Themes › Post cards).
+export const isOwnCard = (id, t = activeSkin()) => !!id && !!t?.cards?.some((c) => c.id === id);
 // A post's own ribbon: a few words in one of these.
 export const RIBBONS = { banner: 'Folded banner', sash: 'Corner sash', stamp: 'Rubber stamp', neon: 'Neon sign', sticker: 'Round sticker' };
 export const CARD_STYLES = OPTIONS.card_style.choices;
@@ -69,7 +71,7 @@ function cornerMark(post, t) {
 export function dressCard(el, post, open = false) {
   if (!el || !post) return el;
   const t = activeSkin();
-  const style = CARD_STYLES[post.card] ? post.card : t?.card_style || 'classic';
+  const style = CARD_STYLES[post.card] || isOwnCard(post.card, t) ? post.card : t?.card_style || 'classic';
   if (style !== 'classic') el.dataset.card = style;
   else delete el.dataset.card;
   // A little tilt for the papery ones, different for each post (and none on its own page).
@@ -105,9 +107,20 @@ export function miniCard(id, t = activeSkin()) {
     { class: 'dress-mini-wrap', 'aria-hidden': 'true' },
     h(
       'span',
-      { class: 'card dress-mini', 'data-card': CARD_STYLES[id] && id !== 'classic' ? id : null, 'data-day': '22 Oct', style: { '--card-tilt': '0deg', '--card-pic': pic } },
+      { class: 'card dress-mini', 'data-card': (CARD_STYLES[id] && id !== 'classic') || isOwnCard(id, t) ? id : null, 'data-day': '22 Oct', style: { '--card-tilt': '0deg', '--card-pic': pic } },
       h('span', { class: 'card-head' }, h('strong', null, 'Thought'), h('span', { class: 'card-date' }, '22 Oct')),
       h('span', { class: 'card-body' }, h('i'), h('i'), h('i'))
     )
   );
+}
+
+// In the back office (which doesn't wear the theme), your own cards' looks, so their previews show.
+export function ensureOwnCardsCss(t, doc = document) {
+  let style = doc.getElementById('own-cards-css');
+  if (!style) {
+    style = doc.createElement('style');
+    style.id = 'own-cards-css';
+    doc.head.append(style);
+  }
+  style.textContent = ownCardsCss(t);
 }
