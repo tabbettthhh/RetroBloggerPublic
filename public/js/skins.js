@@ -66,6 +66,21 @@ const okHex = (v) => /^#[0-9a-f]{6}$/i.test(String(v || ''));
 // The classic look's own colours: what everything is re-coloured from.
 const REF = { main: '#0054e3', accent: '#3a9a3a', paper: '#ece9d8' };
 
+// The four seasons, each a theme of its own (and Through the year, which wears whichever one it
+// is now). Each brings its season's scenery on the bars and posts, and what falls over the page.
+const SEASON_SKINS = {
+  wintry: { name: 'Winter Frost', vibe: 'Snowy hills, icy blues and a warm mug of cocoa', main: '#3f74b0', accent: '#d94a5c', paper: '#f1f7fc', leather: '#2f4466', wallpaper: 'frost', decoration: 'snowflake', pointer: 'mitten', font: 'rounded', title_font: 'elegant', name_style: 'glitter', falling: 'snow', card_style: 'letter', seasons: 'winter' },
+  springtime: { name: 'Spring Bloom', vibe: 'Blossom, tulips and the first warm day', main: '#d9658c', accent: '#6fae4b', paper: '#fff8f6', leather: '#7a9a55', wallpaper: 'blossoms', decoration: 'blossom', pointer: 'tulip', font: 'rounded', title_font: 'handwritten', falling: 'petals', trail: 'sparkles', card_style: 'scrapbook', seasons: 'spring' },
+  summery: { name: 'Summer Days', vibe: 'Sun, sea, sand and an ice lolly', main: '#f07a2a', accent: '#1aa3c2', paper: '#fffaeb', leather: '#1f6f87', wallpaper: 'seaside', decoration: 'sun', pointer: 'icelolly', title_font: 'bubbly', name_style: 'rainbow', falling: 'sunshine', card_style: 'polaroid', seasons: 'summer' },
+  autumnal: { name: 'Autumn Leaves', vibe: 'Falling leaves, conkers and cosy jumpers', main: '#b4521f', accent: '#d99a1c', paper: '#fcf3e6', leather: '#5b3418', wallpaper: 'harvest', decoration: 'maple', pointer: 'acorn', title_font: 'typewriter', falling: 'leaves', card_style: 'notebook', seasons: 'autumn' }
+};
+const SEASON_OF_SKIN = { winter: 'wintry', spring: 'springtime', summer: 'summery', autumn: 'autumnal' };
+// Through the year: the season's own theme for today (south of the equator, the other way round).
+export function seasonalSkin(south = false, date = new Date()) {
+  const now = SEASON_SKINS[SEASON_OF_SKIN[seasonOf(date, south)]];
+  return { ...now, name: 'Through the year', vibe: `Each season in turn, by itself. Now: ${now.name}`, seasons: 'auto' };
+}
+
 export const SKINS = {
   classic: { name: 'Classic', vibe: 'The original blue skies', main: '#0054e3', accent: '#3a9a3a', paper: '#ece9d8', wallpaper: 'sky', decoration: 'none', pointer: 'none' },
   bunny: { name: 'Bunny Hop', vibe: 'Strawberry milk and bunnies', main: '#ec8db1', accent: '#86cfa9', paper: '#fff0f5', leather: '#d27a9c', wallpaper: 'bunnies', decoration: 'ears', pointer: 'bunny', font: 'rounded', title_font: 'bubbly', corners: 'round' },
@@ -90,6 +105,8 @@ export const SKINS = {
   opera: { name: 'Velvet Opera', vibe: 'Crimson velvet, gold damask and a chandelier', main: '#8e1b2b', accent: '#d4a64a', paper: '#fbf3e4', leather: '#4a0f18', wallpaper: 'damask', decoration: 'chandelier', pointer: 'chandelier', font: 'elegant', title_font: 'elegant', name_style: 'outline', scrollbar: 'themed', header: 'card', card_style: 'letter' },
   blocky: { name: 'Block World', vibe: 'Grass, dirt and stone blocks, and a pickaxe', main: '#5d9e2f', accent: '#9c6a38', paper: '#f1ead8', leather: '#5b3a1e', wallpaper: 'blocks', decoration: 'pickaxe', pointer: 'pickaxe', title_font: 'pixel', bars: 'pixel', corners: 'square', selector: 'outline', icons: 'colour', sounds: 'chip', trail: 'pixels', card_style: 'pixel' },
   bigtop: { name: 'Big Top', vibe: 'Circus stripes, bunting and showtime', main: '#d7263d', accent: '#f4b400', paper: '#fff8e7', leather: '#3b2a6b', wallpaper: 'bigtop', decoration: 'tent', pointer: 'tent', title_font: 'condensed', name_style: 'wordart', bars: 'stripes', selector: 'gradient', falling: 'confetti', card_style: 'ticket' },
+  ...SEASON_SKINS,
+  seasonal: seasonalSkin(),
   // Calm and neutral: nothing cute, just a quiet look.
   graphite: { name: 'Graphite', vibe: 'Cool greys, nothing extra', main: '#5d646e', accent: '#8f8676', paper: '#eeeeec', leather: '#3d3f43', wallpaper: 'plain', decoration: 'none', pointer: 'plain', font: 'modern', title_font: 'modern', bars: 'flat' },
   paper: { name: 'Paper', vibe: 'Black ink on off-white', main: '#33312e', accent: '#b5462f', paper: '#f7f5ef', leather: '#2b2a28', wallpaper: 'dots', decoration: 'none', pointer: 'plain', title_font: 'elegant', bars: 'flat', corners: 'square' },
@@ -104,6 +121,7 @@ export const SKINS = {
 export const SKIN_GROUPS = [
   ['Cute and colourful', ['classic', 'bunny', 'matcha', 'chrome', 'arcade', 'lemonade', 'cherry', 'cloud', 'froggy', 'boba', 'peach', 'moonlit']],
   ['Bold and loud', ['neon', 'empire', 'rococo', 'disco', 'popart', 'memphis', 'leopard', 'opera', 'blocky', 'bigtop']],
+  ['The four seasons', ['seasonal', 'wintry', 'springtime', 'summery', 'autumnal']],
   ['Calm and neutral', ['graphite', 'paper', 'slate', 'sand', 'olive', 'navy', 'mono']]
 ];
 
@@ -366,6 +384,40 @@ export const WALLPAPERS = {
       const flags = svgUrl(['#d7263d', '#f4b400', '#3b2a6b', '#1fb5b0'].map((f, i) => `<path d="M${i * 20} 0h20l-10 18z" fill="${f}" stroke="${c.ink}" stroke-width=".8"/>`).join('') + '<path d="M0 0.6h80" stroke="#3a3a3a" stroke-width="1.2"/>', 80, 22);
       const stars = svgUrl(place('star', { ...c, accent: '#f4b400' }, 30, 60, 1.2) + place('star', { ...c, accent: '#fff6e3' }, 120, 20, 0.8), 160, 160);
       return `${flags} 0 0 / 80px 22px repeat-x, ${stars} 0 30px / 160px 160px, repeating-conic-gradient(from -90deg at 50% -20%, ${c.main} 0 5deg, #fff6e3 5deg 10deg)`;
+    }
+  },
+  // The four seasons.
+  frost: {
+    name: 'Snowy hills',
+    css: (t, c) => {
+      const fir = (x, y, k) => `<g transform="translate(${x} ${y}) scale(${k})"><path d="M0-30L-9-14h5l-8 12h6L-14 12h28L6-2h6L4-14h5z" fill="#2f6b4f"/><path d="M0-30l-5 9 5-2 5 2zM-7-4l5-1 4 1-2-4zM-9 10l9-2 9 2-3-5z" fill="#fff"/><rect x="-2" y="12" width="4" height="5" fill="#6b4a33"/></g>`;
+      const hills = svgUrl(`<path d="M0 46C40 20 80 22 120 38s80 18 120-6v58H0z" fill="#dcecf8"/>${fir(56, 50, 0.9)}${fir(186, 40, 1.1)}${fir(204, 52, 0.7)}<path d="M0 62C50 44 100 48 140 60s70 10 100-2v32H0z" fill="#ffffff"/><path d="M0 62C50 44 100 48 140 60s70 10 100-2" fill="none" stroke="#b9d3ea" stroke-width="2"/>`, 240, 90);
+      const flakes = svgUrl(place('snowflake', { ...c, ink: '#9cc2e4' }, 14, 16, 1.1, 10) + place('snowflake', { ...c, ink: '#b8d4ec' }, 92, 64, 0.7, 30) + place('snowflake', { ...c, ink: '#9cc2e4' }, 44, 104, 0.55) + `<g fill="#fff">${[[70, 20, 2], [120, 30, 1.6], [24, 70, 1.8], [110, 112, 2.2], [60, 80, 1.2]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}</g>`, 140, 140);
+      return `${hills} 0 100% / 240px 90px repeat-x, ${flakes} 0 0 / 140px 140px, linear-gradient(180deg, ${mix(t.main, '#ffffff', 0.45)}, #e8f3fb 75%)`;
+    }
+  },
+  blossoms: {
+    name: 'Blossom and tulips',
+    css: (t, c) => {
+      const tulips = svgUrl(`<path d="M0 30c30-8 60-8 90 0s60 8 90 0v30H0z" fill="#8cc96a"/><path d="M0 40c30-6 60-6 90 0s60 6 90 0v20H0z" fill="#6fae4b"/>` + [[12, 8, 1.4], [44, 14, 1.1], [80, 6, 1.5], [118, 12, 1.2], [150, 8, 1.4]].map(([x, y, k], i) => place('tulip', { ...c, accent: ['#ff6f91', '#ffd23f', '#c86bd9', '#ff8a3d', '#ff6f91'][i] }, x, y, k)).join(''), 180, 60);
+      const branch = svgUrl(place('blossom', c, 6, 8, 2.4, -8) + place('blossom', c, 100, 76, 1.6, 20) + place('bee', c, 70, 20, 0.9, 10) + `<g fill="#ffd0dc">${[[50, 60, 2.4], [130, 30, 2], [30, 120, 2.2], [120, 130, 1.6]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * 0.6}" transform="rotate(30 ${x} ${y})"/>`).join('')}</g>`, 150, 150);
+      return `${tulips} 0 100% / 180px 60px repeat-x, ${branch} 0 0 / 150px 150px, linear-gradient(180deg, #dff1ff, ${mix(t.main, '#ffffff', 0.86)} 70%)`;
+    }
+  },
+  seaside: {
+    name: 'Sun, sea and sand',
+    css: (t, c) => {
+      const shore = svgUrl(`<path d="M0 10c10-6 20-6 30 0s20 6 30 0 20-6 30 0 20 6 30 0v60H0z" fill="#1aa3c2"/><path d="M0 22c10-6 20-6 30 0s20 6 30 0 20-6 30 0 20 6 30 0v48H0z" fill="#46c1d9"/><path d="M0 22c10-6 20-6 30 0s20 6 30 0 20-6 30 0 20 6 30 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M0 46c30-6 90-6 120 0v24H0z" fill="#f3d59a"/><g fill="#e2b56c">${[[16, 56], [52, 62], [90, 54], [104, 64]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.4"/>`).join('')}</g>`, 120, 70);
+      const sky = svgUrl(`<g fill="none" stroke="#5a6b7a" stroke-width="1.4" stroke-linecap="round"><path d="M20 30q5-5 10 0q5-5 10 0"/><path d="M110 70q4-4 8 0q4-4 8 0"/></g><g fill="#fff" opacity=".9"><ellipse cx="70" cy="24" rx="16" ry="6"/><ellipse cx="80" cy="20" rx="10" ry="6"/><ellipse cx="30" cy="110" rx="12" ry="4.4"/></g>`, 160, 140);
+      return `${shore} 0 100% / 120px 70px repeat-x, ${sky} 0 0 / 160px 140px, radial-gradient(circle 54px at 84% 14%, #fff6b0 0 40%, #ffd23f 41% 62%, rgba(255, 210, 63, .35) 63%, transparent 100%), linear-gradient(180deg, #7fd3f0, ${mix(t.paper, '#bfeaf8', 0.4)} 70%)`;
+    }
+  },
+  harvest: {
+    name: 'Falling leaves',
+    css: (t, c) => {
+      const pile = svgUrl([[0, 20, 1.4, 20, '#e2622b'], [24, 26, 1.2, -30, '#d99a1c'], [46, 18, 1.5, 60, '#b4521f'], [70, 24, 1.3, -10, '#e2622b'], [94, 20, 1.4, 40, '#c9771f'], [118, 26, 1.2, -50, '#d99a1c']].map(([x, y, k, r]) => place('maple', c, x, y, k, r)).join('') + place('pumpkin', c, 136, 14, 1.6) + place('acorn', c, 34, 6, 0.9, 20), 170, 46);
+      const leaves = svgUrl(place('maple', c, 10, 12, 1.4, 25) + place('maple', c, 96, 70, 1, -35) + place('acorn', c, 60, 30, 0.9, -15) + place('maple', c, 30, 108, 0.8, 70) + place('acorn', c, 118, 120, 0.7, 30), 150, 150);
+      return `${pile} 0 100% / 170px 46px repeat-x, ${leaves} 0 0 / 150px 150px, linear-gradient(180deg, ${mix(t.accent, '#ffffff', 0.55)}, ${mix(t.paper, '#f6d7b0', 0.5)} 75%)`;
     }
   },
   emoji: { name: 'Emoji' },
@@ -1217,7 +1269,8 @@ function appsCss(t, doc) {
 
 // A theme from theme.md's settings: a built-in one, with any of its parts changed.
 export function resolveSkin(settings = {}) {
-  const base = SKINS[settings.theme] || SKINS.classic;
+  // (Through the year wears the season's theme for today, wherever the owner is.)
+  const base = settings.theme === 'seasonal' ? seasonalSkin(settings.hemisphere === 'south') : SKINS[settings.theme] || SKINS.classic;
   const t = { id: SKINS[settings.theme] ? settings.theme : 'classic', ...base };
   for (const k of ['main', 'accent', 'paper', 'leather']) if (okHex(settings[k])) t[k] = settings[k];
   if (WALLPAPERS[settings.wallpaper]) t.wallpaper = settings.wallpaper;
