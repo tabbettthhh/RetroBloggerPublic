@@ -271,9 +271,10 @@ await test('a friend\'s new post reaches your site within moments, and an open p
   await browser.close();
   await fetch(`${BASE2}/admin/api/file?key=thoughts/fresh-news.md`, { method: 'DELETE' });
   await until(async () => !(await publicData()).friendPosts.some((p) => p.title.startsWith('Fresh news')), 'a deleted post goes');
-  // Saving something friends don't see (the theme) doesn't bother them.
+  // Saving something friends don't see (the wallpaper: only the theme's post cards go to them)
+  // doesn't bother them.
   const before = (await api('friends')).friends[0].cache.at;
-  await fetch(`${BASE2}/admin/api/file?key=theme.md`, { method: 'PUT', body: '---\ntheme: bunny\n---\n' });
+  await fetch(`${BASE2}/admin/api/file?key=theme.md`, { method: 'PUT', body: '---\ntheme: classic\nwallpaper: hearts\n---\n' });
   await new Promise((r) => setTimeout(r, 2500));
   eq((await api('friends')).friends[0].cache.at, before, 'no news, no message');
   await fetch(`${BASE2}/admin/api/file?key=theme.md`, { method: 'PUT', body: '---\ntheme: classic\n---\n' });
@@ -305,6 +306,49 @@ await test('a friend\'s post looks as it does on their site: keepsakes, a memory
   assert(!site.errors.length, site.errors.join('; '));
   await browser.close();
   await fetch(`${BASE2}/admin/api/file?key=thoughts/by-the-sea.md`, { method: 'DELETE' });
+});
+
+await test('a friend\'s post wears the card they chose: their own made card, the one it drew from their mix, or its own', async () => {
+  const at = (m) => new Date(Date.now() - m * 60e3).toISOString().slice(0, 16).replace('T', ' ');
+  // Your own card c1 is a different card: theirs mustn't be drawn as yours.
+  await putFile('theme.md', '---\ntheme: classic\ncards: [{"id": "c1", "name": "Mine", "edge": "glow"}]\n---\n');
+  await fetch(`${BASE2}/admin/api/file?key=theme.md`, { method: 'PUT', body: '---\ntheme: classic\nmain: "#aa2266"\ncard_style: c1\ncards: [{"id": "c1", "name": "Theirs", "edge": "stripes", "deco": "seal", "paper": "#fff3d1"}]\n---\n' });
+  await fetch(`${BASE2}/admin/api/file?key=thoughts/my-card.md`, { method: 'PUT', body: `---\ndate: ${at(1)}\ntitle: Wearing my card\n---\nHi.\n` });
+  await fetch(`${BASE2}/admin/api/file?key=thoughts/a-ticket.md`, { method: 'PUT', body: `---\ndate: ${at(2)}\ntitle: Dressed as a ticket\ncard: ticket\n---\nHi.\n` });
+  await until(async () => {
+    const d = await publicData();
+    return d.friendPosts.some((p) => p.title === 'Dressed as a ticket') && Object.values(d.friendLooks || {}).some((l) => l.card_style === 'c1' && l.cards?.[0]?.edge === 'stripes');
+  }, 'their cards arrive with their posts');
+  const shown = async () => {
+    const browser = await chromium.launch();
+    const site = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
+    site.errors = [];
+    site.on('pageerror', (e) => site.errors.push(e.message));
+    await site.addInitScript(() => sessionStorage.setItem('entered', '1'));
+    await site.goto(BASE + '/#/friends');
+    await site.locator('.ff-full', { hasText: 'Dressed as a ticket' }).waitFor();
+    const out = await site.evaluate(() => Object.fromEntries([...document.querySelectorAll('.ff-full')].map((c) => [c.querySelector('.card-title')?.textContent.trim(), [c.dataset.card || 'classic', getComputedStyle(c).borderTopWidth]])));
+    assert(!site.errors.length, site.errors.join('; '));
+    await browser.close();
+    return out;
+  };
+  let cards = await shown();
+  assert(/^f\d+-c1$/.test(cards['Wearing my card'][0]), 'their own card, under their name: ' + cards['Wearing my card'][0]);
+  eq(cards['Wearing my card'][1], '7px', 'drawn from their parts (airmail edge), not yours');
+  eq(cards['Dressed as a ticket'][0], 'ticket', 'a post dressed in a design of its own');
+  // Mixed at random on their site: each post wears what it drew there.
+  await fetch(`${BASE2}/admin/api/file?key=theme.md`, { method: 'PUT', body: '---\ntheme: classic\ncard_style: mix\ncard_mix: ["polaroid"]\n---\n' });
+  await until(async () => Object.values((await publicData()).friendLooks || {}).some((l) => l.card_style === 'mix'), 'their mix arrives');
+  cards = await shown();
+  eq([cards['Wearing my card'][0], cards['Dressed as a ticket'][0]], ['polaroid', 'ticket'], 'from their mix');
+  // Tidied on the way in.
+  const { tidyFeed } = await import('../src/friends.js');
+  const look = tidyFeed({ cards_look: { theme: '<x>', main: 'red;', card_style: 'mix', card_mix: ['polaroid', '"><b>'], card_seed: 'x', cards: [{ id: 'c1', name: '<b>x</b>', edge: 'evil' }] } }, { url: 'https://pal.example', key: 'pal.example', name: 'Pal' }).cards_look;
+  eq(look, { theme: 'classic', cards: [{ ...look.cards[0], edge: 'none' }], card_style: 'mix', card_mix: ['polaroid'] }, 'only known choices');
+  assert(!/[<>]/.test(JSON.stringify(look)), 'no markup');
+  await fetch(`${BASE2}/admin/api/file?key=theme.md`, { method: 'PUT', body: '---\ntheme: classic\n---\n' });
+  for (const k of ['my-card', 'a-ticket']) await fetch(`${BASE2}/admin/api/file?key=thoughts/${k}.md`, { method: 'DELETE' });
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
 });
 
 await test('a post in full from a friend\'s site is made safe before anyone sees it', async () => {

@@ -3,7 +3,7 @@
 
 import YAML from 'yaml';
 import { cleanFloppy } from '../public/js/floppy-look.js';
-import { cleanCards, OWN_CARD } from '../public/js/card-parts.js';
+import { cleanCards, OWN_CARD, MIX, cleanMix, cleanSeed } from '../public/js/card-parts.js';
 import { marked } from 'marked';
 
 export const TYPES = ['thoughts', 'places', 'photos', 'lists', 'quotes', 'books', 'films', 'podcasts', 'music', 'tv'];
@@ -692,6 +692,11 @@ export function parseTheme(text) {
   const cards = cleanCards(data.cards, THEME_OPTIONS.title_font);
   if (cards.length) out.cards = cards;
   if (OWN_CARD.test(String(data.card_style)) && cards.some((c) => c.id === data.card_style)) out.card_style = data.card_style;
+  // …or every post a different one, mixed at random from the designs ticked.
+  if (String(data.card_style ?? '').trim() === MIX) out.card_style = MIX;
+  const mix = cleanMix(data.card_mix, THEME_OPTIONS.card_style, cards);
+  if (mix.length) out.card_mix = mix;
+  if (cleanSeed(data.card_seed)) out.card_seed = cleanSeed(data.card_seed);
   // The browser tab's icon (a drawing or one emoji), and another theme for after dark.
   const tab = THEME_CHARMS.includes(String(data.tab_icon)) && !['none', 'plain'].includes(data.tab_icon) ? String(data.tab_icon) : emojiOnly(data.tab_icon, 1)[0];
   if (tab) out.tab_icon = tab;

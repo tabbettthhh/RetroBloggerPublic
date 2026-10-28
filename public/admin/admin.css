@@ -517,6 +517,17 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .dress-mini .card-body i { display: block; height: 7px; margin: 5px 0; border-radius: 4px; background: rgba(0, 0, 0, .14); }
 .dress-mini .card-body i:last-child { width: 60%; }
 .card.dress-mini[data-card="neon"] .card-body i { background: rgba(255, 255, 255, .35); }
+/* Mixed at random: a little fan of the designs in the mix. */
+.dress-mix { position: relative; }
+.dress-mix > .card.dress-mini { position: absolute !important; top: 10px !important; left: calc(var(--mix-at) * 20px) !important; width: 150px; margin: 0 !important; transform: rotate(var(--card-tilt)) !important; transform-origin: 50% 90%; }
+.cards-mode { margin-bottom: 8px; }
+/* Ticking designs in and out of the mix. */
+.dress-pick[role="checkbox"] { position: relative; }
+.dress-pick[role="checkbox"]::after { content: ""; position: absolute; top: 4px; right: 4px; width: 16px; height: 16px; border: 1px solid #8a8670; border-radius: 3px; background: #fff; font-size: 12px; line-height: 16px; text-align: center; }
+.dress-pick[role="checkbox"][aria-checked="true"] { border: 2px solid #316ac5; padding: 7px 5px 5px; background: #eef4fd; }
+.dress-pick[role="checkbox"][aria-checked="true"]::after { content: "✓"; border-color: #316ac5; background: #316ac5; color: #fff; }
+.dress-pick[role="checkbox"][aria-checked="false"] .dress-mini-wrap { opacity: .45; filter: grayscale(.6); }
+.mix-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
 .dress-ribbon { display: grid; gap: 8px; margin-top: 10px; padding: 10px; border: 1px dashed #c9c4ae; border-radius: 6px; }
 .dress-ribbon .card { max-width: 340px; margin: 0; }
 .dress-ribbon .card .card-body { padding: 6px 10px 10px; font-size: 12px; color: #555; }
