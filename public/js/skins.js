@@ -624,7 +624,7 @@ function decorate(doc) {
   const bySpot = {};
   for (const s of st.t.stickers) (bySpot[s.where] ||= []).push(s);
   const add = (target, spot, place) => {
-    if (target.querySelector(`:scope > .stk-wrap[data-spot="${spot}"]`)) return;
+    if (target.querySelector(`:scope > .stk-wrap[data-spot="${spot}"], :scope > * > .stk-wrap[data-spot="${spot}"]`)) return;
     const wrap = doc.createElement('span');
     wrap.className = `stk-wrap stk-${spot}`;
     wrap.dataset.spot = spot;
@@ -637,7 +637,8 @@ function decorate(doc) {
     title: ['.xp-title', (el, w) => (el.querySelector(':scope > .xp-title-text') ? el.querySelector(':scope > .xp-title-text').after(w) : el.append(w))],
     'corner-bl': ['.xp-window, .dw-xp', (el, w) => el.append(w)],
     'corner-br': ['.xp-window, .dw-xp', (el, w) => el.append(w)],
-    profile: ['.profile-tile', (el, w) => el.append(w)],
+    // (On the picture itself, so it stays on it whatever the header has around it.)
+    profile: ['.profile-tile', (el, w) => (el.querySelector(':scope > .avatar') || el).append(w)],
     cards: ['.card', (el, w) => el.append(w)],
     taskbar: ['.taskbar', (el, w) => (el.querySelector(':scope > .tray') ? el.querySelector(':scope > .tray').before(w) : el.append(w))],
     desktop: ['.desktop', (el, w) => el.prepend(w)]
@@ -1432,6 +1433,9 @@ export function ownCardsCss(t) {
     if (c.tilt === 'slight') rules.push('transform: rotate(var(--card-tilt, 0deg))');
     if (['tape', 'tapetop', 'pin', 'clip'].includes(c.deco)) rules.push('overflow: visible');
     if (c.deco === 'seal') rules.push('padding-bottom: 44px');
+    // (A drawing on the corner of every post keeps clear of the seal and the torn edge.)
+    if (c.deco === 'seal') css += `${P} > .stk-cards { right: 62px; }`;
+    else if (c.edge === 'torn') css += `${P} > .stk-cards { bottom: 22px; }`;
     css += `${P} { ${rules.join('; ')}; }`;
     css += `${P} :is(.card-body, .card-title, .card-head strong, .card-date, .place-name, .list-body, .quote-body, .muted, figcaption) { color: ${ink}; }`;
     // The heading.

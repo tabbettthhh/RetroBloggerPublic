@@ -148,3 +148,10 @@
 :root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="comic"] > .card-head :is(strong, .card-date) { color: #111; }
 :root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="chrome"] > .card-head { background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .04)); }
 :root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="chrome"] > .card-head :is(strong, .card-date) { color: #eef0fa; }
+/* A drawing on the corner of every post (Themes › Stickers) keeps clear of each design's own
+   corner: the wax seal, the ticket's stub, the film's holes, the sticky note's curl, the torn edge. */
+:root:not([data-sk-posts="lines"]) .card[data-card="letter"] > .stk-cards { right: 62px; }
+:root:not([data-sk-posts="lines"]) .card[data-card="ticket"] > .stk-cards { bottom: 26px; }
+:root:not([data-sk-posts="lines"]) .card[data-card="film"] > .stk-cards { bottom: 26px; }
+:root:not([data-sk-posts="lines"]) .card[data-card="sticky"] > .stk-cards { right: 30px; }
+:root:not([data-sk-posts="lines"]) .card[data-card="torn"] > .stk-cards { bottom: 20px; }

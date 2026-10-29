@@ -1210,6 +1210,42 @@ await test('the profile header dresses for the season or festive day: bunting an
       eq(got, want, what);
     }, { desktop: false, reducedMotion: 'reduce' });
   }
+  // A drawing put "on my profile picture" stays on the picture, bunting or not.
+  for (const settings of ['seasons: autumn\nlooks: {"autumn": {"where": ["profile"]}}', 'seasons: off\nstickers: [{"what": "cloud", "where": "profile"}]']) {
+    await putFile('theme.md', `---\ntheme: classic\n${settings}\n---\n`);
+    await siteAt(async (p) => {
+      const at = await p.evaluate(() => {
+        const tile = [...document.querySelectorAll('.feed > .profile-tile')].find((x) => x.offsetParent);
+        const pic = tile.querySelector('.avatar').getBoundingClientRect();
+        const st = tile.querySelector('.stk-profile').getBoundingClientRect();
+        return { overPicture: st.left < pic.right && st.right > pic.left - 20 && st.top < pic.bottom, position: getComputedStyle(tile.querySelector('.stk-profile')).position };
+      });
+      eq(at, { overPicture: true, position: 'absolute' }, 'on the profile picture: ' + settings.split('\n')[0]);
+    }, { desktop: false, reducedMotion: 'reduce' });
+  }
+  // Drawings of your own stay where you put them, clear of the day's decorations.
+  const overlap = (a, b) => a && b && a.left < b.right - 2 && b.left < a.right - 2 && a.top < b.bottom - 2 && b.top < a.bottom - 2;
+  const placed = async (pg) => pg.evaluate(() => {
+    const box = (el) => el && (({ left, right, top, bottom, width }) => ({ left, right, top, bottom, width }))(el.getBoundingClientRect());
+    const vis = (sel) => [...document.querySelectorAll(sel)].find((x) => x.getBoundingClientRect().width > 0);
+    const tile = vis('.feed > .profile-tile');
+    const title = vis('.xp-phone .xp-title');
+    const letter = [...document.querySelectorAll('.feed > .card[data-card="letter"]')].find((x) => x.offsetParent);
+    return {
+      pic: box(tile.querySelector('.avatar')), cloud: box(tile.querySelector('.stk-profile')),
+      star: box(title.querySelector('.stk-title')), bar: box(title.querySelector('.bar-decor')), buttons: box(title.querySelector('.xp-ctl')),
+      corner: box(letter?.querySelector(':scope > .stk-cards')), seal: letter && (() => { const r = letter.getBoundingClientRect(); return { left: r.right - 52, right: r.right - 14, top: r.bottom - 44, bottom: r.bottom - 6 }; })()
+    };
+  });
+  await putFile('thoughts/sealed.md', `---\ndate: ${new Date(Date.now() - 60e3).toISOString().slice(0, 16).replace('T', ' ')}\ntitle: Sealed\ncard: letter\n---\nHi.\n`);
+  await putFile('theme.md', '---\ntheme: classic\nseasons: autumn\nstickers: [{"what": "cloud", "where": "profile"}, {"what": "star", "where": "title"}, {"what": "heart", "where": "cards"}]\n---\n');
+  await siteAt(async (pg) => {
+    const at = await placed(pg);
+    assert(overlap(at.cloud, at.pic), 'on the profile picture: ' + JSON.stringify([at.cloud, at.pic]));
+    assert(at.star && at.bar?.width > 0 && !overlap(at.star, at.bar) && !overlap(at.bar, at.buttons), 'title bar drawings side by side: ' + JSON.stringify([at.star, at.bar, at.buttons]));
+    assert(at.corner && !overlap(at.corner, at.seal), 'the post-corner drawing clear of the wax seal');
+  }, { desktop: false, reducedMotion: 'reduce' });
+  await delFile('thoughts/sealed.md');
   await putFile('theme.md', '---\ntheme: classic\n---\n');
 });
 
