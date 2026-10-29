@@ -130,3 +130,21 @@
 
 @media (prefers-reduced-motion: reduce) { .card[data-card] { transform: none !important; } }
 @media print { .card[data-card] { transform: none !important; box-shadow: none !important; } }
+
+/* ---------- the paper, not the mode (data-paper, set by card-dress.js) ----------
+   The papery designs, and cards of your own on pale paper, stay light in dark mode: the date, small
+   print, links and the Comment button are drawn for light paper. A card of your own on dark paper
+   does the same the other way round in light mode. */
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-paper="light"] { color-scheme: light; }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-paper="light"] :is(.card-date, .cat-chip, figcaption, .muted, .empty, small) { color: #5c5c5c; }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-paper="light"] a:not([class]) { color: #1d4fc4; }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-paper="light"] > .card-comments { color: #1d4fc4; background: rgba(0, 0, 0, .07); }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-paper="light"] .stars path[fill="#e2e2e2"] { fill: #d6d6d6; stroke: #9a9a9a; }
+:root:not([data-theme="dark"]):not([data-sk-posts="lines"]) .card[data-paper="dark"] { color-scheme: dark; }
+:root:not([data-theme="dark"]):not([data-sk-posts="lines"]) .card[data-paper="dark"] :is(.card-date, .cat-chip, figcaption, .muted, .empty, small) { color: #cfcfcf; }
+:root:not([data-theme="dark"]):not([data-sk-posts="lines"]) .card[data-paper="dark"] a:not([class]) { color: #9cc0ff; }
+:root:not([data-theme="dark"]):not([data-sk-posts="lines"]) .card[data-paper="dark"] > .card-comments { color: #ffffff; background: rgba(255, 255, 255, .14); }
+/* The comic panel's heading and the chrome glass's, readable in dark mode. */
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="comic"] > .card-head :is(strong, .card-date) { color: #111; }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="chrome"] > .card-head { background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .04)); }
+:root[data-theme="dark"]:not([data-sk-posts="lines"]) .card[data-card="chrome"] > .card-head :is(strong, .card-date) { color: #eef0fa; }

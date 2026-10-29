@@ -733,7 +733,10 @@ export const OPTIONS = {
   card_corner: { name: 'A mark in the corner', choices: { none: 'None', season: 'The season it was written in', charm: 'The theme’s charm' } },
   // What's behind the posts in the main windows (rather than plain white).
   page: { name: 'Behind the posts', choices: { layered: 'Layered: the theme’s colours, its pattern and the season', pattern: 'The theme’s pattern, faintly', wallpaper: 'The whole wallpaper', tint: 'Just the theme’s colours', plain: 'Plain white' } },
-  page_strength: { name: 'How much it shows', choices: { medium: 'Medium', soft: 'Softly', strong: 'Strongly' } }
+  page_strength: { name: 'How much it shows', choices: { medium: 'Medium', soft: 'Softly', strong: 'Strongly' } },
+  // Like the sky: morning light, the day as it is, a golden evening and night with stars (always
+  // night in dark mode). For every wallpaper, your own picture and emoji too.
+  wall_time: { name: 'The wallpaper through the day', choices: { day: 'Follows the time of day', still: 'Stays the same all day' } }
 };
 
 // ---------- the seasons, and festive days ----------
@@ -959,7 +962,7 @@ export function cleanMyDays(list) {
     .filter(Boolean);
 }
 // Where a season can settle (each can be switched off, season by season).
-export const SCENERY_PLACES = { bars: 'Title bars', icons: 'Desktop icons', taskbar: 'Along the taskbar', ground: 'The foot of the desktop', posts: 'Posts', menu: 'Under the phone’s menu' };
+export const SCENERY_PLACES = { bars: 'Title bars', icons: 'Desktop icons', taskbar: 'Along the taskbar', ground: 'The foot of the desktop', posts: 'Posts', menu: 'Under the phone’s menu', profile: 'Your profile header' };
 // Your own touches for any season or festive day: { id: { charms, falling, where, settle } }:
 // its drawings, what falls, where the drawings go (sticker places), and where a season settles.
 export const MAX_LOOK_CHARMS = 8;
@@ -1076,6 +1079,77 @@ export const APPS = {
   tv: { name: 'TV', era: 'crt', extras: ['font'] },
   album: { name: 'Photo album', era: 'album', extras: ['font'] }
 };
+// ---------- the apps' top bars, dressed ----------
+// Bunting hangs under each app's top bar and a few drawings sit on its corner like stickers.
+// Each app chooses what its bar wears (Themes › Seasons & festive days): the season's or festive
+// day's drawings (while one is on), different ones every day, drawings of your own, or nothing.
+export const BAR_APPS = { windows: 'The windows (Home, Thoughts and the rest)', ...Object.fromEntries(Object.entries(APPS).map(([id, a]) => [id, a.name])) };
+export const BAR_DECOR = { day: 'The day’s drawings', random: 'Different ones every day', mine: 'My own', none: 'Nothing' };
+export const MAX_BAR_STICKERS = 3;
+// Only known apps and choices, and drawings (by name) or emoji of your own.
+export function cleanBarDecor(v) {
+  const out = {};
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return out;
+  for (const [app, o] of Object.entries(v)) {
+    if (!BAR_APPS[app] || !o || typeof o !== 'object' || !BAR_DECOR[o.mode] || o.mode === 'day') continue;
+    const one = { mode: o.mode };
+    if (o.mode === 'mine') {
+      const charms = [...new Set((Array.isArray(o.charms) ? o.charms : []).map((x) => (CHARMS[x] && !['none', 'plain'].includes(x) ? x : emojiList(x, 1)[0])).filter(Boolean))].slice(0, MAX_BAR_STICKERS);
+      if (!charms.length) continue;
+      one.charms = charms;
+    }
+    out[app] = one;
+  }
+  return out;
+}
+// The colours of a season's bunting (a festive day has its own, in FESTIVE_COLOURS).
+export const SEASON_COLOURS = { winter: ['#9cc2e4', '#ffffff', '#d94a5c'], spring: ['#ffb3c7', '#bfe6a0', '#ffe08a'], summer: ['#ffd23f', '#46c1d9', '#ff8a3d'], autumn: ['#e2622b', '#d99a1c', '#8a5a33'] };
+// A length of bunting, three flags to a 48px repeat.
+export function buntingUrl([a, b, c]) {
+  const flag = (x, fill) => `<path d="M${x} 3.2l7 0.6-3.2 9.4z" fill="${fill}" stroke="rgba(0,0,0,.28)" stroke-width=".6" stroke-linejoin="round"/>`;
+  return svgUrl(`<path d="M0 3c8 1.4 16 1.4 24 0s16-1.4 24 0" fill="none" stroke="rgba(0,0,0,.35)" stroke-width=".8"/>${flag(3, a)}${flag(19, b || a)}${flag(35, c || b || a)}`, 48, 16);
+}
+// A few drawings in a row, each with a white sticker edge and a little shadow.
+export function stickerStrip(list, t, size = 24) {
+  const c = inks(t);
+  const step = size + 4;
+  const w = list.length * step + 4;
+  const edge = '<filter id="st" x="-20%" y="-20%" width="140%" height="150%"><feMorphology in="SourceAlpha" operator="dilate" radius="1.4" result="d"/><feFlood flood-color="#fff"/><feComposite in2="d" operator="in" result="w"/><feGaussianBlur in="d" stdDeviation="1"/><feOffset dy="1.2" result="b"/><feFlood flood-color="#000" flood-opacity=".28"/><feComposite in2="b" operator="in" result="s"/><feMerge><feMergeNode in="s"/><feMergeNode in="w"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
+  const inner = list.map((what, i) => `<g transform="rotate(${[-9, 7, -4][i % 3]} ${2 + i * step + size / 2} ${3 + size / 2})">${drawing(what, c, 2 + i * step, 3, size)}</g>`).join('');
+  return { url: svgUrl(`<defs>${edge}</defs><g filter="url(#st)">${inner}</g>`, w, size + 8), width: w, height: size + 8 };
+}
+// Every drawing that makes a good sticker (for "different ones every day").
+const STICKER_POOL = () => Object.keys(CHARM_NAMES).filter((x) => !['none', 'plain', 'ears', 'dot', 'ring', 'diamond', 'plus', 'asterisk', 'chevron', 'pal'].includes(x));
+// The bars' stylesheet: for each app, whether its bar is dressed, its stickers and its bunting.
+function barDecorCss(t, dayId, look, settled, now) {
+  const day = dayNumber(now);
+  const on = !!(look && settled);
+  const flags = on && !look.quiet ? buntingUrl(FESTIVE_COLOURS[dayId] || SEASON_COLOURS[dayId] || [t.accent, t.main, '#f6c431']) : 'none';
+  const pool = STICKER_POOL();
+  return Object.keys(BAR_APPS)
+    .map((app, n) => {
+      const mine = t.bar_decor?.[app] || { mode: 'day' };
+      let list = [];
+      if (mine.mode === 'day' && on) {
+        const ch = look.charms?.length ? look.charms : ['twinkle'];
+        list = (look.quiet ? [0] : [0, 1, 2]).map((i) => ch[(day + i + n) % ch.length]);
+        list = [...new Set(list)];
+      } else if (mine.mode === 'random') {
+        let k = (day * 7919 + n * 104729) >>> 0;
+        while (list.length < 3) {
+          k = (k * 1103515245 + 12345) % 2147483648;
+          const what = pool[k % pool.length];
+          if (!list.includes(what)) list.push(what);
+        }
+      } else if (mine.mode === 'mine') list = mine.charms || [];
+      const sel = app === 'windows' ? ':root' : `[data-app="${app}"]`;
+      if (!list.length) return `${sel} { --bd-show: none; }`;
+      const strip = stickerStrip(list, t);
+      return `${sel} { --bd-show: block; --bd-stickers: ${strip.url}; --bd-w: ${strip.width}px; --bd-flags: ${mine.mode === 'none' ? 'none' : flags}; }`;
+    })
+    .join('\n');
+}
+
 export const APP_LOOKS = { auto: 'As the theme has it', original: 'Its original look', tint: 'In the theme’s colour', custom: 'A colour of its own' };
 export const APP_EXTRAS = {
   paper: { name: 'Paper', choices: { aged: 'Aged', cream: 'Cream', white: 'Crisp white', kraft: 'Brown kraft', grid: 'Graph paper', dotted: 'Dotted' } },
@@ -1295,6 +1369,7 @@ export function resolveSkin(settings = {}) {
   t.labels = cleanLabels(settings.labels);
   t.glass = [...new Set((Array.isArray(settings.glass) ? settings.glass : []).filter((x) => GLASS_PLACES[x]))];
   t.looks = cleanLooks(settings.looks);
+  t.bar_decor = cleanBarDecor(settings.bar_decor);
   t.floppy = cleanFloppy(settings.floppy, (x) => (CHARMS[x] && !['none', 'plain'].includes(x) ? x : emojiList(x, 1)[0] || ''));
   Object.assign(t, resolveOptions(settings, base));
   // Post cards of your own, and one of them for every post if you've chosen it.
@@ -1424,7 +1499,8 @@ export function skinCss(t, doc = document) {
   css += appsCss(t, doc);
   css += ownCardsCss(t);
   const wall = wallpaperCss(t);
-  if (wall) css += `:root .wall, :root .mode-desktop .wall, :root .phone.wall { background: ${wall}; background-attachment: fixed; }`;
+  // (With the light of the time of day on top: see skins.css.)
+  if (wall) css += `:root .wall, :root .mode-desktop .wall, :root .phone.wall { background: var(--wall-time, linear-gradient(transparent, transparent)), ${wall}; background-attachment: fixed; }`;
   if (t.decoration && !['none', 'plain'].includes(t.decoration)) {
     css += `.xp-title-text::after, .dw-xp .xp-title-text::after { content: ''; display: inline-block; width: 17px; height: 17px; margin-left: 7px; vertical-align: -3px; background: ${charmUrl(t.decoration, t, 17)} center / contain no-repeat; }`;
   }
@@ -1550,6 +1626,15 @@ export function applySkin(settings, doc = document) {
     const sc = festiveScenery(look, festival, t);
     for (const [k, v] of Object.entries(sc)) root.style.setProperty(`--fx-${k}`, v);
   } else for (const k of ['bar', 'icon', 'garland', 'ground']) root.style.removeProperty(`--fx-${k}`);
+
+  // The apps' top bars: bunting and stickers, as each app has chosen.
+  let barStyle = doc.getElementById('bar-decor-css');
+  if (!barStyle) {
+    barStyle = doc.createElement('style');
+    barStyle.id = 'bar-decor-css';
+    doc.head.append(barStyle);
+  }
+  barStyle.textContent = barDecorCss(t, festival || season, look, root.dataset.settle.split(' ').includes('bars'), now);
 
   // Behind the posts: the layers, with the season's (or festive day's) drawings on top.
   const page = pageLayers(t, look);

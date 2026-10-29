@@ -12,6 +12,8 @@ export const isOwnCard = (id, t = activeSkin()) => !!id && !!t?.cards?.some((c) 
 // The theme's card for a post: the one for every post, or (mixed at random) the one this post
 // always draws from the mix.
 export const themeCard = (post, t = activeSkin()) => (t?.card_style === MIX ? mixPick(`${post?.type}/${post?.slug || post?.title || ''}`, t.card_mix || [], t.card_seed) : t?.card_style || 'classic');
+// The designs printed on pale paper, whatever the mode.
+const LIGHT_PAPER = new Set(['polaroid', 'scrapbook', 'notebook', 'postcard', 'sticky', 'letter', 'film']);
 // A post's own ribbon: a few words in one of these.
 export const RIBBONS = { banner: 'Folded banner', sash: 'Corner sash', stamp: 'Rubber stamp', neon: 'Neon sign', sticker: 'Round sticker' };
 export const CARD_STYLES = OPTIONS.card_style.choices;
@@ -103,6 +105,13 @@ export function dressCard(el, post, open = false) {
   const style = CARD_STYLES[post.card] || isOwnCard(post.card, look) ? post.card : themeCard(post, look);
   if (style !== 'classic') el.dataset.card = look !== t && isOwnCard(style, look) ? `${post.friend_id}-${style}` : style;
   else delete el.dataset.card;
+  // What it's printed on: the papery designs (and cards of your own on pale paper) stay light in
+  // dark mode, and a card of your own on dark paper stays dark in light mode, so the date, the
+  // Comment button and the rest are drawn for the paper, not the mode (see cards.css).
+  const own = isOwnCard(style, look) ? look.cards.find((c) => c.id === style) : null;
+  const paper = own ? (luminance(own.paper || '#ffffff') > 0.45 ? 'light' : 'dark') : LIGHT_PAPER.has(style) ? 'light' : '';
+  if (paper) el.dataset.paper = paper;
+  else delete el.dataset.paper;
   // (In their colours.)
   if (look !== t && style !== 'classic' && look) {
     el.style.setProperty('--sk-main', look.main);
@@ -165,6 +174,29 @@ export function mixMini(t = activeSkin(), mix = t?.card_mix || []) {
     fan.append(one);
   });
   return fan;
+}
+
+// ---------- the profile header, dressed for the day ----------
+// While a season or festive day is on (and allowed to settle on the profile header), bunting in
+// its colours runs along the top of the header and a few of its drawings sit beside "Last post"
+// like stickers. A quiet day keeps it to one small drawing and no bunting.
+const SEASON_COLOURS = { winter: ['#9cc2e4', '#ffffff', '#d94a5c'], spring: ['#ffb3c7', '#bfe6a0', '#ffe08a'], summer: ['#ffd23f', '#46c1d9', '#ff8a3d'], autumn: ['#e2622b', '#d99a1c', '#8a5a33'] };
+const svgData = (svg) => `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+export function profileDecor(t = activeSkin()) {
+  const id = t?.today?.festival || t?.today?.season;
+  const look = id ? lookOf(id, t) : null;
+  if (!look) return { bunting: null, stickers: null };
+  const charms = look.charms?.length ? look.charms : ['twinkle'];
+  const [a, b, c] = FESTIVE_COLOURS[id] || SEASON_COLOURS[id] || [t.accent, t.main, '#f6c431'];
+  const day = Math.floor(Date.now() / 864e5);
+  const flag = (x, fill) => `<path d="M${x} 3.2l7 0.6-3.2 9.4z" fill="${fill}" stroke="rgba(0,0,0,.28)" stroke-width=".6" stroke-linejoin="round"/>`;
+  const bunting = look.quiet ? null : h('span', { class: 'pd-bunting', 'aria-hidden': 'true', style: { backgroundImage: svgData(`<svg xmlns="http://www.w3.org/2000/svg" width="48" height="16" viewBox="0 0 48 16"><path d="M0 3c8 1.4 16 1.4 24 0s16-1.4 24 0" fill="none" stroke="rgba(0,0,0,.35)" stroke-width=".8"/>${flag(3, a)}${flag(19, b || a)}${flag(35, c || b || a)}</svg>`) } });
+  const stickers = h(
+    'span',
+    { class: 'pd-stickers', role: 'img', 'aria-label': look.name },
+    (look.quiet ? [0] : [0, 1, 2]).map((i) => h('span', { class: 'pd-sticker', style: { backgroundImage: drawingUrl(charms[(day + i) % charms.length], t, 40), '--pd-tilt': `${[-10, 8, -3][i]}deg` } }))
+  );
+  return { bunting, stickers };
 }
 
 // In the back office (which doesn't wear the theme), your own cards' looks, so their previews show.

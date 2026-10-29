@@ -80,7 +80,7 @@
 [data-sk-header="minimal"] .profile-tile :is(.small, .now-line) { color: #555; }
 [data-theme="dark"][data-sk-header="card"] .profile-tile { background: #23262d; color: #eee; }
 [data-theme="dark"][data-sk-header="card"] .profile-tile :is(.small, .now-line), [data-theme="dark"][data-sk-header="minimal"] .profile-tile :is(.small, .now-line) { color: #bbb; }
-[data-sk-hide~="lastpost"] .profile-text > .small { display: none; }
+[data-sk-hide~="lastpost"] :is(.profile-text > .small, .profile-sub > .small) { display: none; }
 [data-sk-hide~="status"] .profile-tile :is(.status-pill, .status-history) { display: none; }
 [data-sk-hide~="playing"] .profile-tile .now-line { display: none; }
 [data-sk-hide~="countdown"] .profile-tile .countdown { display: none; }
@@ -232,3 +232,40 @@
 [data-sk-page]:not([data-sk-page="plain"]) :is(.xp-phone .xp-body, .dw-xp .wbody) .feed > .card:not(.memory):not([data-card]) { background: rgba(255, 255, 255, var(--page-card-a)); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
 [data-theme="dark"][data-sk-page]:not([data-sk-page="plain"]) :is(.xp-phone .xp-body, .dw-xp .wbody) .feed > .card:not(.memory):not([data-card]) { background: rgba(36, 36, 36, var(--page-card-a)); }
 [data-sk-page]:not([data-sk-page="plain"]):not([data-sk-posts="lines"]) :is(.xp-phone .xp-body, .dw-xp .wbody) .feed > :is(.card, .profile-tile) { box-shadow: 0 2px 8px rgba(0, 0, 0, .12); }
+
+/* ---------- the profile header, dressed for the season or festive day ----------
+   Bunting in the day's colours along the top, and a few of its drawings beside "Last post", like
+   stickers (a quiet day: one small drawing). Only while one is on, and settling on the header. */
+.profile-sub { display: flex; align-items: center; gap: 8px; min-height: 0; }
+.pd-bunting, .pd-stickers { display: none; }
+:is([data-season], [data-festival])[data-settle~="profile"] .profile-tile > .pd-bunting { display: block; position: absolute; z-index: 0; left: 6px; right: 6px; top: 0; height: 16px; background-repeat: repeat-x; background-size: 48px 16px; pointer-events: none; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .15)); }
+:is([data-season], [data-festival])[data-settle~="profile"] .profile-tile > :not(.pd-bunting) { position: relative; z-index: 1; }
+:is([data-season], [data-festival])[data-settle~="profile"] .profile-tile:has(> .pd-bunting) { padding-top: 18px; }
+:is([data-season], [data-festival])[data-settle~="profile"] .profile-sub > .pd-stickers { display: flex; flex: none; margin-left: auto; padding-right: 2px; }
+.pd-sticker { width: 30px; height: 30px; margin-left: -4px; background: center / contain no-repeat; transform: rotate(var(--pd-tilt, 0deg)); filter: drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff) drop-shadow(0 2px 2px rgba(0, 0, 0, .25)); }
+.pd-sticker:first-child { margin-left: 0; }
+@media (max-width: 380px) { .pd-sticker { width: 24px; height: 24px; } }
+
+/* ---------- the apps' top bars, dressed (see barDecorCss in skins.js) ----------
+   Bunting hangs just under each bar and the stickers sit on its corner, half on the bar. On a
+   phone's XP windows (where the menu below has its own garland) the stickers sit in the title
+   bar, beside its buttons. Never in the way: nothing here can be tapped. */
+.bar-decor { display: none; }
+:is(.xp-title, .wbar) { position: relative; }
+.bar-decor { display: var(--bd-show, none); position: absolute; z-index: 6; left: 0; right: 0; top: 100%; height: 30px; margin-top: -13px; pointer-events: none; background: var(--bd-stickers, none) right 10px top 0 / var(--bd-w, 80px) 32px no-repeat, var(--bd-flags, none) 0 12px / 48px 16px repeat-x; }
+.xp-phone .xp-title > .bar-decor { top: var(--safe-top, 0px); bottom: 0; height: auto; margin-top: 0; background: var(--bd-stickers, none) right 104px center / var(--bd-w, 80px) 32px no-repeat; }
+.dw-xp .xp-title > .bar-decor { background: var(--bd-stickers, none) right 92px center / var(--bd-w, 80px) 28px no-repeat; top: 0; bottom: 0; height: auto; margin-top: 0; }
+@media print { .bar-decor { display: none; } }
+.phone .menubar > .bar-decor { background-position: right 72px top 0, 0 12px; }
+.wbar > .bar-decor { background-position: right 76px top 0, 0 12px; }
+
+/* ---------- the wallpaper through the day (wall_time; the clock is in sky.js) ----------
+   Every theme's wallpaper (and your own picture or emoji) takes the light of the time of day, like
+   the classic sky: a warm morning, the day as it is, a golden evening, and night with stars and a
+   moon. Dark mode always has the night. "Stays the same all day" keeps the day (and dark mode's
+   night). These sit over the wallpaper only, never over the windows. */
+:root { --wall-night: radial-gradient(circle at 84% 11%, rgba(255, 250, 215, .95) 0 12px, rgba(255, 250, 215, .16) 13px 30px, transparent 31px), radial-gradient(rgba(255, 255, 255, .75) 1px, transparent 1.6px) 0 0 / 97px 113px, radial-gradient(rgba(255, 255, 255, .5) .8px, transparent 1.4px) 41px 57px / 131px 89px, radial-gradient(rgba(255, 244, 200, .6) 1.2px, transparent 1.8px) 70px 20px / 173px 151px, linear-gradient(180deg, rgba(10, 18, 66, .78), rgba(20, 26, 78, .66) 70%, rgba(30, 22, 70, .62)); }
+:root:not([data-sk-wall-time="still"]) body.sky-morning { --wall-time: linear-gradient(180deg, rgba(255, 168, 108, .32), rgba(255, 214, 168, .16) 45%, rgba(255, 240, 220, 0) 82%); }
+:root:not([data-sk-wall-time="still"]) body.sky-sunset { --wall-time: linear-gradient(180deg, rgba(62, 36, 122, .36), rgba(196, 82, 122, .26) 45%, rgba(255, 142, 72, .24)); }
+:root:not([data-sk-wall-time="still"]) body.sky-night { --wall-time: var(--wall-night); }
+:root[data-theme="dark"] body, :root[data-theme="dark"] body:is(.sky-morning, .sky-day, .sky-sunset, .sky-night) { --wall-time: var(--wall-night); }

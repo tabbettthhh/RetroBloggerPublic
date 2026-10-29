@@ -180,7 +180,7 @@ await test('an emoji wallpaper and stickers, chosen in the back office', async (
   await site(async (p) => {
     assert(await p.locator('.xp-title .stk').count(), 'a sticker on the title bar');
     const wall = await p.evaluate(() => getComputedStyle(document.querySelector('.wall')).backgroundImage);
-    assert(decodeURIComponent(wall).includes('🍓'), 'emoji in the wallpaper');
+    assert(wall.match(/data:image\/svg\+xml,[^"]+/g).some((u) => decodeURIComponent(u).includes('🍓')), 'emoji in the wallpaper');
     // Stickers keep up with the page: a new page of the feed still has them.
     await p.goto(BASE + '/#/thoughts');
     await p.waitForTimeout(400);
@@ -1184,6 +1184,105 @@ await test('the four seasons: a theme for each, with its own wallpaper and scene
   await siteAt(async (p) => {
     eq(await p.evaluate(() => [document.documentElement.dataset.skin, document.documentElement.dataset.season]), ['wintry', 'winter'], 'snow settles on the site');
   }, { reducedMotion: 'reduce' });
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+});
+
+await test('the profile header dresses for the season or festive day: bunting and stickers, quiet days quietly', async () => {
+  const look = (p) => p.evaluate(() => {
+    const tile = [...document.querySelectorAll('.feed > .profile-tile')].find((x) => x.offsetParent);
+    const shown = (el) => !!el && getComputedStyle(el).display !== 'none' && el.getBoundingClientRect().width > 0;
+    const stickers = [...(tile.querySelectorAll('.pd-sticker') || [])].filter(shown);
+    const box = tile.getBoundingClientRect();
+    return { bunting: shown(tile.querySelector('.pd-bunting')), stickers: stickers.length, inside: stickers.every((s) => { const r = s.getBoundingClientRect(); return r.right <= box.right + 4 && r.left >= box.left; }), label: tile.querySelector('.pd-stickers')?.getAttribute('aria-label') || '' };
+  });
+  const cases = [
+    ['seasons: christmas', { bunting: true, stickers: 3, inside: true, label: 'Christmas' }, 'a festive day: bunting and three of its drawings'],
+    ['seasons: autumn', { bunting: true, stickers: 3, inside: true, label: 'Autumn' }, 'a season too'],
+    ['seasons: ramadan', { bunting: false, stickers: 1, inside: true, label: 'Ramadan' }, 'a quiet day: one small drawing, no bunting'],
+    ['seasons: off', { bunting: false, stickers: 0, inside: true }, 'off: nothing'],
+    ['seasons: winter\nlooks: {"winter": {"settle": ["bars", "posts"]}}', { bunting: false, stickers: 0, inside: true }, 'not where you’ve said it shouldn’t settle']
+  ];
+  for (const [settings, want, what] of cases) {
+    await putFile('theme.md', `---\ntheme: classic\n${settings}\n---\n`);
+    await siteAt(async (p) => {
+      const got = await look(p);
+      if (!want.label) delete got.label;
+      eq(got, want, what);
+    }, { desktop: false, reducedMotion: 'reduce' });
+  }
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+});
+
+await test('the apps’ top bars: bunting and stickers for the day, and each app can choose its own, random ones or none', async () => {
+  const content = await import('../src/content.js');
+  const skins = await import('../public/js/skins.js');
+  eq(Object.keys(skins.BAR_APPS), ['windows', ...Object.keys(content.THEME_APPS)], 'the server knows the same apps');
+  eq(content.parseTheme('---\ntheme: classic\nbar_decor: {"album": {"mode": "mine", "charms": ["santa", "🎂", "<b>", "star", "sun"]}, "tv": {"mode": "none"}, "music": {"mode": "random"}, "nope": {"mode": "none"}, "books": {"mode": "mine"}}\n---\n').bar_decor, { album: { mode: 'mine', charms: ['santa', '🎂', 'star'] }, tv: { mode: 'none' }, music: { mode: 'random' } }, 'checked by the server');
+  const bars = (p) => p.evaluate(() => [...document.querySelectorAll('.bar-decor')].filter((d) => d.parentElement.offsetParent).map((d) => {
+    const s = getComputedStyle(d);
+    return { app: d.closest('[data-app]')?.dataset.app || '', shown: s.display !== 'none', stickers: s.backgroundImage.includes('svg') ? (decodeURIComponent(s.backgroundImage).match(/<g transform="rotate/g) || []).length : 0, bunting: s.backgroundImage.split('url("').length > 2 };
+  }));
+  const at = async (route, settings) => {
+    await putFile('theme.md', `---\ntheme: classic\n${settings}\n---\n`);
+    return siteAt(async (p) => {
+      await p.goto(BASE + '/' + route);
+      await p.waitForTimeout(900);
+      return bars(p);
+    }, { desktop: false, reducedMotion: 'reduce' });
+  };
+  // A festive day: bunting and three stickers on every app's bar.
+  for (const route of ['#/thoughts', '#/album', '#/books', '#/journal']) {
+    const [b] = await at(route, 'seasons: christmas');
+    // (On a phone the windows' title bar has its stickers only: the menu under it has its garland.)
+    eq([b?.shown, b?.stickers, b?.bunting], [true, 3, route !== '#/thoughts'], `${route}: dressed`);
+  }
+  eq((await at('#/album', 'seasons: ramadan'))[0].stickers, 1, 'a quiet day: one drawing');
+  assert(!(await at('#/album', 'seasons: ramadan'))[0].bunting, 'and no bunting');
+  eq((await at('#/album', 'seasons: off'))[0].shown, false, 'no day: nothing');
+  // Each app its own way.
+  const own = 'seasons: christmas\nbar_decor: {"album": {"mode": "mine", "charms": ["bunny", "🎂"]}, "tv": {"mode": "none"}, "music": {"mode": "random"}}';
+  eq((await at('#/album', own))[0].stickers, 2, 'the album: your own two');
+  eq((await at('#/tv', own))[0].shown, false, 'the TV: nothing');
+  eq((await at('#/music', own))[0].stickers, 3, 'the record crate: three different ones');
+  // Your own and random ones stay all year; the bunting only while a day is on.
+  const off = 'seasons: off\nbar_decor: {"album": {"mode": "mine", "charms": ["bunny"]}}';
+  const [alb] = await at('#/album', off);
+  eq([alb.shown, alb.stickers, alb.bunting], [true, 1, false], 'your own, all year round');
+  // Chosen in Themes.
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+  const page = await adminPage();
+  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await page.waitForSelector('.tm-own');
+  if (!(await page.locator('.tm-own').evaluate((e) => e.open))) await page.locator('.tm-own summary').click();
+  await page.locator('.tm-tab', { hasText: 'Seasons' }).click();
+  await page.getByRole('radiogroup', { name: 'On the Cinema bar' }).getByRole('radio', { name: 'My own' }).click();
+  await page.locator('.tm-bars .tm-pick[aria-label="Snowman"]').click();
+  await page.getByRole('radiogroup', { name: 'On the TV bar' }).getByRole('radio', { name: 'Nothing' }).click();
+  await page.locator('button', { hasText: 'Save the theme' }).click();
+  await page.waitForFunction(() => !document.querySelector('.tm-savebar.unsaved'));
+  eq((await publicData()).theme.bar_decor, { films: { mode: 'mine', charms: ['snowman'] }, tv: { mode: 'none' } }, 'saved');
+  assert(!page.errors.length, page.errors.join('; '));
+  await page.close();
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+});
+
+await test('every wallpaper through the day: morning light, an evening glow and a starry night (always night in dark mode)', async () => {
+  const at = (time, dark, settings = '') => siteAt(async (p) => p.evaluate(() => getComputedStyle(document.querySelector('.wall')).backgroundImage), { desktop: true, reducedMotion: 'reduce', time: new Date(time), ...(dark ? { dark: true } : {}) });
+  for (const theme of ['bunny', 'neon', 'autumnal']) {
+    await putFile('theme.md', `---\ntheme: ${theme}\nseasons: off\n---\n`);
+    const day = await at('2026-10-28T13:00:00');
+    const night = await at('2026-10-28T23:30:00');
+    const morning = await at('2026-10-28T08:00:00');
+    assert(day.includes('svg') && night.includes('svg'), `${theme}: its own wallpaper, day and night`);
+    assert(/rgba\(10, 18, 66/.test(night) && !/rgba\(10, 18, 66/.test(day), `${theme}: night falls`);
+    assert(/rgba\(255, 168, 108/.test(morning), `${theme}: morning light`);
+  }
+  // Your own picture too; and "stays the same all day" keeps the day.
+  await putFile('theme.md', '---\ntheme: classic\nseasons: off\nwallpaper: emoji\nemoji: "🌸"\n---\n');
+  assert(/rgba\(10, 18, 66/.test(await at('2026-10-28T23:30:00')), 'emoji wallpaper at night');
+  await putFile('theme.md', '---\ntheme: bunny\nseasons: off\nwall_time: still\n---\n');
+  assert(!/rgba\(10, 18, 66/.test(await at('2026-10-28T23:30:00')), 'kept as it is when you ask');
+  eq((await import('../src/content.js')).parseTheme('---\ntheme: bunny\nwall_time: still\n---\n').wall_time, 'still', 'the server keeps it');
   await putFile('theme.md', '---\ntheme: classic\n---\n');
 });
 

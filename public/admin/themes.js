@@ -6,13 +6,13 @@
 import { h } from '/js/util.js';
 import { CARD_STYLES, miniCard, mixMini, isOwnCard, ensureOwnCardsCss } from '/js/card-dress.js';
 import { CARD_PARTS, CARD_COLOURS, MAX_CARDS, cleanCards, nextCardId, MIX, MAX_SEED, cleanMix, cleanSeed } from '/js/card-parts.js';
-import { SKINS, SKIN_GROUPS, WALLPAPERS, CHARMS, CHARM_NAMES, resolveSkin, wallpaperCss, charmUrl, pointerSvgs, themeColour, TITLE_STOPS, inks, mix, emojiList, EMOJI_LAYOUTS, STICKER_SPOTS, STICKER_SIZES, OPTIONS, HIDEABLE, SECTIONS, DEFAULT_MENU, FONT_FAMILIES, APPS, APP_LOOKS, APP_EXTRAS, cleanApps, hexHsl, hslHex, SEASONS, FESTIVALS, FALLING_CHOICES, cleanMyDays, MAX_MY_DAYS, cleanFestivalDates, nextFestival, LABELS, LABEL_GROUPS, cleanLabels, GLASS_PLACES, SCENERY_PLACES, lookOf, cleanLooks, MAX_LOOK_CHARMS, seasonOf } from '/js/skins.js';
+import { SKINS, SKIN_GROUPS, WALLPAPERS, CHARMS, CHARM_NAMES, resolveSkin, wallpaperCss, charmUrl, pointerSvgs, themeColour, TITLE_STOPS, inks, mix, emojiList, EMOJI_LAYOUTS, STICKER_SPOTS, STICKER_SIZES, OPTIONS, HIDEABLE, SECTIONS, DEFAULT_MENU, FONT_FAMILIES, APPS, APP_LOOKS, APP_EXTRAS, cleanApps, hexHsl, hslHex, SEASONS, FESTIVALS, FALLING_CHOICES, cleanMyDays, MAX_MY_DAYS, cleanFestivalDates, nextFestival, LABELS, LABEL_GROUPS, cleanLabels, GLASS_PLACES, SCENERY_PLACES, lookOf, cleanLooks, MAX_LOOK_CHARMS, seasonOf, BAR_APPS, BAR_DECOR, MAX_BAR_STICKERS, cleanBarDecor } from '/js/skins.js';
 import { FLOPPY_PIECES, FLOPPY_DRESS, outfitFor, dressFloppy, cleanFloppy } from '/js/floppy-look.js';
 import { FLOPPY } from '/js/helper.js';
 
 const PARTS = ['main', 'accent', 'paper', 'leather', 'wallpaper', 'decoration', 'pointer', 'tab_icon', 'night_theme', ...Object.keys(OPTIONS)];
 // Your own layout choices and extras stay when you switch to another theme; the look comes with the theme.
-const KEEP_ON_SWITCH = ['card_festive', 'card_corner', 'page', 'page_strength', 'taskbar', 'text_size', 'header', 'sounds', 'name_style', 'trail', 'falling', 'tab_icon', 'night_theme', 'seasons', 'hemisphere'];
+const KEEP_ON_SWITCH = ['card_festive', 'card_corner', 'page', 'page_strength', 'wall_time', 'taskbar', 'text_size', 'header', 'sounds', 'name_style', 'trail', 'falling', 'tab_icon', 'night_theme', 'seasons', 'hemisphere'];
 // Each change, so Undo can step back one at a time (while you're on the Themes page).
 let history = [];
 // Showing the after-dark look in the preview (rather than the daytime one).
@@ -35,7 +35,7 @@ const MAX_STICKERS = 16;
 // Emoji to start from (any emoji from the keyboard works too).
 const SUGGESTED = ['⚪', '⚫', '🤍', '🖤', '🤎', '◽', '➕', '✳️', '〰️', '🌿', '☕', '📎', '📌', '🕯️', '🪴', '🐰', '🎀', '💖', '✨', '🌈', '⭐', '🍓', '🌸', '☁️', '🫧', '🍄', '🦋', '🐸', '🧋', '🍑', '🌙', '💫', '🍒', '🌼', '🐻', '🐱', '🍰', '🎧', '💿', '📼', '🪐', '🌷', '🧸', '💌', '🫶'];
 const DOODLES = Object.keys(CHARM_NAMES).filter((k) => !['none', 'ears', 'plain'].includes(k));
-const blank = () => ({ theme: 'classic', ...Object.fromEntries(PARTS.map((k) => [k, ''])), picture: '', file: null, blob: '', emoji: '', emoji_layout: '', cards: [], card_mix: [], card_seed: 0, stickers: [], hide: [], menu: null, sections_hidden: [], apps: {}, festivals: [], my_days: [], festival_dates: {}, labels: {}, glass: [], looks: {}, floppy: { dress: 'off', colour: 'classic', own: {} } });
+const blank = () => ({ theme: 'classic', ...Object.fromEntries(PARTS.map((k) => [k, ''])), picture: '', file: null, blob: '', emoji: '', emoji_layout: '', cards: [], card_mix: [], card_seed: 0, stickers: [], hide: [], menu: null, sections_hidden: [], apps: {}, festivals: [], my_days: [], festival_dates: {}, labels: {}, glass: [], looks: {}, bar_decor: {}, floppy: { dress: 'off', colour: 'classic', own: {} } });
 
 // What goes in theme.md: the theme's name, and only the parts you've changed.
 function themeFile(d) {
@@ -66,6 +66,8 @@ function themeFile(d) {
   if (d.glass?.length) out.glass = Object.keys(GLASS_PLACES).filter((x) => d.glass.includes(x));
   const looks = cleanLooks(d.looks);
   if (Object.keys(looks).length) out.looks = looks;
+  const bars = cleanBarDecor(d.bar_decor);
+  if (Object.keys(bars).length) out.bar_decor = bars;
   const fl = cleanFloppy(d.floppy, (x) => (CHARMS[x] ? x : emojiList(x, 1)[0] || ''));
   if (fl.dress !== 'off' || fl.colour !== 'classic') out.floppy = fl;
   const mine = cleanMyDays(d.my_days);
@@ -77,7 +79,7 @@ function themeFile(d) {
 
 // A draft to edit, from theme.md's settings (saved, or from a theme file being installed).
 function fromSettings(st) {
-  return { ...blank(), theme: st.theme in SKINS ? st.theme : 'classic', ...Object.fromEntries(PARTS.map((k) => [k, st[k] || ''])), picture: st.picture || '', emoji: st.emoji || '', emoji_layout: st.emoji_layout || '', cards: JSON.parse(JSON.stringify(st.cards || [])), card_mix: [...(st.card_mix || [])], card_seed: st.card_seed || 0, stickers: (st.stickers || []).map((x) => ({ x: 50, y: 50, ...x })), hide: [...(st.hide || [])], menu: st.menu ? [...st.menu] : null, sections_hidden: [...(st.sections_hidden || [])], apps: JSON.parse(JSON.stringify(st.apps || {})), festivals: [...(st.festivals || [])], my_days: JSON.parse(JSON.stringify(st.my_days || [])), festival_dates: JSON.parse(JSON.stringify(st.festival_dates || {})), labels: { ...(st.labels || {}) }, glass: [...(st.glass || [])], looks: JSON.parse(JSON.stringify(st.looks || {})), floppy: JSON.parse(JSON.stringify(st.floppy || { dress: 'off', colour: 'classic', own: {} })) };
+  return { ...blank(), theme: st.theme in SKINS ? st.theme : 'classic', ...Object.fromEntries(PARTS.map((k) => [k, st[k] || ''])), picture: st.picture || '', emoji: st.emoji || '', emoji_layout: st.emoji_layout || '', cards: JSON.parse(JSON.stringify(st.cards || [])), card_mix: [...(st.card_mix || [])], card_seed: st.card_seed || 0, stickers: (st.stickers || []).map((x) => ({ x: 50, y: 50, ...x })), hide: [...(st.hide || [])], menu: st.menu ? [...st.menu] : null, sections_hidden: [...(st.sections_hidden || [])], apps: JSON.parse(JSON.stringify(st.apps || {})), festivals: [...(st.festivals || [])], my_days: JSON.parse(JSON.stringify(st.my_days || [])), festival_dates: JSON.parse(JSON.stringify(st.festival_dates || {})), labels: { ...(st.labels || {}) }, glass: [...(st.glass || [])], looks: JSON.parse(JSON.stringify(st.looks || {})), bar_decor: JSON.parse(JSON.stringify(st.bar_decor || {})), floppy: JSON.parse(JSON.stringify(st.floppy || { dress: 'off', colour: 'classic', own: {} })) };
 }
 // theme.md as text: colours, emoji and lists in quotes or as JSON (which is valid YAML).
 function themeText(file) {
@@ -257,7 +259,7 @@ function themeControls(ctx, saved, redraw, preview) {
         'button',
         { type: 'button', role: 'radio', 'aria-checked': String(on), class: 'tm-card' + (on ? ' on' : ''), style: st.pointer !== 'none' ? { cursor: `${pointerSvgs(st).arrow} 3 3, pointer` } : null, onclick: () => {
           // A new theme brings all of its own parts (your stickers and emoji stay).
-          draft = { ...blank(), theme: id, picture: d.picture, file: d.file, blob: d.blob, emoji: d.emoji, emoji_layout: d.emoji_layout, stickers: d.stickers, cards: d.cards, card_mix: d.card_mix, card_seed: d.card_seed, ...(d.card_style === MIX ? { card_style: MIX } : {}), hide: d.hide, menu: d.menu, sections_hidden: d.sections_hidden, apps: d.apps, festivals: d.festivals, my_days: d.my_days, festival_dates: d.festival_dates, labels: d.labels, glass: d.glass, looks: d.looks, floppy: d.floppy, ...Object.fromEntries(KEEP_ON_SWITCH.map((k) => [k, d[k]])) };
+          draft = { ...blank(), theme: id, picture: d.picture, file: d.file, blob: d.blob, emoji: d.emoji, emoji_layout: d.emoji_layout, stickers: d.stickers, cards: d.cards, card_mix: d.card_mix, card_seed: d.card_seed, ...(d.card_style === MIX ? { card_style: MIX } : {}), hide: d.hide, menu: d.menu, sections_hidden: d.sections_hidden, apps: d.apps, festivals: d.festivals, my_days: d.my_days, festival_dates: d.festival_dates, labels: d.labels, glass: d.glass, looks: d.looks, bar_decor: d.bar_decor, floppy: d.floppy, ...Object.fromEntries(KEEP_ON_SWITCH.map((k) => [k, d[k]])) };
           redraw();
         } },
         mini(st),
@@ -359,7 +361,9 @@ function themeControls(ctx, saved, redraw, preview) {
             redraw();
           }), h('span', { class: 'hint' }, 'Your own picture fills the desktop behind everything. It’s cleaned of hidden data like every photo.'))
         : null,
-      t.wallpaper === 'emoji' ? emojiWallControls(d, t, redraw, preview) : null
+      t.wallpaper === 'emoji' ? emojiWallControls(d, t, redraw, preview) : null,
+      opt('wall_time'),
+      h('p', { class: 'hint' }, 'Like the classic sky: a warm morning, the day as it is, a golden evening and a starry night, by each visitor’s clock. In dark mode it’s always night.')
     ]],
     words: ['Fonts', () => [opt('font', { font: true }), opt('title_font', { font: true }), opt('text_size')]],
     shapes: ['Bars & corners', () => [opt('bars'), opt('corners'), h('p', { class: 'hint' }, 'Bar styles show in light mode; dark mode keeps its own dark bars.')]],
@@ -1076,6 +1080,7 @@ function seasonControls(d, t, redraw, opt) {
       : null,
     glassControls(d, redraw, opt),
     looksControls(d, t, redraw),
+    barControls(d, t, redraw),
     myDaysControls(d, t, redraw),
     auto
       ? h(
@@ -1261,6 +1266,49 @@ function looksControls(d, t, redraw) {
     h('div', { class: 'design-field wide' }, h('span', null, 'Where its drawings go'), h('div', { class: 'tm-ticks' }, Object.keys(STICKER_SPOTS).map(spotTick))),
     h('div', { class: 'design-field wide' }, h('span', null, isSeason ? 'Where the season settles' : 'Where the day settles'), h('div', { class: 'tm-ticks' }, Object.keys(SCENERY_PLACES).map(settleTick))),
     changed ? h('button', { type: 'button', class: 'btn small', onclick: () => { delete d.looks[lookFor]; redraw(); } }, `${(SEASONS[lookFor] || FESTIVALS[lookFor]).name} as it comes`) : null
+  );
+}
+// The apps' top bars: for each app, what its bar wears (bunting under it while a season or
+// festive day is on, and stickers on its corner).
+let barPicking = '';
+function barControls(d, t, redraw) {
+  d.bar_decor ||= {};
+  const set = (app, one) => {
+    if (one.mode === 'day') delete d.bar_decor[app];
+    else d.bar_decor[app] = one;
+    redraw();
+  };
+  const row = (app) => {
+    const now = d.bar_decor[app] || { mode: 'day' };
+    const mine = now.mode === 'mine' ? now.charms || [] : [];
+    return h(
+      'div',
+      { class: 'tm-bar-row' },
+      h('b', null, BAR_APPS[app]),
+      h('div', { class: 'chip-row', role: 'radiogroup', 'aria-label': `On the ${BAR_APPS[app]} bar` }, Object.entries(BAR_DECOR).map(([mode, label]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(now.mode === mode), 'aria-pressed': String(now.mode === mode), onclick: () => {
+        if (mode === 'mine' && now.mode !== 'mine') {
+          // (Opens the drawings to choose from.)
+          barPicking = app;
+          set(app, { mode, charms: [] });
+        } else set(app, mode === 'mine' ? now : { mode });
+      } }, label))),
+      now.mode === 'mine'
+        ? h(
+            'div',
+            { class: 'tm-look-charms' },
+            mine.map((c, i) => h('span', { class: 'tm-look-charm' }, stickerLook({ what: c }, t, 28), h('button', { type: 'button', class: 'btn small danger', 'aria-label': 'Take this drawing off', onclick: () => set(app, { mode: 'mine', charms: mine.filter((_, k) => k !== i) }) }, '×'))),
+            mine.length < MAX_BAR_STICKERS ? h('button', { type: 'button', class: 'btn small', 'aria-expanded': String(barPicking === app), onclick: () => { barPicking = barPicking === app ? '' : app; redraw(); } }, '+ Add a drawing') : null
+          )
+        : null,
+      now.mode === 'mine' && barPicking === app ? drawingPicker(t, (what) => { barPicking = mine.length + 1 < MAX_BAR_STICKERS ? app : ''; set(app, { mode: 'mine', charms: [...new Set([...mine, what])] }); }) : null
+    );
+  };
+  return h(
+    'div',
+    { class: 'design-field wide tm-bars' },
+    h('span', null, 'On the apps’ top bars'),
+    h('p', { class: 'hint' }, `Bunting hangs under each app’s top bar while a season or festive day is on, and a few drawings sit on its corner like stickers. Choose for each app: the day’s drawings, different ones every day, up to ${MAX_BAR_STICKERS} of your own (any drawing or emoji, all year round), or nothing.`),
+    Object.keys(BAR_APPS).map(row)
   );
 }
 function drawingPicker(t, onPick) {
