@@ -239,7 +239,7 @@
 .profile-sub { display: flex; align-items: center; gap: 8px; min-height: 0; }
 .pd-bunting, .pd-stickers { display: none; }
 :is([data-season], [data-festival])[data-settle~="profile"] .profile-tile > .pd-bunting { display: block; position: absolute; z-index: 0; left: 6px; right: 6px; top: 0; height: 16px; background-repeat: repeat-x; background-size: 48px 16px; pointer-events: none; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .15)); }
-:is([data-season], [data-festival])[data-settle~="profile"] .profile-tile > :not(.pd-bunting) { position: relative; z-index: 1; }
+:is([data-season], [data-festival])[data-settle~="profile"] .profile-tile > :not(.pd-bunting, .stk-wrap) { position: relative; z-index: 1; }
 :is([data-season], [data-festival])[data-settle~="profile"] .profile-tile:has(> .pd-bunting) { padding-top: 18px; }
 :is([data-season], [data-festival])[data-settle~="profile"] .profile-sub > .pd-stickers { display: flex; flex: none; margin-left: auto; padding-right: 2px; }
 .pd-sticker { width: 30px; height: 30px; margin-left: -4px; background: center / contain no-repeat; transform: rotate(var(--pd-tilt, 0deg)); filter: drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff) drop-shadow(0 2px 2px rgba(0, 0, 0, .25)); }
@@ -253,8 +253,10 @@
 .bar-decor { display: none; }
 :is(.xp-title, .wbar) { position: relative; }
 .bar-decor { display: var(--bd-show, none); position: absolute; z-index: 6; left: 0; right: 0; top: 100%; height: 30px; margin-top: -13px; pointer-events: none; background: var(--bd-stickers, none) right 10px top 0 / var(--bd-w, 80px) 32px no-repeat, var(--bd-flags, none) 0 12px / 48px 16px repeat-x; }
-.xp-phone .xp-title > .bar-decor { top: var(--safe-top, 0px); bottom: 0; height: auto; margin-top: 0; background: var(--bd-stickers, none) right 104px center / var(--bd-w, 80px) 32px no-repeat; }
-.dw-xp .xp-title > .bar-decor { background: var(--bd-stickers, none) right 92px center / var(--bd-w, 80px) 28px no-repeat; top: 0; bottom: 0; height: auto; margin-top: 0; }
+/* (In the windows' own title bars, the stickers take their turn in the row: after the title and any
+   drawings of yours, before the buttons, so nothing sits on top of anything else.) */
+:is(.xp-phone, .dw-xp) .xp-title > :is(.xp-ctl, .wbtn) { order: 2; }
+:is(.xp-phone, .dw-xp) .xp-title > .bar-decor { position: static; order: 1; flex: none; align-self: center; width: var(--bd-w, 80px); height: 30px; margin: 0 6px 0 2px; background: var(--bd-stickers, none) center / contain no-repeat; }
 @media print { .bar-decor { display: none; } }
 .phone .menubar > .bar-decor { background-position: right 72px top 0, 0 12px; }
 .wbar > .bar-decor { background-position: right 76px top 0, 0 12px; }
@@ -269,3 +271,5 @@
 :root:not([data-sk-wall-time="still"]) body.sky-sunset { --wall-time: linear-gradient(180deg, rgba(62, 36, 122, .36), rgba(196, 82, 122, .26) 45%, rgba(255, 142, 72, .24)); }
 :root:not([data-sk-wall-time="still"]) body.sky-night { --wall-time: var(--wall-night); }
 :root[data-theme="dark"] body, :root[data-theme="dark"] body:is(.sky-morning, .sky-day, .sky-sunset, .sky-night) { --wall-time: var(--wall-night); }
+/* (On a computer, an app's bar sits above its own window's page, so what hangs under it shows.) */
+.dw > .wbar:has(> .bar-decor) { position: relative; z-index: 4; }

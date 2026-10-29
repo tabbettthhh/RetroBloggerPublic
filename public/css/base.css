@@ -240,6 +240,8 @@ body { --pen: #24305c; }
 .stk-corner-br { right: 6px; }
 .dw-xp .stk-corner-bl, .dw-xp .stk-corner-br { bottom: 4px; }
 .stk-profile { position: absolute; top: -12px; left: -10px; z-index: 3; }
+.profile-tile > .avatar:has(> .stk-profile) { position: relative; overflow: visible; }
+.avatar > .stk-profile { top: -14px; left: -14px; }
 .stk-cards { position: absolute; right: 6px; bottom: 4px; z-index: 2; opacity: .95; }
 .stk-cards .stk-l { width: 40px; height: 40px; font-size: 34px; }
 .stk-taskbar { align-items: center; padding: 0 4px; }
