@@ -62,6 +62,24 @@ function tone(freq, start, dur, type = 'sine', vol = 0.05) {
   o.stop(t + dur + 0.02);
 }
 
+// A short burst of filtered noise (wood, metal, paper).
+function noise(dur, freq, vol, start = 0) {
+  const a = audio();
+  if (!a) return;
+  const len = Math.floor(a.sampleRate * dur);
+  const buf = a.createBuffer(1, len, a.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3) * vol;
+  const src = a.createBufferSource();
+  const f = a.createBiquadFilter();
+  f.type = 'bandpass';
+  f.frequency.value = freq;
+  f.Q.value = 2.5;
+  src.buffer = buf;
+  src.connect(f).connect(a.destination);
+  src.start(a.currentTime + start);
+}
+
 export const sound = {
   click: () => tone(1800, 0, 0.03, 'square', 0.015),
   // A buzzy two-part rattle for a nudge.
@@ -86,6 +104,16 @@ export const sound = {
   stamp: () => {
     tone(140, 0, 0.12, 'square', 0.05);
     tone(90, 0.02, 0.18, 'sine', 0.06);
+  },
+  // The highlights cabinet: a small key turning in its lock, and the doors' latch.
+  key: () => {
+    noise(0.05, 4200, 0.35, 0);
+    noise(0.06, 3000, 0.3, 0.09);
+    tone(2400, 0.09, 0.05, 'triangle', 0.012);
+  },
+  latch: () => {
+    noise(0.08, 900, 0.4, 0);
+    tone(196, 0, 0.12, 'sine', 0.03);
   },
   page: () => {
     const a = audio();

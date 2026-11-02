@@ -1,6 +1,6 @@
 // Opening any post in the back office and saving it without touching anything must not
 // change what the site shows. Checked for the example posts and a set of awkward ones.
-import { api, test, report, assert, launch, close, adminPage, clickSave, overview, BASE } from './lib.mjs';
+import { api, test, report, assert, launch, close, adminPage, clickSave, overview, BASE, openTab } from './lib.mjs';
 
 const AWKWARD = {
   'thoughts/2026-08-01-numbers.md': '---\ndate: 2026-08-01 09:00\ntitle: "1984"\n---\nA title that is a number.\n',
@@ -47,7 +47,7 @@ for (const p of before) {
   await test(`open and save unchanged: ${p.key}`, async () => {
     // (The last save's refresh finishes first, so it can't redraw over the next editor.)
     await page.waitForLoadState('networkidle');
-    await page.locator('.admin-tabs button', { hasText: 'Posts' }).click();
+    await openTab(page, 'Posts');
     // Older posts are folded away by month: open every month so all the rows are there.
     await page.evaluate(() => document.querySelectorAll('.month-fold').forEach((d) => (d.open = true)));
     const rows = page.locator('.list-row');
@@ -62,13 +62,13 @@ for (const p of before) {
       }
     }
     assert(row, 'row not found');
-    await row.locator('button', { hasText: 'Edit' }).click();
+    await row.locator('.row-main').click();
     // The list may still be redrawing after the last save; if the click landed on the old
     // list, click again.
     if (!(await page.waitForSelector('.hint:has-text("Editing")', { timeout: 5000 }).catch(() => null))) {
-      await page.locator('.admin-tabs button', { hasText: 'Posts' }).click();
+      await openTab(page, 'Posts');
       await page.evaluate(() => document.querySelectorAll('.month-fold').forEach((d) => (d.open = true)));
-      await page.locator('.list-row').filter({ has: page.locator('strong', { hasText: p.title || p.excerpt || '(no text)' }) }).first().locator('button', { hasText: 'Edit' }).click();
+      await page.locator('.list-row').filter({ has: page.locator('strong', { hasText: p.title || p.excerpt || '(no text)' }) }).first().locator('.row-main').click();
       await page.waitForSelector('.hint:has-text("Editing")');
     }
     const msg = await clickSave(page);

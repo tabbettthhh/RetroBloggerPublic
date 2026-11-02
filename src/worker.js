@@ -4,7 +4,7 @@
 import { Zip, ZipDeflate, ZipPassThrough } from 'fflate';
 import { stripImage, UnsupportedImage, CLEAN_TYPES } from './strip.js';
 import { parseVisited } from './content.js';
-import { TYPES, buildPost, isVisible, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
+import { TYPES, buildPost, isVisible, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
 import { adminCheck } from './auth.js';
 import * as friends from './friends.js';
 
@@ -374,7 +374,7 @@ async function buildEverything(env, { includeHidden = false, forFriends = false 
     .map(({ key, ...rest }) => rest)
     .sort((a, b) => String(b.date).localeCompare(String(a.date)));
 
-  const [siteText, wishText, travelText, logText, catText, passportText, keepText, themeText] = await Promise.all([
+  const [siteText, wishText, travelText, logText, catText, passportText, keepText, themeText, highlightsText] = await Promise.all([
     readText(env, 'site.md'),
     readText(env, 'wishlist.md'),
     readText(env, 'travel.md'),
@@ -382,8 +382,22 @@ async function buildEverything(env, { includeHidden = false, forFriends = false 
     readText(env, 'categories.md'),
     readText(env, 'passport.md'),
     readText(env, 'keepsakes.md'),
-    readText(env, 'theme.md')
+    readText(env, 'theme.md'),
+    readText(env, 'highlights.md')
   ]);
+  // The highlights cabinet: only posts that are on the site (the back office sees them all), and
+  // each of them marked with its place on its shelf, for the rosette on its card.
+  const highlights = {};
+  const byKey = new Map(posts.map((p, i) => [`${p.type}/${p.slug}`, i]));
+  for (const [shelf, list] of Object.entries(parseHighlights(highlightsText))) {
+    const kept = includeHidden ? list : list.filter((x) => byKey.has(x.post) && !posts[byKey.get(x.post)].friends_only);
+    if (kept.length) highlights[shelf] = kept;
+    kept.forEach((x, i) => byKey.has(x.post) && (posts[byKey.get(x.post)] = { ...posts[byKey.get(x.post)], highlight: i + 1 }));
+  }
+  // Once in the cabinet: the room's library of former highlights (on the site, only posts still
+  // there and not back in the cabinet).
+  const inCabinet = new Set(Object.values(highlights).flat().map((x) => x.post));
+  const highlightsPast = parseHighlightsPast(highlightsText).filter((x) => includeHidden || (byKey.has(x.post) && !posts[byKey.get(x.post)].friends_only && !inCabinet.has(x.post)));
 
   const site = parseSite(siteText);
   // Approved comments, each with its post (and none at all while comments are switched off).
@@ -417,6 +431,8 @@ async function buildEverything(env, { includeHidden = false, forFriends = false 
     keepsakes: parseKeepsakeSettings(keepText),
     // The site's theme: colours, wallpaper, charms and pointer (theme.md).
     theme: parseTheme(themeText),
+    highlights,
+    highlightsPast,
     guestbook,
     generated: now
   };

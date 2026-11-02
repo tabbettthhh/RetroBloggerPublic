@@ -1016,3 +1016,37 @@ export function parseGuestbookEntry(key, text) {
     message: String(body || '').trim().slice(0, 2000)
   };
 }
+
+// ---------- the highlights cabinet (highlights.md) ----------
+// Up to five posts on each shelf (places, music, films, TV, podcasts), best first, each with an
+// optional line on why it's there: { places: [{ post: 'places/slug', why: '…' }], … }.
+export const HIGHLIGHT_SHELVES = ['places', 'music', 'films', 'tv', 'podcasts'];
+export const HIGHLIGHTS_PER_SHELF = 5;
+export function parseHighlights(text) {
+  const { data } = splitFrontMatter(text || '');
+  const out = {};
+  for (const shelf of HIGHLIGHT_SHELVES) {
+    const seen = new Set();
+    const list = (Array.isArray(data[shelf]) ? data[shelf] : [])
+      .map((x) => (typeof x === 'string' ? { post: x } : x))
+      .filter((x) => x && typeof x === 'object' && new RegExp(`^${shelf}/[A-Za-z0-9][A-Za-z0-9._-]{0,120}$`).test(String(x.post || '')))
+      .filter((x) => !seen.has(x.post) && seen.add(x.post))
+      .slice(0, HIGHLIGHTS_PER_SHELF)
+      .map((x) => ({ post: String(x.post), why: String(x.why ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 160) }));
+    if (list.length) out[shelf] = list;
+  }
+  return out;
+}
+// What used to be in the cabinet (the room's library keeps them as books): the newest first, each
+// with its shelf's post, its line on why, and when it left.
+export const HIGHLIGHTS_PAST_MAX = 40;
+export function parseHighlightsPast(text) {
+  const { data } = splitFrontMatter(text || '');
+  const seen = new Set();
+  return (Array.isArray(data.past) ? data.past : [])
+    .map((x) => (typeof x === 'string' ? { post: x } : x))
+    .filter((x) => x && typeof x === 'object' && new RegExp(`^(${HIGHLIGHT_SHELVES.join('|')})/[A-Za-z0-9][A-Za-z0-9._-]{0,120}$`).test(String(x.post || '')))
+    .filter((x) => !seen.has(x.post) && seen.add(x.post))
+    .slice(0, HIGHLIGHTS_PAST_MAX)
+    .map((x) => ({ post: String(x.post), why: String(x.why ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 160), until: /^\d{4}-\d{2}-\d{2}$/.test(String(x.until || '')) ? String(x.until) : '' }));
+}

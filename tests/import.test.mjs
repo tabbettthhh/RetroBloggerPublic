@@ -1,8 +1,8 @@
-import { test, report, assert, eq, launch, close, adminPage, toastText, overview, getFile, FIXTURES } from './lib.mjs';
+import { test, report, assert, eq, launch, close, adminPage, toastText, overview, getFile, FIXTURES, openTab } from './lib.mjs';
 await launch();
 await test('Goodreads import with awkward titles, then importing again skips them', async () => {
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Export & files' }).click();
+  await openTab(page, 'Export & files');
   const box = page.locator('fieldset', { hasText: 'Import from Goodreads' });
   await box.locator('input[type="file"]').setInputFiles(`${FIXTURES}/goodreads.csv`);
   await box.locator('button.go').waitFor();
@@ -16,7 +16,7 @@ await test('Goodreads import with awkward titles, then importing again skips the
   const dune = books.find((b) => b.title === 'Dune: Messiah');
   eq([dune.creator, dune.year, dune.rating, dune.state], ['Frank Herbert', '1969', 4, 'done'], 'Dune fields');
   assert(!/secret/.test(await getFile(dune.key)), 'private notes were imported');
-  await page.locator('.admin-tabs button', { hasText: 'Export & files' }).click();
+  await openTab(page, 'Export & files');
   const box2 = page.locator('fieldset', { hasText: 'Import from Goodreads' });
   await box2.locator('input[type="file"]').setInputFiles(`${FIXTURES}/goodreads.csv`);
   await box2.locator('.import-out p').first().waitFor();

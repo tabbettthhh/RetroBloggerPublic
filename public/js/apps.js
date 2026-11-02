@@ -18,6 +18,7 @@ import { studyMakers } from './study-keepsakes.js';
 import { albumApp } from './album.js';
 import { friendsApp } from './friends-feed.js';
 import { dressCard, profileDecor } from './card-dress.js';
+import { cabinetEntrance } from './cabinet.js';
 import { commentLink, commentsBlock, commentsButton } from './comments.js';
 import { activeSkin, resolveSkin, word, postFontAttrs } from './skins.js';
 
@@ -135,6 +136,8 @@ export function card(post, open = false) {
     const link = commentLink(post);
     if (link && el) el.append(link);
   }
+  // (In the highlights cabinet: a little gold rosette, leading to it.)
+  if (post.highlight && el && !post.friend_look) el.append(h('a', { class: 'card-rosette', href: '#/highlights', title: 'In my highlights' }, post.highlight === 1 ? '№ 1 in my highlights' : 'In my highlights'));
   return el;
 }
 function cardInner(post, open) {
@@ -1848,6 +1851,8 @@ function about(ctx) {
     { class: 'feed' },
     profileTile(ctx.data, true),
     h('article', { class: 'card' }, prose(ctx.data.site.about_html, 'card-body')),
+    // The way into the highlights cabinet's room.
+    cabinetEntrance(ctx.data),
     profileGrid(ctx.data),
     buddiesCard(ctx.data),
     h('p', { class: 'muted small' }, 'No trackers, no ads, no cookies. Your sound and wallpaper choices stay in your own browser.')
