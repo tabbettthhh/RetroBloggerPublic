@@ -217,8 +217,9 @@ await test('every level: fonts, feed, header, menu, taskbar, icons and sounds', 
   await pick('Fonts', 'Words', 'Pixel');
   await pick('Fonts', 'Titles', 'Arcade');
   await pick('Fonts', 'Text size', 'Bigger');
-  await pick('Bars & corners', 'Title bars', 'Striped');
-  await pick('Bars & corners', 'Corners', 'Square');
+  await pick('Bars, corners & depth', 'Title bars', 'Striped');
+  await pick('Bars, corners & depth', 'Corners', 'Square');
+  await pick('Bars, corners & depth', 'Realism', 'Extra real: textures, depth, nothing flat');
   await pick('Feed', 'Posts in the feed', 'A list with lines');
   await pick('Feed', 'Spacing', 'Compact');
   await pick('Profile header', 'Profile header', 'Card');
@@ -236,12 +237,13 @@ await test('every level: fonts, feed, header, menu, taskbar, icons and sounds', 
   await page.waitForFunction(() => [...(document.querySelector('.tm-frame')?.contentDocument?.querySelectorAll('.xp-links a') || [])].map((a) => a.textContent).filter(Boolean).join(',') === 'Home,Music,Places,Map', null, { timeout: 20000 });
   await page.locator('button', { hasText: 'Save the theme' }).click();
   await page.waitForSelector('.toast:not([hidden])');
-  eq((await publicData()).theme, { theme: 'classic', font: 'pixel', title_font: 'arcade', text_size: 'l', selector: 'pointer', bars: 'stripes', corners: 'square', density: 'compact', posts: 'lines', scrollbar: 'thin', taskbar: 'top', icons: 'mono', sounds: 'quiet', header: 'card', hide: ['nudge', 'clock'], menu: ['home', 'music', 'journal', 'atlas'], sections_hidden: ['wishlist'] }, 'all saved');
+  eq((await publicData()).theme, { theme: 'classic', font: 'pixel', title_font: 'arcade', text_size: 'l', selector: 'pointer', bars: 'stripes', corners: 'square', realism: 'extra', density: 'compact', posts: 'lines', scrollbar: 'thin', taskbar: 'top', icons: 'mono', sounds: 'quiet', header: 'card', hide: ['nudge', 'clock'], menu: ['home', 'music', 'journal', 'atlas'], sections_hidden: ['wishlist'] }, 'all saved');
   assert(!page.errors.length, page.errors.join('; '));
   await page.close();
   await site(async (p) => {
     const r = await p.evaluate(() => ({ ...document.documentElement.dataset, font: getComputedStyle(document.querySelector('.card-body')).fontFamily }));
-    eq([r.skFont, r.skPosts, r.skHeader, r.skHide], ['pixel', 'lines', 'card', 'nudge clock'], 'marks on the page');
+    eq([r.skFont, r.skPosts, r.skHeader, r.skHide, r.skRealism], ['pixel', 'lines', 'card', 'nudge clock', 'extra'], 'marks on the page');
+    assert(await p.evaluate(() => !!document.getElementById('real-grain') && getComputedStyle(document.querySelector('.card')).filter.includes('real-grain')), 'extra real: the cards have grain');
     assert(r.font.includes('Pixelify'), 'pixel font: ' + r.font);
     eq((await p.locator('.xp-links a').allInnerTexts()).filter(Boolean), ['Home', 'Music', 'Places', 'Map'], 'the main bar');
     eq(await p.locator('.profile-tile .nudge-btn').isVisible(), false, 'no nudge button');

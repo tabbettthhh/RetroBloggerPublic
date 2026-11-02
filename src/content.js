@@ -630,6 +630,7 @@ export const THEME_OPTIONS = {
   selector: ['bar', 'gradient', 'pointer', 'outline', 'invert'],
   bars: ['glossy', 'flat', 'stripes', 'pixel'],
   corners: ['classic', 'square', 'round'],
+  realism: ['normal', 'extra'],
   density: ['cosy', 'compact', 'roomy'],
   posts: ['cards', 'lines'],
   scrollbar: ['classic', 'themed', 'thin', 'hidden'],

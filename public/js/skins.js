@@ -713,6 +713,7 @@ export const OPTIONS = {
   selector: { name: 'Highlight', choices: { bar: 'Solid bar', gradient: 'Gradient bar', pointer: 'Pointer', outline: 'Outline', invert: 'Inverted' } },
   bars: { name: 'Title bars', choices: { glossy: 'Glossy', flat: 'Flat', stripes: 'Striped', pixel: 'Pixel steps' } },
   corners: { name: 'Corners', choices: { classic: 'Classic', square: 'Square', round: 'Round' } },
+  realism: { name: 'Realism', choices: { normal: 'As it is', extra: 'Extra real: textures, depth, nothing flat' } },
   density: { name: 'Spacing', choices: { cosy: 'Cosy', compact: 'Compact', roomy: 'Roomy' } },
   posts: { name: 'Posts in the feed', choices: { cards: 'Cards', lines: 'A list with lines' } },
   scrollbar: { name: 'Scroll bars', choices: { classic: 'Usual', themed: 'In the theme’s colours', thin: 'Thin', hidden: 'Hidden' } },
@@ -1652,6 +1653,12 @@ export function applySkin(settings, doc = document) {
   // The other settings: rules in skins.css follow these marks on the page.
   for (const k of Object.keys(OPTIONS)) root.dataset['sk' + k.replace(/(^|_)(\w)/g, (m, u, ch) => ch.toUpperCase())] = t[k];
   root.dataset.skHide = t.hide.join(' ');
+  // Extra real: the grain that paper, card and keepsakes are given (see real.css).
+  if (t.realism === 'extra' && !doc.getElementById('real-defs')) {
+    const holder = doc.createElement('div');
+    holder.innerHTML = '<svg id="real-defs" width="0" height="0" aria-hidden="true" style="position:absolute;width:0;height:0"><filter id="real-grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="7" result="n"/><feColorMatrix in="n" type="matrix" values=".3 0 0 0 .81  .3 0 0 0 .8  .3 0 0 0 .77  0 0 0 0 1" result="g"/><feComposite in="g" in2="SourceAlpha" operator="in" result="gin"/><feBlend in="SourceGraphic" in2="gin" mode="multiply"/></filter></svg>';
+    doc.body.append(holder.firstChild);
+  }
   let style = doc.getElementById('skin-css');
   if (!style) {
     style = doc.createElement('style');
