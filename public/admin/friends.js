@@ -85,16 +85,16 @@ function page(ctx, redraw) {
 // ---------- who sees what ----------
 
 const VIS = [
-  ['all', 'Everyone', 'A Friends tab on your site with their posts, and your friends list on your About page.'],
-  ['list', 'Just my friends list', 'Your friends’ names on your About page, linking to their sites. Their posts stay here, for you.'],
-  ['off', 'Only me', 'Nothing about your friends on your site. You still see everything here.']
+  ['off', 'Only me', 'Your Friends tab and their posts show only while you’re signed in. Visitors see nothing about your friends.'],
+  ['list', 'Only me, and my friends list', 'Their posts are still just for you; visitors see your friends’ names on your About page, linking to their sites.'],
+  ['all', 'Everyone', 'A Friends tab on your site with their posts for everyone, and your friends list on your About page. (Their posts never go in your Home for visitors.)']
 ];
 function privacyBox(ctx, d, act) {
   const post = (body, msg) => act(() => ctx.api('friends/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }), msg);
   return h(
     'fieldset',
     { class: 'fr-privacy' },
-    h('legend', null, 'Who sees your friends on your site?'),
+    h('legend', null, 'Who sees your friends’ posts on your site?'),
     VIS.map(([id, label, hint]) =>
       h(
         'label',
@@ -107,7 +107,13 @@ function privacyBox(ctx, d, act) {
       'label',
       { class: 'row check fr-share' },
       h('input', { type: 'checkbox', checked: d.letShare, onchange: (e) => post({ letShare: e.target.checked }, e.target.checked ? 'Friends may show your posts on their sites.' : 'Your posts now stay off your friends’ sites (they still see them in their back office).') }),
-      h('span', null, h('b', null, 'Let friends show my posts on their sites. '), h('small', null, 'Untick it and your friends still see your posts in their own back office, but never show them to their visitors.'))
+      h('span', null, h('b', null, 'Let friends show my posts on their sites. '), h('small', null, 'Untick it and your friends still see your posts when they’re signed in on their own site, but never show them to their visitors.'))
+    ),
+    h(
+      'label',
+      { class: 'row check fr-home' },
+      h('input', { type: 'checkbox', checked: d.inHome !== false, onchange: (e) => post({ inHome: e.target.checked }, e.target.checked ? 'Their posts are in your Home now (only you see them there).' : 'Their posts are only on Friends now.') }),
+      h('span', null, h('b', null, 'Mix their posts into my Home. '), h('small', null, 'Only you see them there, while you’re signed in: each as it looks on their site, with who it’s from on top.'))
     )
   );
 }
@@ -335,7 +341,8 @@ function howItWorks() {
     h('summary', null, 'How friends work'),
     h('p', null, 'You and a friend each run your own copy of this site. Copy your friend code, send it to them, and they paste it into Add a friend on theirs (or the other way round). From then on your two sites trust each other. Your code stays the same for everyone; switch it off or make a new one whenever you like.'),
     h('p', null, 'Your friends’ sites tell yours the moment they post or change their status, and your site checks theirs every 20 minutes as well. Their photos come through your own site, so your browser never connects to theirs. Drafts and scheduled posts are never shared.'),
-    h('p', null, 'Your site also gets a Friends tab: their posts as one feed you can scroll, with your friends listed at the top. Untick the box above to take it off your site.'),
-    h('p', null, 'It’s following only: there are no messages. Remove a buddy and both sites stop following each other.')
+    h('p', null, 'Signed in, you see their posts in your Home and on a Friends tab, with your friends listed at the top. A dot on Friends tells you when there’s something new. Whether visitors see the tab too is up to you (above).'),
+    h('p', null, 'You can comment on their posts right there: your comment goes straight on at their site, under your name, linking to yours. (Their visitors’ comments still wait for them to approve, and so do yours on your own site.)'),
+    h('p', null, 'There are no private messages. Remove a buddy and both sites stop following each other.')
   );
 }

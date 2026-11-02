@@ -39,12 +39,19 @@ export function startDesktop(root, data) {
   const icons = h('div', { class: 'desk-icons', role: 'list' });
 
   // ---- icons ----
-  const { hidden } = menuOf(data);
-  for (const [id, usual, cls] of DESKTOP_ICONS) {
-    const label = word(id, usual);
-    if (id === 'stats' && !data.stats) continue;
-    // Sections the theme leaves out of the menus have no icon either.
-    if (hidden.has(id)) continue;
+  // (Drawn again when what's shown changes: signed in, say, your Friends and Planner appear.)
+  let iconSet = '';
+  const drawIcons = () => {
+    const { hidden } = menuOf(data);
+    const shown = DESKTOP_ICONS.filter(([id]) => !(id === 'stats' && !data.stats) && !hidden.has(id));
+    const now = JSON.stringify(shown.map(([id, usual]) => [id, word(id, usual)]));
+    if (now === iconSet) return;
+    iconSet = now;
+    icons.replaceChildren();
+    for (const [id, usual, cls] of shown) iconFor(id, word(id, usual), cls);
+  };
+  const iconFor = (id, label, cls) => {
+    // (Sections the theme leaves out of the menus have no icon either.)
     const btn = h('button', { type: 'button', class: 'desk-icon', role: 'listitem', title: `Open ${label}` }, h('span', { class: 'dock-icon ' + cls, 'aria-hidden': 'true' }), h('span', { class: 'desk-label' }, label));
     btn.addEventListener('dblclick', () => go('#/' + (id === 'home' ? '' : id)));
     btn.addEventListener('click', (e) => {
@@ -53,7 +60,8 @@ export function startDesktop(root, data) {
       if (e.pointerType === 'touch' || e.detail === 0) go('#/' + (id === 'home' ? '' : id));
     });
     icons.append(btn);
-  }
+  };
+  drawIcons();
 
   function go(hashStr) {
     if (location.hash === hashStr || (hashStr === '#/' && (location.hash === '' || location.hash === '#/'))) open(hashStr);
@@ -345,6 +353,7 @@ export function startDesktop(root, data) {
     // scrolled down in is left alone, and shows them next time it changes).
     // (`all`: every window, wherever it's scrolled to, as when the owner changes something.)
     refresh(all = false) {
+      drawIcons();
       for (const [id, w] of wins)
         if (all) {
           // (Kept where you were in it.)

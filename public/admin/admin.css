@@ -485,10 +485,10 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .fr-move { display: flex; flex-direction: column; gap: 6px; } .fr-address .row { gap: 6px; } .fr-address .input { flex: 1 1 260px; max-width: 420px; }
 .fr-privacy { border: 1px solid #b9c3d9; border-radius: 6px; padding: 10px 14px 12px; margin: 14px 0; background: #f7f9fd; display: grid; gap: 6px; }
 .fr-privacy legend { font-weight: bold; padding: 0 4px; }
-.fr-vis, .fr-share { display: flex; gap: 8px; align-items: flex-start; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
+.fr-vis, .fr-share, .fr-home { display: flex; gap: 8px; align-items: flex-start; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
 .fr-vis.on { background: #e3ecfb; }
-.fr-vis span, .fr-share span { display: flex; flex-direction: column; }
-.fr-vis small, .fr-share small { color: #555; }
+.fr-vis span, .fr-share span, .fr-home span { display: flex; flex-direction: column; }
+.fr-vis small, .fr-share small, .fr-home small { color: #555; }
 .fr-share { border-top: 1px dashed #c9d1e3; margin-top: 4px; padding-top: 10px; border-radius: 0; }
 [data-theme="dark"] .fr-privacy { background: #20242c; border-color: #3a4252; }
 [data-theme="dark"] .fr-vis.on { background: #2b3446; }

@@ -12,6 +12,11 @@
 .cm-text { margin: 6px 0 2px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; }
 .cm-owner { margin: 8px 0 0 14px; padding: 6px 10px; border-left: 3px solid var(--sk-main, #0054e3); border-radius: 0 6px 6px 0; background: color-mix(in srgb, var(--sk-main, #0054e3) 8%, transparent); }
 .cm-badge { padding: 1px 6px; border-radius: 8px; color: #fff !important; background: var(--sk-main, #0054e3); }
+/* A friend, commenting from their own site. */
+.cm-avatar.friend { background: linear-gradient(#ffb347, #e8692c); }
+.cm-badge.friend { background: #e8692c; }
+.cm-site { color: inherit; text-decoration: none; }
+.cm-site:hover b, .cm-site:focus-visible b { text-decoration: underline; }
 .cm-reply-btn { margin-top: 4px; padding: 0; border: 0; background: none; color: var(--sk-bar, #0054e3); font: inherit; font-size: 12px; cursor: pointer; text-decoration: underline; }
 .cm-empty { margin: 0 0 6px; color: #777; font-style: italic; }
 .cm-leave { margin: 14px 0 6px; font-size: 13px; }

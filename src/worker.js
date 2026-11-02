@@ -133,10 +133,13 @@ async function route(request, env, ctx) {
     } catch {
       return new Response('Bad path', { status: 400 });
     }
-    return friends.friendPhotoForVisitor(env, parts[0], parts.slice(1).join('/'));
+    // (Signed in, you see the photos of every post of theirs you have, friends-only ones too.)
+    // (Only a browser's own request is checked: a sign-in only ever arrives with one.)
+    const mine = (request.headers.has('Cookie') || request.headers.get('Sec-Fetch-Site') === 'same-origin') && (await adminCheck(request, env)).ok;
+    return friends.friendPhotoForVisitor(env, parts[0], parts.slice(1).join('/'), mine);
   }
   // Friends' sites talking to yours (every request signed with the secret you share).
-  if (p.startsWith('/api/friends/')) return friends.friendsApi(request, env, p, { buildEverything, mediaForFriend: (key) => friendMedia(env, key), changed: () => bumpVersion(env), waitUntil: (work) => ctx.waitUntil(work) });
+  if (p.startsWith('/api/friends/')) return friends.friendsApi(request, env, p, { buildEverything, mediaForFriend: (key) => friendMedia(env, key), friendComment: (who, info) => friendComment(env, who, info), changed: () => bumpVersion(env), news: () => friends.shareNews(env, buildEverything), waitUntil: (work) => ctx.waitUntil(work) });
   if (p.startsWith('/api/')) return json({ error: 'Not found' }, 404);
 
   return staticFile(request, env, p);
@@ -475,8 +478,8 @@ async function apiAll(request, env, ctx) {
     const data = await buildEverything(env);
     // Visitors get the finished HTML; the raw Markdown and file names stay for the back office.
     data.posts = data.posts.map(({ body, files, key, ...p }) => p);
-    // Your friends: who they are and how they are, and their latest posts (unless you've turned
-    // that off in the back office).
+    // Your friends: who they are and how they are, and their latest posts (only if you've chosen
+    // to show them to everyone: otherwise they're just for you, signed in).
     const pals = await friends.publicFriends(env).catch(() => ({ buddies: [], posts: [] }));
     data.buddies = pals.buddies;
     data.friendPosts = pals.posts;
@@ -667,6 +670,24 @@ async function leaveComment(request, env) {
   return json({ ok: true, pending: true });
 }
 
+// A friend's comment on one of your posts, sent by their site (it's checked there and signed):
+// it goes straight on, under their name, linking to their site. Friends see friends-only posts,
+// so they can comment on those too.
+async function friendComment(env, who, { post: id, message, reply_to }) {
+  if (message.length < 2) return { error: 'Write a comment first.', status: 400 };
+  const [type, slug] = String(id || '').split('/');
+  const data = await buildEverything(env, { forFriends: true });
+  if (!data.site.comments) return { error: 'Comments are switched off on their site.', status: 403 };
+  const post = data.posts.find((x) => x.type === type && x.slug === slug);
+  if (!post) return { error: 'That post isn’t on their site any more.', status: 404 };
+  const answering = reply_to && post.comments.some((c) => c.id === reply_to) ? reply_to : '';
+  if (post.comments.filter((c) => c.site === who.site).length >= 100) return { error: 'That’s a lot of comments on one post. Try another!', status: 429 };
+  const { iso, file } = stamp();
+  const text = `---\nname: ${yamlString(who.name)}\nsite: ${yamlString(who.site)}\ndate: ${yamlString(iso.slice(0, 16).replace('T', ' '))}\n${answering ? `reply_to: ${yamlString(answering)}\n` : ''}---\n${message}\n`;
+  await env.CONTENT.put(`comments/${type}/${slug}/${file}.md`, text, { httpMetadata: { contentType: 'text/markdown; charset=utf-8' } });
+  return { ok: true };
+}
+
 async function suggest(request, env) {
   if (looksLikeBot(request)) return json({ error: 'Not accepted' }, 400);
   let body;
@@ -754,7 +775,9 @@ async function adminApi(request, env, url, ctx) {
     } catch {}
     // Your friends' latest posts, for the notifications.
     const friendNotes = await friends.friendNotes(env).catch(() => ({ count: 0, posts: [] }));
-    return json({ ...data, files, pendingGuestbook: pendingGb, approvedGuestbook: approvedGb, pendingComments, approvedComments, suggestions, counter, nudges, notifySeen, friendNotes, now: Date.now() });
+    // And everything of theirs, for you, signed in, on the site: friends-only posts and comments too.
+    const friendsMine = await friends.publicFriends(env, { mine: true }).catch(() => ({ buddies: [], posts: [] }));
+    return json({ ...data, files, pendingGuestbook: pendingGb, approvedGuestbook: approvedGb, pendingComments, approvedComments, suggestions, counter, nudges, notifySeen, friendNotes, friendsMine, now: Date.now() });
   }
 
   // Many Markdown files at once (used by the Goodreads and Letterboxd imports).
@@ -925,6 +948,8 @@ async function adminApi(request, env, url, ctx) {
         return json({ ok: true, ...out });
       }
       if (p === 'friends/photo' && m === 'GET') return friends.friendPhoto(env, fkey, url.searchParams.get('p') || '');
+      // A comment from you on a friend's post (it goes on at their site, straight away).
+      if (p === 'friends/comment' && m === 'POST') return json(await friends.commentOnFriend(env, fkey || String(body.friend || ''), body));
     } catch (e) {
       return json({ error: String(e.message || e) }, 400);
     }

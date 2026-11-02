@@ -4041,5 +4041,7 @@ export const kit = {
   // Themes on the site itself: the real site wears what you're trying (see themes.js).
   themesLive: (live) => (themesCtx.live = live),
   highlights: () => allHighlights(),
-  saveHighlights: (all) => saveHighlights(all)
+  saveHighlights: (all) => saveHighlights(all),
+  // A comment from you on a friend's post (it goes on at their site, straight away).
+  friendComment: (friend, post, message, replyTo = '') => api('friends/comment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friend, post, message, reply_to: replyTo }) })
 };

@@ -93,7 +93,7 @@ await test('on the site: the comments under a post, a form to leave one, and the
   await browser.close();
 });
 
-await test('switched off, none show and none can be left; a deleted post takes its comments; friends never get them', async () => {
+await test('switched off, none show and none can be left; a deleted post takes its comments; friends get only approved ones', async () => {
   const page = await adminPage();
   await openTab(page, 'Comments');
   await page.waitForSelector('.cm-admin');
@@ -101,16 +101,22 @@ await test('switched off, none show and none can be left; a deleted post takes i
   await page.waitForFunction(() => document.querySelector('.toast:not([hidden])')?.textContent.includes('off'));
   await page.close();
   eq('comments' in (await onSite()), false, 'none show');
+  // (Nor go to friends' sites, who are told they can't comment.)
+  const { friendFeed } = await import('../src/friends.js');
+  const offFeed = friendFeed(await publicData(), BASE);
+  eq([offFeed.comments_on, offFeed.posts.every((p) => !p.comments.length)], [false, true], 'none for friends either');
   eq((await send({ post: POST, name: 'Jo', message: 'Hi' }))[0], 403, 'none can be left');
   // Saving the site's settings keeps them off.
   await putFile('site.md', (await (await fetch(`${BASE}/admin/api/file?key=site.md`)).text()));
   assert(/comments: (off|"off")/.test(await (await fetch(`${BASE}/admin/api/file?key=site.md`)).text()), 'kept in site.md');
   await putFile('site.md', '---\nname: Home Corner\nowner: Sam\n---\nHi.\n');
   eq((await onSite()).comments.length, 2, 'back on, all still there');
-  // Friends' sites never get visitors' comments.
-  const { friendFeed } = await import('../src/friends.js');
+  // Friends' sites get the approved ones with the post, so they can join in (just the name
+  // and words: nothing else about the visitor is kept anyway).
   const feed = friendFeed(await publicData(), BASE);
-  assert(!JSON.stringify(feed).includes('Thank you Jo'), 'not in the friend feed');
+  const withThem = feed.posts.find((p) => p.id === POST);
+  eq([feed.comments_on, withThem.comments.length], [true, 2], 'with the post, for friends');
+  eq(Object.keys(withThem.comments[0]).sort(), ['date', 'id', 'message', 'name', 'reply', 'reply_to', 'site'], 'only these parts');
   // Deleting the post deletes its comments, on the site and waiting.
   await api('file?key=' + encodeURIComponent('thoughts/sunny-day.md'), { method: 'DELETE' });
   const files = (await overview()).files.map((f) => f.key);
