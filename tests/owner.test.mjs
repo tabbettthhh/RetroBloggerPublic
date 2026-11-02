@@ -66,20 +66,25 @@ for (const [name, opts] of [['a computer', DESK], ['a phone', PHONE]]) {
       // + › Thought: write and publish, then it's on the site.
       await p.locator('.okit-plus').first().click();
       await p.locator('.okit-menu button', { hasText: 'Thought' }).click();
-      await p.waitForSelector('.okit-host textarea');
+      // (A blank post at the top of your feed, written where it'll be read.)
+      await p.waitForSelector('.card.ied .ied-text');
+      eq(await p.evaluate(() => { const ed = document.querySelector('.card.ied'); const first = ed.closest('.feed')?.querySelector('.card:not(.ied)'); return !!first && !!(ed.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING); }), true, 'at the top of the feed, above your posts');
       const words = `Written on the site, on ${name}.`;
-      await p.locator('.okit-host textarea').first().fill(words);
-      await p.locator('.okit-host button.go', { hasText: 'Publish' }).click();
-      await p.waitForFunction(() => !document.querySelector('.okit-host'));
+      await p.locator('.card.ied .ied-text').fill(words);
+      await p.locator('.card.ied button.go', { hasText: 'Publish' }).click();
+      await p.waitForFunction(() => !document.querySelector('.card.ied'));
       await p.waitForFunction((w) => [...document.querySelectorAll('.card')].some((c) => c.textContent.includes(w)), words);
       assert((await publicData()).posts.some((x) => `${x.body || ''} ${x.html || ''} ${x.excerpt || ''}`.includes(words)), 'published for everyone');
       // ⋯ › Edit: change it in place, save.
       await p.locator(`${scope}.card`, { hasText: words }).first().locator('.okit-more').click();
       await p.locator('.okit-menu button', { hasText: 'Edit' }).click();
-      await p.waitForSelector('.okit-host textarea');
-      await p.locator('.okit-host textarea').first().fill(words + ' Edited.');
-      await p.locator('.okit-host button.go').click();
-      await p.waitForFunction(() => !document.querySelector('.okit-host'));
+      // (The post itself becomes its editor, right where it was.)
+      await p.waitForSelector('.card.ied .ied-text');
+      eq(await p.locator(`${scope}.card[data-post]`, { hasText: words }).first().isVisible(), false, 'the post turned into its editor');
+      eq((await p.locator('.card.ied .ied-text').inputValue()).trim(), words, 'with its words');
+      await p.locator('.card.ied .ied-text').fill(words + ' Edited.');
+      await p.locator('.card.ied button.go').click();
+      await p.waitForFunction(() => !document.querySelector('.card.ied'));
       await p.waitForFunction((w) => [...document.querySelectorAll('.card')].some((c) => c.textContent.includes(w)), words + ' Edited.');
       // View as a visitor: no drafts, no tools; and back.
       await p.locator('.okit-me').first().click();
@@ -102,6 +107,21 @@ for (const [name, opts] of [['a computer', DESK], ['a phone', PHONE]]) {
     for (const x of mine) await fetch(`${BASE}/admin/api/file?key=${encodeURIComponent(x.key)}`, { method: 'DELETE' });
   });
 }
+
+await test('a journal page turns into its editor in the journal, and back again', async () => {
+  await putFile('places/tea-room.md', `---\ndate: ${at(30)}\ntitle: The Tea Room\ncity: Whitby\nlat: 54.48\nlon: -0.61\n---\nScones the size of your fist.\n`);
+  await site(PHONE, async (p) => {
+    await p.waitForSelector('.journal-head .okit-more');
+    await p.locator('.journal-head .okit-more').click();
+    await p.locator('.okit-menu button', { hasText: 'Edit' }).click();
+    await p.waitForSelector('#main .card.ied .ied-title');
+    eq(await p.locator('#main .card.ied .ied-title').inputValue(), 'The Tea Room', 'its name, ready to change');
+    eq(await p.locator('.journal-head').isVisible(), false, 'the page made way for it');
+    await p.locator('.card.ied button', { hasText: 'Cancel' }).click();
+    await p.waitForSelector('.journal-head');
+    eq(await p.locator('.card.ied').count(), 0, 'and back');
+  }, '/?owner=1#/journal/tea-room');
+});
 
 await test('the welcome screen’s owner tile signs you in, back to the site', async () => {
   await site(PHONE, async (p) => {

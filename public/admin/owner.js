@@ -80,7 +80,13 @@ function merge(d) {
   d.highlightsPast = owner.highlightsPast;
 }
 let redrawSoon;
+let redrawWaiting = false;
 function redraw() {
+  // (Never under your hands: while you're writing in a post, the page waits until you're done.)
+  if (writing()) {
+    redrawWaiting = true;
+    return;
+  }
   clearTimeout(redrawSoon);
   redrawSoon = setTimeout(() => site.redraw(), 30);
 }
@@ -116,6 +122,7 @@ window.addEventListener('popstate', () => {
 });
 function openHost(title, { nav = false } = {}) {
   if (host && !closeHost()) return null;
+  if (!leaveInline()) return null;
   const sections = nav ? h('nav', { class: 'admin-sections', 'aria-label': 'Control Panel' }) : null;
   const tabs = nav ? h('nav', { class: 'admin-tabs', role: 'tablist', 'aria-label': 'Pages in this section' }) : null;
   const body = h('main', { class: 'admin-body' });
@@ -164,17 +171,104 @@ function dragBy(handle, el) {
   });
 }
 
+// ---------- writing inside the post itself ----------
+// Edit turns the post into its editor, right where it is (a card in the feed becomes the card
+// you're writing; a journal page or a review becomes it, in that app). + puts a new, blank post
+// at the top of your feed. Done (saved, cancelled or thrown away), the page is drawn again.
+let inline = null;
+function writing() {
+  if (inline && !inline.host.isConnected) {
+    // (The page moved on without it: what you'd typed is kept in this browser, offered again
+    // next time you write.)
+    inline = null;
+    kit.attach({ panel: null, toast, changed });
+  }
+  return !!inline;
+}
+function finishInline() {
+  const was = inline;
+  inline = null;
+  kit.attach({ panel: null, toast, changed });
+  if (was) {
+    was.host.remove();
+    for (const [el, display] of was.hidden) el.style.display = display;
+  }
+  if (redrawWaiting || was) {
+    redrawWaiting = false;
+    redraw();
+  }
+}
+function leaveInline() {
+  if (!inline) return true;
+  if (kit.editing() && !confirm('Leave the post you’re writing? (What you’ve written is kept in this browser, so you can carry on later.)')) return false;
+  finishInline();
+  return true;
+}
+function startInline(place) {
+  const host = h('div', { class: 'ied-host' });
+  const hidden = [];
+  if (place.replace) {
+    hidden.push([place.replace, place.replace.style.display]);
+    place.replace.style.display = 'none';
+    place.replace.before(host);
+  } else if (place.into) {
+    for (const el of place.into.children) hidden.push([el, el.style.display]);
+    for (const [el] of hidden) el.style.display = 'none';
+    place.into.prepend(host);
+  } else place.before.before(host);
+  inline = { host, hidden };
+  kit.attach({ panel: host, toast, changed, editorDone: finishInline, layout: 'card' });
+  return host;
+}
+const show = (host) => requestAnimationFrame(() => {
+  host.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  host.querySelector('.ied-text, .ied-title, input')?.focus({ preventScroll: true });
+});
+// Where your writing goes: the post's own card; or the app it's in (a journal page, a review).
+function placeFor(el) {
+  if (el.matches('.card')) return { replace: el };
+  const body = el.closest('.wbody') || document.getElementById('main');
+  return body ? { into: body } : { replace: el };
+}
+// The top of your feed, opening Home first if it isn't showing.
+async function feedTop() {
+  const find = () => {
+    const feed = site.desktop ? document.querySelector('.dw[data-app="home"] .feed') : document.querySelector('#main .feed');
+    return feed && !document.querySelector('.okit-host') ? feed : null;
+  };
+  if (!find() || (!site.desktop && location.hash !== '#/' && location.hash !== '')) location.hash = '#/';
+  for (let i = 0; i < 60 && !find(); i++) await new Promise((r) => setTimeout(r, 50));
+  // (On a computer, Home comes to the front.)
+  if (site.desktop) document.querySelector('.dw[data-app="home"] .wbody')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+  return find();
+}
+
 // ---------- the things you do ----------
 const TYPE_WORD = Object.fromEntries(TYPES.map(([id, w]) => [id, w]));
-function newPost(type) {
+async function newPost(type) {
   closeMenus();
-  if (!openHost(`New ${TYPE_WORD[type].toLowerCase()}`)) return;
-  if (!kit.write(type)) closeHost(true);
+  if (host && !closeHost()) return;
+  if (!leaveInline()) return;
+  const feed = await feedTop();
+  if (!feed) {
+    // (No feed to write into: the window or sheet, as before.)
+    if (!openHost(`New ${TYPE_WORD[type].toLowerCase()}`)) return;
+    if (!kit.write(type)) closeHost(true);
+    return;
+  }
+  const first = feed.querySelector(':scope > .card, :scope > .feed-more, :scope > .empty');
+  const hostEl = startInline(first ? { before: first } : { into: feed });
+  if (!kit.write(type)) return finishInline();
+  show(hostEl);
 }
-async function editPost(p) {
+async function editPost(p, el) {
   closeMenus();
-  if (!openHost(`Edit ${(p.title || TYPE_WORD[p.type] || 'post').slice(0, 40)}`)) return;
+  if (host && !closeHost()) return;
+  if (!leaveInline()) return;
+  const hostEl = startInline(placeFor(el));
   await kit.edit(p.key);
+  if (!hostEl.firstChild) return finishInline();
+  show(hostEl);
 }
 function controlPanel(page = 'posts') {
   closeMenus();
@@ -236,7 +330,7 @@ function postMenu(anchor, p) {
   popMenu(
     anchor,
     [
-      { label: 'Edit', icon: '✎', run: () => editPost(p) },
+      { label: 'Edit', icon: '✎', run: () => editPost(p, anchor.closest('[data-post]')) },
       { label: p.pinned ? 'Unpin' : 'Pin to the top', icon: '📌', run: () => kit.togglePin(kit.post(p.key) || p) },
       shelf ? { label: rank ? `Out of my highlights (№${rank})` : 'Add to my highlights', icon: '★', run: () => (rank ? kit.takeOutHighlight(kit.post(p.key) || p) : kit.addHighlight(kit.post(p.key) || p)) } : null,
       { label: p.friends_only ? 'For everyone' : 'Friends only', icon: '👥', run: () => kit.toggleFlag(kit.post(p.key) || p, 'friends_only', p.friends_only ? 'On the site for everyone.' : 'Friends only now: off the site.') },
@@ -337,6 +431,7 @@ function decoratePosts() {
 }
 let decorating = false;
 function decorate() {
+  writing();
   if (decorating || previewing) return;
   decorating = true;
   try {
@@ -359,6 +454,7 @@ export async function startOwner(s) {
     return;
   }
   document.documentElement.classList.add('owner-on');
+  ownerHooks.holding = () => writing();
   ownerHooks.fresh = (d) => {
     keepPublic(d);
     merge(d);
