@@ -1,5 +1,6 @@
 // The welcome screen: a Visitor tile (no sign-in) and, like XP's, the owner's own account tile.
 import { h, ICON, storage } from './util.js';
+import { pictureHtml, hasPicture } from './pictures.js';
 import { greeting } from './sky.js';
 import { word } from './skins.js';
 import { sound, isMuted, setMuted } from './sound.js';
@@ -57,7 +58,7 @@ export function renderWelcome(data, onEnter, { overlay = false } = {}) {
       h(
         'a',
         { class: 'owner-tile', href: '/admin/signin' },
-        h('span', { class: 'tile-avatar owner', html: ICON.person() }),
+        h('span', { class: 'tile-avatar owner' + (hasPicture(data.site.picture) ? ' has-pic' : ''), html: pictureHtml(data.site.picture) }),
         h('span', { class: 'tile-text' }, h('strong', null, data.site.owner || 'Owner'), h('small', null, 'Sign in to write and edit')),
         h('span', { class: 'tile-go lock', 'aria-hidden': 'true', html: LOCK })
       ),

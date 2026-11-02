@@ -1,6 +1,6 @@
 // Owner mode: signed in, the site itself has your tools on it. (Locally the lock is open, as
 // DEV_ADMIN does for the back office; on the internet Cloudflare Access decides.)
-import { test, report, assert, eq, launch, close, putFile, getFile, publicData, overview, BASE, chromium } from './lib.mjs';
+import { test, report, assert, eq, launch, close, putFile, getFile, publicData, overview, BASE, chromium, PHOTOS } from './lib.mjs';
 
 await launch();
 const at = (d) => new Date(Date.now() - d * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
@@ -98,7 +98,7 @@ for (const [name, opts] of [['a computer', DESK], ['a phone', PHONE]]) {
       await p.locator('.okit-me').first().click();
       await p.locator('.okit-menu button', { hasText: 'Control Panel' }).click();
       await p.waitForSelector('.okit-host .cp-item');
-      eq(await p.locator('.okit-host .cp-item').count(), 11, 'its categories');
+      eq(await p.locator('.okit-host .cp-item').count(), 12, 'its categories');
       await p.locator('.okit-close').click();
       await p.waitForFunction(() => !document.querySelector('.okit-host'));
     });
@@ -237,6 +237,54 @@ await test('the Control Panel: categories, each in the same place, and back', as
       await p.waitForFunction(() => !document.querySelector('.okit-host'));
     });
   }
+});
+
+await test('signed in, the Explore menu is yours; your picture: one of the site’s own, or a photo', async () => {
+  await putFile('site.md', '---\nname: Home Corner\nowner: Sam\n---\nHi.\n');
+  // A visitor's Explore menu is a visitor's.
+  await site(PHONE, async (p) => {
+    await p.locator('.start-btn').first().click();
+    eq(await p.locator('.sm-head strong').innerText(), 'Visitor', 'a visitor’s');
+  }, '/#/');
+  for (const opts of [DESK, PHONE]) {
+    await site(opts, async (p) => {
+      await p.waitForSelector('.okit-me');
+      await p.locator('.start-btn').first().click();
+      eq(await p.locator('.sm-head strong').innerText(), 'Sam', 'signed in: yours');
+      // Your picture there opens the chooser (as XP's did).
+      await p.locator('.sm-head.mine .avatar').click();
+      await p.waitForSelector('.okit-host .pic-pick');
+      assert((await p.locator('.okit-host .xp-title-text').innerText()).includes('Your picture'), 'in the Control Panel');
+      if (opts === PHONE) return;
+      await p.locator('.pic-pick[aria-label="Cat"]').click();
+      await p.waitForFunction(() => document.querySelector('.pic-pick[aria-label="Cat"]')?.getAttribute('aria-checked') === 'true');
+      await p.waitForSelector('.okit-me .okit-face.has-pic svg');
+      // A photo: cropped square, and its hidden data left behind.
+      await p.locator('.pic-chooser input[type="file"]').setInputFiles(PHOTOS[0]);
+      await p.waitForFunction(() => document.querySelector('.pic-now img')?.complete);
+    });
+  }
+  const pic = (await publicData()).site.picture;
+  assert(/^design\/me-[a-z0-9]+\.jpg$/.test(pic), 'a photo of yours: ' + pic);
+  assert(/^picture: design\/me-/m.test(await getFile('site.md')), 'kept in site.md');
+  const img = await fetch(`${BASE}/media/${pic}`);
+  eq(img.status, 200, 'shown to visitors');
+  // On the welcome screen, by your name.
+  await site(PHONE, async (p) => {
+    await p.waitForSelector('.owner-tile .tile-avatar.has-pic img');
+    eq(await p.locator('.owner-tile .tile-avatar img').evaluate((i) => i.naturalWidth === i.naturalHeight), true, 'square');
+  }, '/#/welcome');
+  // Back to a picture of the site's: the photo isn't kept.
+  await site(DESK, async (p) => {
+    await p.waitForSelector('.okit-me');
+    await p.locator('.okit-me').first().click();
+    await p.locator('.okit-menu button', { hasText: 'Your picture' }).click();
+    await p.locator('.pic-pick[aria-label="Rubber duck"]').click();
+    await p.waitForFunction(() => document.querySelector('.pic-pick[aria-label="Rubber duck"]')?.getAttribute('aria-checked') === 'true');
+  });
+  eq((await publicData()).site.picture, 'duck', 'the duck');
+  eq((await fetch(`${BASE}/media/${pic}`)).status, 404, 'the old photo gone');
+  assert(!(await overview()).files.some((f) => f.key === pic), 'not in your files');
 });
 
 await test('no separate back office: /admin is your site, signed in; the plain editor is kept as a safety net', async () => {

@@ -6,6 +6,7 @@ import { sound } from './sound.js';
 import { menuOf } from './apps.js';
 import { isDark, setThemeChoice } from './theme.js';
 import { word } from './skins.js';
+import { pictureHtml, hasPicture } from './pictures.js';
 
 const MAIN = [
   ['#/', 'Thoughts', 'The latest posts', 'di-thoughts'],
@@ -32,11 +33,15 @@ function postHref(p) {
 
 // Returns the menu's parts, with a Screensaver button when onScreensaver is given.
 export function startMenuParts(data, { onScreensaver } = {}) {
+  // Whose menu it is: a visitor's, or yours, signed in (your name and picture).
+  const mine = !!data.ownerView;
   const head = h(
     'div',
-    { class: 'sm-head' },
-    h('span', { class: 'avatar', html: ICON.person() }),
-    h('span', null, h('strong', null, 'Visitor'), data.site.status ? h('small', null, `${data.site.owner || 'The author'} is `, withEmoticons(data.site.status, 13)) : null)
+    { class: 'sm-head' + (mine ? ' mine' : '') },
+    h('span', { class: 'avatar' + (mine && hasPicture(data.site.picture) ? ' has-pic' : ''), html: mine ? pictureHtml(data.site.picture) : ICON.person() }),
+    mine
+      ? h('span', null, h('strong', null, data.site.owner || data.site.name), data.site.status ? h('small', null, 'Currently: ', withEmoticons(data.site.status, 13)) : h('small', null, 'Signed in'))
+      : h('span', null, h('strong', null, word('visitor', 'Visitor')), data.site.status ? h('small', null, `${data.site.owner || 'The author'} is `, withEmoticons(data.site.status, 13)) : null)
   );
   const left = h(
     'div',
@@ -96,6 +101,8 @@ export function phoneExplore(data) {
     document.removeEventListener('keydown', onKey);
   }
   function open() {
+    // (Drawn afresh each time: the latest posts, and whose menu it is.)
+    menu.replaceChildren(...startMenuParts(data, { onScreensaver: () => { close(); startPhoneScreensaver(data); } }));
     menu.hidden = scrim.hidden = false;
     btn.classList.add('pressed');
     btn.setAttribute('aria-expanded', 'true');

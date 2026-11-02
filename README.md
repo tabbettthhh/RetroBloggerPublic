@@ -44,7 +44,7 @@ If Cloudflare asks you to turn on **R2** (where your posts and photos are kept),
 - **The Control Panel:** **⚙ Control Panel** in your menu, like XP's: pick a category under Writing (posts and drafts, highlights, planner), People (inbox, friends, status), Look (themes, designs) or Your site (site and wishlist, travel stats, export and files). It's a window on a computer and a list of rows on a phone, like a Settings app. Each category opens in the same place, with **‹** to go back. Back or ✕ closes it.
 - **Themes, on your real site:** **Themes** opens beside your site (at the bottom on a phone, where it can be tucked down to look), and the site itself wears each choice as you make it. Closing without saving puts the saved look back, after asking; your choices are kept for next time.
 - **Your friends:** their posts are mixed into your Home by when they were posted, each as it looks on their site with who it's from on top (friends-only ones marked). Only you see them there. **💬 Comment** under one opens its comments, and yours goes straight on at their site, under your name, linking to yours; you can answer other people's comments too. A dot on **Friends** (in the menus, on the desktop and in the dock) counts new posts until you open it. See [Friends](#friends).
-- **Your menu:** **View as a visitor** shows the site exactly as everyone else sees it, and **Sign out** signs you out.
+- **Your menu:** **View as a visitor** shows the site exactly as everyone else sees it, and **Sign out** signs you out. Signed in, the Explore menu is yours too: your name and picture at the top (tap the picture to change it).
 
 There's no separate back office: everything is done on the site itself, signed in. Visitors never see any of it, and never even download it: the owner's tools live behind a lock at `/admin` on your site. Until you set it up, it's shut for everyone, including you; once it's set up, only you get past the sign-in, and `/admin` takes you to your site, signed in.
 
@@ -74,6 +74,7 @@ These settings live only in your Cloudflare account, never in the code. Your sit
 
 Signed in, open **⚙ Control Panel** from your menu (your tile in the taskbar or the dock):
 
+- **Your picture:** a photo of you (cropped square, with its hidden data left behind), or one of the pictures drawn for the site in the spirit of the early 2000s: a rubber duck, a guitar, a goldfish, a rocket and more. It shows by your name on the welcome screen, at the top of your profile, on your tile in the taskbar and in your Explore menu.
 - **Site & wishlist:** set your site's name and your own name. The site name appears on the welcome screen, every title bar, the browser tab and the home-screen app.
 - **Themes:** pick one of thirty-four looks for the whole site, or make your own colours, wallpaper, stickers and mouse pointer.
 - **Designs:** the visa in your passport and the keepsakes are examples you can swap (see [Designs you can swap](#designs-you-can-swap)).

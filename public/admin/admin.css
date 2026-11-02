@@ -644,3 +644,18 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .pl-sub .input:not([type]) { flex: 1 1 160px; }
 .pl-item.done .grow > .input { text-decoration: line-through; color: #777; }
 @media (max-width: 640px) { .pl-item { flex-wrap: wrap !important; } .pl-item .hl-moves { margin-left: 26px; } }
+
+/* ---------- your picture ---------- */
+.pic-chooser.busy { opacity: .6; pointer-events: none; }
+.pic-top { display: flex; gap: 14px; align-items: flex-start; }
+.pic-top .hint { margin-top: 0; }
+.pic-frame { display: grid; place-items: center; overflow: hidden; border: 3px solid #fff; border-radius: 8px; background: linear-gradient(180deg, #cfe3ff, #6f9be6); box-shadow: 0 1px 4px rgba(0, 0, 0, .35); }
+.pic-frame > img, .pic-frame.has-pic > svg { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pic-now { flex: none; width: 88px; height: 88px; }
+.pic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 8px; }
+.pic-pick { padding: 3px; border: 2px solid transparent; border-radius: 10px; background: none; cursor: pointer; }
+.pic-pick .pic-frame { width: 100%; aspect-ratio: 1; box-sizing: border-box; }
+.pic-pick:hover { border-color: #9fb8e6; }
+.pic-pick[aria-checked="true"] { border-color: #316ac5; background: #e3ecfb; }
+.pic-pick:focus-visible { outline: 2px solid #316ac5; outline-offset: 1px; }
+[data-theme="dark"] .pic-pick[aria-checked="true"] { background: #2b3446; }

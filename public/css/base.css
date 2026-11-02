@@ -250,3 +250,8 @@ body { --pen: #24305c; }
 .stk-desktop .stk { position: absolute; translate: -50% -50%; }
 .stk-desktop .stk-m { width: 48px; height: 48px; font-size: 40px; }
 .stk-desktop .stk-l { width: 84px; height: 84px; font-size: 70px; }
+
+
+/* Your picture, filling its frame (a photo of yours, or one of the site's own). */
+.avatar.has-pic, .tile-avatar.has-pic { overflow: hidden; background: #fff; }
+.avatar.has-pic > img, .avatar.has-pic > svg, .tile-avatar.has-pic > img, .tile-avatar.has-pic > svg { display: block; width: 100%; height: 100%; object-fit: cover; }
