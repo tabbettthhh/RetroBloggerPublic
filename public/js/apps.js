@@ -6,6 +6,7 @@ import { statusBlock, nudgeButton, presenceDot } from './statusbar.js';
 import { withEmoticons } from './emoticons.js';
 import { h, esc, iconEl, ICON, niceDate, monthYear, catColor, catLabel, CATEGORIES, storage, postForm, bringIntoView } from './util.js';
 import { mountMap } from './maps.js';
+import { atlasBoard } from './atlas.js';
 import { INK_DEFS, stampSvg, passportStamps, stampLook } from './stamps.js';
 import { sound } from './sound.js';
 import { SHELF_TYPES, shelfCard, shelfApp, inFeed, SHELF_ICON } from './shelves.js';
@@ -1556,44 +1557,8 @@ function segmented(active) {
 }
 
 function atlas(ctx) {
-  const all = places(ctx.data);
-  // Categories in use: built-in and your own first, in their order, then any others.
-  const used = new Set(all.map((p) => p.category).filter(Boolean));
-  const present = [...Object.keys(CATEGORIES).filter((c) => used.has(c)), ...[...used].filter((c) => !CATEGORIES[c])];
-  let filter = 'all';
-  const mapHolder = h('div', { class: 'atlas-map-frame' });
-  const listHolder = h('div', { class: 'finder' });
-  const chips = h('div', { class: 'aqua-chips' });
-  // Arriving from a journal entry: the map opens on that place's pin, its row selected.
-  const from = ctx.param ? all.find((p) => p.slug === ctx.param) : null;
-  let focusOnce = !!from;
-
-  const draw = () => {
-    const shown = all.filter((p) => filter === 'all' || p.category === filter);
-    mapHolder.replaceChildren();
-    const el = h('div', { class: 'atlas-map' });
-    mapHolder.append(el);
-    mountMap(el, {
-      places: shown.map((p) => ({ lat: p.lat, lon: p.lon, title: p.title, category: p.category, href: `#/journal/${p.slug}`, sub: p.area || p.city })),
-      style: 'mac',
-      focus: focusOnce ? shown.indexOf(from) : -1
-    });
-    focusOnce = false;
-    listHolder.replaceChildren(
-      h('div', { class: 'finder-head' }, h('span', null, 'Name'), h('span', null, 'City'), h('span', null, 'Rating')),
-      ...(shown.length
-        ? shown.map((p) => h('a', { class: 'finder-row' + (p === from ? ' found' : ''), href: `#/journal/${p.slug}` }, h('span', null, h('span', { class: 'dot', style: { background: catColor(p.category) } }), p.title || 'Untitled'), h('span', null, p.city), h('span', null, p.rating != null ? `${p.rating}/5` : '–')))
-        : [h('div', { class: 'finder-row empty' }, 'No places in this category yet.')])
-    );
-    chips.replaceChildren(
-      h('button', { type: 'button', class: 'aqua-pill' + (filter === 'all' ? ' on' : ''), onclick: () => { filter = 'all'; sound.click(); draw(); } }, 'All'),
-      ...present.map((c) =>
-        h('button', { type: 'button', class: 'aqua-pill' + (filter === c ? ' on' : ''), onclick: () => { filter = c; sound.click(); draw(); } }, h('span', { class: 'dot', style: { background: catColor(c) } }), catLabel(c))
-      )
-    );
-  };
-  draw();
-  return h('div', { class: 'atlas' }, h('div', { class: 'mac-toolbar' }, segmented('atlas')), h('div', { class: 'mac-pad' }, chips, mapHolder, listHolder));
+  // A travel board: see atlas.js.
+  return atlasBoard(ctx, places(ctx.data), h('div', { class: 'mac-toolbar' }, segmented('atlas')));
 }
 
 // A form for visitors to suggest a place, book, film or podcast. Their name goes on a
