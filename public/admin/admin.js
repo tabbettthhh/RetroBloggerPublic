@@ -4016,5 +4016,28 @@ export const kit = {
   takeOutHighlight: (p) => takeOutHighlight(p),
   highlightRank: (p) => hlRank(p),
   remove: (p) => removePost(p),
-  setStatus: (text) => setStatus(text)
+  setStatus: (text) => setStatus(text),
+  // For doing things where they happen on the site (comments, the guestbook, suggestions, your
+  // status, the planner, the trips wishlist, the highlights): one thing, then everything fresh.
+  async act(fn, msg) {
+    try {
+      await fn();
+      if (msg) toast(msg);
+      await refresh();
+      return true;
+    } catch (e) {
+      toast(e.message, true);
+      return false;
+    }
+  },
+  files: { putFile, delFile, readFile, move: (from, to) => api(`move?key=${enc(from)}&to=${enc(to)}`, { method: 'POST' }) },
+  approveComment: (c) => approveComment(c),
+  commentText: (c, reply) => commentText(c, reply),
+  gbText: (g, reply) => gbText(g.name, g.date, reply, g.message),
+  addSuggestion: (sg) => (KIND_TYPE[sg.kind] ? addToShelf(sg) : addToWishlist(sg)),
+  suggestionGoesTo: (sg) => (KIND_TYPE[sg.kind] ? `your ${SHELF_NAME[KIND_TYPE[sg.kind]]}` : 'your trips wishlist'),
+  setSiteField: (k, v) => setSiteField(k, v),
+  plannerText: (lists) => plannerText(lists),
+  highlights: () => allHighlights(),
+  saveHighlights: (all) => saveHighlights(all)
 };

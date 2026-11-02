@@ -12,6 +12,7 @@
 import { h, ICON } from '/js/util.js';
 import { kit } from '/admin/admin.js';
 import { forgetOwner, ownerHooks } from '/js/owner-door.js';
+import { rebuildRoom } from '/js/cabinet.js';
 
 const TYPES = [
   ['thoughts', 'Thought', '💭'],
@@ -56,7 +57,10 @@ async function loadStyles() {
 let toastEl;
 let toastTimer;
 function toast(msg, err = false) {
-  toastEl ||= document.body.appendChild(h('div', { class: 'okit-toast', role: 'status', 'aria-live': 'polite' }));
+  toastEl ||= h('div', { class: 'okit-toast', role: 'status', 'aria-live': 'polite' });
+  // (Over a dialog that's open, like the cabinet's closer look, it goes inside it, to be seen.)
+  const over = document.querySelector('dialog[open]') || document.body;
+  if (toastEl.parentNode !== over) over.append(toastEl);
   toastEl.textContent = msg;
   toastEl.classList.toggle('err', err);
   toastEl.classList.add('on');
@@ -68,16 +72,15 @@ function toast(msg, err = false) {
 const idOf = (p) => `${p.type}/${p.slug}`;
 const postFor = (id) => owner?.posts.find((p) => !p.error && idOf(p) === id) || null;
 // What visitors see, kept for "View as a visitor" (taken from the site's own fresh copies).
+const MINE = ['posts', 'planner', 'highlights', 'highlightsPast', 'guestbook', 'wishlist', 'site'];
 function keepPublic(d) {
-  publicCopy = { posts: d.posts, planner: d.planner, highlights: d.highlights, highlightsPast: d.highlightsPast };
+  publicCopy = Object.fromEntries(MINE.map((k) => [k, d[k]]));
 }
 function merge(d) {
   if (!owner || previewing) return;
   // (A post whose header can't be read stays in the Control Panel, where it can be fixed.)
   d.posts = owner.posts.filter((p) => !p.error);
-  d.planner = owner.planner;
-  d.highlights = owner.highlights;
-  d.highlightsPast = owner.highlightsPast;
+  for (const k of MINE.slice(1)) if (owner[k] !== undefined) d[k] = owner[k];
 }
 let redrawSoon;
 let redrawWaiting = false;
@@ -91,9 +94,15 @@ function redraw() {
   redrawSoon = setTimeout(() => site.redraw(), 30);
 }
 function changed(d) {
+  const before = JSON.stringify([owner?.highlights, owner?.highlightsPast]);
   owner = d;
   merge(site.data);
   redraw();
+  // (The highlights changed and you're in their room: built again, the closer look put back.)
+  if (before !== JSON.stringify([d.highlights, d.highlightsPast]) && document.querySelector('.cab-room') && before !== '[null,null]') {
+    document.querySelector('dialog.cab-dialog[open]')?.close();
+    rebuildRoom(site.data);
+  }
 }
 
 // ---------- the window (computer) or sheet (phone) the back office draws in ----------
@@ -396,6 +405,8 @@ function decorateBars() {
   let float = document.querySelector('.okit-float');
   if (!hasBar && !float) document.body.append(h('div', { class: 'okit-float' }, plusButton('floating'), meButton('floating')));
   else if (hasBar && float) float.remove();
+  // (Room left at the foot of the page, so the floating pair never covers anything.)
+  document.documentElement.classList.toggle('okit-floating', !hasBar);
   const n = badgeCount();
   for (const b of document.querySelectorAll('.okit-badge')) {
     b.hidden = !n;
@@ -429,6 +440,299 @@ function decoratePosts() {
     }
   }
 }
+
+// ---------- doing things where they happen ----------
+// Comments wait under their post, signatures in the guestbook, suggestions by the shelf they're
+// for; your status changes where it shows; the planner, the trips wishlist and the highlights
+// change in place. Each is one tap, saved straight away, with a word to say it's done.
+const niceWhen = (d) => {
+  const t = new Date(String(d).replace(' ', 'T'));
+  return Number.isNaN(+t) ? '' : t.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+};
+const btn = (label, cls, run, extra = {}) => h('button', { type: 'button', class: `okit-btn ${cls || ''}`, ...extra, onclick: (e) => { e.preventDefault(); e.stopPropagation(); run(e); } }, label);
+// (A button that's working says so, and can't be pressed twice.)
+const busyOn = async (b, fn) => {
+  if (b.disabled) return;
+  b.disabled = true;
+  try {
+    await fn();
+  } finally {
+    b.disabled = false;
+  }
+};
+function waitingCard(title, who, when, words, buttons) {
+  return h('div', { class: 'okit-waiting' }, h('div', { class: 'okit-waiting-head' }, h('span', { class: 'okit-tag' }, title), h('b', null, who), h('small', null, when)), words ? h('p', null, words) : null, h('div', { class: 'okit-row' }, buttons));
+}
+// An inline box to write a reply (or a line on why), with Save; empty removes it.
+function replyBox(start, label, onSave) {
+  const ta = h('textarea', { class: 'okit-input', rows: 2, placeholder: label, 'aria-label': label });
+  ta.value = start || '';
+  const save = btn('Save', 'go', (e) => busyOn(e.currentTarget, () => onSave(ta.value.trim())));
+  const box = h('div', { class: 'okit-replybox' }, ta, h('div', { class: 'okit-row' }, save));
+  setTimeout(() => ta.focus(), 0);
+  return box;
+}
+
+function decorateComments() {
+  for (const sec of document.querySelectorAll('.comments[data-comments-for]:not([data-okit])')) {
+    sec.dataset.okit = '1';
+    const id = sec.dataset.commentsFor;
+    const waiting = (owner.pendingComments || []).filter((c) => c.post === id);
+    if (waiting.length) {
+      const list = h(
+        'div',
+        { class: 'okit-waitlist', 'aria-label': 'Comments waiting for you' },
+        h('h4', null, `Waiting for you · ${waiting.length}`),
+        waiting.map((c) =>
+          waitingCard('Comment', c.name, niceWhen(c.date), c.message, [
+            btn('Delete', 'danger', (e) => busyOn(e.currentTarget, () => kit.act(() => kit.files.delFile(c.key), 'Deleted.'))),
+            btn('Approve', 'go', (e) => busyOn(e.currentTarget, () => kit.act(() => kit.approveComment(c), 'Approved: it’s on the site now.')))
+          ])
+        )
+      );
+      sec.querySelector('.cm-title')?.after(list);
+    }
+    // Yours to answer, or take down.
+    for (const li of sec.querySelectorAll('.cm-item[data-comment]')) {
+      const c = (owner.approvedComments || []).find((x) => x.post === id && x.id === li.dataset.comment);
+      if (!c) continue;
+      const box = h('div', { class: 'okit-cm-box' });
+      const reply = btn(c.reply ? 'Edit your reply' : 'Reply as you', '', () => box.replaceChildren(box.firstChild ? '' : replyBox(c.reply, 'Your reply (shown under theirs)', (text) => kit.act(() => kit.files.putFile(c.key, kit.commentText(c, text)), text ? 'Reply saved.' : 'Reply removed.'))));
+      const del = btn('Delete', 'danger', (e) => confirm(`Delete ${c.name}’s comment?`) && busyOn(e.currentTarget, () => kit.act(() => kit.files.delFile(c.key), 'Deleted.')));
+      li.querySelector(':scope > .cm-text')?.after(h('div', { class: 'okit-row okit-cm-tools' }, reply, del), box);
+    }
+    // (You answer as yourself above, not with the visitors' form.)
+    sec.classList.add('okit-owner-comments');
+  }
+  // In the feed: how many are waiting, on the post they're for.
+  for (const card of document.querySelectorAll('.card[data-post]:not([data-okit-cm])')) {
+    card.dataset.okitCm = '1';
+    const n = (owner.pendingComments || []).filter((c) => c.post === card.dataset.post).length;
+    if (n) card.querySelector('.card-head')?.append(h('span', { class: 'okit-state waiting' }, `💬 ${n} waiting`));
+  }
+}
+
+function decorateGuestbook() {
+  const list = document.querySelector('[data-gb-list]:not([data-okit])');
+  if (!list) return;
+  list.dataset.okit = '1';
+  const waiting = owner.pendingGuestbook || [];
+  if (waiting.length) {
+    const box = h(
+      'div',
+      { class: 'okit-waitlist', 'aria-label': 'Signatures waiting for you' },
+      h('h4', null, `Waiting for you · ${waiting.length}`),
+      waiting.map((g) =>
+        waitingCard('Signature', g.name, niceWhen(g.date), g.message, [
+          btn('Delete', 'danger', (e) => busyOn(e.currentTarget, () => kit.act(() => kit.files.delFile(g.key), 'Deleted.'))),
+          btn('Approve', 'go', (e) => busyOn(e.currentTarget, () => kit.act(() => kit.files.move(g.key, g.key.replace('guestbook-pending/', 'guestbook/')), 'Approved: it’s on the site now.')))
+        ])
+      )
+    );
+    list.querySelector('.droid-section')?.after(box);
+  }
+  for (const el of list.querySelectorAll('.gb-entry[data-gb]')) {
+    const [date, name] = el.dataset.gb.split('|');
+    const g = (owner.approvedGuestbook || []).find((x) => String(x.date) === date && x.name === name);
+    if (!g) continue;
+    const box = h('div', { class: 'okit-cm-box' });
+    el.querySelector('.gb-text')?.append(
+      h('div', { class: 'okit-row okit-cm-tools' }, btn(g.reply ? 'Edit your reply' : 'Reply', '', () => box.replaceChildren(box.firstChild ? '' : replyBox(g.reply, 'Your reply', (text) => kit.act(() => kit.files.putFile(g.key, kit.gbText(g, text)), text ? 'Reply saved.' : 'Reply removed.')))), btn('Remove', 'danger', (e) => confirm(`Remove ${g.name}’s signature?`) && busyOn(e.currentTarget, () => kit.act(() => kit.files.delFile(g.key), 'Removed.')))),
+      box
+    );
+  }
+}
+
+// Suggestions: next to the form they came from (the shelf they're for, or the trips wishlist).
+const SUGGEST_KINDS = { place: ['place'], book: ['book'], film: ['film'], podcast: ['podcast'], music: ['music'], tv: ['tv'] };
+function decorateSuggestions() {
+  for (const box of document.querySelectorAll('.suggest-box[data-suggest]:not([data-okit])')) {
+    box.dataset.okit = '1';
+    const kinds = SUGGEST_KINDS[box.dataset.suggest] || [box.dataset.suggest];
+    const these = (owner.suggestions || []).filter((sg) => kinds.includes(sg.kind || 'place'));
+    if (!these.length) continue;
+    box.before(
+      h(
+        'div',
+        { class: 'okit-waitlist', 'aria-label': 'Suggestions for you' },
+        h('h4', null, `Suggested to you · ${these.length}`),
+        these.map((sg) =>
+          waitingCard('Suggestion', sg.title, `from ${sg.from || 'a visitor'}`, sg.note, [
+            btn('Delete', 'danger', (e) => busyOn(e.currentTarget, () => kit.act(() => kit.files.delFile(sg.key), 'Deleted.'))),
+            btn(`Add to ${kit.suggestionGoesTo(sg).replace(/^your /, '')}`, 'go', (e) => busyOn(e.currentTarget, () => kit.act(() => kit.addSuggestion(sg), `Added to ${kit.suggestionGoesTo(sg)}.`)))
+          ])
+        )
+      )
+    );
+  }
+}
+
+// Your status: tap ✎ by it, and change it there.
+const PRESENCES = [['online', 'Online'], ['away', 'Away'], ['brb', 'Be right back'], ['lunch', 'Out to lunch'], ['busy', 'Busy'], ['offline', 'Appear offline']];
+function decorateStatus() {
+  for (const block of document.querySelectorAll('.status-block:not([data-okit])')) {
+    block.dataset.okit = '1';
+    const edit = btn('✎', 'okit-status-edit', () => {
+      const open = block.querySelector('.okit-status-box');
+      if (open) return open.remove();
+      const text = h('input', { class: 'okit-input', value: owner.site?.status || '', maxlength: 140, placeholder: 'What are you up to? (try :) or (music))', 'aria-label': 'Your status' });
+      let presence = owner.site?.presence || 'online';
+      const chips = h('div', { class: 'okit-row okit-chips', role: 'radiogroup', 'aria-label': 'How you are' });
+      const drawChips = () => chips.replaceChildren(...PRESENCES.map(([v, l]) => h('button', { type: 'button', role: 'radio', class: 'okit-chip', 'aria-checked': String(presence === v), onclick: () => { presence = v; drawChips(); } }, l)));
+      drawChips();
+      const save = btn('Save', 'go', (e) =>
+        busyOn(e.currentTarget, () =>
+          kit.act(async () => {
+            if (presence !== (owner.site?.presence || 'online')) await kit.setSiteField('presence', presence === 'online' ? '' : presence);
+            if (text.value.trim() !== (owner.site?.status || '')) await kit.setStatus(text.value.trim());
+          }, 'Status updated.')
+        )
+      );
+      text.addEventListener('keydown', (e) => e.key === 'Enter' && save.click());
+      block.append(h('div', { class: 'okit-status-box' }, chips, text, h('div', { class: 'okit-row' }, btn('Cancel', '', () => block.querySelector('.okit-status-box')?.remove()), save)));
+      text.focus();
+    }, { 'aria-label': 'Change your status', title: 'Change your status' });
+    block.querySelector('.status-pill')?.after(edit);
+  }
+}
+
+// The planner: tick, take off and add, on the page.
+// (One change at a time, each building on the last, even when you tap quickly.)
+let saving = Promise.resolve();
+const inTurn = (fn) => (saving = saving.then(fn, fn));
+function savePlanner(change, msg) {
+  return inTurn(() => {
+    const lists = (owner.planner || []).map((l) => ({ ...l, items: l.items.map((x) => ({ text: x.text, done: x.done, due: x.due, note: x.note })) }));
+    change(lists);
+    owner.planner = lists;
+    return kit.act(() => kit.files.putFile('planner.md', kit.plannerText(lists)), msg);
+  });
+}
+function decoratePlanner() {
+  for (const li of document.querySelectorAll('.pln-item[data-pl]:not([data-okit])')) {
+    li.dataset.okit = '1';
+    const [a, b] = li.dataset.pl.split(':').map(Number);
+    const box = li.querySelector('.pln-box');
+    if (box) {
+      box.setAttribute('role', 'checkbox');
+      box.setAttribute('aria-checked', String(li.classList.contains('done')));
+      box.tabIndex = 0;
+      box.classList.add('okit-tick');
+      const tick = () => savePlanner((ls) => (ls[a].items[b].done = !ls[a].items[b].done), li.classList.contains('done') ? 'Not done yet.' : 'Done ✓');
+      box.addEventListener('click', tick);
+      box.addEventListener('keydown', (e) => (e.key === ' ' || e.key === 'Enter') && (e.preventDefault(), tick()));
+    }
+    li.append(btn('×', 'okit-x', () => savePlanner((ls) => ls[a].items.splice(b, 1), 'Taken off.'), { 'aria-label': 'Take it off the list', title: 'Take it off' }));
+  }
+  // An empty planner: start one.
+  for (const empty of document.querySelectorAll('[data-pl-empty]:not([data-okit])')) {
+    empty.dataset.okit = '1';
+    empty.after(h('div', { class: 'okit-row' }, btn('Start a to-do list, a wishlist and notes', 'go', (e) => busyOn(e.currentTarget, () => kit.act(() => kit.files.putFile('planner.md', kit.plannerText([{ name: 'To do', private: true, items: [], notes: '' }, { name: 'Wishlist', private: false, items: [], notes: '' }, { name: 'Notes', private: false, items: [], notes: '' }])), 'Your planner is ready.')))));
+  }
+  for (const page of document.querySelectorAll('.pln-list[data-pl-list]:not([data-okit])')) {
+    page.dataset.okit = '1';
+    if (page.dataset.plList === '') continue;
+    const at = Number(page.dataset.plList);
+    const text = h('input', { class: 'okit-input', maxlength: 200, placeholder: 'Add to this list…', 'aria-label': 'Add to this list' });
+    const due = h('input', { class: 'okit-input okit-date', type: 'date', 'aria-label': 'By when (optional)' });
+    const add = btn('Add', 'go', (e) => {
+      const t = text.value.trim();
+      if (!t) return text.focus();
+      busyOn(e.currentTarget, () => savePlanner((ls) => ls[at].items.push({ text: t, done: false, due: due.value, note: '' }), 'Added.'));
+    });
+    text.addEventListener('keydown', (e) => e.key === 'Enter' && add.click());
+    const form = h('div', { class: 'okit-row okit-add' }, text, due, add);
+    (page.querySelector('.pln-items') || page.querySelector('.pln-count') || page.querySelector('.pln-title'))?.after(form);
+  }
+}
+
+// The trips wishlist: add, tick off (been there), take off, on the page.
+function saveWishlist(change, msg) {
+  return inTurn(() => kit.act(async () => {
+    const text = (await kit.files.readFile('wishlist.md')) ?? '# Want to go\n';
+    await kit.files.putFile('wishlist.md', change(text));
+  }, msg));
+}
+const wishLine = (lines, name) => lines.findIndex((l) => /^\s*[-*]\s+\[( |x|X)\]\s+/.test(l) && l.replace(/^\s*[-*]\s+\[( |x|X)\]\s+/, '').split(/,|\s+[—–-]\s+|\s\(/)[0].trim().toLowerCase() === name.trim().toLowerCase());
+function decorateWishlist() {
+  const pad = document.querySelector('[data-wishlist]:not([data-okit])');
+  if (!pad) return;
+  pad.dataset.okit = '1';
+  const name = h('input', { class: 'okit-input', maxlength: 120, placeholder: 'A place you want to go', 'aria-label': 'Place' });
+  const city = h('input', { class: 'okit-input', maxlength: 60, placeholder: 'City (optional)', 'aria-label': 'City' });
+  const add = btn('Add', 'go', (e) => {
+    const n = name.value.trim().replace(/[\n,]/g, ' ');
+    if (!n) return name.focus();
+    const c = city.value.trim().replace(/[\n,]/g, ' ');
+    busyOn(e.currentTarget, () => saveWishlist((t) => t.replace(/\s*$/, '\n') + `- [ ] ${n}${c ? `, ${c}` : ''}\n`, 'On the list.'));
+  });
+  name.addEventListener('keydown', (e) => e.key === 'Enter' && add.click());
+  pad.querySelector('.mac-label')?.before(h('div', { class: 'okit-row okit-add okit-wish-add' }, name, city, add));
+  for (const el of pad.querySelectorAll('.wish[data-wish]')) {
+    const n = el.dataset.wish;
+    const done = el.classList.contains('done');
+    const flip = (e) => busyOn(e.currentTarget, () => saveWishlist((t) => {
+      const lines = t.split('\n');
+      const i = wishLine(lines, n);
+      if (i >= 0) lines[i] = lines[i].replace(/\[( |x|X)\]/, done ? '[ ]' : '[x]');
+      return lines.join('\n');
+    }, done ? 'Back on the list.' : 'Been there ✓'));
+    const check = el.querySelector('.aqua-check');
+    if (check) {
+      check.removeAttribute('aria-hidden');
+      check.setAttribute('role', 'checkbox');
+      check.setAttribute('aria-checked', String(done));
+      check.setAttribute('aria-label', done ? `${n}: been there` : `${n}: tick when you’ve been`);
+      check.tabIndex = 0;
+      check.classList.add('okit-tick');
+      check.addEventListener('click', flip);
+      check.addEventListener('keydown', (e) => (e.key === ' ' || e.key === 'Enter') && (e.preventDefault(), flip(e)));
+    }
+    el.append(btn('×', 'okit-x', (e) => confirm(`Take ${n} off the list?`) && busyOn(e.currentTarget, () => saveWishlist((t) => {
+      const lines = t.split('\n');
+      const i = wishLine(lines, n);
+      if (i >= 0) lines.splice(i, 1);
+      return lines.join('\n');
+    }, 'Taken off.')), { 'aria-label': `Take ${n} off the list`, title: 'Take it off' }));
+  }
+}
+
+// The highlights: in the closer look, its line on why, its place on the shelf, or out.
+function decorateHighlights() {
+  for (const label of document.querySelectorAll('.cab-museum[data-hl]')) {
+    if (label.dataset.okit === label.dataset.hl) continue;
+    label.dataset.okit = label.dataset.hl;
+    label.querySelector('.okit-hl')?.remove();
+    const id = label.dataset.hl;
+    const shelf = id.split('/')[0];
+    const all = kit.highlights();
+    const list = all[shelf] || [];
+    const i = list.findIndex((x) => x.post === id);
+    if (i < 0) continue;
+    const save = (change, msg) => kit.act(async () => {
+      const now = kit.highlights();
+      change(now[shelf]);
+      await kit.saveHighlights(now);
+    }, msg);
+    const box = h('div', { class: 'okit-cm-box' });
+    label.append(
+      h(
+        'div',
+        { class: 'okit-hl' },
+        h(
+          'div',
+          { class: 'okit-row' },
+          btn(list[i].why ? 'Change why it’s here' : 'Say why it’s here', '', () => box.replaceChildren(box.firstChild ? '' : replyBox(list[i].why, 'Why it’s here (a line visitors read)', (text) => save((l) => (l[i].why = text.slice(0, 160)), 'Saved.')))),
+          btn('‹ Earlier', '', () => save((l) => l.splice(i - 1, 0, l.splice(i, 1)[0]), `Now №${i}.`), { disabled: i === 0 || null }),
+          btn('Later ›', '', () => save((l) => l.splice(i + 1, 0, l.splice(i, 1)[0]), `Now №${i + 2}.`), { disabled: i === list.length - 1 || null }),
+          btn('Take out', 'danger', () => confirm('Take it out of the cabinet? (It goes into the library as a book.)') && save((l) => l.splice(i, 1), 'Out of the cabinet.'))
+        ),
+        box
+      )
+    );
+  }
+}
+
 let decorating = false;
 function decorate() {
   writing();
@@ -437,6 +741,13 @@ function decorate() {
   try {
     decorateBars();
     decoratePosts();
+    decorateComments();
+    decorateGuestbook();
+    decorateSuggestions();
+    decorateStatus();
+    decoratePlanner();
+    decorateWishlist();
+    decorateHighlights();
   } finally {
     decorating = false;
   }

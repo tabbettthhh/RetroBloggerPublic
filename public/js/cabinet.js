@@ -190,6 +190,9 @@ function closerLook(items, start, shelf, fromEl, make = null) {
   const show = (i, dir = 0) => {
     at = (i + items.length) % items.length;
     const { post, why, note } = items[at];
+    // (Which highlight it is, for the owner's tools: not for the library's books.)
+    if (make) delete label.dataset.hl;
+    else label.dataset.hl = `${post.type}/${post.slug}`;
     const obj = make ? make(items[at]) : objectFor(post);
     obj.classList.add('in-hand');
     // The back of a ticket: why it's here, by hand.
@@ -460,6 +463,13 @@ export function cabinetCount(data) {
 function leave() {
   if (cameFrom && cameFrom !== '#/highlights') history.back();
   else location.hash = '#/about';
+}
+// (When the owner changes the highlights: the room built again, with them.)
+export function rebuildRoom(data) {
+  if (!room) return;
+  room.remove();
+  room = null;
+  syncRoom(data, location.hash);
 }
 export function syncRoom(data, hash = location.hash, from = '') {
   const want = /^#\/highlights\/?$/.test(hash);

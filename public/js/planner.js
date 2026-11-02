@@ -78,7 +78,7 @@ function itemRow(it, wish) {
   const late = it.due && !it.done && it.due < today;
   return h(
     'li',
-    { class: 'pln-item' + (it.done ? ' done' : '') + (late ? ' late' : '') },
+    { class: 'pln-item' + (it.done ? ' done' : '') + (late ? ' late' : ''), 'data-pl': `${it._li}:${it._ii}` },
     h('span', { class: 'pln-box', role: 'img', 'aria-label': it.done ? (wish ? 'Came true' : 'Done') : wish ? 'Still wishing' : 'To do', html: wish ? STAR(it.done) : BOX(it.done) }),
     h('span', { class: 'pln-text' }, h('span', { class: 'pln-what' }, it.text), it.due ? h('small', { class: 'pln-due' }, late ? `was due ${dayName(it.due)}` : `by ${dayName(it.due)}`) : null, it.note ? h('span', { class: 'pln-note' }, it.note) : null),
     wish && it.done ? h('span', { class: 'pln-got', 'aria-hidden': 'true' }, 'Got it!') : null
@@ -86,6 +86,8 @@ function itemRow(it, wish) {
 }
 
 function listPage(state, lists) {
+  // (Each thing knows its list and its place in it, for the owner's tools.)
+  lists.forEach((x, li) => x.items.forEach((it, ii) => Object.assign(it, { _li: li, _ii: ii })));
   const l = lists[state.at] || lists[0];
   const wish = isWish(l);
   let items = l.items;
@@ -94,7 +96,7 @@ function listPage(state, lists) {
   const done = items.filter((x) => x.done);
   return h(
     'section',
-    { class: 'pln-page pln-list', style: { '--tab': TAB_COLOURS[state.at % TAB_COLOURS.length] }, 'aria-label': state.day ? `Due ${dayName(state.day)}` : l.name },
+    { class: 'pln-page pln-list', 'data-pl-list': state.day ? '' : String(lists.indexOf(l)), style: { '--tab': TAB_COLOURS[state.at % TAB_COLOURS.length] }, 'aria-label': state.day ? `Due ${dayName(state.day)}` : l.name },
     h('h2', { class: 'pln-title' }, state.day ? `Due ${dayName(state.day)}` : l.name),
     !state.day && l.items.length ? h('p', { class: 'pln-count' }, wish ? `${done.length} of ${items.length} came true` : `${done.length} of ${items.length} done`) : null,
     items.length ? h('ul', { class: 'pln-items' }, [...open, ...done].map((it) => itemRow(it, wish && !state.day))) : state.day ? h('p', { class: 'pln-empty' }, 'Nothing due that day.') : null,
@@ -115,7 +117,7 @@ export function plannerApp(ctx) {
   const book = h('div', { class: 'pln-book' });
   const wide = () => ctx.desktop || ctx.tablet;
   const draw = () => {
-    if (!lists.length) return book.replaceChildren(h('div', { class: 'pln-page pln-list' }, h('p', { class: 'pln-empty' }, 'Nothing in the planner yet.')));
+    if (!lists.length) return book.replaceChildren(h('div', { class: 'pln-page pln-list' }, h('p', { class: 'pln-empty', 'data-pl-empty': '' }, 'Nothing in the planner yet.')));
     const tabs = h(
       'nav',
       { class: 'pln-tabs', 'aria-label': 'Lists' },

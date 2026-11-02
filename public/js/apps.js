@@ -1620,7 +1620,7 @@ export function suggestForm(kind, data, { cls = '', field = 'aqua-field', button
     ),
     h('input', { name: 'website', class: 'hp', tabindex: '-1', autocomplete: 'off', 'aria-hidden': 'true' })
   );
-  return h('div', { class: 'suggest-box' }, form, msg);
+  return h('div', { class: 'suggest-box', 'data-suggest': kind }, form, msg);
 }
 
 export function suggestedStamp(post) {
@@ -1636,7 +1636,7 @@ function wishlist(ctx) {
     const review = isDone ? findReview(w) : null;
     return h(
       'div',
-      { class: 'wish' + (isDone ? ' done' : '') },
+      { class: 'wish' + (isDone ? ' done' : ''), 'data-wish': w.name },
       h('span', { class: 'aqua-check' + (isDone ? ' on' : ''), 'aria-hidden': 'true', html: isDone ? ICON.check : '' }),
       h(
         'div',
@@ -1654,7 +1654,7 @@ function wishlist(ctx) {
     h('div', { class: 'mac-toolbar' }, segmented('wishlist')),
     h(
       'div',
-      { class: 'mac-pad' },
+      { class: 'mac-pad', 'data-wishlist': '' },
       form,
       h('h3', { class: 'mac-label' }, `Want to go · ${want.length}`),
       want.length ? want.map((w) => item(w, false)) : h('p', { class: 'muted' }, 'Nothing on the list yet.'),
@@ -1689,7 +1689,7 @@ function guestbook(ctx) {
   const entries = ctx.data.guestbook.map((g) =>
     h(
       'div',
-      { class: 'gb-entry' },
+      { class: 'gb-entry', 'data-gb': `${g.date}|${g.name}` },
       h('span', { class: 'gb-avatar', html: ICON.person('#1d4f86') }),
       h(
         'div',
@@ -1727,7 +1727,7 @@ function guestbook(ctx) {
   return h(
     'div',
     { class: 'guestbook' },
-    h('div', { class: 'gb-scroll' }, h('div', { class: 'counter' }, h('span', { class: 'counter-label' }, 'VISITOR COUNTER'), digits, h('span', { class: 'counter-sub' }, 'You are one of these')), h('div', { class: 'droid-section' }, 'SIGNATURES'), entries.length ? entries : h('p', { class: 'gb-empty' }, 'No signatures yet. Be the first.')),
+    h('div', { class: 'gb-scroll', 'data-gb-list': '' }, h('div', { class: 'counter' }, h('span', { class: 'counter-label' }, 'VISITOR COUNTER'), digits, h('span', { class: 'counter-sub' }, 'You are one of these')), h('div', { class: 'droid-section' }, 'SIGNATURES'), entries.length ? entries : h('p', { class: 'gb-empty' }, 'No signatures yet. Be the first.')),
     form
   );
 }
