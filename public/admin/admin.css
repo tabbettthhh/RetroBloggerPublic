@@ -625,3 +625,18 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .hl-choose h3 { margin: 0 0 4px; }
 .hl-choose::backdrop { background: rgba(0, 0, 0, .45); }
 @media (max-width: 640px) { .hl-row { flex-wrap: wrap !important; } .hl-row .grow { flex: 1 1 calc(100% - 48px); } .hl-moves { margin-left: 44px; } }
+
+/* The planner */
+.pl-lists .chip-btn small { opacity: .7; }
+.pl-head { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; padding: 10px; border: 1px solid #d4d0c8; border-radius: 6px; background: #fbfaf6; }
+.pl-add { gap: 6px; flex-wrap: wrap; }
+.pl-add .input:first-child { flex: 1 1 200px; }
+.pl-add .input[type="date"] { flex: 0 0 150px; }
+.pl-item { align-items: flex-start; }
+.pl-item > input[type="checkbox"] { margin-top: 10px; width: 18px; height: 18px; flex: none; }
+.pl-item .grow { flex: 1; min-width: 0; gap: 4px; }
+.pl-sub { display: flex; gap: 6px; flex-wrap: wrap; }
+.pl-sub .input[type="date"] { flex: 0 0 150px; }
+.pl-sub .input:not([type]) { flex: 1 1 160px; }
+.pl-item.done .grow > .input { text-decoration: line-through; color: #777; }
+@media (max-width: 640px) { .pl-item { flex-wrap: wrap !important; } .pl-item .hl-moves { margin-left: 26px; } }

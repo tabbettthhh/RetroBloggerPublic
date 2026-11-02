@@ -17,7 +17,8 @@ const DESKTOP_ICONS = [
   ['album', 'Photo album', 'di-album'],
   ['more', 'Photos & lists', 'di-photos'],
   ['passport', 'Passport', 'di-passport'],
-  ['wishlist', 'Wishlist', 'di-wish'],
+  ['wishlist', 'Trips Wishlist', 'di-wish'],
+  ['planner', 'Planner', 'di-planner'],
   ['books', 'Bookshelf', 'di-books'],
   ['films', 'Cinema', 'di-films'],
   ['podcasts', 'Podcasts', 'di-podcasts'],
@@ -74,6 +75,7 @@ export function startDesktop(root, data) {
     else if (era === 'tape') bar = h('div', { class: 'wbar deck-bar' }, h('span', { class: 'lcd' }, title.toUpperCase()), min, max, close);
     else if (era === 'record') bar = h('div', { class: 'wbar hifi-bar' }, h('span', { class: 'hifi-dial' }, title), min, max, close);
     else if (era === 'album') bar = h('div', { class: 'wbar al-bar' }, h('span', { class: 'al-bar-title' }, title), min, max, close);
+    else if (era === 'planner') bar = h('div', { class: 'wbar pln-bar' }, h('span', { class: 'pln-bar-title' }, title), min, max, close);
     else if (era === 'crt') bar = h('div', { class: 'wbar tv-bar' }, h('span', { class: 'tv-channel' }, h('span', { class: 'tv-led', 'aria-hidden': 'true' }, 'CH 03'), title), min, max, close);
     else bar = h('div', { class: 'wbar droid-bar' }, h('span', { class: 'droid-icon', html: ICON.book }), h('span', { class: 'droid-title' }, title), min, close);
     const body = h('div', { class: 'wbody' });
@@ -320,7 +322,7 @@ export function startDesktop(root, data) {
     );
   }
 
-  desk.append(icons, layer, ctxMenu, startMenu, balloon, taskbar);
+  desk.append(...[icons, layer, ctxMenu, startMenu, balloon, taskbar].filter(Boolean));
   root.replaceChildren(desk);
 
   // ---- screensaver ----
