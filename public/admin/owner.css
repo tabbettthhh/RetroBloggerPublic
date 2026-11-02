@@ -321,3 +321,11 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 
 :root[data-theme="dark"] :is(.okit-talk, .okit-note) { color: #eee; background: #2a2a2e; border-color: #555; }
 :root[data-theme="dark"] .okit-talk-item.me > .okit-talk-head b, :root[data-theme="dark"] .okit-btn.link { color: color-mix(in srgb, var(--ok-sel, #316ac5) 50%, #fff); }
+
+/* ---------- Your picture ---------- */
+.okit-face.has-pic { overflow: hidden; background: #fff; }
+.okit-face.has-pic > img, .okit-face.has-pic > svg { display: block; width: 100%; height: 100%; object-fit: cover; }
+.okit-me.in-dock .okit-face.has-pic { border-radius: 10px; box-shadow: 0 0 0 2px #fff, 0 1px 3px rgba(0, 0, 0, .35); }
+.okit-me.in-dock .okit-face.has-pic > svg { width: 100%; height: 100%; }
+.okit-pic-btn { cursor: pointer; }
+.okit-pic-btn:hover, .okit-pic-btn:focus-visible { outline: 2px solid #fff; outline-offset: 1px; box-shadow: 0 0 0 4px var(--ok-accent, #f2861e); }

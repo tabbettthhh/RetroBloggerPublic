@@ -586,6 +586,8 @@ export function parseSite(text) {
     // Extra room at the top when opened from a phone's Home Screen ('' as it is).
     top_room: ['some', 'more', 'lots'].includes(String(data.top_room ?? '').trim()) ? String(data.top_room).trim() : '',
     tagline: data.tagline ? String(data.tagline) : '',
+    // Your picture: one of the site's own (by name), or a photo of yours kept with the designs.
+    picture: /^([a-z]{2,20}|design\/[\w.-]{1,80}\.(jpe?g|png|webp|gif))$/i.test(String(data.picture ?? '').trim()) ? String(data.picture).trim() : '',
     about_html: safeMarkdown(body)
   };
 }

@@ -11,6 +11,7 @@ import { viewThemes } from '/admin/themes.js';
 import { OPTIONS, FONT_FAMILIES, resolveSkin } from '/js/skins.js';
 import { CARD_STYLES, RIBBONS, miniCard, mixMini, themeCard, ownRibbon, ensureOwnCardsCss } from '/js/card-dress.js';
 import { TOP_ROOM, setTopRoom, onHomeScreen } from '/js/top-room.js';
+import { PICTURES, PICTURE_IDS, pictureHtml, isPhoto, hasPicture } from '/js/pictures.js';
 
 // Where it all draws. On the back office's own page (the safety net), its page; on the site,
 // in owner mode, wherever the site puts it (see kit at the end, and /admin/owner.js).
@@ -264,7 +265,7 @@ function go(id, friend) {
 }
 
 function draw() {
-  const views = { notifications: viewNotifications, posts: viewPosts, new: viewEditor, highlights: viewHighlights, planner: viewPlanner, guestbook: viewGuestbook, comments: viewComments, suggestions: viewSuggestions, status: () => viewSite('status'), friends: () => { const k = friendToOpen; friendToOpen = null; return viewFriends(friendsCtx, k); }, site: () => viewSite('site'), designs: viewDesigns, themes: () => viewThemes(themesCtx), travel: viewTravel, files: viewFiles };
+  const views = { notifications: viewNotifications, posts: viewPosts, new: viewEditor, highlights: viewHighlights, planner: viewPlanner, guestbook: viewGuestbook, comments: viewComments, suggestions: viewSuggestions, status: () => viewSite('status'), friends: () => { const k = friendToOpen; friendToOpen = null; return viewFriends(friendsCtx, k); }, site: () => viewSite('site'), picture: () => h('div', { class: 'field' }, pictureChooser()), designs: viewDesigns, themes: () => viewThemes(themesCtx), travel: viewTravel, files: viewFiles };
   // (On the site, nothing to draw into while no back office page is open.)
   if (!panel?.isConnected) return;
   panel.replaceChildren(views[tab]());
@@ -300,7 +301,7 @@ const stampNow = () => {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 };
 // The fields site.md can hold, kept as they are when only the status changes.
-const SITE_KEYS = ['name', 'owner', 'status', 'presence', 'status_updated', 'now_playing', 'countdown', 'countdown_date', 'countdown_icon', 'tagline', 'comments', 'top_room'];
+const SITE_KEYS = ['name', 'owner', 'picture', 'status', 'presence', 'status_updated', 'now_playing', 'countdown', 'countdown_date', 'countdown_icon', 'tagline', 'comments', 'top_room'];
 // Changes one setting in site.md, keeping everything else as it is.
 async function setSiteField(key, value) {
   const siteRaw = await readFile('site.md');
@@ -3133,6 +3134,8 @@ function viewSite(part = 'site') {
         const fm = {
           name: inputs.name.value.trim(),
           owner: inputs.owner.value.trim(),
+          // (Kept as it is: changed under Your picture, saved straight away.)
+          picture: data.site?.picture || '',
           status: newStatus,
           presence: st.presence === 'online' ? '' : st.presence,
           status_updated: changed ? new Date().toISOString() : st.status_updated,
@@ -3214,6 +3217,7 @@ function viewSite(part = 'site') {
         logBox,
         h('div', { class: 'row end' }, h('button', { type: 'button', class: 'btn go', onclick: async (e) => { try { await putFile('status-log.md', logBox.value.trim() + '\n'); logRaw = logBox.value.trim(); toast('Past statuses saved.'); await refresh(); } catch (err) { toast(err.message, true); } } }, 'Save past statuses'))
       ),
+      pictureChooser(),
       h('fieldset', { class: 'group' }, h('legend', null, 'About the site'), field('Site name', inputs.name, 'Shown on the welcome screen, every title bar, the tab and the home-screen app.'), field('Your name', inputs.owner), field('Tagline', inputs.tagline, 'Shown on the welcome screen.'), field('About you', about, 'Markdown works here too.'), h('div', { class: 'row end' }, saveSite)),
       categoryManager(),
       topRoomControls(),
@@ -3222,6 +3226,88 @@ function viewSite(part = 'site') {
     // The first two are the status and past statuses; the rest are the site and wishlist.
     wrap.replaceChildren(...(part === 'status' ? parts.slice(0, 2) : parts.slice(2)));
   })();
+  return wrap;
+}
+
+// ---------- your picture ----------
+// A photo of you (cropped square, its hidden data left behind), one of the site's own pictures,
+// or the plain outline. It shows by your name: on the welcome screen, at the top of your profile
+// and, signed in, in the Explore menu and the taskbar. Each choice is saved straight away.
+const PICTURE_SIZE = 480;
+async function squarePhoto(file) {
+  const bmp = await decode(file);
+  const side = Math.min(bmp.width, bmp.height);
+  const c = document.createElement('canvas');
+  c.width = c.height = Math.min(PICTURE_SIZE, side);
+  const g = c.getContext('2d');
+  g.imageSmoothingQuality = 'high';
+  // (The middle of it; a little higher than the middle for a tall photo, where faces usually are.)
+  const sx = (bmp.width - side) / 2;
+  const sy = bmp.height > bmp.width ? (bmp.height - side) * 0.3 : (bmp.height - side) / 2;
+  g.drawImage(bmp, sx, sy, side, side, 0, 0, c.width, c.height);
+  bmp.close?.();
+  return toJpeg(c, 0.88);
+}
+async function setPicture(value) {
+  const before = data.site?.picture || '';
+  await setSiteField('picture', value);
+  // (A photo you've replaced isn't kept.)
+  if (isPhoto(before) && before !== value) await delFile(before).catch(() => {});
+  await refresh();
+}
+function pictureChooser() {
+  const now = () => data.site?.picture || '';
+  const big = h('span', { class: 'pic-now' });
+  const grid = h('div', { class: 'pic-grid', role: 'radiogroup', 'aria-label': 'Pictures' });
+  const busy = (on) => wrap.classList.toggle('busy', on);
+  const choose = async (value, msg) => {
+    busy(true);
+    try {
+      await setPicture(value);
+      toast(msg);
+      draw();
+    } catch (e) {
+      toast(e.message, true);
+    }
+    busy(false);
+  };
+  const file = h('input', { type: 'file', accept: 'image/*,.heic,.heif', class: 'sr' });
+  file.addEventListener('change', async () => {
+    const f = file.files?.[0];
+    file.value = '';
+    if (!f) return;
+    busy(true);
+    try {
+      const blob = await squarePhoto(f);
+      const key = `design/me-${Date.now().toString(36)}.jpg`;
+      await api('upload?key=' + enc(key), { method: 'PUT', body: blob, headers: { 'Content-Type': 'image/jpeg' } });
+      busy(false);
+      await choose(key, 'Your photo is your picture now.');
+    } catch (e) {
+      toast(e.message, true);
+      busy(false);
+    }
+  });
+  const tile = (value, label, inner) =>
+    h('button', { type: 'button', role: 'radio', class: 'pic-pick', 'aria-checked': String(now() === value), 'aria-label': label, title: label, onclick: () => now() !== value && choose(value, value ? `${label}: your picture now.` : 'The plain picture now.') }, h('span', { class: 'pic-frame' + (value ? ' has-pic' : ''), html: inner }));
+  const draw = () => {
+    big.className = 'pic-now pic-frame' + (hasPicture(now()) ? ' has-pic' : '');
+    big.innerHTML = pictureHtml(now(), '#1d3f8a');
+    grid.replaceChildren(
+      ...(isPhoto(now()) ? [tile(now(), 'Your photo', pictureHtml(now()))] : []),
+      ...PICTURE_IDS.map((id) => tile(id, PICTURES[id][0], pictureHtml(id))),
+      tile('', 'Plain', pictureHtml('', '#1d3f8a'))
+    );
+  };
+  const wrap = h(
+    'fieldset',
+    { class: 'group pic-chooser' },
+    h('legend', null, 'Your picture'),
+    h('div', { class: 'pic-top' }, big, h('div', null, h('p', { class: 'hint' }, 'By your name on the welcome screen, at the top of your profile, and in your Explore menu when you’re signed in. A photo is cropped square, and its hidden data (where it was taken, the phone…) is left behind.'), h('label', { class: 'btn' }, '📷 Use a photo…', file))),
+    h('p', { class: 'label' }, 'Or pick one'),
+    grid
+  );
+  draw();
   return wrap;
 }
 
@@ -4037,6 +4123,8 @@ export const kit = {
   addSuggestion: (sg) => (KIND_TYPE[sg.kind] ? addToShelf(sg) : addToWishlist(sg)),
   suggestionGoesTo: (sg) => (KIND_TYPE[sg.kind] ? `your ${SHELF_NAME[KIND_TYPE[sg.kind]]}` : 'your trips wishlist'),
   setSiteField: (k, v) => setSiteField(k, v),
+  // Your picture: the chooser, for a window or sheet of its own.
+  pictureChooser: () => pictureChooser(),
   plannerText: (lists) => plannerText(lists),
   // Themes on the site itself: the real site wears what you're trying (see themes.js).
   themesLive: (live) => (themesCtx.live = live),

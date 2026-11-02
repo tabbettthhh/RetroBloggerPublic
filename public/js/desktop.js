@@ -240,6 +240,8 @@ export function startDesktop(root, data) {
     hideStart();
     hideContext();
     if (show) {
+      // (Drawn afresh each time: the latest posts, and whose menu it is.)
+      startMenu.replaceChildren(...startMenuParts(data, { onScreensaver: () => { hideStart(); screensaver.start(); } }));
       startMenu.hidden = false;
       startBtn.classList.add('pressed');
       startBtn.setAttribute('aria-expanded', 'true');

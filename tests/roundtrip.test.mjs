@@ -1,6 +1,6 @@
 // Opening any post in the back office and saving it without touching anything must not
 // change what the site shows. Checked for the example posts and a set of awkward ones.
-import { api, test, report, assert, launch, close, adminPage, clickSave, overview, BASE, openTab } from './lib.mjs';
+import { api, test, report, assert, launch, close, adminPage, toastText, overview, BASE, openTab } from './lib.mjs';
 
 const AWKWARD = {
   'thoughts/2026-08-01-numbers.md': '---\ndate: 2026-08-01 09:00\ntitle: "1984"\n---\nA title that is a number.\n',
@@ -63,15 +63,28 @@ for (const p of before) {
     }
     assert(row, 'row not found');
     await row.locator('.row-main').click();
-    // The list may still be redrawing after the last save; if the click landed on the old
-    // list, click again.
-    if (!(await page.waitForSelector('.hint:has-text("Editing")', { timeout: 5000 }).catch(() => null))) {
+    // The list may still be redrawing after the last save: if the click landed on the old list,
+    // or the list was drawn again over the editor just after it opened, open it again. (Saving
+    // unchanged twice is harmless, so trying again is safe.)
+    const reopen = async () => {
       await openTab(page, 'Posts');
       await page.evaluate(() => document.querySelectorAll('.month-fold').forEach((d) => (d.open = true)));
       await page.locator('.list-row').filter({ has: page.locator('strong', { hasText: p.title || p.excerpt || '(no text)' }) }).first().locator('.row-main').click();
       await page.waitForSelector('.hint:has-text("Editing")');
+    };
+    if (!(await page.waitForSelector('.hint:has-text("Editing")', { timeout: 5000 }).catch(() => null))) await reopen();
+    let msg;
+    for (let tries = 0; ; tries++) {
+      try {
+        await page.locator('.row.end button.go').last().click({ timeout: 8000 });
+        msg = await toastText(page);
+        break;
+      } catch (e) {
+        if (tries >= 2) throw e;
+        await page.waitForLoadState('networkidle');
+        await reopen();
+      }
     }
-    const msg = await clickSave(page);
     assert(!/n't|error|mistake/i.test(msg), 'save said: ' + msg);
     const after = (await overview()).posts.find((x) => x.key === p.key);
     assert(after, 'post vanished');

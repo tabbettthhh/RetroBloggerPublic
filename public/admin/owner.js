@@ -14,6 +14,7 @@
 //   says when there's something new.
 import { h, ICON, registerCategories } from '/js/util.js';
 import { registerKeepsakes } from '/js/keepsake-maker.js';
+import { pictureHtml, hasPicture } from '/js/pictures.js';
 import { kit } from '/admin/admin.js';
 import { forgetOwner, ownerHooks } from '/js/owner-door.js';
 import { rebuildRoom } from '/js/cabinet.js';
@@ -79,7 +80,7 @@ const postFor = (id) => owner?.posts.find((p) => !p.error && idOf(p) === id) || 
 // What visitors see, kept for "View as a visitor" (taken from the site's own fresh copies).
 const MINE = ['posts', 'planner', 'highlights', 'highlightsPast', 'guestbook', 'wishlist', 'site', 'theme'];
 // (And what visitors see of your friends, which may be nothing.)
-const FRIENDS = ['buddies', 'friendPosts', 'friendLooks', 'friendKeepsakes', 'friendCategories', 'friendsTab', 'friendsInHome'];
+const FRIENDS = ['buddies', 'friendPosts', 'friendLooks', 'friendKeepsakes', 'friendCategories', 'friendsTab', 'friendsInHome', 'ownerView'];
 function keepPublic(d) {
   publicCopy = Object.fromEntries([...MINE, ...FRIENDS].map((k) => [k, d[k]]));
 }
@@ -88,6 +89,8 @@ function merge(d) {
   // (A post whose header can't be read stays in the Control Panel, where it can be fixed.)
   d.posts = owner.posts.filter((p) => !p.error);
   for (const k of MINE.slice(1)) if (owner[k] !== undefined) d[k] = owner[k];
+  // (Whose site it is, for the Explore menu: yours, with your name and picture.)
+  d.ownerView = true;
   // Your friends, all of them, whoever else sees them: the Friends tab, and (unless you've said
   // not to) their posts in your Home.
   const fm = owner.friendsMine;
@@ -114,6 +117,7 @@ function changed(d) {
   owner = d;
   merge(site.data);
   redraw();
+  showFaces();
   // (The highlights changed and you're in their room: built again, the closer look put back.)
   if (before !== JSON.stringify([d.highlights, d.highlightsPast]) && document.querySelector('.cab-room') && before !== '[null,null]') {
     document.querySelector('dialog.cab-dialog[open]')?.close();
@@ -376,7 +380,7 @@ const CP = [
   ['Writing', [['posts', 'Posts & drafts', 'Every post, drafts and scheduled ones included: find, pin, edit', '🗂'], ['highlights', 'Highlights', 'The cabinet’s shelves, in order, with why', '★'], ['planner', 'Planner', 'Your lists, private ones too', '📒']]],
   ['People', [['notifications', 'Inbox', 'Comments, signatures, suggestions, nudges, friends’ news', '✉'], ['friends', 'Friends', 'Your buddies, and who sees what', '👥'], ['status', 'Status', 'How you are, your message, a countdown', '💬']]],
   ['Look', [['themes', 'Themes', 'Colours, wallpaper, fonts and the rest, on your real site as you choose', '🎨'], ['designs', 'Designs', 'The visa in your passport, and keepsakes of your own', '🎟']]],
-  ['Your site', [['site', 'Site & wishlist', 'Its name, about you, place categories, the trips wishlist', '🏠'], ['travel', 'Travel stats', 'The flight log in your passport', '✈'], ['files', 'Export & files', 'Download everything, import, all your files', '💾']]]
+  ['Your site', [['picture', 'Your picture', 'A photo of you, or one of the site’s own pictures', '🖼'], ['site', 'Site & wishlist', 'Its name, about you, place categories, the trips wishlist', '🏠'], ['travel', 'Travel stats', 'The flight log in your passport', '✈'], ['files', 'Export & files', 'Download everything, import, all your files', '💾']]]
 ];
 const CP_NAME = Object.fromEntries(CP.flatMap(([, items]) => items.map(([id, name]) => [id, name])));
 CP_NAME.comments = 'Comments';
@@ -477,6 +481,7 @@ function meMenu(anchor) {
       { label: n ? `Inbox (${n} waiting)` : 'Inbox', icon: '✉', run: () => controlPanel(n && owner.pendingComments?.length ? 'comments' : n && owner.pendingGuestbook?.length ? 'guestbook' : 'notifications') },
       { label: 'Posts, drafts and highlights', icon: '🗂', run: () => controlPanel('posts') },
       { label: 'Themes', icon: '🎨', run: () => openThemes() },
+      { label: 'Your picture', icon: '🖼', run: () => controlPanel('picture') },
       { label: 'Control Panel', icon: '⚙', run: () => controlPanel() },
       '-',
       { label: previewing ? 'Back to owner view' : 'View as a visitor', icon: '👁', run: togglePreview },
@@ -533,9 +538,46 @@ function plusButton(cls) {
 }
 function meButton(cls) {
   const name = owner.site?.owner || 'You';
-  const b = h('button', { type: 'button', class: `okit-me ${cls}`, 'aria-label': `${name}: your menu`, title: name, 'aria-haspopup': 'menu' }, h('span', { class: 'okit-face', 'aria-hidden': 'true', html: ICON.person('#1d3f8a') }), h('span', { class: 'okit-name' }, name), h('span', { class: 'okit-badge', hidden: true }));
+  const b = h('button', { type: 'button', class: `okit-me ${cls}`, 'aria-label': `${name}: your menu`, title: name, 'aria-haspopup': 'menu' }, h('span', { class: 'okit-face', 'aria-hidden': 'true' }), h('span', { class: 'okit-name' }, name), h('span', { class: 'okit-badge', hidden: true }));
+  showFaces(b);
   b.addEventListener('click', () => meMenu(b));
   return b;
+}
+// Your picture and name on your tile (in the taskbar, the dock or floating), kept up to date.
+let faceShown = '';
+function showFaces(only) {
+  const pic = owner?.site?.picture || '';
+  const name = owner?.site?.owner || 'You';
+  if (!only && faceShown === pic + '|' + name) return;
+  if (!only) faceShown = pic + '|' + name;
+  for (const b of only ? [only] : document.querySelectorAll('.okit-me')) {
+    const face = b.querySelector('.okit-face');
+    face.classList.toggle('has-pic', hasPicture(pic));
+    face.innerHTML = pictureHtml(pic, '#1d3f8a');
+    b.querySelector('.okit-name').textContent = name;
+    b.setAttribute('aria-label', `${name}: your menu`);
+    b.title = name;
+  }
+}
+// In the Explore menu, signed in, your picture changes it (as XP's did).
+function decorateStartHead() {
+  for (const av of document.querySelectorAll('.sm-head.mine .avatar:not([data-okit])')) {
+    av.dataset.okit = '1';
+    Object.assign(av, { role: 'button', tabIndex: 0, title: 'Change your picture' });
+    av.setAttribute('aria-label', 'Change your picture');
+    av.classList.add('okit-pic-btn');
+    const go = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // (The menu closes first: on a phone by its backdrop, on a computer by its button.)
+      const scrim = document.querySelector('.start-scrim:not([hidden])');
+      if (scrim) scrim.click();
+      else document.querySelector('.start-btn.pressed')?.click();
+      controlPanel('picture');
+    };
+    av.addEventListener('click', go);
+    av.addEventListener('keydown', (e) => (e.key === 'Enter' || e.key === ' ') && go(e));
+  }
 }
 function badgeCount() {
   return (owner.pendingGuestbook?.length || 0) + (owner.pendingComments?.length || 0) + (owner.suggestions?.length || 0);
@@ -1021,6 +1063,7 @@ function decorate() {
     decorateWishlist();
     decorateHighlights();
     decorateFriendPosts();
+    decorateStartHead();
     decorateFriendsTab();
     friendsDot();
   } finally {
