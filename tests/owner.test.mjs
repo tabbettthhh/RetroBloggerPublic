@@ -123,6 +123,103 @@ await test('a journal page turns into its editor in the journal, and back again'
   }, '/?owner=1#/journal/tea-room');
 });
 
+const send = (path, body) => fetch(`${BASE}/api/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0 (test)' }, body: JSON.stringify(body) });
+
+await test('things waiting for you, where they happen: a comment under its post, a signature in the guestbook, a suggestion by its shelf', async () => {
+  await putFile('thoughts/talk-to-me.md', `---\ndate: ${at(2)}\ntitle: Talk to me\n---\nAnyone there?\n`);
+  eq((await send('comment', { post: 'thoughts/talk-to-me', name: 'Ali', message: 'Hello from the comments!' })).status, 200, 'a comment sent');
+  eq((await send('guestbook', { name: 'Bea', message: 'Lovely little site.' })).status, 200, 'a signature sent');
+  eq((await send('suggest', { kind: 'book', title: 'The Remains of the Day', name: 'Cy', note: 'you’ll love it' })).status, 200, 'a suggestion sent');
+  await site(PHONE, async (p) => {
+    // In the feed: how many are waiting, on the post.
+    const card = p.locator('.card', { hasText: 'Talk to me' });
+    await card.locator('.okit-state.waiting').waitFor();
+    // Under the post: approve it there.
+    await p.goto(BASE + '/#/post/thoughts/talk-to-me');
+    const wait = p.locator('.comments .okit-waiting', { hasText: 'Hello from the comments!' });
+    await wait.waitFor();
+    await wait.locator('button', { hasText: 'Approve' }).click();
+    await p.waitForFunction(() => document.querySelector('.okit-toast.on')?.textContent.includes('Approved'));
+    await p.locator('.comments .cm-item', { hasText: 'Hello from the comments!' }).waitFor();
+    eq(await p.locator('.comments .okit-waiting').count(), 0, 'no longer waiting');
+    // And answer it, as you.
+    const item = p.locator('.comments .cm-item', { hasText: 'Hello from the comments!' });
+    await item.locator('button', { hasText: 'Reply as you' }).click();
+    await item.locator('textarea.okit-input').fill('Hello back!');
+    await item.locator('.okit-replybox button', { hasText: 'Save' }).click();
+    await p.waitForFunction(() => [...document.querySelectorAll('.cm-owner')].some((x) => x.textContent.includes('Hello back!')));
+    // The guestbook: approve the signature in it.
+    await p.goto(BASE + '/#/guestbook');
+    const sig = p.locator('.okit-waiting', { hasText: 'Lovely little site.' });
+    await sig.waitFor();
+    await sig.locator('button', { hasText: 'Approve' }).click();
+    await p.locator('.gb-entry', { hasText: 'Lovely little site.' }).waitFor();
+    // The bookshelf: the suggestion, onto the shelf.
+    await p.goto(BASE + '/#/books');
+    const sg = p.locator('.okit-waiting', { hasText: 'The Remains of the Day' });
+    await sg.waitFor();
+    await sg.locator('button.go').click();
+    await p.waitForFunction(() => document.querySelector('.okit-toast.on')?.textContent.includes('Added'));
+  });
+  const d = await publicData();
+  assert(d.posts.find((x) => x.slug === 'talk-to-me').comments.some((c) => c.reply === 'Hello back!'), 'the comment and your reply are on the site');
+  assert(d.guestbook.some((g) => g.message === 'Lovely little site.'), 'the signature too');
+  assert((await overview()).posts.some((x) => x.type === 'books' && x.title === 'The Remains of the Day' && x.suggested_by === 'Cy'), 'the book on the shelf, with who suggested it');
+});
+
+await test('your status, the planner and the trips wishlist change where they are', async () => {
+  await putFile('planner.md', '---\n---\n## To do\n- [ ] Post the parcel\n- [ ] Book the dentist\n');
+  await putFile('wishlist.md', '# Want to go\n- [ ] Lisbon, Portugal\n');
+  await site(PHONE, async (p) => {
+    // Status, from the profile.
+    await p.locator('.okit-status-edit').first().click();
+    await p.locator('.okit-status-box .okit-chip', { hasText: 'Busy' }).click();
+    await p.locator('.okit-status-box input').fill('Writing my essay (book)');
+    await p.locator('.okit-status-box button', { hasText: 'Save' }).click();
+    await p.waitForFunction(() => document.querySelector('.okit-toast.on')?.textContent.includes('Status updated'));
+    const site = (await publicData()).site;
+    eq([site.status, site.presence], ['Writing my essay (book)', 'busy'], 'status and how you are');
+    // The planner: tick, take off, add.
+    await p.goto(BASE + '/#/planner');
+    await p.locator('.pln-item', { hasText: 'Post the parcel' }).locator('.pln-box').click();
+    await p.waitForFunction(() => document.querySelector('.okit-toast.on')?.textContent.includes('Done'));
+    await p.locator('.pln-item', { hasText: 'Book the dentist' }).locator('.okit-x').click();
+    await p.waitForFunction(() => document.querySelector('.okit-toast.on')?.textContent.includes('Taken off'));
+    await p.locator('.okit-add input[aria-label="Add to this list"]').fill('Buy stamps');
+    await p.locator('.okit-add input[aria-label="Add to this list"]').press('Enter');
+    await p.locator('.pln-item', { hasText: 'Buy stamps' }).waitFor();
+    eq((await getFile('planner.md')).split('## To do\n')[1].trim(), '- [x] Post the parcel\n- [ ] Buy stamps', 'planner.md as you left it');
+    // The trips wishlist: add, been there.
+    await p.goto(BASE + '/#/wishlist');
+    await p.locator('.okit-wish-add input[aria-label="Place"]').fill('Kyoto');
+    await p.locator('.okit-wish-add input[aria-label="City"]').fill('Japan');
+    await p.locator('.okit-wish-add button').click();
+    await p.locator('.wish', { hasText: 'Kyoto' }).waitFor();
+    await p.locator('.wish', { hasText: 'Lisbon' }).locator('.aqua-check').click();
+    await p.waitForFunction(() => document.querySelector('.okit-toast.on')?.textContent.includes('Been there'));
+    const w = await getFile('wishlist.md');
+    assert(w.includes('- [x] Lisbon, Portugal') && w.includes('- [ ] Kyoto, Japan'), 'wishlist.md: ' + w);
+  });
+});
+
+await test('the highlights, in the cabinet: a line on why, a new place on the shelf', async () => {
+  await putFile('places/one.md', `---\ndate: ${at(40)}\ntitle: First Place\n---\nA.\n`);
+  await putFile('places/two.md', `---\ndate: ${at(41)}\ntitle: Second Place\n---\nB.\n`);
+  await putFile('highlights.md', '---\nplaces: ["places/one", "places/two"]\n---\n');
+  await site({ ...PHONE, reducedMotion: 'reduce' }, async (p) => {
+    await p.locator('.cab-room .cab-doors').click();
+    await p.waitForSelector('.cab-room .cabinet.open');
+    await p.locator('.cab-room .cab-shelf-places .cab-pick').nth(1).click();
+    await p.waitForSelector('dialog.cab-dialog[open] .okit-hl');
+    await p.locator('.okit-hl button', { hasText: 'Say why it’s here' }).click();
+    await p.locator('.okit-hl textarea').fill('The best window seat in town.');
+    await p.locator('.okit-hl button', { hasText: 'Save' }).click();
+    await p.waitForFunction(() => document.querySelector('.okit-toast')?.textContent.includes('Saved'));
+  }, '/?owner=1#/highlights');
+  const hl = (await overview()).highlights.places;
+  eq(hl.find((x) => x.post === 'places/two').why, 'The best window seat in town.', 'its line on why');
+});
+
 await test('the welcome screen’s owner tile signs you in, back to the site', async () => {
   await site(PHONE, async (p) => {
     await p.goto(BASE + '/#/welcome');

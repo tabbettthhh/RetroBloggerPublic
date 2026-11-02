@@ -74,7 +74,7 @@ function oneComment(c, post, owner, replies) {
   });
   return h(
     'li',
-    { class: 'cm-item', id: `comment-${c.id}` },
+    { class: 'cm-item', id: `comment-${c.id}`, 'data-comment': c.id },
     h('div', { class: 'cm-head' }, h('span', { class: 'cm-avatar', 'aria-hidden': 'true' }, (c.name.trim()[0] || '?').toUpperCase()), h('b', null, c.name), h('small', null, niceDate(c.date, true))),
     h('p', { class: 'cm-text' }, withEmoticons(c.message, 15)),
     c.reply ? h('div', { class: 'cm-owner' }, h('div', { class: 'cm-head' }, h('span', { class: 'cm-avatar owner', 'aria-hidden': 'true' }, '★'), h('b', null, owner), h('small', { class: 'cm-badge' }, 'replied')), h('p', { class: 'cm-text' }, withEmoticons(c.reply, 15))) : null,
@@ -108,7 +108,7 @@ export function commentsBlock(post, data) {
   });
   return h(
     'section',
-    { class: 'comments', 'aria-label': 'Comments' },
+    { class: 'comments', 'aria-label': 'Comments', 'data-comments-for': `${post.type}/${post.slug}` },
     h('h3', { class: 'cm-title' }, h('span', { 'aria-hidden': 'true' }, '💬'), all.length ? howMany(all.length) : 'Comments'),
     list.length ? h('ul', { class: 'cm-list' }, list) : h('p', { class: 'cm-empty' }, 'No comments yet. Be the first!'),
     h('h4', { class: 'cm-leave' }, 'Leave a comment'),

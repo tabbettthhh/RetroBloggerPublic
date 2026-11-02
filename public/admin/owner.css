@@ -184,3 +184,69 @@ html.owner-preview .okit-hidden-post { outline: 0; }
 :root[data-theme="dark"] .okit-toast { background: #2a2a2e; }
 :root[data-theme="dark"] .okit-menu button { color: #eee; }
 :root[data-theme="dark"] .okit-more { color: #eee; background: var(--ok-gloss), #3a3a40; border-color: #555; }
+
+/* ---------- Doing things where they happen ---------- */
+.okit-btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 30px; padding: 0 12px; border: 1px solid var(--ok-line, #c7c3ae); border-radius: 15px; color: var(--ok-ink, #14254d); background: var(--ok-gloss), linear-gradient(180deg, #fff, var(--ok-paper, #ece9d8)); box-shadow: var(--ok-bevel), 0 1px 2px rgba(0, 0, 0, .15); font: bold 12px Tahoma, 'Segoe UI', sans-serif; cursor: pointer; }
+.okit-btn:hover { border-color: var(--ok-sel, #316ac5); }
+.okit-btn:active { box-shadow: var(--ok-press); translate: 0 1px; }
+.okit-btn.go { color: var(--ok-sel-text, #fff); border-color: color-mix(in srgb, var(--ok-sel, #316ac5) 70%, #000); background: var(--ok-gloss), var(--ok-sel, #316ac5); text-shadow: 0 -1px 0 rgba(0, 0, 0, .25); }
+.okit-btn.danger { color: #9c2414; }
+.okit-btn[disabled] { opacity: .5; cursor: default; }
+.okit-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.okit-input { flex: none; min-width: 0; min-height: 34px; padding: 4px 10px; border: 1px solid var(--ok-line, #c7c3ae); border-radius: 6px; color: #111; background: #fff; box-shadow: inset 0 2px 3px rgba(0, 0, 0, .12); font: 14px/1.4 Tahoma, 'Segoe UI', sans-serif; }
+textarea.okit-input { width: 100%; flex-basis: 100%; resize: vertical; }
+.okit-input:focus { outline: 2px solid color-mix(in srgb, var(--ok-sel, #316ac5) 40%, transparent); border-color: var(--ok-sel, #316ac5); }
+.okit-date { flex: 0 0 150px; }
+
+/* Waiting for you: a little stack, in the theme's paper, edged in its accent. */
+.okit-waitlist { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 12px; padding: 10px; border: 1px solid var(--ok-line, #c7c3ae); border-left: 4px solid var(--ok-accent, #f2861e); border-radius: 8px; color: var(--ok-ink, #14254d); background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--ok-paper, #ece9d8) 45%, #fff)); box-shadow: var(--ok-bevel), 0 2px 6px rgba(0, 0, 0, .12); font: 13px/1.4 Tahoma, 'Segoe UI', sans-serif; text-align: left; }
+.okit-waitlist h4 { margin: 0; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: color-mix(in srgb, var(--ok-accent, #f2861e) 70%, #000); }
+.okit-waiting { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-radius: 6px; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .12); }
+.okit-waiting p { margin: 0; overflow-wrap: anywhere; }
+.okit-waiting-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+.okit-waiting-head small { margin-left: auto; opacity: .7; }
+.okit-tag { padding: 0 7px; border-radius: 8px; color: #fff; background: var(--ok-gloss), var(--ok-accent, #f2861e); font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: .04em; }
+.okit-waiting .okit-row { justify-content: flex-end; }
+.okit-cm-tools { margin: 4px 0; }
+.okit-cm-tools .okit-btn { min-height: 26px; padding: 0 10px; font-size: 11px; }
+.okit-replybox { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 8px; }
+.okit-replybox .okit-row { justify-content: flex-end; }
+.okit-owner-comments .cm-leave, .okit-owner-comments > form, .okit-owner-comments .cm-reply-btn, .okit-owner-comments .cm-replybox { display: none; }
+:root .okit-state.waiting { background: var(--ok-gloss), color-mix(in srgb, var(--ok-accent, #f2861e) 35%, #fff); }
+
+/* Your status: ✎ by it; the little box to change it. */
+.okit-status-edit { min-height: 24px; width: 28px; padding: 0; margin-left: 4px; border-radius: 12px; vertical-align: middle; }
+.okit-status-box { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; padding: 8px; border: 1px solid var(--ok-line, #c7c3ae); border-radius: 8px; color: var(--ok-ink, #14254d); background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--ok-paper, #ece9d8) 50%, #fff)); box-shadow: var(--ok-bevel), 0 3px 10px rgba(0, 0, 0, .2); }
+.okit-status-box .okit-row:last-child { justify-content: flex-end; }
+.okit-chip { min-height: 26px; padding: 0 10px; border: 1px solid var(--ok-line, #c7c3ae); border-radius: 13px; color: var(--ok-ink, #14254d); background: var(--ok-gloss), #fff; font: 12px Tahoma, sans-serif; cursor: pointer; }
+.okit-chip[aria-checked="true"] { color: var(--ok-sel-text, #fff); border-color: color-mix(in srgb, var(--ok-sel, #316ac5) 70%, #000); background: var(--ok-gloss), var(--ok-sel, #316ac5); box-shadow: var(--ok-press); }
+
+/* Planner and trips wishlist: tick right on the page, take off with ×, add underneath. */
+.okit-tick { cursor: pointer; border-radius: 4px; }
+.okit-tick:hover { background: color-mix(in srgb, var(--ok-sel, #316ac5) 12%, transparent); }
+.okit-tick:focus-visible { outline: 2px solid var(--ok-sel, #316ac5); outline-offset: 2px; }
+.okit-x { width: 26px; min-height: 26px; padding: 0; margin-left: auto; border-radius: 13px; color: #9c2414; font-size: 14px; opacity: .55; }
+.okit-x:hover, .okit-x:focus-visible { opacity: 1; }
+.pln-item .okit-x { position: relative; align-self: center; flex: none; }
+.okit-add { margin: 10px 0; }
+.wish { position: relative; }
+.wish .okit-x { position: absolute; top: 8px; right: 8px; }
+.okit-wish-add { padding: 8px; border-radius: 8px; background: rgba(255, 255, 255, .6); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .12); }
+
+/* The highlights: under the museum label. */
+.okit-hl { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(0, 0, 0, .2); }
+.okit-hl .okit-row { justify-content: center; }
+
+:root[data-theme="dark"] :is(.okit-waitlist, .okit-status-box) { color: #eee; background: #2a2a2e; border-color: #555; }
+:root[data-theme="dark"] .okit-waiting { background: #33333a; }
+:root[data-theme="dark"] .okit-btn:not(.go) { color: #eee; background: var(--ok-gloss), #3a3a40; border-color: #555; }
+
+.okit-row > .okit-input { flex: 1 1 160px; }
+.okit-row > .okit-input.okit-date { flex: 0 0 150px; }
+html.okit-floating #main { padding-bottom: 76px !important; }
+/* The Mac dock with yours in it: everything a little closer, so it fits a phone. */
+.dock[data-okit] { gap: 6px; padding: 0 6px; }
+@media (max-width: 440px) { .dock[data-okit] .dock-icon, .okit-plus.in-dock, .okit-me.in-dock { width: 40px; height: 40px; } .okit-me.in-dock .okit-face { width: 32px; height: 32px; } .okit-me.in-dock .okit-face svg { width: 24px; height: 24px; } }
+/* Your status's ✎, next to it. */
+.status-block { position: relative; }
+.status-block > .okit-status-edit { margin: 4px 0 0; }
