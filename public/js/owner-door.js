@@ -40,7 +40,7 @@ export function ownerArrival() {
 }
 
 // What the owner's tools are told about the site, and can ask it to do.
-export const ownerHooks = { fresh: null, holding: null };
+export const ownerHooks = { fresh: null, holding: null, trying: null };
 
 // Signed in? Then the owner's tools come in. (Never inside the back office's own preview frame.)
 export async function openOwnerDoor(site) {

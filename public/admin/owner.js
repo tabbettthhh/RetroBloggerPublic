@@ -13,6 +13,7 @@ import { h, ICON } from '/js/util.js';
 import { kit } from '/admin/admin.js';
 import { forgetOwner, ownerHooks } from '/js/owner-door.js';
 import { rebuildRoom } from '/js/cabinet.js';
+import { applySkin } from '/js/skins.js';
 
 const TYPES = [
   ['thoughts', 'Thought', '💭'],
@@ -72,7 +73,7 @@ function toast(msg, err = false) {
 const idOf = (p) => `${p.type}/${p.slug}`;
 const postFor = (id) => owner?.posts.find((p) => !p.error && idOf(p) === id) || null;
 // What visitors see, kept for "View as a visitor" (taken from the site's own fresh copies).
-const MINE = ['posts', 'planner', 'highlights', 'highlightsPast', 'guestbook', 'wishlist', 'site'];
+const MINE = ['posts', 'planner', 'highlights', 'highlightsPast', 'guestbook', 'wishlist', 'site', 'theme'];
 function keepPublic(d) {
   publicCopy = Object.fromEntries(MINE.map((k) => [k, d[k]]));
 }
@@ -95,6 +96,7 @@ function redraw() {
 }
 function changed(d) {
   const before = JSON.stringify([owner?.highlights, owner?.highlightsPast]);
+  const themeBefore = JSON.stringify(owner?.theme || null);
   owner = d;
   merge(site.data);
   redraw();
@@ -103,58 +105,132 @@ function changed(d) {
     document.querySelector('dialog.cab-dialog[open]')?.close();
     rebuildRoom(site.data);
   }
+  // (A theme just saved: the site wears it, and remembers it for next time.)
+  if (themeBefore !== 'null' && themeBefore !== JSON.stringify(d.theme || null) && !trying) {
+    applySkin(d.theme || {});
+    try {
+      localStorage.setItem('skin', JSON.stringify(d.theme || {}));
+    } catch {}
+  }
 }
 
 // ---------- the window (computer) or sheet (phone) the back office draws in ----------
 let host = null;
-function closeHost(force = false) {
+function okToLeaveThemes() {
+  if (!trying) return true;
+  if (themeUnsaved?.() && !confirm('Close without saving your theme? Your site goes back to its saved look. (Your choices are kept for next time.)')) return false;
+  stopTrying();
+  return true;
+}
+function closeHost(force = false, keepPlace = false) {
   if (!host) return true;
   if (!force && kit.editing() && !confirm('Close without saving what you’ve written? (It’s kept in this browser, so you can carry on later.)')) return false;
+  if (!force && !okToLeaveThemes()) return false;
+  if (force) stopTrying();
   const was = host;
   host = null;
   was.el.remove();
-  document.documentElement.classList.remove('okit-open');
-  if (history.state?.okit) history.back();
+  document.documentElement.classList.remove('okit-open', 'okit-docked');
+  // (Going straight to another window or sheet keeps this one's place in Back's history.)
+  if (!keepPlace && history.state?.okit) history.back();
   return true;
 }
+// Escape closes the window or sheet (not while typing, and not while a menu is open).
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' || !host || menu || e.target.closest?.('input, textarea, select') || document.querySelector('dialog[open]')) return;
+  closeHost();
+});
 window.addEventListener('popstate', () => {
   if (!host) return;
   // Back closes the window or sheet (asking first if there's unsaved writing).
-  if (kit.editing() && !confirm('Close without saving what you’ve written? (It’s kept in this browser, so you can carry on later.)')) {
+  if ((kit.editing() && !confirm('Close without saving what you’ve written? (It’s kept in this browser, so you can carry on later.)')) || !okToLeaveThemes()) {
     history.pushState({ okit: 1 }, '', location.href);
     return;
   }
   const was = host;
   host = null;
   was.el.remove();
-  document.documentElement.classList.remove('okit-open');
+  document.documentElement.classList.remove('okit-open', 'okit-docked');
 });
-function openHost(title, { nav = false } = {}) {
-  if (host && !closeHost()) return null;
+
+// ---------- themes, on the real site ----------
+// The Themes panel sits at the side (at the bottom on a phone) and the site itself wears each
+// choice as you make it. Closing without saving puts the saved look back.
+let trying = false;
+let themeUnsaved = null;
+let lastStructure = '';
+function stopTrying() {
+  if (!trying) return;
+  trying = false;
+  applySkin(owner?.theme || {});
+  if (lastStructure) {
+    lastStructure = '';
+    redraw();
+  }
+}
+const themesLive = {
+  apply(settings, structure) {
+    trying = true;
+    applySkin(settings);
+    // (A new menu, taskbar or words on the buttons: the page is drawn again with them.)
+    if (lastStructure && structure !== lastStructure) redraw();
+    lastStructure = structure;
+  },
+  restore() {
+    stopTrying();
+  },
+  onLeave(fn) {
+    themeUnsaved = fn;
+  }
+};
+function openHost(title, { nav = false, dock = false } = {}) {
+  const replacing = !!host && history.state?.okit;
+  if (host && !closeHost(false, true)) return null;
   if (!leaveInline()) return null;
-  const sections = nav ? h('nav', { class: 'admin-sections', 'aria-label': 'Control Panel' }) : null;
-  const tabs = nav ? h('nav', { class: 'admin-tabs', role: 'tablist', 'aria-label': 'Pages in this section' }) : null;
+  const sections = null;
+  const tabs = null;
   const body = h('main', { class: 'admin-body' });
   // (In the site's own window style, so the theme dresses it like every other window.)
   const titleEl = h('span', { class: 'xp-title-text' }, title);
   const close = h('button', { type: 'button', class: 'xp-ctl close okit-close', 'aria-label': 'Close' }, '×');
-  const bar = h('div', { class: 'xp-title okit-bar' }, h('span', { class: 'okit-ico', 'aria-hidden': 'true', html: nav ? GEAR : PLUS }), titleEl, close);
-  const el = h('section', { class: `okit okit-host xp-window ${site.desktop ? 'okit-win' : 'okit-sheet'}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': title }, bar, sections, tabs, body);
+  // (Back to the Control Panel's categories, from one of them.)
+  const back = h('button', { type: 'button', class: 'okit-back', hidden: true, 'aria-label': 'Back to the Control Panel' }, '‹');
+  back.addEventListener('click', () => (trying && !okToLeaveThemes() ? null : cpHome()));
+  // (A docked panel on a phone can be tucked down to look at the site.)
+  const tuck = dock && !site.desktop ? h('button', { type: 'button', class: 'okit-tuck', 'aria-expanded': 'true', 'aria-label': 'Tuck the panel away' }, '▾') : null;
+  tuck?.addEventListener('click', () => {
+    const tucked = el.classList.toggle('tucked');
+    tuck.setAttribute('aria-expanded', String(!tucked));
+    tuck.textContent = tucked ? '▴' : '▾';
+    tuck.setAttribute('aria-label', tucked ? 'Bring the panel back' : 'Tuck the panel away');
+  });
+  const bar = h('div', { class: 'xp-title okit-bar' }, back, h('span', { class: 'okit-ico', 'aria-hidden': 'true', html: nav || dock ? GEAR : PLUS }), titleEl, tuck, close);
+  const kind = dock ? 'okit-dock' : site.desktop ? 'okit-win' : 'okit-sheet';
+  const el = h('section', { class: `okit okit-host xp-window ${kind}`, role: 'dialog', 'aria-modal': dock ? 'false' : 'true', 'aria-label': title }, bar, sections, tabs, body);
   close.addEventListener('click', () => closeHost());
-  el.addEventListener('keydown', (e) => e.key === 'Escape' && !e.target.closest('input, textarea, select') && closeHost());
+
   // On a computer it's a window you can move by its title bar.
-  if (site.desktop) dragBy(bar, el);
+  if (site.desktop && !dock) dragBy(bar, el);
   document.body.append(el);
-  document.documentElement.classList.add('okit-open');
-  history.pushState({ okit: 1 }, '', location.href);
-  host = { el, body, titleEl, sections, tabs };
+  // (A docked panel leaves the site free to look at and scroll.)
+  document.documentElement.classList.add(dock ? 'okit-docked' : 'okit-open');
+  if (!replacing) history.pushState({ okit: 1 }, '', location.href);
+  host = { el, body, titleEl, back, sections, tabs, nav };
   kit.attach({
     panel: body,
     tabs,
     sections,
     toast,
     changed,
-    editorDone: () => closeHost(true)
+    editorDone: () => closeHost(true),
+    // (Moving to another page from inside one, e.g. "See it" in the inbox: its name in the bar.)
+    go: (id) => {
+      if (id === 'themes' && host && !host.el.classList.contains('okit-dock')) {
+        setTimeout(() => openThemes(), 0);
+        return false;
+      }
+      if (host?.nav) setPage(id);
+    }
   });
   setTimeout(() => close.focus({ preventScroll: true }), 0);
   return host;
@@ -279,10 +355,70 @@ async function editPost(p, el) {
   if (!hostEl.firstChild) return finishInline();
   show(hostEl);
 }
-function controlPanel(page = 'posts') {
+// ---------- the Control Panel ----------
+// Like XP's: pick a category. A window on a computer, a sheet on a phone (in the theme's colours);
+// each category opens in the same place, with ‹ back to the categories.
+const CP = [
+  ['Writing', [['posts', 'Posts & drafts', 'Every post, drafts and scheduled ones included: find, pin, edit', '🗂'], ['highlights', 'Highlights', 'The cabinet’s shelves, in order, with why', '★'], ['planner', 'Planner', 'Your lists, private ones too', '📒']]],
+  ['People', [['notifications', 'Inbox', 'Comments, signatures, suggestions, nudges, friends’ news', '✉'], ['friends', 'Friends', 'Your buddies, and who sees what', '👥'], ['status', 'Status', 'How you are, your message, a countdown', '💬']]],
+  ['Look', [['themes', 'Themes', 'Colours, wallpaper, fonts and the rest, on your real site as you choose', '🎨'], ['designs', 'Designs', 'The visa in your passport, and keepsakes of your own', '🎟']]],
+  ['Your site', [['site', 'Site & wishlist', 'Its name, about you, place categories, the trips wishlist', '🏠'], ['travel', 'Travel stats', 'The flight log in your passport', '✈'], ['files', 'Export & files', 'Download everything, import, all your files', '💾']]]
+];
+const CP_NAME = Object.fromEntries(CP.flatMap(([, items]) => items.map(([id, name]) => [id, name])));
+CP_NAME.comments = 'Comments';
+CP_NAME.guestbook = 'Guestbook';
+CP_NAME.suggestions = 'Suggestions';
+CP_NAME.new = 'Writing';
+function setPage(id) {
+  if (!host) return;
+  host.titleEl.textContent = `Control Panel › ${CP_NAME[id] || 'Page'}`;
+  host.back.hidden = false;
+  host.body.scrollTop = 0;
+}
+function cpHome() {
+  if (!host) return;
+  host.titleEl.textContent = 'Control Panel';
+  host.back.hidden = true;
+  const n = badgeCount();
+  host.body.replaceChildren(
+    h(
+      'div',
+      { class: 'cp-home' },
+      h('p', { class: 'cp-pick' }, 'Pick a category'),
+      CP.map(([group, items]) =>
+        h(
+          'section',
+          { class: 'cp-group', 'aria-label': group },
+          h('h3', null, group),
+          h(
+            'div',
+            { class: 'cp-items' },
+            items.map(([id, name, sub, icon]) =>
+              h('button', { type: 'button', class: 'cp-item', 'data-cp': id, onclick: () => openPage(id) }, h('span', { class: 'cp-icon', 'aria-hidden': 'true' }, icon), h('span', { class: 'cp-words' }, h('b', null, name, id === 'notifications' && n ? h('span', { class: 'okit-badge cp-badge' }, String(n)) : null), h('small', null, sub)), h('span', { class: 'cp-go', 'aria-hidden': 'true' }, '›'))
+            )
+          )
+        )
+      )
+    )
+  );
+}
+function openPage(id) {
+  if (id === 'themes') return openThemes();
+  setPage(id);
+  kit.show(id);
+}
+function controlPanel(page = '') {
   closeMenus();
+  if (page === 'themes') return openThemes();
   if (!openHost('Control Panel', { nav: true })) return;
-  kit.show(page);
+  if (page) openPage(page);
+  else cpHome();
+}
+function openThemes() {
+  closeMenus();
+  if (!openHost('Themes', { dock: true })) return;
+  kit.themesLive(themesLive);
+  kit.show('themes');
 }
 
 // ---------- menus (one at a time) ----------
@@ -324,8 +460,8 @@ function meMenu(anchor) {
       { label: 'New post…', icon: '＋', run: () => typeMenu(anchor) },
       { label: n ? `Inbox (${n} waiting)` : 'Inbox', icon: '✉', run: () => controlPanel(n && owner.pendingComments?.length ? 'comments' : n && owner.pendingGuestbook?.length ? 'guestbook' : 'notifications') },
       { label: 'Posts, drafts and highlights', icon: '🗂', run: () => controlPanel('posts') },
-      { label: 'Themes', icon: '🎨', run: () => controlPanel('themes') },
-      { label: 'Control Panel', icon: '⚙', run: () => controlPanel('site') },
+      { label: 'Themes', icon: '🎨', run: () => openThemes() },
+      { label: 'Control Panel', icon: '⚙', run: () => controlPanel() },
       '-',
       { label: previewing ? 'Back to owner view' : 'View as a visitor', icon: '👁', run: togglePreview },
       { label: 'Sign out', icon: '⎋', run: signOut }
@@ -766,6 +902,7 @@ export async function startOwner(s) {
   }
   document.documentElement.classList.add('owner-on');
   ownerHooks.holding = () => writing();
+  ownerHooks.trying = () => trying;
   ownerHooks.fresh = (d) => {
     keepPublic(d);
     merge(d);
