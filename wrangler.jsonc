@@ -31,7 +31,7 @@
 
   // Every 10 minutes your site reads your friends' sites for new posts and statuses (they also
   // tell it straight away when they post), and tells them about a scheduled post going live.
-  "triggers": { "crons": ["*/10 * * * *"] },
+  "triggers": { "crons": ["*/20 * * * *"] },
 
   "observability": { "enabled": true }
 }
