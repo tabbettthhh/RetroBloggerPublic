@@ -1,4 +1,4 @@
-// The welcome screen: one Visitor tile, no sign-in.
+// The welcome screen: a Visitor tile (no sign-in) and, like XP's, the owner's own account tile.
 import { h, ICON, storage } from './util.js';
 import { greeting } from './sky.js';
 import { word } from './skins.js';
@@ -13,8 +13,8 @@ export function forgetEntered() {
   session.removeItem('entered');
 }
 
-// A little settings gear in the XP style: steel blue, with a soft shine.
-const GEAR = '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9f0fb"/><stop offset="1" stop-color="#9fb3d6"/></linearGradient></defs><path d="M10.3 1.8h3.4l.5 2.6 1.7.7 2.2-1.5 2.4 2.4-1.5 2.2.7 1.7 2.6.5v3.4l-2.6.5-.7 1.7 1.5 2.2-2.4 2.4-2.2-1.5-1.7.7-.5 2.6h-3.4l-.5-2.6-1.7-.7-2.2 1.5-2.4-2.4 1.5-2.2-.7-1.7-2.6-.5v-3.4l2.6-.5.7-1.7-1.5-2.2 2.4-2.4 2.2 1.5 1.7-.7z" fill="url(#wg)" stroke="#2c4a86" stroke-width="1.1" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.4" fill="#3d63b8" stroke="#2c4a86" stroke-width="1"/><circle cx="11" cy="11" r="1" fill="#fff" opacity=".6"/></svg>';
+// A small padlock, for the owner's tile.
+const LOCK = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="8" rx="1.5" fill="#fff"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="#fff" stroke-width="1.8"/><circle cx="8" cy="11" r="1.2" fill="#2a4f9c"/></svg>';
 
 export function renderWelcome(data, onEnter, { overlay = false } = {}) {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -38,9 +38,7 @@ export function renderWelcome(data, onEnter, { overlay = false } = {}) {
   return h(
     'div',
     { class: 'welcome' + (overlay ? ' overlay' : ''), role: 'dialog', 'aria-label': 'Welcome' },
-    // A quiet way into the back office for the owner. It's locked by Cloudflare Access, so
-    // anyone else who taps it just meets a sign-in page they can't get past.
-    h('div', { class: 'welcome-band top' }, h('a', { class: 'welcome-owner', href: '/admin/', 'aria-label': 'Back office (for the owner)', title: 'Back office (for the owner)', html: GEAR })),
+    h('div', { class: 'welcome-band top' }),
     h(
       'div',
       { class: 'welcome-mid' },
@@ -53,6 +51,15 @@ export function renderWelcome(data, onEnter, { overlay = false } = {}) {
         h('span', { class: 'tile-avatar', html: ICON.person() }),
         h('span', { class: 'tile-text' }, h('strong', null, word('visitor', 'Visitor')), h('small', null, 'No sign-in needed')),
         h('span', { class: 'tile-go', 'aria-hidden': 'true' }, '›')
+      ),
+      // The owner's account: into the back office. It's locked by Cloudflare Access as before,
+      // so anyone else who taps it meets a sign-in they can't get past.
+      h(
+        'a',
+        { class: 'visitor-tile owner-tile', href: '/admin/' },
+        h('span', { class: 'tile-avatar owner', html: ICON.person() }),
+        h('span', { class: 'tile-text' }, h('strong', null, data.site.owner || 'Owner'), h('small', null, 'Back office · sign in')),
+        h('span', { class: 'tile-go lock', 'aria-hidden': 'true', html: LOCK })
       ),
       !overlay && !standalone
         ? h(
