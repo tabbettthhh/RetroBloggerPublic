@@ -50,7 +50,8 @@ function keepFresh(data, redraw) {
       ownerHooks.fresh?.(data);
       registerDesigns(data);
       if (!previewing) setSoundPack(applySkin(data.theme).sounds);
-      redraw();
+      // (Not while the owner is writing in a post: it's drawn again once they're done.)
+      if (!ownerHooks.holding?.()) redraw();
     } catch {
     } finally {
       busy = false;

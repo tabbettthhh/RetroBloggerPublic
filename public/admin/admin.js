@@ -2237,7 +2237,8 @@ function viewEditor() {
     wrap.append(h('p', { class: 'hint' }, `Editing ${TYPE_LABEL[s.type].toLowerCase()} · ${s.key}`));
   }
 
-  if (s.type === 'places') wrap.append(placePicker(s, rerender));
+  const placeEl = s.type === 'places' ? placePicker(s, rerender) : null;
+  if (placeEl) wrap.append(placeEl);
 
   const title = h('input', { class: 'input', value: s.title, maxlength: 140, placeholder: s.type === 'places' ? 'Name of the place' : s.type === 'lists' ? 'Top 5 albums this month' : SHELF[s.type] ? '' : 'Optional' });
   title.addEventListener('input', () => (s.title = title.value));
@@ -2301,7 +2302,8 @@ function viewEditor() {
   body.value = s.body;
   body.addEventListener('input', () => (s.body = body.value));
   wrap.append(field(s.type === 'places' || SHELF[s.type] ? 'Review' : s.type === 'quotes' ? 'Quote' : 'Text', body, 'Markdown works: *italic*, **bold**, [links](https://…), "> " for a quote, "1." for a list.'));
-  wrap.append(photoPicker(s, rerender));
+  const photosEl = photoPicker(s, rerender);
+  wrap.append(photosEl);
 
   const date = h('input', { class: 'input', type: 'datetime-local', value: s.date });
   date.addEventListener('change', () => (s.date = date.value));
@@ -2374,7 +2376,59 @@ function viewEditor() {
     forgetDraft();
     finishEditing();
   } }, s.key ? 'Cancel' : 'Discard'), rawBtn, saveBtn));
-  return wrap;
+  return editorLayout === 'card' ? asCard(s, wrap, { title, body, placeEl, photosEl }) : wrap;
+}
+
+// ---------- writing inside the post itself (on the site, in owner mode) ----------
+// The same editor, laid out as the post it makes: the kind of post and the day in its head,
+// the title and words where they'll be read (in the post's own type), the photos under them,
+// and everything else in a tray of folds underneath, with Publish at the foot.
+let editorLayout = 'form';
+function asCard(s, wrap, { title, body, placeEl, photosEl }) {
+  const kids = [...wrap.children];
+  const pick = (test) => kids.filter(test);
+  const isFold = (el) => el.matches('details, .memory-pick, .keep-panel, .floppy-panel');
+  const banner = pick((el) => el.classList.contains('draft-banner'));
+  const typeRow = pick((el) => el.classList.contains('type-tabs'));
+  const actions = pick((el) => el.classList.contains('ed-actions'));
+  const titleField = title.closest('.field');
+  const bodyField = body.closest('.field');
+  const folds = pick(isFold);
+  const used = new Set([...banner, ...typeRow, ...actions, ...folds, titleField, bodyField, placeEl, photosEl].filter(Boolean));
+  const essentials = kids.filter((el) => !used.has(el) && !(el.matches('p.hint') && /^Editing /.test(el.textContent)));
+  // Words where they'll be read: no labels, the post's own font, growing as you write.
+  title.classList.add('ied-title');
+  title.setAttribute('aria-label', titleField.querySelector('label')?.textContent || 'Title');
+  if (!title.placeholder || title.placeholder === 'Optional') title.placeholder = s.type === 'places' ? 'Name of the place' : SHELF[s.type] ? SHELF[s.type].titleLabel : 'Title (optional)';
+  photosEl?.classList.add('ied-photos');
+  body.classList.add('ied-text');
+  body.setAttribute('aria-label', bodyField.querySelector('label')?.textContent || 'Text');
+  body.rows = 3;
+  const grow = () => {
+    body.style.height = 'auto';
+    body.style.height = Math.max(90, body.scrollHeight + 2) + 'px';
+  };
+  body.addEventListener('input', grow);
+  requestAnimationFrame(grow);
+  if (s.font && FONT_FAMILIES[s.font]) body.style.fontFamily = title.style.fontFamily = FONT_FAMILIES[s.font];
+  const when = new Date(fromInputDate(s.date).replace(' ', 'T'));
+  const head = h(
+    'header',
+    { class: 'card-head ied-head' },
+    h('span', { class: 'ied-badge' }, s.key ? 'Editing' : 'New'),
+    h('strong', null, TYPE_LABEL[s.type] || 'Post'),
+    h('span', { class: 'ied-when' }, Number.isNaN(+when) ? '' : when.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }))
+  );
+  return h(
+    'article',
+    { class: 'card okit ied', 'data-ied': s.type, 'aria-label': s.key ? `Editing ${s.title || TYPE_LABEL[s.type]}` : `New ${(TYPE_LABEL[s.type] || 'post').toLowerCase()}` },
+    head,
+    ...banner,
+    ...typeRow,
+    h('div', { class: 'card-body ied-body' }, placeEl, title, ...essentials, body, h('span', { class: 'ied-hint' }, 'Markdown works: *italic*, **bold**, [links](https://…)'), photosEl),
+    folds.length ? h('div', { class: 'ied-tray', role: 'group', 'aria-label': 'More for this post' }, ...folds) : null,
+    ...actions
+  );
 }
 
 
@@ -3923,7 +3977,8 @@ async function saveKeepsakes(k, saved, btn) {
 // to draw (a window on a computer, a sheet on a phone), and hears when things change.
 export const kit = {
   // Where to draw from now on: the page area, and (if wanted) the section and page bars.
-  attach({ panel: el, tabs = null, sections = null, toast: t = null, changed = null, editorDone = null, go: g = null } = {}) {
+  attach({ panel: el, tabs = null, sections = null, toast: t = null, changed = null, editorDone = null, go: g = null, layout = 'form' } = {}) {
+    editorLayout = layout;
     panel = el;
     tabsEl = tabs;
     sectionsEl = sections;

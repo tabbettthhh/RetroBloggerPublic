@@ -74,3 +74,113 @@ html.owner-preview .okit-hidden-post { outline: 0; }
 /* Inside a window or sheet, the page area scrolls, with Publish kept in reach at its foot. */
 .okit-host .admin-body { overflow-y: auto !important; overscroll-behavior: contain; }
 .okit-host:not(:has(.admin-sections)) .ed-actions { bottom: 0 !important; }
+
+/* ---------- Writing inside the post ----------
+   The post you're writing is a real card (the theme dresses it like the rest), clearly marked as
+   being written: an orange edge, "Editing" or "New" in its head. Its title and words are written
+   where they'll be read, in its own type; everything else is in the tray underneath. */
+.ied-host { scroll-margin-top: 12px; }
+.card.ied { overflow: visible; outline: 2px solid #f2861e; outline-offset: 2px; box-shadow: 0 8px 24px rgba(0, 0, 0, .18); }
+.ied-head { display: flex; align-items: center; gap: 8px; }
+.ied-head strong { flex: 1; }
+.ied-badge { padding: 1px 8px; border-radius: 9px; color: #fff; background: #f2861e; font: bold 11px/1.6 Tahoma, sans-serif; }
+.ied-when { font-size: 12px; opacity: .75; }
+.card.ied .type-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 8px 12px 0; }
+.card.ied .draft-banner { margin: 8px 12px 0; }
+.ied-body { display: flex; flex-direction: column; gap: 10px; }
+.card.ied .ied-title, .card.ied .ied-text { width: 100%; box-sizing: border-box; margin: 0; padding: 4px 2px; border: 0; border-bottom: 1px dashed rgba(0, 0, 0, .25); border-radius: 0; color: inherit; background: transparent; box-shadow: none; resize: none; outline: none; }
+.card.ied .ied-title { font: bold 19px/1.25 var(--font-xp-title, inherit); }
+.card.ied .ied-text { min-height: 90px; font: inherit; font-size: 15px; line-height: 1.5; border-bottom-color: transparent; overflow: hidden; }
+.card.ied .ied-title:focus, .card.ied .ied-text:focus { border-bottom: 1px solid #f2861e; background: rgba(242, 134, 30, .05); }
+.card.ied .ied-title::placeholder, .card.ied .ied-text::placeholder { color: rgba(0, 0, 0, .38); font-weight: normal; }
+.ied-hint { margin-top: -6px; font-size: 11px; opacity: .6; }
+.ied-tray { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-top: 1px dashed rgba(0, 0, 0, .18); background: rgba(0, 0, 0, .025); }
+.card.ied .ed-actions { position: sticky; bottom: 0; margin: 0; border-radius: 0 0 4px 4px; }
+.mode-phone .card.ied .ed-actions { bottom: 0; }
+[data-theme="dark"] .card.ied .ied-title::placeholder, [data-theme="dark"] .card.ied .ied-text::placeholder { color: rgba(255, 255, 255, .4); }
+[data-theme="dark"] .ied-tray { background: rgba(255, 255, 255, .04); }
+/* Photos, as a strip under the words: no label, the long note about filters left to the filters. */
+.card.ied .ied-photos > .label, .card.ied .ied-photos > .hint { display: none; }
+
+
+/* ---------- In the theme's colours, never flat ----------
+   Everything of yours is drawn with the theme's own colours (the bars, the highlight, the accent,
+   the paper and the ink that every theme sets), and with the same light as the rest of the site:
+   glossy, bevelled, standing up off the page and pressing in. Classic, Matcha, Empire, a festive
+   day or dark mode: your tools change with it. */
+:root {
+  --ok-bar: var(--sk-bar, #0054e3);
+  --ok-bar-hi: var(--sk-bar-hi, #3d8af7);
+  --ok-bar-lo: var(--sk-bar-lo, #003399);
+  --ok-bar-text: var(--sk-bar-text, #fff);
+  --ok-sel: var(--sk-sel, #316ac5);
+  --ok-sel-text: var(--sk-sel-text, #fff);
+  --ok-accent: var(--sk-accent, #f2861e);
+  --ok-paper: var(--sk-paper, #ece9d8);
+  --ok-line: var(--sk-line, #c7c3ae);
+  --ok-ink: var(--sk-ink, #14254d);
+  --ok-gloss: linear-gradient(180deg, rgba(255, 255, 255, .55), rgba(255, 255, 255, .12) 48%, rgba(0, 0, 0, 0) 52%, rgba(0, 0, 0, .1));
+  --ok-bevel: inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -1px 0 rgba(0, 0, 0, .18);
+  --ok-lift: 0 1px 2px rgba(0, 0, 0, .3), 0 3px 8px rgba(0, 0, 0, .12);
+  --ok-press: inset 0 2px 4px rgba(0, 0, 0, .3);
+}
+
+/* + and you, in the bars. */
+:root .okit-plus { color: #fff; border-color: color-mix(in srgb, var(--ok-accent) 60%, #000); background: var(--ok-gloss), var(--ok-accent); box-shadow: var(--ok-bevel), var(--ok-lift); text-shadow: 0 -1px 0 rgba(0, 0, 0, .3); }
+:root .okit-plus:active { box-shadow: var(--ok-press); }
+:root .okit-me { color: var(--ok-bar-text); border-color: rgba(255, 255, 255, .45); background: var(--ok-gloss), color-mix(in srgb, var(--ok-bar-hi) 75%, transparent); box-shadow: var(--ok-bevel), 0 1px 2px rgba(0, 0, 0, .25); }
+:root .okit-me:hover { background: var(--ok-gloss), var(--ok-bar-hi); }
+:root .okit-face { background: radial-gradient(circle at 35% 30%, #fff, color-mix(in srgb, var(--ok-bar-hi) 35%, #fff)); }
+:root .okit-me.in-dock { background: var(--ok-gloss), color-mix(in srgb, var(--ok-bar-hi) 45%, #fff); }
+:root .okit-float { background: var(--ok-gloss), color-mix(in srgb, var(--ok-bar) 85%, transparent); box-shadow: var(--ok-bevel), 0 6px 18px rgba(0, 0, 0, .35); border: 1px solid rgba(255, 255, 255, .35); }
+
+/* ⋯ on your posts: a small raised button in the card's own colours. */
+:root .okit-more { color: var(--ok-ink); border-color: var(--ok-line); background: var(--ok-gloss), var(--ok-paper); box-shadow: var(--ok-bevel), 0 1px 2px rgba(0, 0, 0, .2); }
+:root .okit-more:hover, :root .okit-more:focus-visible { border-color: var(--ok-sel); background: var(--ok-gloss), color-mix(in srgb, var(--ok-sel) 18%, var(--ok-paper)); }
+:root .okit-more:active { box-shadow: var(--ok-press); }
+:root .okit-state { color: var(--ok-ink); background: var(--ok-gloss), color-mix(in srgb, var(--ok-line) 70%, #fff); box-shadow: var(--ok-bevel); }
+:root .okit-state.later { background: var(--ok-gloss), color-mix(in srgb, var(--ok-accent) 30%, #fff); }
+:root .okit-state.friends { background: var(--ok-gloss), color-mix(in srgb, var(--ok-sel) 25%, #fff); }
+:root .okit-hidden-post { outline-color: color-mix(in srgb, var(--ok-sel) 55%, transparent); }
+
+/* Menus: like the theme's Start menu, a coloured strip down the side. */
+:root .okit-menu { padding: 4px 4px 4px 30px; border: 1px solid var(--ok-bar-lo); border-radius: 6px; color: var(--ok-ink); background: linear-gradient(90deg, var(--ok-bar) 0 26px, transparent 26px), linear-gradient(180deg, #fff, color-mix(in srgb, var(--ok-paper) 45%, #fff)); box-shadow: var(--ok-bevel), 0 6px 18px rgba(0, 0, 0, .3); }
+:root .okit-menu button { margin-left: -26px; padding-left: 4px; color: var(--ok-ink); border-radius: 4px; }
+:root .okit-menu .okit-mi { width: 22px; color: #fff; filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .3)); }
+:root .okit-menu button:hover, :root .okit-menu button:focus-visible { color: var(--ok-sel-text); background: var(--ok-gloss), var(--ok-sel); }
+:root .okit-menu hr { margin-left: 4px; border-top-color: var(--ok-line); }
+
+:root .okit-toast { color: var(--ok-ink); border-color: var(--ok-bar-lo); background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--ok-paper) 60%, #fff)); box-shadow: var(--ok-bevel), 0 6px 16px rgba(0, 0, 0, .3); }
+:root .okit-preview { background: var(--ok-gloss), var(--ok-bar); box-shadow: var(--ok-bevel), 0 6px 16px rgba(0, 0, 0, .3); }
+:root .okit-preview button { color: var(--ok-bar); box-shadow: var(--ok-bevel), 0 1px 2px rgba(0, 0, 0, .25); }
+
+/* The post you're writing: edged in the theme's accent. */
+:root .card.ied { outline-color: var(--ok-accent); }
+:root .ied-badge { background: var(--ok-gloss), var(--ok-accent); box-shadow: var(--ok-bevel); }
+:root .card.ied .ied-title:focus, :root .card.ied .ied-text:focus { border-bottom-color: var(--ok-accent); background: color-mix(in srgb, var(--ok-accent) 6%, transparent); }
+
+/* The controls in your windows, sheets and the post you're writing. */
+:root .okit .btn { border-color: color-mix(in srgb, var(--ok-bar-lo) 70%, #000); border-radius: 5px; color: var(--ok-ink); background: var(--ok-gloss), linear-gradient(180deg, #fff, var(--ok-paper)); box-shadow: var(--ok-bevel), 0 1px 2px rgba(0, 0, 0, .18); }
+:root .okit .btn:hover { box-shadow: var(--ok-bevel), 0 0 0 2px color-mix(in srgb, var(--ok-accent) 55%, transparent); }
+:root .okit .btn:active { box-shadow: var(--ok-press); translate: 0 1px; }
+:root .okit .btn.go { color: #fff; border-color: color-mix(in srgb, var(--ok-sel) 60%, #000); background: var(--ok-gloss), var(--ok-sel); text-shadow: 0 -1px 0 rgba(0, 0, 0, .3); }
+:root .okit .btn.danger { color: #9c2414; }
+:root .okit :is(.input, .select, .textarea):not(.ied-title):not(.ied-text) { border-color: var(--ok-line); border-radius: 5px; background: #fff; box-shadow: inset 0 2px 3px rgba(0, 0, 0, .12), 0 1px 0 rgba(255, 255, 255, .6); }
+:root .okit :is(.input, .select, .textarea):not(.ied-title):not(.ied-text):focus { border-color: var(--ok-sel); outline: 2px solid color-mix(in srgb, var(--ok-sel) 35%, transparent); outline-offset: 0; }
+:root .okit :is(.chip-btn, .type-tabs button) { color: var(--ok-ink); border: 1px solid var(--ok-line); background: var(--ok-gloss), linear-gradient(180deg, #fff, color-mix(in srgb, var(--ok-paper) 70%, #fff)); box-shadow: var(--ok-bevel), 0 1px 2px rgba(0, 0, 0, .15); }
+:root .okit :is(.chip-btn, .type-tabs button)[aria-pressed="true"] { color: var(--ok-sel-text); border: 1px solid color-mix(in srgb, var(--ok-sel) 70%, #000); background: var(--ok-gloss), var(--ok-sel); box-shadow: var(--ok-press); }
+:root .okit :is(.ed-fold, .keep-panel, .floppy-panel, .memory-pick) { border-color: var(--ok-line); border-radius: 8px; background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--ok-paper) 40%, #fff)); box-shadow: var(--ok-bevel), 0 1px 3px rgba(0, 0, 0, .1); }
+:root .okit .ed-fold > summary b, :root .okit legend, :root .okit .field > label { color: color-mix(in srgb, var(--ok-sel) 70%, var(--ok-ink)); }
+:root .okit .ed-actions { border-top-color: var(--ok-line); background: linear-gradient(180deg, color-mix(in srgb, var(--ok-paper) 30%, #fff), var(--ok-paper)); box-shadow: 0 -4px 10px rgba(0, 0, 0, .08); }
+:root .okit .sec-btn { color: var(--ok-ink); border-color: var(--ok-line); background: var(--ok-gloss), linear-gradient(180deg, #fff, var(--ok-paper)); box-shadow: var(--ok-bevel), 0 1px 2px rgba(0, 0, 0, .15); }
+:root .okit .sec-btn[aria-current="page"] { color: var(--ok-sel-text); border-color: color-mix(in srgb, var(--ok-sel) 70%, #000); background: var(--ok-gloss), var(--ok-sel); }
+:root .okit .admin-tabs button { background: var(--ok-gloss), linear-gradient(180deg, #fff, var(--ok-paper)); }
+:root .okit .admin-tabs button[aria-selected="true"] { border-top-color: var(--ok-accent); background: #fff; }
+:root .okit .admin-body { border-color: var(--ok-line); }
+:root .okit-host { background: var(--ok-paper); }
+
+/* Dark mode: the same, by night. */
+:root[data-theme="dark"] :is(.okit-menu, .okit-toast) { color: #eee; background: linear-gradient(90deg, var(--ok-bar) 0 26px, transparent 26px), #2a2a2e; }
+:root[data-theme="dark"] .okit-toast { background: #2a2a2e; }
+:root[data-theme="dark"] .okit-menu button { color: #eee; }
+:root[data-theme="dark"] .okit-more { color: #eee; background: var(--ok-gloss), #3a3a40; border-color: #555; }
