@@ -208,6 +208,29 @@ await test('your site has a Friends tab with their posts, unless you turn it off
   assert(!(await overview()).files.some((f) => f.key.startsWith('data/_')), 'friends files never listed');
 });
 
+await test('a friends-only post: not on their site, nor on yours; only in your back office', async () => {
+  const at = new Date(Date.now() - 5 * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
+  await fetch(`${BASE2}/admin/api/upload?key=thoughts/just-us/c.jpg`, { method: 'PUT', body: fs.readFileSync(PHOTOS[0]) });
+  await fetch(`${BASE2}/admin/api/file?key=thoughts/just-us.md`, { method: 'PUT', body: `---\ndate: ${at}\ntitle: Just for friends\nfriends_only: true\nphotos: [c.jpg]\n---\nSmall news.\n` });
+  const theirs = await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json();
+  assert(!theirs.posts.some((p) => p.title === 'Just for friends'), 'not on their own site');
+  eq((await signed(BASE2, 'GET', '/api/friends/media?key=' + encodeURIComponent('thoughts/just-us/c.jpg'), FAKE, secret)).status, 200, 'its photo is shared with friends');
+  await post_(api, 'friends/refresh');
+  const mine = (await api('friends')).friends[0].cache.feed.posts.find((p) => p.title === 'Just for friends');
+  assert(mine && mine.friends_only, 'in my feed from them, marked');
+  const d = await publicData();
+  assert(!d.friendPosts.some((p) => p.title === 'Just for friends'), 'not on my site’s Friends tab');
+  eq((await fetch(BASE + '/friends-media/localhost_8801/thoughts/just-us/c.jpg')).status, 404, 'its photo isn’t for my visitors');
+  const page = await adminPage();
+  await page.locator('.admin-tabs button', { hasText: 'Friends' }).click();
+  const card = page.locator('.fr-feed .fr-post', { hasText: 'Just for friends' });
+  await card.waitFor();
+  assert((await card.innerText()).includes('Friends only'), 'marked in the back office');
+  eq(await card.locator('.fr-open').count(), 0, 'no link to a page that isn’t public');
+  assert(!page.errors.length, page.errors.join('; '));
+  await page.close();
+});
+
 await test('you choose who sees your friends, and friends choose whether you can show their posts', async () => {
   const photo = (await publicData()).friendPosts[0].photos[0];
   // Just the friends list: no posts, no photos, no Friends tab.

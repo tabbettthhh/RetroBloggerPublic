@@ -16,7 +16,7 @@
 //   before it switches, and still recognises the old one.
 // - When something friends see changes (a post published, edited or deleted, your status, a
 //   scheduled post going live), your site tells each friend's site straight away, and theirs
-//   reads your feed again. Every 10 minutes each site also reads its friends' feeds, in case
+//   reads your feed again. Every 20 minutes each site also reads its friends' feeds, in case
 //   one was offline when told. Your site keeps a copy of each feed. Their photos are fetched
 //   through your own site, so your browser never talks to theirs.
 // - Secrets and copies of feeds live under data/_ in your bucket, which the file list, the
@@ -204,7 +204,7 @@ export async function friendsApi(request, env, path, deps) {
 
   // Your friend feed: who you are, how you are, and your recent posts.
   if (path === '/api/friends/feed' && method === 'GET') {
-    const data = await deps.buildEverything(env);
+    const data = await deps.buildEverything(env, { forFriends: true });
     return reply({ ...friendFeed(data, store.me || new URL(request.url).origin), share: store.letShare });
   }
 
@@ -497,7 +497,7 @@ export async function refreshFriends(env, only) {
 export async function shareNews(env, buildEverything) {
   const store = await loadFriends(env);
   if (!store.me || !store.friends.length) return { told: 0, of: 0 };
-  const data = await buildEverything(env);
+  const data = await buildEverything(env, { forFriends: true });
   const mark = await sha256(JSON.stringify({ ...friendFeed(data, store.me), share: store.letShare }));
   const before = await env.CONTENT.get(SENT).then((o) => (o ? o.text() : ''), () => '');
   if (before === mark) return { told: 0, of: store.friends.length };
@@ -677,6 +677,8 @@ export async function publicFriends(env) {
     if (look) looks[look] = feed.cards_look;
     const from = look ? { ...who, look } : who;
     for (const p of feed?.posts || []) {
+      // (Friends-only posts are for you, in your back office: never on your site.)
+      if (p.friends_only) continue;
       const photos = p.photos.map((k) => `/friends-media/${encodeURIComponent(f.key)}/${k.split('/').map(encodeURIComponent).join('/')}`);
       // (In full: drawn as it looks on their site, with these photos and their own writing.)
       const full = p.full ? { ...p.full, title: words(p.title), date: words(p.date), ts: p.ts, html: p.html, excerpt: p.excerpt, photos, captions: p.captions || [] } : null;
@@ -705,7 +707,8 @@ export async function friendPhotoForVisitor(env, key, photoKey) {
   const friend = store.friends.find((f) => f.key === key);
   const cached = friend ? (await readCache(env, key))?.feed : null;
   const feed = postsShown(store, cached) ? cached : null;
-  if (!feed || !(feed.posts || []).some((p) => p.photos.includes(photoKey))) return new Response('Not found', { status: 404 });
+  // (Not a friends-only post's: those are for you, in the back office.)
+  if (!feed || !(feed.posts || []).some((p) => p.photos.includes(photoKey) && !p.friends_only)) return new Response('Not found', { status: 404 });
   return friendPhoto(env, key, photoKey);
 }
 

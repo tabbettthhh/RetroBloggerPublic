@@ -45,7 +45,7 @@ export default {
     }
     return finish(res, new URL(request.url).pathname);
   },
-  // Every 10 minutes: read your friends' sites for new posts and statuses (in case one was
+  // Every 20 minutes: read your friends' sites for new posts and statuses (in case one was
   // offline when it had news), and tell them about a post of yours that has just gone live.
   async scheduled(event, env, ctx) {
     ctx.waitUntil(
@@ -303,7 +303,7 @@ async function readText(env, key) {
 }
 
 const PARSED_CACHE = 'data/_parsed.json';
-const PARSED_VERSION = 30; // bump when buildPost changes shape
+const PARSED_VERSION = 31; // bump when buildPost changes shape
 
 // "reading [book]" (or [film], [podcast], [music]) becomes "reading The Remains of the Day" while a book is marked as reading.
 function fillStatus(status, posts) {
@@ -321,7 +321,9 @@ function tzOffset(env) {
   return env.TIMEZONE || 'Europe/London';
 }
 
-async function buildEverything(env, { includeHidden = false } = {}) {
+// includeHidden: everything, for the back office. forFriends: what's live, friends-only posts too
+// (for your friends' sites). Otherwise: what the public sees.
+async function buildEverything(env, { includeHidden = false, forFriends = false } = {}) {
   const tz = tzOffset(env);
   const objects = await listAll(env);
   const mdKeys = objects.map((o) => o.key).filter((k) => k.endsWith('.md'));
@@ -361,7 +363,7 @@ async function buildEverything(env, { includeHidden = false } = {}) {
   const posts = [];
   for (const k of postKeys) {
     const post = cache[k]?.post;
-    if (post && (includeHidden || isVisible(post, now))) posts.push(post);
+    if (post && (includeHidden || (isVisible(post, now) && (forFriends || !post.friends_only)))) posts.push(post);
   }
   posts.sort((a, b) => b.ts - a.ts || b.slug.localeCompare(a.slug));
 
@@ -471,7 +473,14 @@ async function media(request, env, path) {
   } catch {
     return new Response('Bad path', { status: 400 });
   }
+  // A friends-only post's photos aren't for the public (the back office still sees them).
+  const [type, slug] = key.split('/');
+  if (type && slug && (await friendsOnlyPost(env, type, slug)) && !(await adminCheck(request, env)).ok) return new Response('Not found', { status: 404 });
   return mediaFor(env, key, request.method === 'HEAD');
+}
+async function friendsOnlyPost(env, type, slug) {
+  const { posts } = await buildEverything(env, { forFriends: true });
+  return posts.some((p) => p.type === type && p.slug === slug && p.friends_only);
 }
 
 // For a friend's site: a photo only if it belongs to a post that's published (not a draft, not
@@ -479,7 +488,7 @@ async function media(request, env, path) {
 async function friendMedia(env, key) {
   const [type, slug, file, more] = String(key).split('/');
   if (more !== undefined) return new Response('Not found', { status: 404 });
-  const { posts } = await buildEverything(env);
+  const { posts } = await buildEverything(env, { forFriends: true });
   const post = posts.find((x) => x.type === type && x.slug === slug);
   if (!post || !post.files.includes(file)) return new Response('Not found', { status: 404 });
   return mediaFor(env, key);

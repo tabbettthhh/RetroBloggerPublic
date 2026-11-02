@@ -19,6 +19,7 @@ const AWKWARD = {
   'quotes/2026-08-14-quote.md': '---\ndate: 2026-08-14 09:00\nsource: "Author, Book: Subtitle"\n---\n> A quote.\n',
   'lists/2026-08-15-list.md': '---\ndate: 2026-08-15 09:00\ntitle: Top 3\npinned: true\n---\n1. One\n2. Two\n3. Three\n',
   'thoughts/2026-08-16-draft.md': '---\ndate: 2026-08-16 09:00\ndraft: true\n---\nA draft.\n',
+  'thoughts/2026-08-18-friends.md': '---\ndate: 2026-08-18 09:00\ntitle: Just for friends\nfriends_only: true\n---\nOnly friends see this.\n',
   'thoughts/2026-08-17-extras.md': '---\ndate: 2026-08-17 09:00\ntitle: Extras\ntags: [a, b]\nmeta:\n  source: notebook\n  pages: 3\nvisible: false\nscore: 0\n---\nExtra fields.\n'
 };
 

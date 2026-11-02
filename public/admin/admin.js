@@ -167,6 +167,7 @@ function splitFM(text) {
 function status(p) {
   if (p.error) return ['error', 'Problem'];
   if (p.draft) return ['draft', 'Draft'];
+  if (p.friends_only && !(p.ts > data.now)) return ['friends', 'Friends only'];
   if (p.ts > data.now) return ['later', 'Scheduled'];
   return ['', 'Live'];
 }
@@ -616,6 +617,7 @@ async function edit(p) {
     body: p.body,
     draft: p.draft,
     pinned: !!p.pinned,
+    friends_only: !!p.friends_only,
     profile: !!p.profile,
     font: p.font || '',
     card: p.card || '',
@@ -764,6 +766,7 @@ function buildText(s) {
   if (s.type === 'places') fm.floppy_journal = one(clean(s.floppy_journal));
   fm.draft = s.draft;
   fm.pinned = s.pinned;
+  fm.friends_only = s.friends_only || null;
   fm.font = s.font || null;
   // How its card is dressed, and a ribbon of its own (only what's been chosen is written).
   fm.card = s.card || null;
@@ -1855,6 +1858,9 @@ function viewEditor() {
   date.addEventListener('change', () => (s.date = date.value));
   const draft = h('input', { type: 'checkbox', checked: s.draft });
   draft.addEventListener('change', () => (s.draft = draft.checked));
+  // Friends only: not on the site at all; your friends see it in their back office.
+  const only = h('input', { type: 'checkbox', checked: !!s.friends_only });
+  only.addEventListener('change', () => (s.friends_only = only.checked));
   const pin = h('input', { type: 'checkbox', checked: s.pinned });
   pin.addEventListener('change', () => (s.pinned = pin.checked));
   wrap.append(h('label', { class: 'row' }, pin, '📌 Pin it to the top of the feed and its section'));
@@ -1867,7 +1873,7 @@ function viewEditor() {
   wrap.append(h('label', { class: 'row' + (s.photos.length ? '' : ' muted') }, grid, s.photos.length ? '▦ Show it on my profile grid (the About page)' : '▦ Show it on my profile grid (add a photo first)'));
   const coverPick = s.profile ? gridCoverPicker(s, rerender) : null;
   if (coverPick) wrap.append(coverPick);
-  wrap.append(field('Date and time', date, SHELF[s.type] ? 'When you finished it, started it or added it. A time in the future publishes it later.' : 'Pick a time in the future to publish it later.'), h('label', { class: 'row' }, draft, 'Keep as a draft (only you can see it)'));
+  wrap.append(field('Date and time', date, SHELF[s.type] ? 'When you finished it, started it or added it. A time in the future publishes it later.' : 'Pick a time in the future to publish it later.'), h('label', { class: 'row' }, draft, 'Keep as a draft (only you can see it)'), h('label', { class: 'row' }, only, '👥 Friends only (not on your site: only your friends see it, in their back office)'));
 
   const saveBtn = h('button', { type: 'button', class: 'btn go' }, s.key ? 'Save changes' : 'Publish');
   saveBtn.addEventListener('click', () => {

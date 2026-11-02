@@ -61,6 +61,7 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .pill { font-size: 11px; padding: 2px 8px; border-radius: 9px; background: #e3f3df; color: #1d5a1d; white-space: nowrap; }
 .pill.draft { background: #eee; color: #444; }
 .pill.later { background: #fff1d6; color: #7a4a00; }
+.pill.friends { background: #e6ecff; color: #22357a; }
 .pill.error { background: #fde3df; color: #8c1f12; }
 .section-title { margin: 6px 0 0; font-size: 14px; color: #0d3a9a; }
 .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 9999; max-width: calc(100% - 32px); padding: 10px 14px; border: 1px solid #000; border-radius: 8px; background: #ffffe1; box-shadow: 2px 3px 6px rgba(0,0,0,.35); font-size: 13px; }
