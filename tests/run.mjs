@@ -24,7 +24,7 @@ const GROUPS = {
   server: ['server', 'updater', 'comments'],
   photos: ['photos'],
   import: ['import'],
-  journal: ['journal'],
+  journal: ['journal', 'atlas'],
   pages: ['fuzz', 'interact'],
   // Two sites at once (a second on port 8801), becoming friends.
   friends: ['friends'],

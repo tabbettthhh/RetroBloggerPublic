@@ -34,7 +34,17 @@ function whenAttached(el, fn) {
   requestAnimationFrame(tick);
 }
 
-function pinIcon(style, color) {
+function pinIcon(style, color, label = '') {
+  // The travel board: a glossy pushpin in the place's colour, with a little handwritten tag.
+  if (style === 'board') {
+    return L.divIcon({
+      className: 'pin-board',
+      html: `<span class="bpin" style="--c:${color}"><i></i></span>${label ? `<span class="btag">${esc(label)}</span>` : ''}`,
+      iconSize: [24, 34],
+      iconAnchor: [9, 31],
+      popupAnchor: [2, -28]
+    });
+  }
   if (style === 'journal') {
     return L.divIcon({
       className: 'pin-journal',
@@ -56,7 +66,8 @@ function pinIcon(style, color) {
 // places: [{lat, lon, title, category, href}]; focus: which of them to open the map on, with
 // its label showing (-1 for none).
 export function mountMap(el, opts = {}) {
-  const { places = [], style = 'mac', interactive = true, zoom = 15, focus = -1 } = opts;
+  // strings: lists of [lat, lon] joined by a thread (a trip); card: the popup's HTML for a place.
+  const { places = [], style = 'mac', interactive = true, zoom = 15, focus = -1, strings = [], card = null, tags = false } = opts;
   el.classList.add('map', 'map-' + style);
   if (!window.L) {
     const wait = Object.assign(document.createElement('div'), { className: 'map-fallback', textContent: 'Unfolding the map…' });
@@ -85,9 +96,16 @@ export function mountMap(el, opts = {}) {
     });
     L.tileLayer(TILE_URL, { maxZoom: 19, attribution: ATTRIBUTION }).addTo(map);
     map.attributionControl.setPrefix(false);
+    // Red thread from pin to pin, in the order you went (under the pins, with its shadow).
+    for (const line of strings) {
+      if (line.length < 2) continue;
+      L.polyline(line, { color: 'rgba(0,0,0,.28)', weight: 3, interactive: false, className: 'thread-shadow', smoothFactor: 1.5 }).addTo(map);
+      L.polyline(line, { color: '#c0392b', weight: 2, interactive: false, className: 'thread', smoothFactor: 1.5 }).addTo(map);
+    }
     const markers = pts.map((p) => {
-      const m = L.marker([p.lat, p.lon], { icon: pinIcon(style, catColor(p.category)), title: p.title || '' }).addTo(map);
-      if (p.href) m.bindPopup(`<a class="map-pop" href="${esc(p.href)}">${esc(p.title || 'Open')}</a>${p.sub ? `<br><span>${esc(p.sub)}</span>` : ''}`);
+      const m = L.marker([p.lat, p.lon], { icon: pinIcon(style, catColor(p.category), tags ? p.title : ''), title: p.title || '', riseOnHover: true }).addTo(map);
+      if (card) m.bindPopup(card(p), { className: 'memory-pop', maxWidth: 240, minWidth: 200 });
+      else if (p.href) m.bindPopup(`<a class="map-pop" href="${esc(p.href)}">${esc(p.title || 'Open')}</a>${p.sub ? `<br><span>${esc(p.sub)}</span>` : ''}`);
       return m;
     });
     const at = pts.indexOf(places[focus]);

@@ -100,8 +100,8 @@ await test("a journal entry leads to its city's stamp and its pin on the map, an
   await phone.waitForTimeout(500);
   assert((await phone.evaluate(() => location.hash)) === '#/journal/2026-07-02-huge-rating', 'back did not return to the entry');
   await phone.locator('.journal-links a', { hasText: 'Map of everywhere' }).click();
-  await phone.waitForSelector('.finder-row.found');
-  assert(/Huge Rating/.test(await phone.locator('.finder-row.found').textContent()), 'the wrong place is selected');
+  await phone.waitForSelector('.board-row.found');
+  assert(/Huge Rating/.test(await phone.locator('.board-row.found').textContent()), 'the wrong place is selected');
   await phone.waitForSelector('.leaflet-popup-content', { timeout: 10000 });
   assert(/Huge Rating/.test(await phone.locator('.leaflet-popup-content').textContent()), 'the map did not open on the place');
   assert(!phone.errors.length, phone.errors.join('\n'));
