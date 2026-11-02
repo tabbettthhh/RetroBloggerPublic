@@ -159,9 +159,6 @@ body { --pen: #24305c; }
 .welcome { position: fixed; inset: 0; z-index: 8000; display: flex; flex-direction: column; color: #fff; background: #4a72d6; font-family: var(--font-xp); }
 .welcome-band { flex: none; height: 84px; background: #00309c; }
 .welcome-band.top { display: flex; justify-content: flex-end; align-items: flex-start; box-shadow: 0 2px 0 #8fb4ff; box-sizing: content-box; padding-top: var(--safe-top); }
-/* The owner's way into the back office: small and quiet in the corner, brighter on hover. */
-.welcome-owner { display: grid; place-items: center; width: 44px; height: 44px; margin: 8px 10px 0 0; border-radius: 6px; opacity: .45; transition: opacity .2s, background .2s; }
-.welcome-owner:hover, .welcome-owner:focus-visible { opacity: 1; background: rgba(255, 255, 255, .12); }
 .welcome-band.bottom { display: flex; align-items: center; gap: 12px; padding: 0 16px; box-shadow: 0 -2px 0 #f0a05a; padding-bottom: env(safe-area-inset-bottom); }
 .welcome-mid { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; padding: 30px 22px; background: radial-gradient(circle at 18% 10%, #8fb0f2 0%, #5a80dc 35%, #3f66c9 75%); }
 .welcome.overlay .welcome-mid { align-items: center; justify-content: center; }
@@ -178,6 +175,9 @@ body { --pen: #24305c; }
 .tile-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .tile-text strong { font-size: 19px; }
 .tile-text small { font-size: 12px; }
+.owner-tile { margin-top: -8px; text-decoration: none; }
+.tile-avatar.owner { background: linear-gradient(180deg, #cfe3ff, #6f9be6); }
+.tile-go.lock { background: linear-gradient(180deg, #8fb0f2, #2a4f9c); }
 .tile-go { width: 30px; height: 30px; border-radius: 6px; background: linear-gradient(180deg, #7ad66d, #2e9a2a); border: 1px solid #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
 .a2hs { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 10px; background: rgba(0,25,90,.35); border: 1px solid rgba(255,255,255,.3); }
 .a2hs span { display: flex; flex-direction: column; gap: 3px; }

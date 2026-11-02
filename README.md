@@ -35,7 +35,7 @@ If Cloudflare asks you to turn on **R2** (where your posts and photos are kept),
 
 ### Step 2: lock your back office (about ten minutes)
 
-The back office, at `/admin` on your site, is where you write posts and change everything. Until you lock it, it's shut for everyone, including you.
+The back office, at `/admin` on your site, is where you write posts and change everything. The welcome screen has your own account tile under **Visitor**, with your name (set in **Site & wishlist**) and a padlock. Tap it to sign in and go straight to the back office. Until you lock it, it's shut for everyone, including you; once it's locked, only you get past the sign-in.
 
 **Easiest way:** open your site, add `/admin` to the end of the address, and follow the steps on that page. It fills in your own site's address for you, and gives you a ready-made message for an AI helper.
 

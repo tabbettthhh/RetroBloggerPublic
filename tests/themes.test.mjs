@@ -343,13 +343,16 @@ await test('neutral themes and a plain pointer', async () => {
   await putFile('theme.md', '---\ntheme: classic\n---\n');
 });
 
-await test('the welcome screen has a quiet way into the back office', async () => {
+await test('the welcome screen: Visitor, and the owner’s own account tile into the back office', async () => {
+  const who = (await publicData()).site.owner || 'Owner';
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
   await page.goto(BASE + '/#/welcome');
-  const gear = page.getByRole('link', { name: 'Back office (for the owner)' });
-  await gear.waitFor();
-  eq(await gear.getAttribute('href'), '/admin/', 'links to the back office');
+  const owner = page.locator('.owner-tile');
+  await owner.waitFor();
+  assert((await owner.innerText()).includes(who), 'the owner’s name: ' + (await owner.innerText()));
+  eq(await owner.getAttribute('href'), '/admin/', 'into the back office');
+  eq(await page.locator('.welcome-band.top a, .welcome-band.top svg').count(), 0, 'no gear');
   await browser.close();
 });
 
