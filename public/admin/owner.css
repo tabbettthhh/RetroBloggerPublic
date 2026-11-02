@@ -1,0 +1,76 @@
+/* Owner mode: your tools on the site. Small, always visible, in the site's own style. */
+
+/* + for a new post, and you, in the taskbar. */
+.okit-plus, .okit-me { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid rgba(255, 255, 255, .55); color: #fff; font: inherit; cursor: pointer; }
+.okit-plus { width: 34px; height: 30px; align-self: center; margin-left: 6px; flex: none; border-radius: 6px; background: linear-gradient(180deg, #ffb35c, #f2861e 45%, #d9690a); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 1px 2px rgba(0, 0, 0, .35); }
+.okit-plus:hover { filter: brightness(1.08); }
+.okit-plus:active { box-shadow: inset 0 2px 3px rgba(0, 0, 0, .35); translate: 0 1px; }
+.okit-me { position: relative; height: 28px; align-self: center; padding: 0 8px 0 3px; margin-right: 4px; border-radius: 14px; background: rgba(255, 255, 255, .14); font-size: 12px; font-weight: bold; }
+.okit-me:hover { background: rgba(255, 255, 255, .26); }
+.okit-face { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(180deg, #e6f0ff, #9fc0f2); box-shadow: 0 0 0 1px #fff; }
+.okit-face svg { width: 16px; height: 16px; }
+.okit-name { max-width: 90px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.okit-badge { position: absolute; top: -5px; right: -5px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #e0301e; box-shadow: 0 0 0 1.5px #fff; font-size: 10px; line-height: 16px; text-align: center; }
+.okit-badge[hidden] { display: none; }
+@media (max-width: 520px) { .okit-me.in-tray .okit-name { display: none; } .okit-me.in-tray { padding: 0 3px; } }
+
+/* In the Mac dock: two more icons. */
+.okit-plus.in-dock, .okit-me.in-dock { width: 52px; height: 52px; margin: 0; padding: 0; border-radius: 12px; }
+.okit-me.in-dock { background: linear-gradient(180deg, #e6f0ff, #7aa2e6); }
+.okit-me.in-dock .okit-name { display: none; }
+.okit-me.in-dock .okit-face { width: 40px; height: 40px; box-shadow: none; background: none; }
+.okit-me.in-dock .okit-face svg { width: 30px; height: 30px; }
+
+/* Screens with no taskbar or dock: the same, floating at the bottom right. */
+.okit-float { position: fixed; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 7000; display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 24px; background: rgba(20, 30, 60, .72); backdrop-filter: blur(8px); box-shadow: 0 4px 14px rgba(0, 0, 0, .35); }
+.okit-float .okit-plus { width: 40px; height: 40px; margin: 0; border-radius: 50%; }
+.okit-float .okit-me { height: 36px; border-radius: 18px; }
+
+/* The ⋯ on each of your posts, and how a hidden one is marked. */
+.okit-more { display: inline-grid; place-items: center; width: 30px; height: 26px; margin-left: 6px; padding: 0; border: 1px solid rgba(0, 0, 0, .15); border-radius: 5px; color: #333; background: rgba(255, 255, 255, .85); cursor: pointer; flex: none; }
+.okit-more:hover, .okit-more:focus-visible { background: #fff; border-color: rgba(0, 0, 0, .35); }
+.okit-has-more { position: relative; }
+.okit-has-more > .okit-more { position: absolute; top: 6px; right: 6px; z-index: 5; }
+.okit-state { display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 9px; font: bold 11px/1.6 Tahoma, sans-serif; color: #444; background: #eee; white-space: nowrap; }
+.okit-state.later { color: #7a4a00; background: #fff1d6; }
+.okit-state.friends { color: #22357a; background: #e6ecff; }
+.okit-has-more > .okit-state { position: absolute; top: 8px; right: 44px; z-index: 5; }
+.okit-hidden-post { outline: 2px dashed rgba(120, 120, 140, .55); outline-offset: 2px; }
+
+/* Menus: the classic right-click menu. */
+.okit-menu { position: fixed; z-index: 2147482500; min-width: 210px; padding: 3px; border: 1px solid #7a7a7a; border-radius: 4px; background: #fff; box-shadow: 2px 3px 8px rgba(0, 0, 0, .35); font: 13px Tahoma, 'Segoe UI', sans-serif; }
+.okit-menu button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 32px; padding: 4px 10px; border: 0; border-radius: 2px; color: #111; background: none; text-align: left; font: inherit; cursor: pointer; }
+.okit-menu button:hover, .okit-menu button:focus-visible { color: #fff; background: #316ac5; outline: none; }
+.okit-menu button.danger { color: #b3261e; }
+.okit-menu button.danger:hover, .okit-menu button.danger:focus-visible { color: #fff; background: #b3261e; }
+.okit-menu hr { margin: 3px 6px; border: 0; border-top: 1px solid #ddd; }
+.okit-mi { width: 20px; text-align: center; }
+
+/* The window (computer) and sheet (phone) the back office opens in. */
+.okit-host { position: fixed; z-index: 2147482000; display: flex; flex-direction: column; margin: 0; overflow: hidden; }
+.okit-win { left: 50%; top: 4vh; translate: -50% 0; width: min(900px, 94vw); height: min(780px, 90vh); resize: both; box-shadow: 0 18px 50px rgba(0, 0, 0, .5); }
+.okit-sheet { inset: 0; border-radius: 0; border-width: 0; padding-top: env(safe-area-inset-top); animation: okit-up .22s ease-out; }
+@keyframes okit-up { from { translate: 0 30px; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .okit-sheet { animation: none; } }
+.okit-bar { cursor: default; user-select: none; }
+.okit-win .okit-bar { cursor: move; }
+.okit-ico { display: grid; place-items: center; width: 18px; color: #fff; }
+.okit-close { cursor: pointer; font: bold 15px/1 Tahoma, sans-serif; padding: 0; }
+.okit-host .admin-body { min-height: 0; }
+.okit-sheet .okit-close { width: 32px; height: 28px; }
+html.okit-open { overflow: hidden; }
+
+/* Telling you things. */
+.okit-toast { position: fixed; left: 50%; bottom: calc(64px + env(safe-area-inset-bottom)); z-index: 2147483100; max-width: min(520px, calc(100% - 24px)); padding: 10px 14px; border: 1px solid #000; border-radius: 8px; color: #111; background: #ffffe1; box-shadow: 2px 3px 8px rgba(0, 0, 0, .35); font: 13px Tahoma, sans-serif; translate: -50% 12px; opacity: 0; pointer-events: none; transition: opacity .2s, translate .2s; }
+.okit-toast.on { opacity: 1; translate: -50% 0; pointer-events: auto; }
+.okit-toast.err { background: #fde3df; border-color: #8c1f12; }
+
+/* Seeing it as a visitor: your tools step aside, and a banner says so. */
+html.owner-preview :is(.okit-plus, .okit-me, .okit-more, .okit-state, .okit-float) { display: none !important; }
+html.owner-preview .okit-hidden-post { outline: 0; }
+.okit-preview { position: fixed; left: 50%; top: calc(8px + env(safe-area-inset-top)); z-index: 2147483000; display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border-radius: 20px; color: #fff; background: rgba(20, 30, 60, .85); box-shadow: 0 4px 12px rgba(0, 0, 0, .35); font: 13px Tahoma, sans-serif; translate: -50% 0; }
+.okit-preview button { padding: 5px 12px; border: 0; border-radius: 14px; color: #1d3f8a; background: #fff; font: bold 12px Tahoma, sans-serif; cursor: pointer; }
+
+/* Inside a window or sheet, the page area scrolls, with Publish kept in reach at its foot. */
+.okit-host .admin-body { overflow-y: auto !important; overscroll-behavior: contain; }
+.okit-host:not(:has(.admin-sections)) .ed-actions { bottom: 0 !important; }

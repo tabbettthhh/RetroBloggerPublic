@@ -113,8 +113,8 @@
 [data-theme="dark"] .welcome-band.top { box-shadow: 0 2px 0 #4a4a4a; }
 [data-theme="dark"] .welcome-band.bottom { box-shadow: 0 -2px 0 var(--xd-orange); }
 [data-theme="dark"] .welcome-mid { background: radial-gradient(circle at 18% 10%, #4a4a4a 0%, #2c2c2c 35%, #191919 75%); }
-[data-theme="dark"] .visitor-tile { background: linear-gradient(90deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .02)); border-color: rgba(255, 255, 255, .25); }
-[data-theme="dark"] .visitor-tile:hover { background: linear-gradient(90deg, rgba(242, 138, 30, .3), rgba(242, 138, 30, .05)); }
+[data-theme="dark"] :is(.visitor-tile, .owner-tile) { background: linear-gradient(90deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .02)); border-color: rgba(255, 255, 255, .25); }
+[data-theme="dark"] :is(.visitor-tile, .owner-tile):hover { background: linear-gradient(90deg, rgba(242, 138, 30, .3), rgba(242, 138, 30, .05)); }
 [data-theme="dark"] .a2hs { background: rgba(0, 0, 0, .35); border-color: rgba(255, 255, 255, .2); }
 
 /* ---------- Mac: Graphite ---------- */

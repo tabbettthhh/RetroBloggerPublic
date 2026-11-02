@@ -35,7 +35,13 @@ If Cloudflare asks you to turn on **R2** (where your posts and photos are kept),
 
 ### Step 2: lock your back office (about ten minutes)
 
-The back office, at `/admin` on your site, is where you write posts and change everything. The welcome screen has your own account tile under **Visitor**, with your name (set in **Site & wishlist**) and a padlock. Tap it to sign in and go straight to the back office. Until you lock it, it's shut for everyone, including you; once it's locked, only you get past the sign-in.
+**Signing in as the owner.** The welcome screen has your own account tile under **Visitor**, with your name (set in **Site & wishlist**) and a padlock. Tap it and Cloudflare Access asks who you are. Once you're signed in, you come straight back to your site, and its owner tools are on it:
+- **The taskbar:** **+** next to Explore for a new post, and your own tile in the tray with your menu. On a phone they sit in the taskbar or the dock, or float at the bottom on screens that have neither.
+- **Your posts:** each one has a **⋯** menu (edit, pin, add to highlights, friends only, the profile grid, delete). Your drafts, scheduled and friends-only posts show too, marked so you can tell.
+- **Writing and the rest:** writing, and everything else the back office does, opens over the site in the **Control Panel**: a window on a computer, a sheet on a phone. Back or ✕ closes it.
+- **Your menu:** **View as a visitor** shows the site exactly as everyone else sees it, and **Sign out** signs you out.
+
+Visitors never see any of it, and never even download it: the owner's tools live behind the same lock as the back office. That lock is the back office, at `/admin` on your site. Until you set it up, it's shut for everyone, including you; once it's set up, only you get past the sign-in.
 
 **Easiest way:** open your site, add `/admin` to the end of the address, and follow the steps on that page. It fills in your own site's address for you, and gives you a ready-made message for an AI helper.
 

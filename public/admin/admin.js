@@ -12,10 +12,14 @@ import { OPTIONS, FONT_FAMILIES, resolveSkin } from '/js/skins.js';
 import { CARD_STYLES, RIBBONS, miniCard, mixMini, themeCard, ownRibbon, ensureOwnCardsCss } from '/js/card-dress.js';
 import { TOP_ROOM, setTopRoom, onHomeScreen } from '/js/top-room.js';
 
-const panel = document.getElementById('panel');
-const tabsEl = document.querySelector('.admin-tabs');
-const sectionsEl = document.querySelector('.admin-sections');
-const toastEl = document.querySelector('.toast');
+// Where it all draws. On the back office's own page (the safety net), its page; on the site,
+// in owner mode, wherever the site puts it (see kit at the end, and /admin/owner.js).
+let panel = document.getElementById('panel');
+let tabsEl = document.querySelector('.admin-tabs');
+let sectionsEl = document.querySelector('.admin-sections');
+let toastEl = document.querySelector('.toast');
+// What the site wants to hear: everything changed (after a save), an editor finished, a toast.
+const hooks = { changed: null, editorDone: null, toast: null, go: null };
 
 let data = null;
 let tab = 'posts';
@@ -97,6 +101,7 @@ const today = () => nowLocal().slice(0, 10);
 
 let toastTimer;
 function toast(msg, err = false) {
+  if (hooks.toast) return hooks.toast(msg, err);
   toastEl.textContent = msg;
   toastEl.classList.toggle('err', err);
   toastEl.hidden = false;
@@ -107,8 +112,14 @@ function toast(msg, err = false) {
 async function refresh() {
   data = await api('overview');
   registerCategories(data.categories);
-  setTopRoom(data.site?.top_room);
+  if (!hooks.changed) setTopRoom(data.site?.top_room);
   drawTabs();
+  hooks.changed?.(data);
+}
+// An editor's done (saved, cancelled or thrown away): on the site, the site takes over again.
+function finishEditing() {
+  if (hooks.editorDone) return hooks.editorDone();
+  go('posts');
 }
 
 function nowLocal() {
@@ -206,6 +217,7 @@ function drawTabs() {
   // Five sections (a bar along the bottom on a phone); each shows a short row of its own pages.
   const here = sectionOf(tab);
   const counts = Object.fromEntries(defs.map(([id, , n]) => [id, n || 0]));
+  if (!sectionsEl || !tabsEl) return;
   sectionsEl.replaceChildren(
     ...SECTIONS.map(([id, label, icon, pages]) => {
       const n = pages.reduce((sum, p) => sum + counts[p], 0);
@@ -240,6 +252,7 @@ const lastIn = {};
 
 let friendToOpen = null;
 function go(id, friend) {
+  if (hooks.go && hooks.go(id) === false) return;
   tab = id;
   lastIn[sectionOf(id)] = id;
   friendToOpen = friend || null;
@@ -252,6 +265,8 @@ function go(id, friend) {
 
 function draw() {
   const views = { notifications: viewNotifications, posts: viewPosts, new: viewEditor, highlights: viewHighlights, planner: viewPlanner, guestbook: viewGuestbook, comments: viewComments, suggestions: viewSuggestions, status: () => viewSite('status'), friends: () => { const k = friendToOpen; friendToOpen = null; return viewFriends(friendsCtx, k); }, site: () => viewSite('site'), designs: viewDesigns, themes: () => viewThemes(themesCtx), travel: viewTravel, files: viewFiles };
+  // (On the site, nothing to draw into while no back office page is open.)
+  if (!panel?.isConnected) return;
   panel.replaceChildren(views[tab]());
 }
 
@@ -947,16 +962,19 @@ function storedDraft() {
   }
 }
 let draftTimer;
-panel.addEventListener('input', () => {
-  if (tab !== 'new') return;
-  clearTimeout(draftTimer);
-  draftTimer = setTimeout(keepDraft, 600);
-});
-panel.addEventListener('click', () => {
-  if (tab !== 'new') return;
-  clearTimeout(draftTimer);
-  draftTimer = setTimeout(keepDraft, 600);
-});
+// What you're typing is kept as you go, wherever the editor is.
+function wirePanel(el) {
+  if (!el || el._wired) return;
+  el._wired = true;
+  const later = () => {
+    if (tab !== 'new') return;
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(keepDraft, 600);
+  };
+  el.addEventListener('input', later);
+  el.addEventListener('click', later);
+}
+wirePanel(panel);
 window.addEventListener('pagehide', () => tab === 'new' && keepDraft());
 
 function draftBanner(inEditor = false) {
@@ -1441,7 +1459,7 @@ async function save(s, btn) {
       await refresh();
     } catch {
       toast("Saved. The list couldn't be refreshed just now; reload the page to see it.");
-      go('posts');
+      finishEditing();
       return;
     }
     // Belt and braces: if the site still can't read what was saved, say so and reopen it.
@@ -1469,7 +1487,7 @@ async function save(s, btn) {
       else hlNote = await syncHighlight(saved || data.posts.find((p) => p.key === key), s._hl).catch((e) => ` (Highlights: ${e.message})`);
     }
     toast((s.draft ? 'Saved as a draft.' : later ? 'Saved. It goes live at the time you set.' : 'Published!') + statusNote + hlNote);
-    go('posts');
+    finishEditing();
   } catch (e) {
     toast(e.message, true);
     // A header mistake caught by the server: keep the text open with the problem showing.
@@ -2195,7 +2213,7 @@ function viewEditor() {
         ? h('div', { class: 'info problem' }, h('strong', null, s.problemHidden ? 'This post is hidden from the site because its header has a mistake. ' : 'Not saved yet: the header has a mistake. '), 'Fix it below and save. Text with a colon, # or quotes in it needs "double quotes" around it.', h('pre', { class: 'problem-msg' }, String(s.problem).replace(/^The header has a mistake\. /, '')))
         : h('div', { class: 'info' }, 'You are editing the file itself. The part between the --- lines is the header; your words go underneath.'),
       field(s.key || keyFor(s), ta),
-      h('div', { class: 'row end' }, s.problemHidden ? h('button', { type: 'button', class: 'btn', onclick: () => { editor = null; forgetDraft(); go('posts'); } }, 'Cancel') : h('button', { type: 'button', class: 'btn', onclick: back }, 'Back to the form'), saveBtn)
+      h('div', { class: 'row end' }, s.problemHidden ? h('button', { type: 'button', class: 'btn', onclick: () => { editor = null; forgetDraft(); finishEditing(); } }, 'Cancel') : h('button', { type: 'button', class: 'btn', onclick: back }, 'Back to the form'), saveBtn)
     );
     return wrap;
   }
@@ -2354,7 +2372,7 @@ function viewEditor() {
     if (isDirty(s) && !confirm(s.key ? 'Close without saving your changes?' : 'Throw away this post?')) return;
     editor = null;
     forgetDraft();
-    go('posts');
+    finishEditing();
   } }, s.key ? 'Cancel' : 'Discard'), rawBtn, saveBtn));
   return wrap;
 }
@@ -3529,14 +3547,16 @@ function viewFiles() {
 
 // ---------- start ----------
 
-(async () => {
-  try {
-    await refresh();
-    draw();
-  } catch (e) {
-    panel.replaceChildren(h('p', null, e.message));
-  }
-})();
+// On the back office's own page only; on the site, owner mode starts it (see kit, below).
+if (panel)
+  (async () => {
+    try {
+      await refresh();
+      draw();
+    } catch (e) {
+      panel.replaceChildren(h('p', null, e.message));
+    }
+  })();
 
 // ---------- Designs: the visa in the passport, and keepsakes ----------
 // The visa and keepsakes that come with the site are examples: here they can be swapped for
@@ -3897,3 +3917,49 @@ async function saveKeepsakes(k, saved, btn) {
     btn.disabled = false;
   }
 }
+
+// ---------- the kit: the back office, used from the site itself ----------
+// In owner mode (/admin/owner.js) the site borrows all of this: it gives the back office a place
+// to draw (a window on a computer, a sheet on a phone), and hears when things change.
+export const kit = {
+  // Where to draw from now on: the page area, and (if wanted) the section and page bars.
+  attach({ panel: el, tabs = null, sections = null, toast: t = null, changed = null, editorDone = null, go: g = null } = {}) {
+    panel = el;
+    tabsEl = tabs;
+    sectionsEl = sections;
+    if (t) hooks.toast = t;
+    if (changed) hooks.changed = changed;
+    hooks.editorDone = editorDone;
+    hooks.go = g;
+    wirePanel(el);
+  },
+  data: () => data,
+  refresh,
+  // A page of the back office (posts, themes, friends…), in the attached place.
+  show(id) {
+    if (!data) return;
+    go(id);
+  },
+  // Writing: a new post of a kind, or a post you have.
+  write(type = 'thoughts') {
+    if (editor && isDirty(editor) && !okToReplaceEditor()) return false;
+    editor = newEditor(type);
+    go('new');
+    return true;
+  },
+  async edit(key) {
+    const p = data?.posts.find((x) => x.key === key);
+    if (!p) return toast('That post isn’t there any more.', true);
+    await edit(p);
+  },
+  editing: () => (editor && isDirty(editor) ? editor : null),
+  // The quick things a post's ⋯ menu does.
+  post: (key) => data?.posts.find((x) => x.key === key) || null,
+  togglePin: (p) => togglePin(p),
+  toggleFlag: (p, flag, msg) => toggleFlag(p, flag, msg),
+  addHighlight: (p) => addHighlight(p),
+  takeOutHighlight: (p) => takeOutHighlight(p),
+  highlightRank: (p) => hlRank(p),
+  remove: (p) => removePost(p),
+  setStatus: (text) => setStatus(text)
+};

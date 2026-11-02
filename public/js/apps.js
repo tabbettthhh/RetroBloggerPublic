@@ -136,6 +136,8 @@ export function card(post, open = false) {
   // (A post written in a font of its own.)
   for (const [k, v] of Object.entries(postFontAttrs(post))) el?.setAttribute(k, v);
   if (post.type === 'thoughts') el?.classList.add('card-is-thought');
+  // (Which post it is, for the owner's tools when you're signed in.)
+  if (el && !post.friend) el.dataset.post = `${post.type}/${post.slug}`;
   // (Its design, ribbons and corner mark; and in the feed, how many comments it has.)
   dressCard(el, post, open);
   if (!open) {
@@ -404,7 +406,7 @@ function journal(ctx) {
         : h('span')
   );
 
-  const journalHead = h('div', { class: 'journal-head', ...postFontAttrs(post) }, h('h2', null, post.title || 'Untitled place'), h('span', { class: 'hand big' }, [post.area || post.city, 'visited ' + niceDate(post.date)].filter(Boolean).join(' · ')));
+  const journalHead = h('div', { class: 'journal-head', 'data-post': `${post.type}/${post.slug}`, ...postFontAttrs(post) }, h('h2', null, post.title || 'Untitled place'), h('span', { class: 'hand big' }, [post.area || post.city, 'visited ' + niceDate(post.date)].filter(Boolean).join(' · ')));
   // The passport opens at this city's stamp, and the map at this place's pin.
   const slug = encodeURIComponent(post.slug);
   const links = h(

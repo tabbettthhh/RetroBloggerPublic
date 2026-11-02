@@ -408,7 +408,7 @@ function detailView(type, ctx) {
     h('div', { class: 'review-cover' }, COVER[type](post, 'big')),
     h(
       'article',
-      { class: 'review-card', ...postFontAttrs(post) },
+      { class: 'review-card', 'data-post': `${post.type}/${post.slug}`, ...postFontAttrs(post) },
       h('h2', null, post.title || 'Untitled'),
       post.episode && post.type !== 'tv' ? h('p', { class: 'review-episode' }, post.episode) : null,
       creatorLine(post) ? h('p', { class: 'review-meta' }, creatorLine(post)) : null,

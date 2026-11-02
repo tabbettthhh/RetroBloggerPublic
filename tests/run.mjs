@@ -20,6 +20,7 @@ const GROUPS = {
   admin: ['admin', 'designs', 'thoughts', 'profile', 'pool', 'themes'],
   highlights: ['highlights'],
   planner: ['planner'],
+  owner: ['owner'],
   roundtrip: ['roundtrip'],
   server: ['server', 'updater', 'comments'],
   photos: ['photos'],

@@ -351,7 +351,7 @@ await test('the welcome screen: Visitor, and the owner’s own account tile into
   const owner = page.locator('.owner-tile');
   await owner.waitFor();
   assert((await owner.innerText()).includes(who), 'the owner’s name: ' + (await owner.innerText()));
-  eq(await owner.getAttribute('href'), '/admin/', 'into the back office');
+  eq(await owner.getAttribute('href'), '/admin/signin', 'signs you in');
   eq(await page.locator('.welcome-band.top a, .welcome-band.top svg').count(), 0, 'no gear');
   await browser.close();
 });
