@@ -15,6 +15,7 @@ import { customMakers } from './keepsake-maker.js';
 import { thoughtMakers, memoryRibbon } from './thought-keepsakes.js';
 import { musicMakers } from './music-keepsakes.js';
 import { studyMakers } from './study-keepsakes.js';
+import { lifeMakers } from './life-keepsakes.js';
 import { albumApp } from './album.js';
 import { friendsApp } from './friends-feed.js';
 import { dressCard, profileDecor } from './card-dress.js';
@@ -1336,7 +1337,24 @@ function polaroidOf(post, k) {
 
 // The keepsakes a place has, each as something that makes a fresh copy (pages are laid out
 // again when a window changes size).
+// Long lines: a handwritten note that runs long moves under its picture and writes smaller,
+// long words break rather than poke out, and one-line labels end in "…" (the whole line kept
+// as a tooltip). The same for every keepsake, yours included.
+export function fitKeepsake(el) {
+  if (!el?.querySelectorAll) return el;
+  for (const n of el.querySelectorAll('.pf-note')) {
+    const text = n.textContent.trim();
+    const longest = Math.max(0, ...text.split(/\s+/).map((w) => w.length));
+    if (text.length > 42 || longest > 13) n.classList.add('long');
+    if (text.length > 110) n.classList.add('longer');
+  }
+  for (const n of el.querySelectorAll('.wb-text, .mmp-centre, .mmp-twig, .rk-tag small')) n.title ||= n.textContent;
+  return el;
+}
 export function keepsakeMakers(post) {
+  return keepsakeList(post).map((make) => () => fitKeepsake(make()));
+}
+function keepsakeList(post) {
   return [
     post.ordered?.length && (() => receipt(post, post.ordered, 'till')),
     post.bought?.length && (() => receipt(post, post.bought, 'shop')),
@@ -1439,6 +1457,8 @@ export function keepsakeMakers(post) {
     ...musicMakers(post),
     // studying and work
     ...studyMakers(post),
+    // food and drink, home, travel and celebrations
+    ...lifeMakers(post),
     // and the ones you designed yourself
     ...customMakers(post)
   ].filter(Boolean);
