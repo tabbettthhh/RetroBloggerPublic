@@ -24,7 +24,7 @@ await test('the server keeps five live posts a shelf, in order, and marks each o
 await test('the back office: five sections, each with its own pages; on a phone a bar along the bottom', async () => {
   const page = await adminPage();
   eq(await page.locator('.admin-sections button').allInnerTexts(), ['Home', 'Posts', 'Inbox', 'Look', 'More'], 'five sections');
-  eq((await page.locator('.admin-tabs button:visible').allInnerTexts()).map((t) => t.trim()), ['Posts', 'New post', 'Highlights'], 'Posts, to start');
+  eq((await page.locator('.admin-tabs button:visible').allInnerTexts()).map((t) => t.trim()), ['Posts', 'New post', 'Highlights', 'Planner'], 'Posts, to start');
   await page.locator('.admin-sections button[data-section="more"]').click();
   eq((await page.locator('.admin-tabs button:visible').allInnerTexts()).map((t) => t.trim()), ['Friends', 'Site & wishlist', 'Travel stats', 'Export & files'], 'More');
   assert(await page.locator('.admin-tabs').evaluate((e) => e.scrollWidth <= e.clientWidth + 1), 'nothing off to the side');

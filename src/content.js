@@ -446,6 +446,58 @@ export function isVisible(post, now = Date.now()) {
   return !post.draft && !post.error && post.ts > 0 && post.ts <= now;
 }
 
+// The planner (planner.md): lists under "## " headings, each with ticked or unticked lines, an
+// optional date to do it by and a note, and any writing in between as the list's notes. A list
+// whose heading ends "(private)" stays in the back office.
+//   ## To do
+//   - [ ] Post the parcel @2026-11-05 — before Friday
+//   - [x] Call Nan
+//   ## Wishes
+//   - [ ] A film camera — the one with the leather strap
+export const PLANNER_MAX_LISTS = 12;
+export const PLANNER_MAX_ITEMS = 80;
+export function parsePlanner(text) {
+  const { body } = splitFrontMatter(text || '');
+  const lists = [];
+  let cur = null;
+  const clean = (s, n) => String(s).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n);
+  for (const raw of body.split(/\r?\n/)) {
+    const head = /^##\s+(.+?)\s*$/.exec(raw);
+    if (head) {
+      if (lists.length >= PLANNER_MAX_LISTS) break;
+      let name = head[1];
+      const priv = /\(private\)\s*$/i.test(name);
+      name = clean(name.replace(/\(private\)\s*$/i, ''), 60) || 'List';
+      cur = { name, private: priv, items: [], notes: '' };
+      lists.push(cur);
+      continue;
+    }
+    if (!cur) continue;
+    const m = /^\s*[-*]\s+\[( |x|X)\]\s+(.+)$/.exec(raw);
+    if (m) {
+      if (cur.items.length >= PLANNER_MAX_ITEMS) continue;
+      let t = m[2].trim();
+      let note = '';
+      const split = t.split(/\s+[—–]\s+/);
+      if (split.length > 1) {
+        t = split.shift().trim();
+        note = split.join(' — ').trim();
+      }
+      let due = '';
+      const d = /(?:^|\s)@(\d{4}-\d{2}-\d{2})(?=\s|$)/.exec(t);
+      if (d) {
+        due = d[1];
+        t = (t.slice(0, d.index) + t.slice(d.index + d[0].length)).replace(/\s+/g, ' ').trim();
+      }
+      cur.items.push({ text: clean(t, 200), done: m[1] !== ' ', due, note: clean(note, 300) });
+      continue;
+    }
+    if (cur.notes.length < 4000) cur.notes += raw + '\n';
+  }
+  for (const l of lists) l.notes = l.notes.trim().slice(0, 4000);
+  return lists;
+}
+
 // "- [ ] Name, City (type) — note"  /  "- [x] Name, City"
 export function parseWishlist(text) {
   const { body } = splitFrontMatter(text || '');
@@ -620,7 +672,7 @@ export const EMOJI_LAYOUTS = ['grid', 'scatter', 'big'];
 // Festive days an owner can tick (these match FESTIVALS in public/js/skins.js).
 export const THEME_FESTIVALS = ['lunar_new_year', 'hanami', 'childrens_day', 'dragon_boat', 'tanabata', 'mid_autumn', 'nowruz', 'holi', 'ramadan', 'eid_al_fitr', 'eid_al_adha', 'diwali', 'yalda', 'dia_de_reyes', 'carnival', 'dia_de_muertos', 'st_patricks', 'easter', 'midsummer', 'bonfire_night', 'halloween', 'hanukkah', 'christmas'];
 // Words on buttons that can be renamed (these match LABELS in public/js/skins.js).
-export const THEME_LABELS = ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about', 'explore', 'others', 'search', 'leave', 'nudge', 'open_journal', 'read_review', 'visitor', 'come_in'];
+export const THEME_LABELS = ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'planner', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about', 'explore', 'others', 'search', 'leave', 'nudge', 'open_journal', 'read_review', 'visitor', 'come_in'];
 // Places the seasons' glass can go (these match GLASS_PLACES in public/js/skins.js).
 export const THEME_GLASS = ['photos', 'thoughts', 'journal', 'passport', 'atlas', 'wishlist', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv'];
 export const THEME_OPTIONS = {
@@ -652,9 +704,9 @@ export const THEME_OPTIONS = {
   wall_time: ['day', 'still']
 };
 export const THEME_HIDEABLE = ['lastpost', 'status', 'playing', 'countdown', 'nudge', 'clock', 'traystatus'];
-export const THEME_SECTIONS = ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about'];
+export const THEME_SECTIONS = ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'planner', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about'];
 // Each app's own look (these match public/js/skins.js).
-export const THEME_APPS = { 'journal': ['paper', 'hand', 'map', 'font'], 'passport': ['paper', 'hand', 'font'], 'atlas': ['map', 'font'], 'wishlist': ['font'], 'guestbook': ['font'], 'books': ['font'], 'films': ['font'], 'podcasts': ['font'], 'music': ['font'], 'tv': ['font'], 'album': ['font'] };
+export const THEME_APPS = { 'journal': ['paper', 'hand', 'map', 'font'], 'passport': ['paper', 'hand', 'font'], 'atlas': ['map', 'font'], 'wishlist': ['font'], 'planner': ['paper', 'hand', 'font'], 'guestbook': ['font'], 'books': ['font'], 'films': ['font'], 'podcasts': ['font'], 'music': ['font'], 'tv': ['font'], 'album': ['font'] };
 export const APP_LOOKS = ['auto', 'original', 'tint', 'custom'];
 export const APP_EXTRAS = { 'paper': ['aged', 'cream', 'white', 'kraft', 'grid', 'dotted'], 'hand': ['caveat', 'gaegu', 'comic', 'typewriter', 'pixel', 'elegant'], 'map': ['classic', 'soft', 'mono', 'sepia', 'night'], 'font': ['own', 'theme', 'classic', 'modern', 'system', 'mono', 'rounded', 'bubbly', 'pixel', 'terminal', 'comic', 'handwritten', 'typewriter', 'elegant'] };
 export const STICKER_SPOTS = ['title', 'corner-bl', 'corner-br', 'profile', 'cards', 'taskbar', 'desktop'];

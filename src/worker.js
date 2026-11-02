@@ -4,7 +4,7 @@
 import { Zip, ZipDeflate, ZipPassThrough } from 'fflate';
 import { stripImage, UnsupportedImage, CLEAN_TYPES } from './strip.js';
 import { parseVisited } from './content.js';
-import { TYPES, buildPost, isVisible, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
+import { TYPES, buildPost, isVisible, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parsePlanner, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
 import { adminCheck } from './auth.js';
 import * as friends from './friends.js';
 
@@ -374,7 +374,7 @@ async function buildEverything(env, { includeHidden = false, forFriends = false 
     .map(({ key, ...rest }) => rest)
     .sort((a, b) => String(b.date).localeCompare(String(a.date)));
 
-  const [siteText, wishText, travelText, logText, catText, passportText, keepText, themeText, highlightsText] = await Promise.all([
+  const [siteText, wishText, travelText, logText, catText, passportText, keepText, themeText, highlightsText, plannerText] = await Promise.all([
     readText(env, 'site.md'),
     readText(env, 'wishlist.md'),
     readText(env, 'travel.md'),
@@ -383,7 +383,8 @@ async function buildEverything(env, { includeHidden = false, forFriends = false 
     readText(env, 'passport.md'),
     readText(env, 'keepsakes.md'),
     readText(env, 'theme.md'),
-    readText(env, 'highlights.md')
+    readText(env, 'highlights.md'),
+    readText(env, 'planner.md')
   ]);
   // The highlights cabinet: only posts that are on the site (the back office sees them all), and
   // each of them marked with its place on its shelf, for the rosette on its card.
@@ -433,6 +434,8 @@ async function buildEverything(env, { includeHidden = false, forFriends = false 
     theme: parseTheme(themeText),
     highlights,
     highlightsPast,
+    // The planner's lists (private ones only in the back office).
+    planner: parsePlanner(plannerText).filter((l) => includeHidden || !l.private),
     guestbook,
     generated: now
   };

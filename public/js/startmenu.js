@@ -15,6 +15,7 @@ const MAIN = [
   ['#/album', 'Photo album', 'Every photo, by date', 'di-album'],
   ['#/more', 'Photo dumps & lists', 'Film strips, top 5s, quotes', 'di-photos'],
   ['#/passport', 'Passport', 'A stamp per city', 'di-passport'],
+  ['#/planner', 'Planner', 'To-dos, wishes and notes', 'di-planner'],
   ['#/books', 'Bookshelf', 'Book reviews', 'di-books'],
   ['#/films', 'Cinema', 'Film reviews', 'di-films'],
   ['#/podcasts', 'Podcasts', 'On tape', 'di-podcasts'],
@@ -51,7 +52,7 @@ export function startMenuParts(data, { onScreensaver } = {}) {
     data.posts.slice(0, 3).map((p) => h('a', { href: postHref(p), class: 'sm-link', role: 'menuitem' }, p.title || (p.excerpt || '').slice(0, 32) || niceDate(p.date))),
     h('div', { class: 'sm-sep' }),
     menuOf(data).hidden.has('guestbook') ? null : h('a', { href: '#/guestbook', class: 'sm-link bold', role: 'menuitem' }, 'Sign the guestbook'),
-    menuOf(data).hidden.has('wishlist') ? null : h('a', { href: '#/wishlist', class: 'sm-link bold', role: 'menuitem' }, 'Wishlist'),
+    menuOf(data).hidden.has('wishlist') ? null : h('a', { href: '#/wishlist', class: 'sm-link bold', role: 'menuitem' }, 'Trips wishlist'),
     data.stats ? h('a', { href: '#/stats', class: 'sm-link bold', role: 'menuitem' }, 'Travel stats') : null,
     h('div', { class: 'sm-sep' }),
     h('a', { href: '#/about', class: 'sm-link', role: 'menuitem' }, 'About ' + (data.site.owner || ''))

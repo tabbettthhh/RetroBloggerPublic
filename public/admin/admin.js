@@ -193,6 +193,7 @@ function drawTabs() {
     ['posts', 'Posts'],
     ['new', editor && editor.key ? 'Edit post' : 'New post'],
     ['highlights', 'Highlights'],
+    ['planner', 'Planner'],
     ['comments', 'Comments', waitingComments],
     ['guestbook', 'Guestbook', pending],
     ['suggestions', 'Suggestions', sugg],
@@ -228,7 +229,7 @@ const ICONS = {
 };
 const SECTIONS = [
   ['home', 'Home', ICONS.home, ['notifications', 'status']],
-  ['posts', 'Posts', ICONS.posts, ['posts', 'new', 'highlights']],
+  ['posts', 'Posts', ICONS.posts, ['posts', 'new', 'highlights', 'planner']],
   ['inbox', 'Inbox', ICONS.inbox, ['comments', 'guestbook', 'suggestions']],
   ['look', 'Look', ICONS.look, ['themes', 'designs']],
   ['more', 'More', ICONS.more, ['site', 'friends', 'travel', 'files']]
@@ -250,7 +251,7 @@ function go(id, friend) {
 }
 
 function draw() {
-  const views = { notifications: viewNotifications, posts: viewPosts, new: viewEditor, highlights: viewHighlights, guestbook: viewGuestbook, comments: viewComments, suggestions: viewSuggestions, status: () => viewSite('status'), friends: () => { const k = friendToOpen; friendToOpen = null; return viewFriends(friendsCtx, k); }, site: () => viewSite('site'), designs: viewDesigns, themes: () => viewThemes(themesCtx), travel: viewTravel, files: viewFiles };
+  const views = { notifications: viewNotifications, posts: viewPosts, new: viewEditor, highlights: viewHighlights, planner: viewPlanner, guestbook: viewGuestbook, comments: viewComments, suggestions: viewSuggestions, status: () => viewSite('status'), friends: () => { const k = friendToOpen; friendToOpen = null; return viewFriends(friendsCtx, k); }, site: () => viewSite('site'), designs: viewDesigns, themes: () => viewThemes(themesCtx), travel: viewTravel, files: viewFiles };
   panel.replaceChildren(views[tab]());
 }
 
@@ -730,6 +731,115 @@ function viewHighlights() {
     h('a', { class: 'btn', href: '/#/highlights', target: '_blank', rel: 'noopener' }, 'See the cabinet'),
     Object.keys(HL_SHELVES).map(shelf),
     pastShelf(byId)
+  );
+}
+
+// ---------- the planner (planner.md) ----------
+// Lists of things to do, wishes and notes, with a date to do each by. Written here without any
+// Markdown; kept as Markdown (see parsePlanner). Private lists stay in the back office.
+let plannerAt = 0;
+function plannerText(lists) {
+  const one = (t) => String(t || '').replace(/\s+/g, ' ').replace(/\s+[—–]\s+/g, ' - ').trim();
+  const out = ['---', '---'];
+  for (const l of lists) {
+    out.push('', `## ${one(l.name) || 'List'}${l.private ? ' (private)' : ''}`);
+    for (const it of l.items) {
+      if (!one(it.text)) continue;
+      out.push(`- [${it.done ? 'x' : ' '}] ${one(it.text)}${/^\d{4}-\d{2}-\d{2}$/.test(it.due || '') ? ` @${it.due}` : ''}${one(it.note) ? ` — ${one(it.note)}` : ''}`);
+    }
+    // (Notes can't start a line that would read as a heading or a ticked line.)
+    const notes = String(l.notes || '').replace(/^(\s*)(##|[-*]\s+\[)/gm, '$1\\$2').trim();
+    if (notes) out.push('', notes);
+  }
+  return out.join('\n') + '\n';
+}
+function viewPlanner() {
+  const lists = (data.planner || []).map((l) => ({ ...l, items: l.items.map((x) => ({ ...x })) }));
+  plannerAt = Math.min(plannerAt, Math.max(0, lists.length - 1));
+  const save = async (msg = 'Saved.') => {
+    try {
+      await putFile('planner.md', plannerText(lists));
+      await refresh();
+      toast(msg);
+      draw();
+    } catch (e) {
+      toast(e.message, true);
+    }
+  };
+  const newList = () => {
+    const name = lists.length ? 'New list' : 'To do';
+    lists.push({ name, private: false, items: [], notes: '' });
+    plannerAt = lists.length - 1;
+    save('List added.');
+  };
+  if (!lists.length)
+    return h(
+      'div',
+      { class: 'field' },
+      h('p', { class: 'hint' }, 'The Planner on your site: lists of things to do, wishes and notes, a month calendar with what’s due, all in a leather organiser. Lists can be private (only here).'),
+      h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn go', onclick: newList }, '+ Start a list'), h('button', { type: 'button', class: 'btn', onclick: () => { lists.push({ name: 'To do', private: true, items: [], notes: '' }, { name: 'Wishlist', private: false, items: [], notes: '' }, { name: 'Notes', private: false, items: [], notes: '' }); save('Your planner is ready.'); } }, 'To do, Wishlist and Notes'))
+    );
+  const l = lists[plannerAt];
+  const chips = h(
+    'div',
+    { class: 'chip-row pl-lists', role: 'tablist', 'aria-label': 'Lists' },
+    lists.map((x, i) => h('button', { type: 'button', role: 'tab', class: 'chip-btn', 'aria-selected': String(i === plannerAt), 'aria-pressed': String(i === plannerAt), onclick: () => { plannerAt = i; draw(); } }, `${x.private ? '🔒 ' : ''}${x.name}`, h('small', null, ` ${x.items.filter((it) => !it.done).length || ''}`))),
+    lists.length < 12 ? h('button', { type: 'button', class: 'chip-btn', onclick: newList }, '+ New list') : null
+  );
+  const name = h('input', { class: 'input', value: l.name, maxlength: 60, 'aria-label': 'List name' });
+  name.addEventListener('change', () => { l.name = name.value.trim() || 'List'; save(); });
+  const priv = h('input', { type: 'checkbox', checked: l.private });
+  priv.addEventListener('change', () => { l.private = priv.checked; save(priv.checked ? 'Private: only here.' : 'On the site.'); });
+  const move = (d) => { lists.splice(plannerAt + d, 0, lists.splice(plannerAt, 1)[0]); plannerAt += d; save('Moved.'); };
+  const head = h(
+    'div',
+    { class: 'pl-head' },
+    field('Name', name),
+    h('label', { class: 'row' }, priv, '🔒 Private (only in the back office, never on the site)'),
+    h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn small', disabled: plannerAt === 0 || null, onclick: () => move(-1) }, '← Earlier tab'), h('button', { type: 'button', class: 'btn small', disabled: plannerAt === lists.length - 1 || null, onclick: () => move(1) }, 'Later tab →'), h('button', { type: 'button', class: 'btn small danger', onclick: () => { if (!confirm(`Delete the list “${l.name}” and everything on it?`)) return; lists.splice(plannerAt, 1); plannerAt = Math.max(0, plannerAt - 1); save('List deleted.'); } }, 'Delete list'))
+  );
+  const row = (it, i) => {
+    const done = h('input', { type: 'checkbox', checked: it.done, 'aria-label': `${it.text}: done` });
+    done.addEventListener('change', () => { it.done = done.checked; save(it.done ? 'Done ✓' : 'Not done yet.'); });
+    const text = h('input', { class: 'input', value: it.text, maxlength: 200, 'aria-label': 'What' });
+    text.addEventListener('change', () => { if (!text.value.trim()) return; it.text = text.value.trim(); save(); });
+    const due = h('input', { class: 'input', type: 'date', value: it.due || '', 'aria-label': 'By when' });
+    due.addEventListener('change', () => { it.due = due.value; save(); });
+    const note = h('input', { class: 'input', value: it.note || '', maxlength: 300, placeholder: 'A note (optional)', 'aria-label': 'Note' });
+    note.addEventListener('change', () => { it.note = note.value.trim(); save(); });
+    const mv = (d) => { l.items.splice(i + d, 0, l.items.splice(i, 1)[0]); save('Moved.'); };
+    return h(
+      'div',
+      { class: 'list-row pl-item' + (it.done ? ' done' : '') },
+      done,
+      h('div', { class: 'grow' }, text, h('div', { class: 'pl-sub' }, due, note)),
+      h('div', { class: 'hl-moves' }, h('button', { type: 'button', class: 'btn small', 'aria-label': 'Move up', disabled: i === 0 || null, onclick: () => mv(-1) }, '↑'), h('button', { type: 'button', class: 'btn small', 'aria-label': 'Move down', disabled: i === l.items.length - 1 || null, onclick: () => mv(1) }, '↓'), h('button', { type: 'button', class: 'btn small danger', 'aria-label': 'Take it off', onclick: () => { l.items.splice(i, 1); save('Taken off.'); } }, '×'))
+    );
+  };
+  const addText = h('input', { class: 'input', maxlength: 200, placeholder: /wish/i.test(l.name) ? 'Something you’d love…' : 'Something to do…', 'aria-label': 'Add to the list' });
+  const addDue = h('input', { class: 'input', type: 'date', 'aria-label': 'By when (optional)' });
+  const add = () => {
+    const t = addText.value.trim();
+    if (!t) return addText.focus();
+    l.items.push({ text: t, done: false, due: addDue.value, note: '' });
+    save('Added.').then(() => document.querySelector('.pl-add input')?.focus());
+  };
+  addText.addEventListener('keydown', (e) => e.key === 'Enter' && (e.preventDefault(), add()));
+  const notes = h('textarea', { class: 'textarea', rows: 5, placeholder: 'Notes for this list, in your own words.', 'aria-label': 'Notes' });
+  notes.value = l.notes || '';
+  notes.addEventListener('change', () => { l.notes = notes.value; save(); });
+  const open = l.items.filter((x) => !x.done).length;
+  return h(
+    'div',
+    { class: 'field planner-admin' },
+    h('p', { class: 'hint' }, 'Your Planner: lists of things to do, wishes and notes, each with a date to do it by if you like. Dated things show in the month on your site. Kept as planner.md.'),
+    h('a', { class: 'btn', href: '/#/planner', target: '_blank', rel: 'noopener' }, 'See the planner'),
+    chips,
+    head,
+    h('div', { class: 'row pl-add' }, addText, addDue, h('button', { type: 'button', class: 'btn go', onclick: add }, 'Add')),
+    l.items.length ? h('p', { class: 'hint' }, `${open} to go · ${l.items.length - open} done`) : null,
+    h('div', { class: 'list' }, l.items.map(row)),
+    field('Notes', notes, 'Shown under the list, in handwriting.')
   );
 }
 

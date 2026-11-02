@@ -184,7 +184,7 @@ function macShell(id, data, content, param) {
       dockItem('#/', 'Home', 'di-home', false),
       dockItem(id === 'atlas' && param ? `#/journal/${encodeURIComponent(param)}` : '#/journal', 'Journal', 'di-journal', false),
       dockItem('#/atlas', 'Atlas', 'di-atlas', id === 'atlas'),
-      dockItem('#/wishlist', 'Wishlist', 'di-wish', id === 'wishlist'),
+      dockItem('#/wishlist', 'Trips', 'di-wish', id === 'wishlist'),
       dockItem('#/guestbook', 'Guestbook', 'di-guest', false)
     )
   );
@@ -218,6 +218,7 @@ function shelfShell(era, id, data, content, param) {
     tape: () => h('div', { class: 'deck-bar' }, back, h('span', { class: 'lcd' }, title.toUpperCase())),
     record: () => h('div', { class: 'hifi-bar' }, back, h('span', { class: 'hifi-dial' }, title)),
     album: () => h('div', { class: 'al-bar' }, back, h('span', { class: 'al-bar-title' }, title)),
+    planner: () => h('div', { class: 'pln-bar' }, back, h('span', { class: 'pln-bar-title' }, title)),
     crt: () => h('div', { class: 'tv-bar' }, back, h('span', { class: 'tv-channel' }, h('span', { class: 'tv-led', 'aria-hidden': 'true' }, 'CH 03'), title), h('span', { class: 'tv-knobs', 'aria-hidden': 'true' }, h('i'), h('i')))
   };
   return h('div', { class: `phone ${era}-phone` }, bars[era](), h('div', { class: `${era}-body`, id: 'main' }, content));

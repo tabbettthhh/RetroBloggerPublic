@@ -19,6 +19,7 @@ import { albumApp } from './album.js';
 import { friendsApp } from './friends-feed.js';
 import { dressCard, profileDecor } from './card-dress.js';
 import { cabinetEntrance } from './cabinet.js';
+import { plannerApp } from './planner.js';
 import { commentLink, commentsBlock, commentsButton } from './comments.js';
 import { activeSkin, resolveSkin, word, postFontAttrs } from './skins.js';
 
@@ -35,7 +36,8 @@ const SECTION_INFO = {
   album: { label: 'Photos', long: 'Photo album', href: '#/album', sub: 'Every photo, by date', swatch: 'album' },
   more: { label: 'Dumps', long: 'Photo dumps & lists', href: '#/more', sub: 'Top 5s, quotes', swatch: 'film' },
   passport: { label: 'Passport', href: '#/passport', sub: 'Leather journal', swatch: 'leather' },
-  wishlist: { label: 'Wishlist', href: '#/wishlist', sub: 'Retro Mac', swatch: 'mac' },
+  wishlist: { label: 'Trips', long: 'Trips wishlist', href: '#/wishlist', sub: 'Places I want to go', swatch: 'mac' },
+  planner: { label: 'Planner', href: '#/planner', sub: 'To-dos, wishes and notes', swatch: 'planner' },
   guestbook: { label: 'Guestbook', href: '#/guestbook', sub: 'Retro Android', swatch: 'android' },
   books: { label: 'Books', long: 'Bookshelf', href: '#/books', sub: 'Book reviews', swatch: 'shelf' },
   films: { label: 'Films', long: 'Cinema', href: '#/films', sub: 'Film reviews', swatch: 'cinema' },
@@ -45,7 +47,7 @@ const SECTION_INFO = {
   stats: { label: 'Stats', long: 'Travel stats', href: '#/stats', sub: 'From the flight log', swatch: 'xp' },
   about: { label: 'About', href: '#/about', swatch: 'about' }
 };
-const OTHERS_ORDER = ['album', 'passport', 'wishlist', 'guestbook', 'more', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about', 'thoughts', 'journal', 'atlas', 'friends'];
+const OTHERS_ORDER = ['album', 'passport', 'wishlist', 'planner', 'guestbook', 'more', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about', 'thoughts', 'journal', 'atlas', 'friends'];
 // The main bar's sections (in order) and the ones left out of the menus.
 export function menuOf(data) {
   const t = activeSkin() || resolveSkin(data.theme || {});
@@ -53,6 +55,8 @@ export function menuOf(data) {
   if (!data.stats) hidden.add('stats');
   // Friends' posts kept off the site (in the back office): no Friends tab, anywhere.
   if (data.friendsTab === false) hidden.add('friends');
+  // No lists in the planner (or only private ones): no Planner.
+  if (!(data.planner || []).length) hidden.add('planner');
   return { main: t.menu.filter((id) => !hidden.has(id)), hidden };
 }
 export const sectionLabel = (id) => word(id, SECTION_INFO[id]?.label || id);
@@ -1551,7 +1555,7 @@ function segmented(active) {
     'div',
     { class: 'segmented' },
     active === 'atlas' ? h('span', { class: 'seg on', 'aria-current': 'page' }, 'Map') : h('a', { class: 'seg', href: '#/atlas' }, 'Map'),
-    active === 'wishlist' ? h('span', { class: 'seg on', 'aria-current': 'page' }, 'Wishlist') : h('a', { class: 'seg', href: '#/wishlist' }, 'Wishlist')
+    active === 'wishlist' ? h('span', { class: 'seg on', 'aria-current': 'page' }, 'Trips wishlist') : h('a', { class: 'seg', href: '#/wishlist' }, 'Trips wishlist')
   );
 }
 
@@ -1867,7 +1871,8 @@ export const APPS = {
   journal: { title: 'Places Journal', era: 'leather', size: [900, 620], render: journal },
   passport: { title: 'Passport', era: 'leather', size: [560, 680], render: passport },
   atlas: { title: 'Atlas', era: 'mac', size: [680, 600], render: atlas },
-  wishlist: { title: 'Wishlist', era: 'mac', size: [460, 600], render: wishlist },
+  wishlist: { title: 'Trips wishlist', era: 'mac', size: [460, 600], render: wishlist },
+  planner: { title: 'Planner', era: 'planner', size: [860, 640], render: plannerApp },
   guestbook: { title: 'Guestbook', era: 'android', size: [400, 620], render: guestbook },
   stats: { title: 'Travel stats', era: 'xp', icon: 'globe', size: [460, 580], nav: true, render: stats },
   about: { title: 'About', era: 'xp', icon: 'bubble', size: [500, 640], nav: true, render: about },

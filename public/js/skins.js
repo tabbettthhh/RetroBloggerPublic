@@ -497,7 +497,7 @@ function recolour(rgb, a, T, ctx) {
   return null;
 }
 
-const SHEETS = ['base.css', 'xp.css', 'desktop.css', 'mac.css', 'android.css', 'album.css', 'dark.css', 'leather.css'];
+const SHEETS = ['base.css', 'xp.css', 'desktop.css', 'mac.css', 'android.css', 'album.css', 'dark.css', 'leather.css', 'planner.css'];
 const LEATHER_SEL = /leather|spread\.paged|\.dw-leather/;
 const SHORTHANDS = ['background', 'border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'border-color', 'outline', 'box-shadow', 'text-shadow'];
 const BG_PROPS = /^(background|--)/;
@@ -505,8 +505,9 @@ const BG_PROPS = /^(background|--)/;
 function ruleCss(rule, T, sheetName) {
   const style = rule.style;
   const sel = rule.selectorText;
-  const inLeather = sheetName === 'leather.css';
-  if (inLeather && !LEATHER_SEL.test(sel)) return '';
+  // (The planner is leather all over, like the journal's covers.)
+  const inLeather = sheetName === 'leather.css' || sheetName === 'planner.css';
+  if (sheetName === 'leather.css' && !LEATHER_SEL.test(sel)) return '';
   const ctx = { noLift: sheetName === 'dark.css' || /data-theme="dark"/.test(sel), leather: inLeather && T.leather };
   const props = new Map();
   for (let i = 0; i < style.length; i++) {
@@ -660,7 +661,7 @@ export const GLASS_PLACES = {
   journal: { name: 'Places journal', kind: 'corner', sel: ['[data-app="journal"] .page'] },
   passport: { name: 'Passport', kind: 'corner', sel: ['.passport-page'] },
   atlas: { name: 'Atlas', kind: 'corner', sel: ['.atlas-map-frame'] },
-  wishlist: { name: 'Wishlist', kind: 'card', sel: ['.wish'] },
+  wishlist: { name: 'Trips wishlist', kind: 'card', sel: ['.wish'] },
   guestbook: { name: 'Guestbook', kind: 'card', sel: ['.gb-entry'] },
   books: { name: 'Bookshelf', kind: 'item', sel: ['.book-cover'] },
   films: { name: 'Cinema', kind: 'item', sel: ['.ticket'] },
@@ -1000,7 +1001,7 @@ const dayNumber = (date) => Math.floor((date - new Date(date.getFullYear(), 0, 0
 // Parts that can be left out: of the profile header, and of the taskbar's tray.
 export const HIDEABLE = { lastpost: 'Last post date', status: 'Status', playing: 'Now playing', countdown: 'Countdown', nudge: 'Nudge button', clock: 'Clock (taskbar)', traystatus: 'Status (taskbar, computers)' };
 // The sections, for the main menu's order and for hiding ones you don't use.
-export const SECTIONS = { home: 'Home', thoughts: 'Thoughts', journal: 'Places', atlas: 'Map', friends: 'Friends', album: 'Photos', more: 'Dumps & lists', passport: 'Passport', wishlist: 'Wishlist', guestbook: 'Guestbook', books: 'Books', films: 'Films', podcasts: 'Podcasts', music: 'Music', tv: 'TV', stats: 'Travel stats', about: 'About' };
+export const SECTIONS = { home: 'Home', thoughts: 'Thoughts', journal: 'Places', atlas: 'Map', friends: 'Friends', album: 'Photos', more: 'Dumps & lists', passport: 'Passport', wishlist: 'Trips wishlist', planner: 'Planner', guestbook: 'Guestbook', books: 'Books', films: 'Films', podcasts: 'Podcasts', music: 'Music', tv: 'TV', stats: 'Travel stats', about: 'About' };
 export const DEFAULT_MENU = ['home', 'thoughts', 'journal', 'atlas', 'friends'];
 export const FONT_FAMILIES = {
   classic: '',
@@ -1042,11 +1043,11 @@ export const postFontAttrs = (post) => (post?.font && OPTIONS.font.choices[post.
 // Every section's name (in the menus, on the desktop icons and in the Explore menu) and the
 // site's buttons can be renamed. Left empty, each keeps its usual words.
 export const LABELS = {
-  home: 'Home', thoughts: 'Thoughts', journal: 'Places', atlas: 'Map', friends: 'Friends', album: 'Photos', more: 'Dumps & lists', passport: 'Passport', wishlist: 'Wishlist', guestbook: 'Guestbook', books: 'Books', films: 'Films', podcasts: 'Podcasts', music: 'Music', tv: 'TV', stats: 'Travel stats', about: 'About',
+  home: 'Home', thoughts: 'Thoughts', journal: 'Places', atlas: 'Map', friends: 'Friends', album: 'Photos', more: 'Dumps & lists', passport: 'Passport', wishlist: 'Trips wishlist', planner: 'Planner', guestbook: 'Guestbook', books: 'Books', films: 'Films', podcasts: 'Podcasts', music: 'Music', tv: 'TV', stats: 'Travel stats', about: 'About',
   explore: 'Explore', others: 'Others', search: 'Search', leave: 'Leave', nudge: 'Nudge', open_journal: 'Open in journal', read_review: 'Read the review', visitor: 'Visitor', come_in: 'Tap to come in'
 };
 export const LABEL_GROUPS = [
-  ['Sections', ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about']],
+  ['Sections', ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'planner', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about']],
   ['Buttons', ['explore', 'others', 'search', 'leave', 'nudge', 'open_journal', 'read_review', 'visitor', 'come_in']]
 ];
 export function cleanLabels(v) {
@@ -1071,7 +1072,8 @@ export const APPS = {
   journal: { name: 'Places journal', era: 'leather', extras: ['paper', 'hand', 'map', 'font'] },
   passport: { name: 'Passport', era: 'leather', extras: ['paper', 'hand', 'font'] },
   atlas: { name: 'Atlas', era: 'mac', extras: ['map', 'font'] },
-  wishlist: { name: 'Wishlist', era: 'mac', extras: ['font'] },
+  wishlist: { name: 'Trips wishlist', era: 'mac', extras: ['font'] },
+  planner: { name: 'Planner', era: 'planner', extras: ['paper', 'hand', 'font'] },
   guestbook: { name: 'Guestbook', era: 'android', extras: ['font'] },
   books: { name: 'Bookshelf', era: 'shelf', extras: ['font'] },
   films: { name: 'Cinema', era: 'cinema', extras: ['font'] },
@@ -1159,9 +1161,9 @@ export const APP_EXTRAS = {
   // Its own era's lettering, the theme's font, or any of the fonts.
   font: { name: 'Font', choices: { own: 'Its own', theme: 'The theme’s', ...OPTIONS.font.choices } }
 };
-const ERA_SHEETS = { mac: ['mac.css'], android: ['android.css'], album: ['album.css'], shelf: ['shelves.css'], cinema: ['shelves.css'], tape: ['shelves.css'], record: ['shelves.css'], crt: ['shelves.css'] };
+const ERA_SHEETS = { planner: ['planner.css'], mac: ['mac.css'], android: ['android.css'], album: ['album.css'], shelf: ['shelves.css'], cinema: ['shelves.css'], tape: ['shelves.css'], record: ['shelves.css'], crt: ['shelves.css'] };
 // Rules for an era's windows that live in desktop.css.
-const ERA_DESKTOP = { mac: /mac|menubar/, android: /droid|android/, album: /al-bar|album/, shelf: /shelf/, cinema: /marquee|cinema/, tape: /deck|tape/, record: /hifi|record/, crt: /tv-|crt/ };
+const ERA_DESKTOP = { planner: /pln-/, mac: /mac|menubar/, android: /droid|android/, album: /al-bar|album/, shelf: /shelf/, cinema: /marquee|cinema/, tape: /deck|tape/, record: /hifi|record/, crt: /tv-|crt/ };
 const HAND_FONTS = { gaegu: "'Gaegu', cursive", comic: "'Comic Neue', 'Comic Sans MS', sans-serif", typewriter: "'Special Elite', monospace", pixel: "'Pixelify Sans', monospace", elegant: "'Libre Baskerville', serif" };
 const PAPERS = {
   cream: { base: '#f8f0dc', mottle: 'none' },
