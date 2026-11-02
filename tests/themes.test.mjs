@@ -631,7 +631,7 @@ await test('while you choose, the preview stays in view (beside the choices, or 
     const page = await browser.newPage(opts);
     page.errors = [];
     page.on('pageerror', (e) => page.errors.push(e.message));
-    await page.goto(BASE + '/admin/');
+    await page.goto(BASE + '/admin/plain');
     await openTab(page, 'Themes');
     await page.waitForSelector('.tm-card');
     await page.evaluate(() => scrollBy(0, 900));

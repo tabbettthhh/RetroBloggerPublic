@@ -535,7 +535,7 @@ await test('extra room at the top on a phone’s Home Screen: chosen in Site, ke
     await p.waitForTimeout(300);
     const pad = await p.locator('.xp-phone .xp-title').first().evaluate((e) => parseFloat(getComputedStyle(e).paddingTop));
     // (And the back office the same way.)
-    await p.goto(BASE + '/admin');
+    await p.goto(BASE + '/admin/plain');
     await p.waitForSelector('.admin-sections button');
     const shell = await p.locator('.admin-shell').evaluate((e) => parseFloat(getComputedStyle(e).paddingTop));
     await browser.close();

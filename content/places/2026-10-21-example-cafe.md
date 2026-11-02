@@ -20,4 +20,4 @@ captions: [the flat white, window seat]
 ---
 An example review. Write what you ordered, the vibe, who you went with and whether you'd go back.
 
-The back office fills in the map position, city, country and the weather for you.
+When you write a place, the site fills in the map position, city, country and the weather for you.

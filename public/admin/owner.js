@@ -37,7 +37,7 @@ const GEAR = '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"
 const DOTS = '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="4" cy="10" r="1.9" fill="currentColor"/><circle cx="10" cy="10" r="1.9" fill="currentColor"/><circle cx="16" cy="10" r="1.9" fill="currentColor"/></svg>';
 
 let site = null;
-let owner = null; // the back office's view of everything (drafts and all)
+let owner = null; // everything, as you see it signed in (drafts and all)
 let publicCopy = null; // what visitors see, for "View as a visitor"
 let previewing = false;
 
@@ -412,7 +412,9 @@ function cpHome() {
             )
           )
         )
-      )
+      ),
+      // The safety net: the plain editor, if something on the site ever stops working.
+      h('p', { class: 'cp-plain' }, 'Something on your site not working? ', h('a', { href: '/admin/plain', target: '_blank', rel: 'noopener' }, 'Open the plain editor'), ' (everything here, in plain pages).')
     )
   );
 }

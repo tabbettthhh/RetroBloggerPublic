@@ -31,7 +31,7 @@ await test('the back office: five sections, each with its own pages; on a phone 
   await page.close();
   const browser = await chromium.launch();
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
-  await phone.goto(BASE + '/admin/');
+  await phone.goto(BASE + '/admin/plain');
   await phone.waitForSelector('.admin-sections button');
   const bar = await phone.locator('.admin-sections').boundingBox();
   assert(bar.y + bar.height >= 840 && bar.width >= 380, 'along the bottom: ' + JSON.stringify(bar));
