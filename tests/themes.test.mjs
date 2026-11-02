@@ -1,7 +1,7 @@
 // Themes: picked or made in the back office (saved as theme.md), previewed live, and worn by the
 // whole site: re-coloured stylesheets, a wallpaper, title-bar charms and the mouse pointer.
 import fs from 'node:fs';
-import { test, report, assert, eq, launch, close, adminPage, getFile, putFile, delFile, overview, publicData, BASE, chromium, newPost, toastText, editPost } from './lib.mjs';
+import { test, report, assert, eq, launch, close, adminPage, getFile, putFile, delFile, overview, publicData, BASE, chromium, newPost, toastText, editPost, openTab } from './lib.mjs';
 
 await launch();
 
@@ -55,7 +55,7 @@ await test('with no theme set, the site keeps its classic look', async () => {
 
 await test('picking a theme previews it live, and saving puts it on the site', async () => {
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   eq(await page.locator('.tm-card').count(), 34, 'thirty-four themes');
   // In groups that fold away: only the current theme's group is open to start with.
@@ -93,7 +93,7 @@ await test('picking a theme previews it live, and saving puts it on the site', a
 
 await test('make it your own: colours, wallpaper, charm and pointer', async () => {
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
   await page.getByLabel('Main', { exact: true }).evaluate((el) => {
@@ -139,7 +139,7 @@ await test('odd theme files never break the site', async () => {
 await test('back to Classic', async () => {
   await putFile('theme.md', '---\ntheme: cherry\n---\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await page.locator('button', { hasText: 'Back to Classic' }).click();
   await page.locator('button', { hasText: 'Save the theme' }).click();
@@ -152,7 +152,7 @@ await test('back to Classic', async () => {
 await test('an emoji wallpaper and stickers, chosen in the back office', async () => {
   await putFile('theme.md', '---\ntheme: bunny\n---\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
   await page.locator('.tm-tab', { hasText: 'Wallpaper' }).click();
@@ -206,7 +206,7 @@ await test('odd stickers and emoji are left out', async () => {
 await test('every level: fonts, feed, header, menu, taskbar, icons and sounds', async () => {
   await putFile('theme.md', '---\ntheme: classic\n---\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
   const pick = async (tabName, group, choice) => {
@@ -261,7 +261,7 @@ await test('every level: fonts, feed, header, menu, taskbar, icons and sounds', 
 await test('themes travel: a theme code and a theme file', async () => {
   await putFile('theme.md', '---\ntheme: froggy\nfont: comic\nstickers: [{"what":"🐸","where":"title","size":"m","tilt":0}]\n---\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
   await page.locator('.tm-tab', { hasText: 'Share' }).click();
@@ -286,7 +286,7 @@ await test('themes travel: a theme code and a theme file', async () => {
 await test('each app its own look, chosen in the back office', async () => {
   await putFile('theme.md', '---\ntheme: bunny\n---\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
   await page.locator('.tm-tab', { hasText: 'Apps' }).click();
@@ -433,7 +433,7 @@ await test('a tab icon of your own, and another theme after dark', async () => {
 await test('the editor: effects, after dark, colours from a picture, surprise me and undo', async () => {
   await putFile('theme.md', '---\ntheme: classic\n---\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
   await page.locator('.tm-tab', { hasText: 'Effects' }).click();
@@ -521,7 +521,7 @@ await test('seasons and festive days: picked by hand, or automatic by the date',
 await test('Surprise me remixes every part, optional extras too, but keeps your menu and words', async () => {
   await putFile('theme.md', '---\ntheme: classic\nmenu: ["home", "music"]\nlabels: {"music": "Tunes"}\n---\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
   await page.locator('.tm-tab', { hasText: 'Share' }).click();
@@ -554,7 +554,7 @@ await test('Surprise me remixes every part, optional extras too, but keeps your 
 await test('the editor: seasons and festive days, previewed', async () => {
   await putFile('theme.md', '---\ntheme: classic\n---\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
   await page.locator('.tm-tab', { hasText: 'Seasons' }).click();
@@ -627,7 +627,7 @@ await test('while you choose, the preview stays in view (beside the choices, or 
     page.errors = [];
     page.on('pageerror', (e) => page.errors.push(e.message));
     await page.goto(BASE + '/admin/');
-    await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+    await openTab(page, 'Themes');
     await page.waitForSelector('.tm-card');
     await page.evaluate(() => scrollBy(0, 900));
     await page.waitForTimeout(200);
@@ -644,7 +644,7 @@ await test('while you choose, the preview stays in view (beside the choices, or 
       eq(await page.locator('.tm-frame-box').isVisible(), true, 'and back');
     }
     // The visa on Designs too.
-    await page.locator('.admin-tabs button', { hasText: 'Designs' }).click();
+    await openTab(page, 'Designs');
     await page.waitForSelector('.visa-layout');
     const top = await page.evaluate(() => document.querySelector('.visa-layout').getBoundingClientRect().top + scrollY);
     await page.evaluate((t) => scrollTo(0, t + 100), top);
@@ -680,7 +680,7 @@ await test('your own words on the buttons, everywhere they show', async () => {
   // Renamed in the back office.
   await putFile('theme.md', '---\ntheme: classic\n---\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
   await page.locator('.tm-tab', { hasText: 'Words' }).click();
@@ -845,7 +845,7 @@ await test('Floppy dresses for the seasons and festive days, or in your own outf
   // In the editor.
   await putFile('theme.md', '---\ntheme: classic\n---\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
   await page.locator('.tm-tab', { hasText: 'Floppy' }).click();
@@ -921,7 +921,7 @@ await test('on a phone the season settles on every app\'s top bar, below the clo
 await test('a theme that isn\'t saved yet says so, and leaving asks first; an open page picks up a saved theme', async () => {
   await putFile('theme.md', '---\ntheme: classic\n---\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-savebar');
   eq(await page.locator('.tm-savebar.unsaved').count(), 0, 'nothing unsaved to start with');
   await page.locator('button', { hasText: 'Surprise me' }).click();
@@ -970,7 +970,7 @@ await test('bold and loud themes: each with its own wallpaper, charm and touches
   // Picking one from the folded group.
   await putFile('theme.md', '---\ntheme: classic\n---\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-gbox');
   await page.locator('.tm-gbox summary', { hasText: 'Bold and loud' }).click();
   await page.locator('.tm-card', { hasText: 'Block World' }).click();
@@ -1088,7 +1088,7 @@ await test('post cards: designs for every post or just one, ribbons of your own,
   const saved = (await publicData()).posts.find((x) => x.ribbon === 'Hot take');
   eq([saved?.card, saved?.ribbon_style], ['comic', 'neon'], 'saved with the post');
   // And for every post, in Themes.
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-own');
   if (!(await page.locator('.tm-own').evaluate((e) => e.open))) await page.locator('.tm-own summary').click();
   await page.locator('.tm-tab', { hasText: 'Post cards' }).click();
@@ -1118,7 +1118,7 @@ await test('post cards of your own: made from parts in Themes, for every post or
   await putFile('theme.md', '---\ntheme: classic\n---\n');
   await putFile('thoughts/maker-post.md', `---\ndate: 2026-10-20 12:00\ntitle: Maker post\n---\nHi.\n`);
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-own');
   if (!(await page.locator('.tm-own').evaluate((e) => e.open))) await page.locator('.tm-own summary').click();
   await page.locator('.tm-tab', { hasText: 'Post cards' }).click();
@@ -1171,7 +1171,7 @@ await test('the four seasons: a theme for each, with its own wallpaper and scene
   // Picked in the back office, it's on the site with its season.
   await putFile('theme.md', '---\ntheme: classic\n---\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-gbox');
   await page.locator('.tm-gbox summary', { hasText: 'The four seasons' }).click();
   await page.locator('.tm-card', { hasText: 'Winter Frost' }).click();
@@ -1287,7 +1287,7 @@ await test('the apps’ top bars: bunting and stickers for the day, and each app
   // Chosen in Themes.
   await putFile('theme.md', '---\ntheme: classic\n---\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-own');
   if (!(await page.locator('.tm-own').evaluate((e) => e.open))) await page.locator('.tm-own summary').click();
   await page.locator('.tm-tab', { hasText: 'Seasons' }).click();
@@ -1344,7 +1344,7 @@ await test('post cards mixed at random: each post keeps its own draw, a dressed 
   const ago = (m) => new Date(Date.now() - m * 60e3).toISOString().slice(0, 16).replace('T', ' ');
   for (let i = 0; i < 8; i++) await putFile(`thoughts/mix-${i}.md`, `---\ndate: ${ago(i + 1)}\ntitle: Mix post ${i}\n${i === 0 ? 'card: neon\n' : ''}---\nHi.\n`);
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Themes' }).click();
+  await openTab(page, 'Themes');
   await page.waitForSelector('.tm-own');
   if (!(await page.locator('.tm-own').evaluate((e) => e.open))) await page.locator('.tm-own summary').click();
   await page.locator('.tm-tab', { hasText: 'Post cards' }).click();

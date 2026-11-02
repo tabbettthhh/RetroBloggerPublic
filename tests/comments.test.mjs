@@ -1,6 +1,6 @@
 // Comments: visitors comment on posts (or reply to a comment) with just a name; each waits for
 // approval in the back office, where the owner can reply; and nothing about the visitor is kept.
-import { test, report, assert, eq, api, putFile, publicData, overview, adminPage, launch, close, BASE, chromium } from './lib.mjs';
+import { test, report, assert, eq, api, putFile, publicData, overview, adminPage, launch, close, BASE, chromium, openTab } from './lib.mjs';
 
 const PERSON = { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36' };
 const send = async (body, headers = PERSON) => {
@@ -39,7 +39,7 @@ await test('approved, it shows; the owner replies; visitors reply to comments', 
   assert(!('key' in shown[0]), 'file names stay in the back office');
   // The owner's reply, saved with it from the back office.
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Comments' }).click();
+  await openTab(page, 'Comments');
   await page.waitForSelector('.cm-admin');
   await page.getByRole('textbox', { name: 'Reply to Jo' }).fill('Thank you Jo!');
   await page.locator('.cm-admin button', { hasText: 'Save reply' }).click();
@@ -48,7 +48,7 @@ await test('approved, it shows; the owner replies; visitors reply to comments', 
   // A visitor replies to Jo, and it's approved from the notifications.
   eq((await send({ post: POST, name: 'Max', message: 'Same here', reply_to: shown[0].id }))[0], 200, 'a reply');
   await page.reload();
-  await page.locator('.admin-tabs button.tab-bell').click();
+  await openTab(page, 'Notifications');
   await page.waitForSelector('.note-comment');
   assert((await page.locator('.note-comment').first().innerText()).includes('replied to a comment on'), 'in the notifications');
   await page.locator('.note-comment button', { hasText: 'Approve' }).first().click();
@@ -95,7 +95,7 @@ await test('on the site: the comments under a post, a form to leave one, and the
 
 await test('switched off, none show and none can be left; a deleted post takes its comments; friends never get them', async () => {
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Comments' }).click();
+  await openTab(page, 'Comments');
   await page.waitForSelector('.cm-admin');
   await page.getByRole('checkbox', { name: /Let visitors comment/ }).uncheck();
   await page.waitForFunction(() => document.querySelector('.toast:not([hidden])')?.textContent.includes('off'));

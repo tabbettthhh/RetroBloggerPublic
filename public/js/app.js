@@ -9,6 +9,7 @@ import { applySkin } from './skins.js';
 import { sound, setSoundPack } from './sound.js';
 import { setTopRoom } from './top-room.js';
 import { startBarDecor } from './bar-decor.js';
+import { syncRoom } from './cabinet.js';
 
 const root = document.getElementById('app');
 const desktopQuery = window.matchMedia('(min-width: 900px) and (pointer: fine)');
@@ -162,6 +163,10 @@ async function main() {
     document.head.append(appTitle);
   }
   appTitle.content = data.site.name;
+
+  // The highlights cabinet's room (#/highlights): over everything else while you're in it.
+  window.addEventListener('hashchange', (e) => syncRoom(data, location.hash, e.oldURL ? new URL(e.oldURL).hash || '#/' : ''));
+  syncRoom(data, location.hash);
 
   if (isDesktop) {
     const desk = startDesktop(root, data);

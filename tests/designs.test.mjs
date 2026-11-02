@@ -1,7 +1,7 @@
 // Designs you can swap: the visa in the passport (passport.md) and keepsakes switched off or
 // designed yourself (keepsakes.md). Saved from the back office, they must reach the site, and
 // posts must keep their keepsakes through edits, even ones whose design is gone.
-import { test, report, assert, eq, launch, close, adminPage, editPost, clickSave, publicData, overview, getFile, putFile, fileExists, mediaOk, split, PHOTOS, BASE, chromium } from './lib.mjs';
+import { test, report, assert, eq, launch, close, adminPage, editPost, clickSave, publicData, overview, getFile, putFile, fileExists, mediaOk, split, PHOTOS, BASE, chromium, openTab } from './lib.mjs';
 
 await launch();
 
@@ -12,7 +12,7 @@ await test('with no settings the passport keeps the original visa', async () => 
 
 await test('the visa: pick a design, change a colour and the words, add a picture', async () => {
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Designs' }).click();
+  await openTab(page, 'Designs');
   await page.waitForSelector('.visa-preview .visa');
   await page.locator('.design-pick', { hasText: 'Seaside' }).click();
   eq(await page.locator('.visa-preview .visa').getAttribute('data-design'), 'seaside', 'preview follows the pick');
@@ -47,7 +47,7 @@ await test('the passport shows the chosen visa, and "Back to the original" resto
   assert(await site.locator('.visa image').count(), 'the picture is in the visa');
   await browser.close();
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Designs' }).click();
+  await openTab(page, 'Designs');
   await page.waitForSelector('.visa-preview .visa');
   const old = (await publicData()).passport.picture;
   await page.locator('button', { hasText: 'Back to the original' }).click();
@@ -61,7 +61,7 @@ await test('the passport shows the chosen visa, and "Back to the original" resto
 
 await test('keepsakes: switch one off and make one of your own', async () => {
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Designs' }).click();
+  await openTab(page, 'Designs');
   await page.waitForSelector('.keep-switch');
   const tickets = page.locator('.keep-switch').filter({ has: page.locator('summary', { hasText: /^Tickets/ }) });
   await tickets.locator('summary').click();

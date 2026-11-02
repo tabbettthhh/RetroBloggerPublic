@@ -2,7 +2,7 @@
 // friend code, follow each other's posts, and refuse anyone else. Following only: no messages.
 import crypto from 'node:crypto';
 import fs from 'node:fs';
-import { test, report, assert, eq, launch, close, adminPage, api, putFile, publicData, overview, PHOTOS, BASE, chromium } from './lib.mjs';
+import { test, report, assert, eq, launch, close, adminPage, api, putFile, publicData, overview, PHOTOS, BASE, chromium, openTab } from './lib.mjs';
 
 const BASE2 = process.env.TEST_BASE2 || 'http://localhost:8801';
 async function api2(p, opts = {}) {
@@ -76,7 +76,7 @@ await test('pasting a friend code makes you buddies, both ways', async () => {
   // A code's secret alone doesn't open the feed: only a hello with it does.
   eq((await signed(BASE2, 'GET', '/api/friends/feed', BASE, codeSecret)).status, 403, 'the code’s secret');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Friends' }).click();
+  await openTab(page, 'Friends');
   await page.waitForSelector('.pal-win');
   await page.locator('button', { hasText: 'Add a friend' }).click();
   await page.getByRole('textbox', { name: 'Your friend’s code' }).fill(code);
@@ -145,7 +145,7 @@ await test('their posts show up (not drafts), with photos through your own site'
   const feed = (await api('friends')).friends[0].cache.feed;
   eq(feed.posts.map((p) => p.title), ['Harbour walk'], 'only the published post');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Friends' }).click();
+  await openTab(page, 'Friends');
   await page.waitForSelector('.fr-feed .fr-post');
   const card = page.locator('.fr-feed .fr-post').first();
   assert((await card.innerText()).includes('Harbour walk'), 'post in the feed');
@@ -158,7 +158,7 @@ await test('their posts show up (not drafts), with photos through your own site'
   const ok = await page.waitForFunction(() => { const img = document.querySelector('.fr-photos img'); return img.complete && img.naturalWidth > 0; }, null, { timeout: 10000 }).then(() => true, () => false);
   assert(ok, 'the photo loads');
   // And in the notifications.
-  await page.locator('.admin-tabs button.tab-bell').click();
+  await openTab(page, 'Notifications');
   await page.waitForSelector('.note-friendpost');
   assert((await page.locator('.note-friendpost').first().innerText()).includes('Harbour walk'), 'notification');
   await page.locator('.note-friendpost button', { hasText: 'See it' }).first().click();
@@ -220,7 +220,7 @@ await test('you choose who sees your friends, and friends choose whether you can
   d = await publicData();
   eq([d.buddies, d.friendPosts, d.friendsTab], [[], [], false], 'nothing at all');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Friends' }).click();
+  await openTab(page, 'Friends');
   await page.waitForSelector('.fr-privacy');
   assert(await page.locator('.fr-vis input[value="off"]').isChecked(), 'the back office shows the choice');
   await page.locator('.fr-vis', { hasText: 'Everyone' }).click();
@@ -416,7 +416,7 @@ await test('your site keeps its address, and friends follow when it moves', asyn
   eq([back.url, back.aliases], [BASE, [NEW]], 'followed back');
   // The back office, opened at another address, offers to move there.
   const page = await adminPage(NEW);
-  await page.locator('.admin-tabs button', { hasText: 'Friends' }).click();
+  await openTab(page, 'Friends');
   await page.waitForSelector('.fr-address');
   await page.locator('.fr-move button', { hasText: 'Move my site to' }).click();
   await page.waitForFunction(() => /Moved, and your friend knows/.test(document.body.innerText));

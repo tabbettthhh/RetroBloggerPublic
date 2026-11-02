@@ -1,6 +1,6 @@
 // End-to-end checks of the back office: every save should leave the site showing exactly
 // what was saved, with every photo loading and nothing lost.
-import { api, test, report, assert, eq, launch, close, adminPage, newPost, waitPhotos, editPost, clickSave, toastText, publicData, overview, getFile, putFile, fileExists, mediaOk, split, upload, PHOTOS, BASE, chromium } from './lib.mjs';
+import { api, test, report, assert, eq, launch, close, adminPage, newPost, waitPhotos, editPost, clickSave, toastText, publicData, overview, getFile, putFile, fileExists, mediaOk, split, upload, PHOTOS, BASE, chromium, openTab, rowMenu } from './lib.mjs';
 
 const findPost = async (pred) => (await overview()).posts.find(pred);
 async function photosAllLoad(post) {
@@ -107,9 +107,9 @@ await test('a post whose header has a mistake opens as text, not an empty form',
   // hand-uploaded file would arrive.
   await api('batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ files: [{ key, text }] }) });
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Posts' }).click();
+  await openTab(page, 'Posts');
   const row = page.locator('.list-row').filter({ hasText: 'Body of the broken post' }).first();
-  await row.locator('button', { hasText: 'Edit' }).click();
+  await row.locator('.row-main').click();
   // Either the raw file is shown, or the form still holds the title and photo.
   const rawShown = await page.locator('textarea.mono').count();
   if (!rawShown) {
@@ -239,14 +239,14 @@ await test('extra fields written by hand survive an edit unchanged', async () =>
 
 await test('pinning and unpinning only changes the pin', async () => {
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Posts' }).click();
+  await openTab(page, 'Posts');
   const row = () => page.locator('.list-row').filter({ hasText: 'Extras test' }).first();
   const before = await getFile('thoughts/2026-09-02-extras.md');
-  await row().locator('button', { hasText: 'Pin' }).click();
+  await rowMenu(row(), 'Pin');
   await toastText(page);
   assert((await overview()).posts.find((p) => p.title === 'Extras test').pinned, 'not pinned');
   await page.waitForTimeout(300);
-  await row().locator('button', { hasText: 'Unpin' }).click();
+  await rowMenu(row(), 'Unpin');
   await page.waitForTimeout(800);
   const after = await getFile('thoughts/2026-09-02-extras.md');
   eq(split(after).data, split(before).data, 'header after pin + unpin');
@@ -259,8 +259,8 @@ await test('deleting a post removes it and its photos', async () => {
   await putFile('photos/2026-09-03-to-delete.md', '---\ndate: 2026-09-03 10:00\nphotos: ["1.jpg", "2.jpg"]\n---\nDelete me please\n');
   const post = await findPost((p) => p.body.includes('Delete me please'));
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Posts' }).click();
-  await page.locator('.list-row').filter({ hasText: 'Delete me please' }).first().locator('button', { hasText: 'Delete' }).click();
+  await openTab(page, 'Posts');
+  await rowMenu(page.locator('.list-row').filter({ hasText: 'Delete me please' }).first(), 'Delete');
   await toastText(page);
   assert(!(await fileExists(post.key)), 'file still there');
   for (const f of post.files) assert(!(await fileExists(post.key.replace(/\.md$/, '/') + f)), 'photo still there: ' + f);
@@ -274,7 +274,7 @@ await test('site settings keep the About text and wishlist when saving the statu
   // The status has its own tab, straight after the bell.
   const tabs = await page.locator('.admin-tabs button').allInnerTexts();
   eq(tabs[1].trim(), 'Status', 'the tab after the bell');
-  await page.locator('.admin-tabs button', { hasText: /^Status$/ }).click();
+  await openTab(page, /^Status$/);
   await page.waitForSelector('input[placeholder^="What are you up to"]');
   await page.locator('input[placeholder^="What are you up to"]').fill('testing things :)');
   await page.locator('button', { hasText: 'Update status' }).click();
@@ -309,7 +309,7 @@ await test('the posts list: ten newest, the rest folded by month, and a search',
   const files = Array.from({ length: 14 }, (_, i) => ({ key: `thoughts/2025-0${(i % 3) + 1}-1${i % 9}-old-${i}.md`, text: `---\ndate: 2025-0${(i % 3) + 1}-1${i % 9} 12:00\ntitle: Old thought ${i}${i === 7 ? ' about pelicans' : ''}\n---\nWords.\n` }));
   await api('batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ files }) });
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Posts' }).click();
+  await openTab(page, 'Posts');
   const top = await page.locator('.post-results > .list > .list-row').count();
   eq(top, 10, 'newest shown');
   const folds = await page.locator('.month-fold > summary').allInnerTexts();
@@ -329,7 +329,7 @@ await test('if the site files cannot be read, nothing can be overwritten with bl
   await page.route('**/admin/api/file?key=site.md', (r) => (r.request().method() === 'GET' ? r.fulfill({ status: 500, body: '{"error":"boom"}', contentType: 'application/json' }) : r.continue()));
   await page.route('**/admin/api/file?key=wishlist.md', (r) => (r.request().method() === 'GET' ? r.fulfill({ status: 500, body: '{"error":"boom"}', contentType: 'application/json' }) : r.continue()));
   for (const tab of [/^Status$/, /^Site & wishlist$/]) {
-    await page.locator('.admin-tabs button', { hasText: tab }).click();
+    await openTab(page, tab);
     await page.waitForTimeout(1200);
     for (const t of ['Update status', 'Save site settings', 'Save wishlist']) {
       const b = page.locator('button', { hasText: t });
@@ -365,7 +365,7 @@ await test('a suggestion added to the wishlist while it cannot be read does not 
   assert(r.ok, 'suggest failed ' + r.status);
   const page = await adminPage();
   await page.route('**/admin/api/file?key=wishlist.md', (r) => (r.request().method() === 'GET' ? r.fulfill({ status: 500, body: '{"error":"boom"}', contentType: 'application/json' }) : r.continue()));
-  await page.locator('.admin-tabs button', { hasText: 'Suggestions' }).click();
+  await openTab(page, 'Suggestions');
   await page.locator('button', { hasText: 'Add to wishlist' }).first().click();
   await page.waitForTimeout(1000);
   const wish = await getFile('wishlist.md');
@@ -377,7 +377,7 @@ await test('guestbook: sign, approve, reply; it shows on the site', async () => 
   const r = await fetch(`${BASE}/api/guestbook`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0 Test' }, body: JSON.stringify({ name: 'Visitor <b>bold</b>', message: 'Hi there: "nice" site <script>alert(1)</script>' }) });
   assert(r.ok, 'sign failed');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Guestbook' }).click();
+  await openTab(page, 'Guestbook');
   await page.locator('button', { hasText: 'Approve' }).first().click();
   await toastText(page);
   await page.waitForTimeout(500);
@@ -394,7 +394,7 @@ await test('travel stats keep their note when saved', async () => {
   await putFile('travel.md', '---\nflights: 12\ndistance_km: 34000\n---\nMostly short hops.\n');
   const page = await adminPage();
   await page.route('**/admin/api/file?key=travel.md', (r) => (r.request().method() === 'GET' ? r.fulfill({ status: 500, body: '{"error":"boom"}', contentType: 'application/json' }) : r.continue()));
-  await page.locator('.admin-tabs button', { hasText: 'Travel stats' }).click();
+  await openTab(page, 'Travel stats');
   await page.waitForTimeout(1000);
   const b = page.locator('button', { hasText: 'Save travel stats' });
   if (await b.count()) {
@@ -423,7 +423,7 @@ await test('logging an episode just after midnight uses today, not yesterday', a
     };
   });
   await page.reload();
-  await page.waitForSelector('.admin-tabs button');
+  await page.waitForSelector('.admin-sections button');
   await editPost(page, 'Test Show');
   await page.locator('button', { hasText: '+ Log an episode' }).click();
   const d = await page.locator('.ep-edit input[type="date"]').first().inputValue();
@@ -455,7 +455,7 @@ await test('unsaved writing survives closing the tab and can be carried on', asy
   const msg = await clickSave(page);
   assert(/Published/.test(msg), 'toast: ' + msg);
   await page.reload();
-  await page.waitForSelector('.admin-tabs button');
+  await page.waitForSelector('.admin-sections button');
   eq(await page.locator('.draft-banner').count(), 0, 'banner after saving');
   await page.close();
 });
@@ -464,7 +464,7 @@ await test('starting a new post asks before throwing away unsaved writing', asyn
   const page = await adminPage();
   await newPost(page, 'Thought');
   await page.locator('textarea.textarea').first().fill('Do not lose me');
-  await page.locator('.admin-tabs button', { hasText: 'Posts' }).click();
+  await openTab(page, 'Posts');
   let asked = '';
   page.removeAllListeners('dialog');
   page.once('dialog', (d) => {
@@ -473,7 +473,7 @@ await test('starting a new post asks before throwing away unsaved writing', asyn
   });
   await page.locator('button', { hasText: '+ New post' }).click();
   assert(/isn't saved/.test(asked), 'no question asked');
-  await page.locator('.admin-tabs button', { hasText: /New post|Edit post/ }).click();
+  await openTab(page, /New post|Edit post/);
   eq(await page.locator('textarea.textarea').first().inputValue(), 'Do not lose me', 'writing kept');
   await page.close();
 });
@@ -517,7 +517,7 @@ await test('extra room at the top on a phone’s Home Screen: chosen in Site, ke
   eq([content.parseSite('---\ntop_room: more\n---\n').top_room, content.parseSite('---\ntop_room: huge\n---\n').top_room], ['more', ''], 'checked by the server');
   await putFile('site.md', '---\nname: Test Site\nowner: Tester\nstatus: kept\n---\nAbout me: I like tests.\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Site' }).first().click();
+  await openTab(page, 'Site');
   await page.getByRole('radiogroup', { name: 'Room at the top' }).getByRole('radio', { name: 'More', exact: true }).click();
   await page.waitForFunction(() => document.querySelector('.toast:not([hidden])')?.textContent.includes('Saved'));
   const site = await getFile('site.md');
@@ -536,7 +536,7 @@ await test('extra room at the top on a phone’s Home Screen: chosen in Site, ke
     const pad = await p.locator('.xp-phone .xp-title').first().evaluate((e) => parseFloat(getComputedStyle(e).paddingTop));
     // (And the back office the same way.)
     await p.goto(BASE + '/admin');
-    await p.waitForSelector('.admin-tabs button');
+    await p.waitForSelector('.admin-sections button');
     const shell = await p.locator('.admin-shell').evaluate((e) => parseFloat(getComputedStyle(e).paddingTop));
     await browser.close();
     return [pad, shell];

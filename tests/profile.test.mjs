@@ -1,6 +1,6 @@
 // The profile grid: tapping your picture opens the About page, where the posts with photos you
 // put on your profile show as a grid after your bio.
-import { test, report, assert, eq, launch, close, adminPage, editPost, clickSave, overview, getFile, putFile, upload, PHOTOS, BASE, chromium } from './lib.mjs';
+import { test, report, assert, eq, launch, close, adminPage, editPost, clickSave, overview, getFile, putFile, upload, PHOTOS, BASE, chromium, openTab, rowMenu } from './lib.mjs';
 
 await launch();
 
@@ -12,12 +12,12 @@ await test('posts go on the grid from the list and the editor; only ones with ph
   }
   await putFile('thoughts/2026-02-03-no-photos.md', '---\ndate: 2026-02-03 12:00\ntitle: No photos grid\nprofile: true\n---\nJust words.\n');
   const page = await adminPage();
-  await page.locator('.admin-tabs button', { hasText: 'Posts' }).click();
+  await openTab(page, 'Posts');
   await page.getByRole('searchbox', { name: 'Search posts' }).fill('grid');
   assert(!(await page.locator('.list-row', { hasText: 'No photos grid' }).locator('button', { hasText: 'To grid' }).count()), 'a post without photos offers the grid');
-  await page.locator('.list-row', { hasText: 'Grid A' }).locator('button', { hasText: 'To grid' }).click();
+  await rowMenu(page.locator('.list-row', { hasText: 'Grid A' }), 'To grid');
   await page.getByRole('searchbox', { name: 'Search posts' }).fill('grid');
-  await page.waitForSelector('.list-row:has-text("Grid A") button:has-text("Off grid")');
+  await page.waitForSelector('.list-row:has-text("Grid A") button:has-text("Off grid")', { state: 'attached' });
   assert(/^profile: true$/m.test(await getFile('photos/2026-02-01-grid-a.md')), 'profile line written');
   await editPost(page, 'Grid B');
   await page.locator('label', { hasText: 'Show it on my profile grid' }).locator('input').check();

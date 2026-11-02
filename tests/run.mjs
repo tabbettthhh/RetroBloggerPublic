@@ -18,6 +18,7 @@ const BASE = `http://localhost:${PORT}`;
 // A group is one or more test files run one after another on the same fresh site.
 const GROUPS = {
   admin: ['admin', 'designs', 'thoughts', 'profile', 'pool', 'themes'],
+  highlights: ['highlights'],
   roundtrip: ['roundtrip'],
   server: ['server', 'updater', 'comments'],
   photos: ['photos'],
