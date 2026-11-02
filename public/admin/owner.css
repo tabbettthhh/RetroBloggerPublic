@@ -250,3 +250,37 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 /* Your status's ✎, next to it. */
 .status-block { position: relative; }
 .status-block > .okit-status-edit { margin: 4px 0 0; }
+
+/* ---------- The Control Panel ---------- */
+.okit-back { display: grid; place-items: center; width: 26px; height: 22px; padding: 0; border: 1px solid rgba(255, 255, 255, .6); border-radius: 4px; color: #fff; background: var(--ok-gloss), rgba(255, 255, 255, .15); font: bold 16px/1 Tahoma, sans-serif; cursor: pointer; }
+.okit-back[hidden] { display: none; }
+.cp-home { display: flex; flex-direction: column; gap: 16px; color: var(--ok-ink, #14254d); }
+.cp-pick { margin: 0; font: bold 18px var(--font-xp-title, Tahoma, sans-serif); color: color-mix(in srgb, var(--ok-bar, #0054e3) 75%, #000); }
+.cp-group h3 { margin: 0 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--ok-line, #c7c3ae); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in srgb, var(--ok-sel, #316ac5) 70%, var(--ok-ink, #14254d)); }
+.cp-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.cp-item { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 10px; border: 1px solid var(--ok-line, #c7c3ae); border-radius: 8px; color: inherit; background: var(--ok-gloss), linear-gradient(180deg, #fff, color-mix(in srgb, var(--ok-paper, #ece9d8) 50%, #fff)); box-shadow: var(--ok-bevel), 0 1px 3px rgba(0, 0, 0, .12); text-align: left; font: inherit; cursor: pointer; }
+.cp-item:hover, .cp-item:focus-visible { border-color: var(--ok-sel, #316ac5); box-shadow: var(--ok-bevel), 0 0 0 2px color-mix(in srgb, var(--ok-sel, #316ac5) 30%, transparent); outline: none; }
+.cp-item:active { box-shadow: var(--ok-press); }
+.cp-icon { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 10px; font-size: 24px; background: var(--ok-gloss), color-mix(in srgb, var(--ok-bar-hi, #3d8af7) 30%, #fff); box-shadow: var(--ok-bevel), 0 2px 4px rgba(0, 0, 0, .2); }
+.cp-words { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cp-words b { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+.cp-words small { font-size: 12px; opacity: .75; line-height: 1.3; }
+.cp-badge { position: static; display: inline-block; }
+.cp-go { font-size: 20px; opacity: .45; }
+/* On a phone: rows, like a Settings app. */
+@media (max-width: 600px) { .cp-items { grid-template-columns: 1fr; gap: 0; border: 1px solid var(--ok-line, #c7c3ae); border-radius: 10px; overflow: hidden; box-shadow: var(--ok-bevel), 0 1px 3px rgba(0, 0, 0, .12); } .cp-item { border: 0; border-bottom: 1px solid var(--ok-line, #c7c3ae); border-radius: 0; box-shadow: none; } .cp-item:last-child { border-bottom: 0; } .cp-icon { width: 36px; height: 36px; font-size: 20px; border-radius: 8px; } }
+
+/* ---------- Themes, docked beside the site ---------- */
+.okit-dock { top: 0; right: 0; bottom: 0; width: min(440px, 92vw); height: auto; border-radius: 0; box-shadow: -10px 0 30px rgba(0, 0, 0, .35); animation: okit-side .22s ease-out; }
+@keyframes okit-side { from { translate: 30px 0; opacity: 0; } }
+@media (max-width: 899px), (pointer: coarse) {
+  .okit-dock { top: auto; left: 0; width: auto; height: 58vh; height: 58dvh; border-radius: 14px 14px 0 0; box-shadow: 0 -10px 30px rgba(0, 0, 0, .35); animation: okit-up .22s ease-out; padding-bottom: env(safe-area-inset-bottom); }
+  .okit-dock.tucked { height: auto; }
+  .okit-dock.tucked .admin-body { display: none; }
+}
+.okit-tuck { display: grid; place-items: center; width: 30px; height: 24px; padding: 0; border: 1px solid rgba(255, 255, 255, .6); border-radius: 4px; color: #fff; background: var(--ok-gloss), rgba(255, 255, 255, .15); font: bold 14px/1 Tahoma, sans-serif; cursor: pointer; }
+.okit-dock .tm-live-hint { margin: 0; }
+.okit-dock .admin-body { padding: 10px; }
+@media (prefers-reduced-motion: reduce) { .okit-dock { animation: none; } }
+.okit-dock .tm-savebar { gap: 6px; }
+.okit-dock .tm-savebar .btn { min-height: 32px; padding: 0 10px; font-size: 12px; }

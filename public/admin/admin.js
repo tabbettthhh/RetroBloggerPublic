@@ -4038,6 +4038,8 @@ export const kit = {
   suggestionGoesTo: (sg) => (KIND_TYPE[sg.kind] ? `your ${SHELF_NAME[KIND_TYPE[sg.kind]]}` : 'your trips wishlist'),
   setSiteField: (k, v) => setSiteField(k, v),
   plannerText: (lists) => plannerText(lists),
+  // Themes on the site itself: the real site wears what you're trying (see themes.js).
+  themesLive: (live) => (themesCtx.live = live),
   highlights: () => allHighlights(),
   saveHighlights: (all) => saveHighlights(all)
 };

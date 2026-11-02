@@ -97,8 +97,8 @@ for (const [name, opts] of [['a computer', DESK], ['a phone', PHONE]]) {
       // The Control Panel: everything else, over the site.
       await p.locator('.okit-me').first().click();
       await p.locator('.okit-menu button', { hasText: 'Control Panel' }).click();
-      await p.waitForSelector('.okit-host .admin-sections button');
-      eq(await p.locator('.okit-host .admin-sections button').allInnerTexts(), ['Home', 'Posts', 'Inbox', 'Look', 'More'], 'its sections');
+      await p.waitForSelector('.okit-host .cp-item');
+      eq(await p.locator('.okit-host .cp-item').count(), 11, 'its categories');
       await p.locator('.okit-close').click();
       await p.waitForFunction(() => !document.querySelector('.okit-host'));
     });
@@ -218,6 +218,54 @@ await test('the highlights, in the cabinet: a line on why, a new place on the sh
   }, '/?owner=1#/highlights');
   const hl = (await overview()).highlights.places;
   eq(hl.find((x) => x.post === 'places/two').why, 'The best window seat in town.', 'its line on why');
+});
+
+await test('the Control Panel: categories, each in the same place, and back', async () => {
+  for (const opts of [DESK, PHONE]) {
+    await site(opts, async (p) => {
+      await p.waitForSelector('.okit-me');
+      await p.locator('.okit-me').first().click();
+      await p.locator('.okit-menu button', { hasText: 'Control Panel' }).click();
+      await p.waitForSelector('.okit-host .cp-item');
+      eq(await p.locator('.okit-host .cp-group h3').allInnerTexts().then((x) => x.map((t) => t.toUpperCase())), ['WRITING', 'PEOPLE', 'LOOK', 'YOUR SITE'], 'four groups');
+      await p.locator('.cp-item[data-cp="friends"]').click();
+      await p.waitForSelector('.okit-host .okit-back:visible');
+      assert((await p.locator('.okit-host .xp-title-text').innerText()).includes('Friends'), 'its name in the bar');
+      await p.locator('.okit-host .okit-back').click();
+      await p.waitForSelector('.okit-host .cp-item');
+      await p.keyboard.press('Escape');
+      await p.waitForFunction(() => !document.querySelector('.okit-host'));
+    });
+  }
+});
+
+await test('Themes: the real site wears what you try; closing without saving puts it back; saving keeps it', async () => {
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+  await site(DESK, async (p) => {
+    await p.waitForSelector('.okit-me');
+    const main = () => p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--sk-main').trim());
+    const was = await main();
+    await p.locator('.okit-me').first().click();
+    await p.locator('.okit-menu button', { hasText: 'Themes' }).click();
+    await p.waitForSelector('.okit-dock .tm-card');
+    eq(await p.locator('.okit-dock iframe').count(), 0, 'no miniature: the site itself');
+    await p.locator('.okit-dock .tm-card', { hasText: 'Matcha' }).click();
+    await p.waitForFunction((w) => getComputedStyle(document.documentElement).getPropertyValue('--sk-main').trim() !== w, was);
+    await p.locator('.okit-dock .okit-close').click();
+    await p.waitForFunction((w) => getComputedStyle(document.documentElement).getPropertyValue('--sk-main').trim() === w, was);
+    // Again, and save.
+    await p.locator('.okit-me').first().click();
+    await p.locator('.okit-menu button', { hasText: 'Themes' }).click();
+    await p.waitForSelector('.okit-dock .tm-card');
+    await p.locator('.okit-dock .tm-card', { hasText: 'Matcha' }).click();
+    await p.locator('.okit-dock button', { hasText: 'Save the theme' }).click();
+    await p.waitForFunction(() => document.querySelector('.okit-toast.on')?.textContent.includes('theme is on your site'));
+    await p.locator('.okit-dock .okit-close').click();
+    await p.waitForFunction(() => !document.querySelector('.okit-host'));
+    assert((await main()) !== was, 'still wearing it');
+  });
+  eq((await publicData()).theme.theme, 'matcha', 'saved for everyone');
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
 });
 
 await test('the welcome screen’s owner tile signs you in, back to the site', async () => {

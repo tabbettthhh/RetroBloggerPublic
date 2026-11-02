@@ -49,7 +49,8 @@ function keepFresh(data, redraw) {
       // (Signed in: your drafts, plans and the rest stay in what's showing.)
       ownerHooks.fresh?.(data);
       registerDesigns(data);
-      if (!previewing) setSoundPack(applySkin(data.theme).sounds);
+      // (Not while the owner is trying on a theme.)
+      if (!previewing && !ownerHooks.trying?.()) setSoundPack(applySkin(data.theme).sounds);
       // (Not while the owner is writing in a post: it's drawn again once they're done.)
       if (!ownerHooks.holding?.()) redraw();
     } catch {
