@@ -18,7 +18,7 @@ import { musicMakers } from './music-keepsakes.js';
 import { studyMakers } from './study-keepsakes.js';
 import { lifeMakers } from './life-keepsakes.js';
 import { albumApp } from './album.js';
-import { friendsApp } from './friends-feed.js';
+import { friendsApp, friendPost } from './friends-feed.js';
 import { dressCard, profileDecor } from './card-dress.js';
 import { cabinetEntrance } from './cabinet.js';
 import { plannerApp } from './planner.js';
@@ -239,8 +239,12 @@ const FEED_PAGE = 20;
 function feed(filter, withProfile) {
   return (ctx) => {
     const list = ctx.data.posts.filter((p) => (filter === 'all' ? p.pinned || inFeed(p) : filter.includes(p.type)));
-    // Pinned posts first, newest pinned at the top; then everything else by date.
-    const posts = [...list.filter((p) => p.pinned), ...list.filter((p) => !p.pinned)];
+    // Pinned posts first, newest pinned at the top; then everything else by date. (Signed in,
+    // your friends' posts are mixed in by when they were posted: only you ever see that.)
+    const rest = list.filter((p) => !p.pinned);
+    const theirs = filter === 'all' && withProfile ? (ctx.data.friendsInHome || []).map((p) => ({ ...p, fromFriend: true })) : [];
+    const mixed = theirs.length ? [...rest, ...theirs].sort((a, b) => (b.ts || 0) - (a.ts || 0)) : rest;
+    const posts = [...list.filter((p) => p.pinned), ...mixed];
     const wrap = h('div', { class: 'feed' }, withProfile ? profileTile(ctx.data) : null);
     if (!posts.length) {
       wrap.append(h('p', { class: 'empty' }, 'Nothing here yet.'));
@@ -252,7 +256,7 @@ function feed(filter, withProfile) {
     const addMore = () => {
       const next = posts.slice(shown, shown + FEED_PAGE);
       shown += next.length;
-      more.before(...next.map((p) => foldLong(pinnedCard(p), p)));
+      more.before(...next.map((p) => (p.fromFriend ? friendPost(p, ctx.data) : foldLong(pinnedCard(p), p))));
       if (shown >= posts.length) {
         more.remove();
         io?.disconnect();

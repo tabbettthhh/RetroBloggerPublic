@@ -284,3 +284,38 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 @media (prefers-reduced-motion: reduce) { .okit-dock { animation: none; } }
 .okit-dock .tm-savebar { gap: 6px; }
 .okit-dock .tm-savebar .btn { min-height: 32px; padding: 0 10px; font-size: 12px; }
+
+/* ---------- Your friends ---------- */
+/* Comments on a friend's post: a glossy button at the foot of their card, opening the
+   conversation underneath, in your theme's paper (their card keeps their look). */
+.okit-talk-wrap { margin: 8px 10px 10px; text-align: left; font: 13px/1.4 Tahoma, 'Segoe UI', sans-serif; color: var(--ok-ink, #14254d); }
+.okit-talk-btn { min-height: 28px; }
+.okit-talk-btn[aria-expanded="true"] { color: var(--ok-sel-text, #fff); border-color: color-mix(in srgb, var(--ok-sel, #316ac5) 70%, #000); background: var(--ok-gloss), var(--ok-sel, #316ac5); box-shadow: var(--ok-press); }
+.okit-talk { margin-top: 8px; padding: 8px 10px; border: 1px solid var(--ok-line, #c7c3ae); border-left: 4px solid var(--ok-sel, #316ac5); border-radius: 8px; background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--ok-paper, #ece9d8) 40%, #fff)); box-shadow: var(--ok-bevel), 0 1px 4px rgba(0, 0, 0, .12); }
+.okit-talk[hidden] { display: none; }
+.okit-talk-list { display: flex; flex-direction: column; gap: 8px; margin: 0 0 8px; padding: 0; list-style: none; }
+.okit-talk-list .okit-talk-list { margin: 6px 0 0 14px; }
+.okit-talk-item p { margin: 2px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.okit-talk-item.me > .okit-talk-head b { color: var(--ok-sel, #316ac5); }
+.okit-talk-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+.okit-talk-head small:last-child { opacity: .65; }
+.okit-talk-reply { margin: 4px 0 0 12px; padding: 4px 8px; border-left: 3px solid var(--ok-accent, #f2861e); border-radius: 0 6px 6px 0; background: color-mix(in srgb, var(--ok-accent, #f2861e) 8%, transparent); overflow-wrap: anywhere; }
+.okit-talk-none { margin: 0 0 8px; font-style: italic; opacity: .7; }
+.okit-btn.link { min-height: 0; margin-top: 2px; padding: 0; border: 0; border-radius: 0; color: var(--ok-sel, #316ac5); background: none; box-shadow: none; font-size: 12px; text-decoration: underline; }
+.okit-btn.link:active { translate: none; }
+.okit-talk-box { margin: 4px 0 0; }
+
+/* Who sees the Friends tab, at the top of it. */
+.okit-note { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; margin: 0 0 10px; padding: 8px 10px; border: 1px solid var(--ok-line, #c7c3ae); border-radius: 8px; color: var(--ok-ink, #14254d); background: var(--ok-gloss), color-mix(in srgb, var(--ok-paper, #ece9d8) 70%, #fff); box-shadow: var(--ok-bevel), 0 1px 3px rgba(0, 0, 0, .12); font: 12px/1.4 Tahoma, 'Segoe UI', sans-serif; text-align: left; }
+
+/* Something new from friends: a glossy orb, like XP's tray alerts, on Friends wherever it's shown. */
+.okit-ndot { display: inline-grid; place-items: center; min-width: 17px; height: 17px; margin-left: 6px; padding: 0 4px; box-sizing: border-box; border: 1.5px solid #fff; border-radius: 9px; color: #fff; background: radial-gradient(circle at 35% 30%, #ffb08a, #e8401c 55%, #a8210a); box-shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 0 0 1px rgba(168, 33, 10, .35); font: bold 10px/1 Tahoma, 'Segoe UI', sans-serif; text-shadow: 0 -1px 0 rgba(0, 0, 0, .3); vertical-align: middle; pointer-events: none; animation: okit-ndot-in .35s cubic-bezier(.3, 1.6, .5, 1); }
+.okit-ndot.on-icon { position: absolute; top: -4px; right: -6px; margin: 0; z-index: 2; }
+/* (On a word, like the menu bar's: tucked into its corner, taking no room from the others.) */
+.okit-ndot.on-word { position: absolute; top: 0; right: -8px; min-width: 15px; height: 15px; margin: 0; padding: 0 3px; font-size: 9px; z-index: 2; }
+.dock-icon.di-friends, .okit-has-ndot { position: relative; }
+@keyframes okit-ndot-in { from { transform: scale(0); } to { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .okit-ndot { animation: none; } }
+
+:root[data-theme="dark"] :is(.okit-talk, .okit-note) { color: #eee; background: #2a2a2e; border-color: #555; }
+:root[data-theme="dark"] .okit-talk-item.me > .okit-talk-head b, :root[data-theme="dark"] .okit-btn.link { color: color-mix(in srgb, var(--ok-sel, #316ac5) 50%, #fff); }

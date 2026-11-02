@@ -170,7 +170,11 @@ await test('their posts show up (not drafts), with photos through your own site'
   eq(bad.status, 404, 'odd photo names refused');
 });
 
-await test('your site has a Friends tab with their posts, unless you turn it off', async () => {
+await test('your site has a Friends tab with their posts if you choose (to start with, they’re just for you)', async () => {
+  const before = await publicData();
+  eq([before.buddies, before.friendPosts, before.friendsTab], [[], [], false], 'to start with, visitors see nothing of your friends');
+  eq((await api('friends')).visibility, 'off', 'only you');
+  await post_(api, 'friends/settings', { visibility: 'all' });
   const d = await publicData();
   eq(d.buddies.map((x) => [x.name, x.url, x.presence]), [['Lina Lounge', BASE2, 'busy']], 'buddies shown');
   eq(d.friendPosts.map((p) => [p.title, p.friend.name]), [['Harbour walk', 'Lina Lounge']], 'their posts');
@@ -266,6 +270,97 @@ await test('you choose who sees your friends, and friends choose whether you can
   eq((await api('friends')).visibility, 'off', 'old off');
   await post_(api, 'friends/settings', { showOnSite: true });
   eq((await api('friends')).visibility, 'all', 'old on');
+});
+
+await test('signed in: their posts in your Home, a dot on Friends, and comments that go straight on', async () => {
+  await post_(api, 'friends/settings', { visibility: 'off' });
+  const pub = await publicData();
+  eq([pub.friendPosts, pub.friendsTab], [[], false], 'visitors: nothing of theirs');
+  const browser = await chromium.launch();
+  const p = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  p.errors = [];
+  p.on('pageerror', (e) => p.errors.push(e.message));
+  p.on('dialog', (dl) => dl.accept());
+  await p.addInitScript(() => sessionStorage.setItem('entered', '1'));
+  try {
+    await p.goto(BASE + '/?owner=1#/');
+    await p.waitForSelector('.okit-plus');
+    // In your Home, as on their site, with who it's from on top; friends-only ones marked.
+    const harbour = p.locator('.ff-in-home[data-friend-post$="|places/harbour"]');
+    await harbour.waitFor();
+    assert((await harbour.locator('.ff-from').innerText()).includes('Lina Lounge'), 'who it’s from');
+    const only = p.locator('.ff-in-home', { hasText: 'Just for friends' });
+    assert((await only.innerText()).includes('friends only'), 'a friends-only post, marked');
+    eq(await harbour.locator('.okit-more').count(), 0, 'not taken for one of yours');
+    // Something new: a dot on Friends.
+    await p.waitForSelector('.okit-ndot');
+    eq(await p.locator('.okit-ndot').first().innerText(), '2', 'two new posts');
+    // Comment on theirs: it goes straight on at their site.
+    await harbour.locator('.okit-talk-btn').click();
+    await harbour.locator('.okit-talk textarea').fill('Lovely gulls!');
+    await harbour.locator('.okit-talk .okit-btn.go', { hasText: 'Post' }).click();
+    await p.waitForFunction(() => /Posted on their site/.test(document.querySelector('.okit-toast')?.textContent || ''));
+    const again = p.locator('.ff-in-home[data-friend-post$="|places/harbour"]');
+    await p.waitForFunction(() => /1 comment/.test(document.querySelector('.ff-in-home[data-friend-post$="|places/harbour"] .okit-talk-btn')?.textContent || ''));
+    assert(!(await again.locator('.okit-talk').isHidden()), 'still open after the page redraws');
+    assert((await again.locator('.okit-talk-item').innerText()).includes('You'), 'yours, marked');
+    const theirs = await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json();
+    const c = theirs.posts.find((x) => x.slug === 'harbour').comments;
+    eq(c.map((x) => [x.name, x.site, x.message]), [['Sam', BASE, 'Lovely gulls!']], 'on their site, under your name, linking to yours');
+    eq((await api2('overview')).pendingComments.length, 0, 'not waiting for approval');
+    // Their visitors' comments still wait.
+    const v = await (await fetch(`${BASE2}/api/comment`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ post: 'places/harbour', name: 'Visitor', message: 'Hi there' }) })).json();
+    eq(v.pending, true, 'a visitor’s comment waits');
+    eq(await again.locator('.okit-talk-item .okit-btn.link').count(), 0, 'no replying to yourself');
+    // Once they approve it, you see it, and can answer it.
+    const waiting = (await api2('overview')).pendingComments[0];
+    await post_(api2, `move?key=${encodeURIComponent(waiting.key)}&to=${encodeURIComponent(waiting.key.replace('comments-pending/', 'comments/'))}`);
+    await until(async () => (await api('overview')).friendsMine.posts.find((x) => x.id === 'places/harbour').comments.length === 2, 'their approved comment reaches you');
+    await p.reload();
+    const fresh = p.locator('.ff-in-home[data-friend-post$="|places/harbour"]');
+    await fresh.locator('.okit-talk-btn', { hasText: '2 comments' }).click();
+    await fresh.locator('.okit-talk-item', { hasText: 'Visitor' }).locator('.okit-btn.link', { hasText: 'Reply' }).click();
+    await fresh.locator('.okit-talk-item textarea').fill('And the chips.');
+    await fresh.locator('.okit-talk-item .okit-btn.go').click();
+    await p.waitForFunction(() => /3 comments/.test(document.querySelector('.ff-in-home[data-friend-post$="|places/harbour"] .okit-talk-btn')?.textContent || ''));
+    const after = await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json();
+    const cs = after.posts.find((x) => x.slug === 'harbour').comments;
+    eq(cs.find((x) => x.message === 'And the chips.').reply_to, cs.find((x) => x.name === 'Visitor').id, 'a reply, under the comment it answers');
+    // Friends: only you see it (it says so), and opening it clears the dot.
+    await p.goto(BASE + '/?owner=1#/friends');
+    await p.waitForSelector('.feed.ff .okit-note');
+    assert((await p.locator('.okit-note').innerText()).includes('Only you'), 'only you');
+    await p.waitForTimeout(400);
+    eq(await p.locator('.okit-ndot').count(), 0, 'dot cleared');
+    await p.goto(BASE + '/?owner=1#/');
+    await p.waitForSelector('.ff-in-home');
+    await p.waitForTimeout(400);
+    eq(await p.locator('.okit-ndot').count(), 0, 'and stays cleared');
+    // On a computer, the Friends icon on the desktop (only there while you're signed in) has it.
+    const dp = await browser.newPage({ viewport: { width: 1280, height: 860 } });
+    await dp.addInitScript(() => sessionStorage.setItem('entered', '1'));
+    await dp.goto(BASE + '/#/');
+    await dp.waitForSelector('.desk-icon');
+    eq(await dp.locator('.desk-icon .di-friends').count(), 0, 'visitors: no Friends icon');
+    await dp.goto(BASE + '/?owner=1#/');
+    await dp.addInitScript(() => localStorage.removeItem('okit-friends-seen'));
+    await dp.reload();
+    await dp.waitForSelector('.desk-icon .di-friends .okit-ndot');
+    await dp.close();
+    // View as a visitor: none of it.
+    await p.locator('.okit-me').first().click();
+    await p.locator('.okit-menu button', { hasText: 'View as a visitor' }).click();
+    await p.waitForSelector('.okit-preview');
+    await p.waitForTimeout(400);
+    eq(await p.locator('.ff-in-home').count(), 0, 'no friends’ posts for visitors');
+    assert(!p.errors.length, p.errors.join('; '));
+  } finally {
+    await browser.close();
+  }
+  // Mixing them into Home is yours to turn off.
+  eq((await post_(api, 'friends/settings', { inHome: false })).inHome, false, 'not in Home');
+  eq((await api('overview')).friendsMine.inHome, false, 'told to the site');
+  await post_(api, 'friends/settings', { inHome: true, visibility: 'all' });
 });
 
 await test('a friend\'s new post reaches your site within moments, and an open page picks it up', async () => {

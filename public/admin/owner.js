@@ -9,7 +9,11 @@
 // - Writing, and everything else the back office does, opens over the site: a window on a
 //   computer, a sheet on a phone (Back or ✕ closes it), never one stacked on another.
 // - View as a visitor shows the site exactly as everyone else sees it.
-import { h, ICON } from '/js/util.js';
+// - Your friends' posts are mixed into your Home (only you see that), each as it looks on their
+//   site with who it's from on top; you can comment on them right there, and a dot on Friends
+//   says when there's something new.
+import { h, ICON, registerCategories } from '/js/util.js';
+import { registerKeepsakes } from '/js/keepsake-maker.js';
 import { kit } from '/admin/admin.js';
 import { forgetOwner, ownerHooks } from '/js/owner-door.js';
 import { rebuildRoom } from '/js/cabinet.js';
@@ -74,14 +78,24 @@ const idOf = (p) => `${p.type}/${p.slug}`;
 const postFor = (id) => owner?.posts.find((p) => !p.error && idOf(p) === id) || null;
 // What visitors see, kept for "View as a visitor" (taken from the site's own fresh copies).
 const MINE = ['posts', 'planner', 'highlights', 'highlightsPast', 'guestbook', 'wishlist', 'site', 'theme'];
+// (And what visitors see of your friends, which may be nothing.)
+const FRIENDS = ['buddies', 'friendPosts', 'friendLooks', 'friendKeepsakes', 'friendCategories', 'friendsTab', 'friendsInHome'];
 function keepPublic(d) {
-  publicCopy = Object.fromEntries(MINE.map((k) => [k, d[k]]));
+  publicCopy = Object.fromEntries([...MINE, ...FRIENDS].map((k) => [k, d[k]]));
 }
 function merge(d) {
   if (!owner || previewing) return;
   // (A post whose header can't be read stays in the Control Panel, where it can be fixed.)
   d.posts = owner.posts.filter((p) => !p.error);
   for (const k of MINE.slice(1)) if (owner[k] !== undefined) d[k] = owner[k];
+  // Your friends, all of them, whoever else sees them: the Friends tab, and (unless you've said
+  // not to) their posts in your Home.
+  const fm = owner.friendsMine;
+  if (fm) {
+    Object.assign(d, { buddies: fm.buddies || [], friendPosts: fm.posts || [], friendLooks: fm.looks || {}, friendKeepsakes: fm.keepsakes || [], friendCategories: fm.categories || [], friendsTab: true, friendsInHome: fm.inHome === false ? [] : fm.posts || [] });
+    registerCategories(d.friendCategories);
+    registerKeepsakes([...(d.keepsakes?.custom || []), ...d.friendKeepsakes]);
+  }
 }
 let redrawSoon;
 let redrawWaiting = false;
@@ -500,6 +514,7 @@ function togglePreview() {
   document.documentElement.classList.toggle('owner-preview', previewing);
   if (previewing) {
     Object.assign(site.data, publicCopy);
+    for (const d of document.querySelectorAll('.okit-ndot')) d.remove();
     previewBanner = document.body.appendChild(h('div', { class: 'okit-preview', role: 'status' }, h('span', null, '👁 You’re seeing the site as a visitor does.'), h('button', { type: 'button', onclick: togglePreview }, 'Back to owner view')));
   } else {
     previewBanner?.remove();
@@ -869,6 +884,125 @@ function decorateHighlights() {
   }
 }
 
+// ---------- your friends ----------
+// On each of their posts (in your Home and on Friends): its comments, and yours to add. Yours
+// go straight on at their site, under your name, linking to yours; their visitors' still wait
+// for them to approve.
+const friendOf = (key) => (owner.friendsMine?.buddies || []).find((b) => b.key === key) || null;
+const friendPostOf = (key, id) => (owner.friendsMine?.posts || []).find((p) => p.friend?.key === key && p.id === id) || null;
+const openTalk = new Set(); // posts whose comments you had open (kept open as the page redraws)
+function sendToFriend(key, id, text, replyTo, b) {
+  return busyOn(b, () => kit.act(() => kit.friendComment(key, id, text, replyTo), 'Posted on their site.'));
+}
+function talkBox(key, id, replyTo, who) {
+  const me = owner.site?.owner || owner.site?.name || 'you';
+  const label = replyTo ? `Reply to ${who} as ${me}…` : `Comment as ${me}…`;
+  const ta = h('textarea', { class: 'okit-input', rows: 2, maxlength: 1000, placeholder: label, 'aria-label': label });
+  const send = btn(replyTo ? 'Reply' : 'Post', 'go', (e) => {
+    if (ta.value.trim().length < 2) return ta.focus();
+    sendToFriend(key, id, ta.value.trim(), replyTo, e.currentTarget);
+  });
+  ta.addEventListener('keydown', (e) => e.key === 'Enter' && (e.metaKey || e.ctrlKey) && send.click());
+  return h('div', { class: 'okit-replybox okit-talk-box' }, ta, h('div', { class: 'okit-row' }, send));
+}
+function talkList(p, key, mine, canTalk) {
+  const all = p.comments || [];
+  const top = all.filter((c) => !c.reply_to || !all.some((x) => x.id === c.reply_to));
+  const who = p.friend?.owner || p.friend?.name || 'They';
+  const one = (c, replies) => {
+    const box = h('div');
+    const isMe = c.site && c.site === mine;
+    return h(
+      'li',
+      { class: 'okit-talk-item' + (isMe ? ' me' : '') },
+      h('div', { class: 'okit-talk-head' }, h('b', null, isMe ? 'You' : c.name), c.site && !isMe ? h('small', { class: 'okit-tag' }, '👥 friend') : null, h('small', null, niceWhen(c.date))),
+      h('p', null, c.message),
+      c.reply ? h('div', { class: 'okit-talk-reply' }, h('b', null, who), ' ', c.reply) : null,
+      replies.length ? h('ul', { class: 'okit-talk-list' }, replies.map((r) => one(r, []))) : null,
+      canTalk && !c.reply_to && !isMe ? btn('Reply', 'link', () => box.replaceChildren(box.firstChild ? '' : talkBox(key, p.id, c.id, c.name)), { 'aria-label': `Reply to ${c.name}` }) : null,
+      box
+    );
+  };
+  return top.length ? h('ul', { class: 'okit-talk-list' }, top.map((c) => one(c, all.filter((x) => x.reply_to === c.id)))) : h('p', { class: 'okit-talk-none' }, 'No comments yet.');
+}
+function decorateFriendPosts() {
+  for (const el of document.querySelectorAll('[data-friend-post]:not([data-okit])')) {
+    const [key, id] = el.dataset.friendPost.split('|');
+    const p = friendPostOf(key, id);
+    if (!p) continue;
+    el.dataset.okit = '1';
+    const f = friendOf(key);
+    const canTalk = !!f?.comments_on;
+    const n = (p.comments || []).length;
+    const panel = h('div', { class: 'okit-talk', hidden: true }, talkList(p, key, owner.friendsMine?.me || '', canTalk), canTalk ? talkBox(key, id, '', '') : h('p', { class: 'okit-talk-none' }, `${f?.owner || f?.name || 'They'} can’t take comments from friends just now (they’re switched off, or their site needs updating).`));
+    const toggle = btn(n ? `💬 ${n} comment${n === 1 ? '' : 's'}` : '💬 Comment', 'okit-talk-btn', () => {
+      panel.hidden = !panel.hidden;
+      toggle.setAttribute('aria-expanded', String(!panel.hidden));
+      if (panel.hidden) openTalk.delete(el.dataset.friendPost);
+      else {
+        openTalk.add(el.dataset.friendPost);
+        panel.querySelector(':scope > .okit-talk-box textarea')?.focus();
+      }
+    }, { 'aria-expanded': 'false' });
+    if (openTalk.has(el.dataset.friendPost)) {
+      panel.hidden = false;
+      toggle.setAttribute('aria-expanded', 'true');
+    }
+    el.append(h('div', { class: 'okit-talk-wrap' }, toggle, panel));
+  }
+}
+// On the Friends tab: who else sees it, and where to change that.
+function decorateFriendsTab() {
+  const feed = document.querySelector('.feed.ff:not([data-okit])');
+  if (!feed) return;
+  feed.dataset.okit = '1';
+  const everyone = owner.friendsMine?.postsShown;
+  feed.prepend(h('div', { class: 'okit-note' }, h('span', null, everyone ? '👁 Everyone can see this tab and your friends’ posts on it.' : '🔒 Only you can see this tab: your visitors don’t see your friends’ posts.'), btn('Change', '', () => controlPanel('friends'))));
+}
+// A dot on Friends, wherever it's shown (the menus, the desktop, the dock), while there are
+// posts you haven't seen yet. Opening Friends clears it.
+const SEEN = 'okit-friends-seen';
+function friendsSeen() {
+  try {
+    const v = Number(localStorage.getItem(SEEN));
+    if (v) return v;
+  } catch {}
+  return Date.now() - 7 * 24 * 60 * 60 * 1000;
+}
+function newFromFriends() {
+  const seen = friendsSeen();
+  return (owner?.friendsMine?.posts || []).filter((p) => p.ts > seen && p.ts <= Date.now()).length;
+}
+function friendsDot() {
+  if (/^#\/friends\b/.test(location.hash)) {
+    const latest = Math.max(0, ...(owner?.friendsMine?.posts || []).map((p) => p.ts || 0));
+    if (latest > friendsSeen()) {
+      try {
+        localStorage.setItem(SEEN, String(latest));
+      } catch {}
+    }
+  }
+  const n = previewing ? 0 : newFromFriends();
+  const spots = new Set();
+  for (const icon of document.querySelectorAll('.dock-icon.di-friends')) spots.add(icon);
+  for (const a of document.querySelectorAll('a[href="#/friends"]')) if (!a.querySelector('.di-friends')) spots.add(a);
+  for (const spot of spots) {
+    let dot = spot.querySelector(':scope > .okit-ndot');
+    if (!n) {
+      dot?.remove();
+      continue;
+    }
+    const text = n > 9 ? '9+' : String(n);
+    if (!dot) {
+      spot.classList.add('okit-has-ndot');
+      spot.append((dot = h('span', { class: 'okit-ndot ' + (spot.classList.contains('dock-icon') ? 'on-icon' : 'on-word'), role: 'status' })));
+    }
+    if (dot.textContent !== text) dot.textContent = text;
+    dot.setAttribute('aria-label', `${n} new from friends`);
+  }
+}
+window.addEventListener('hashchange', () => owner && friendsDot());
+
 let decorating = false;
 function decorate() {
   writing();
@@ -884,6 +1018,9 @@ function decorate() {
     decoratePlanner();
     decorateWishlist();
     decorateHighlights();
+    decorateFriendPosts();
+    decorateFriendsTab();
+    friendsDot();
   } finally {
     decorating = false;
   }

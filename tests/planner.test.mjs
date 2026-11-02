@@ -26,9 +26,11 @@ await test('the back office: start a planner, add with a date, tick, note, make 
   await page.getByRole('textbox', { name: 'Add to the list' }).fill('Post the parcel');
   await page.getByRole('textbox', { name: 'Add to the list' }).press('Enter');
   await page.waitForFunction(() => document.querySelector('.toast:not([hidden])')?.textContent.includes('Added'));
+  // (Filling it fires its change: one save, finished before the next thing is typed, so the page
+  // drawn again after it never swallows what comes next.)
   await page.locator('.pl-item').first().locator('input[type="date"]').fill(day(3));
-  await page.locator('.pl-item').first().locator('input[type="date"]').dispatchEvent('change');
   await page.waitForFunction(() => document.querySelector('.toast:not([hidden])')?.textContent.includes('Saved'));
+  await page.waitForFunction((d) => document.querySelector('.pl-item input[type="date"]')?.value === d, day(3));
   await page.locator('.pl-item').first().getByRole('textbox', { name: 'Note' }).fill('before Friday');
   await page.locator('.pl-item').first().getByRole('textbox', { name: 'Note' }).press('Tab');
   await page.waitForFunction(() => /Saved/.test(document.querySelector('.toast:not([hidden])')?.textContent || '') && document.querySelector('.pl-item input[aria-label="Note"]')?.value === 'before Friday');

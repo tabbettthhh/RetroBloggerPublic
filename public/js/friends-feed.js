@@ -1,5 +1,6 @@
 // The Friends tab: posts from friends who run their own copy of this site, as one scrollable
 // feed (newest first), under a list of your friends. Tap a buddy to see only their posts. Everything comes through your own site; nothing loads from theirs.
+// (Signed in, their posts are mixed into your Home too: see friendPost.)
 import { h } from './util.js';
 import { presenceDot, ago } from './statusbar.js';
 import { withEmoticons } from './emoticons.js';
@@ -61,6 +62,17 @@ function photos(list, title) {
   return h('div', { class: 'ff-media' }, strip, dots, h('span', { class: 'ff-count' }, `1/${list.length}`));
 }
 
+// Which friend's post a card is, for the owner's tools (commenting on it from here).
+function markFriendPost(el, p) {
+  const who = p.friend || {};
+  // (Never taken for one of your own posts that happens to share its name.)
+  delete el.dataset.post;
+  if (who.key && p.id) el.dataset.friendPost = `${who.key}|${p.id}`;
+  // (Friends-only: theirs for you to see, never your visitors.)
+  if (p.friends_only) el.querySelector('.ff-who small')?.append(h('span', { class: 'ff-only' }, ' · 👥 friends only'));
+  return el;
+}
+
 function postCard(p) {
   const who = p.friend || {};
   const [emoji, word] = TYPE[p.type] || ['•', 'Post'];
@@ -94,7 +106,7 @@ function postCard(p) {
       text.after(more);
     } else text.classList.add('open');
   });
-  return card;
+  return markFriendPost(card, p);
 }
 
 // A post that came in full is drawn just as it looks on your friend's site (keepsakes, a
@@ -128,7 +140,15 @@ function friendCard(p) {
   );
   const link = safeUrl(p.url);
   if (link) el.append(h('a', { class: 'ff-open', href: link, target: '_blank', rel: 'noopener noreferrer' }, `See it on ${who.owner || who.name}’s site ↗`));
-  return foldLong(el, p.full);
+  return markFriendPost(foldLong(el, p.full), p);
+}
+
+// A friend's post, drawn as on their site with who it's from on top (for your Home, signed in).
+export function friendPost(p, data) {
+  looks = data?.friendLooks || looks;
+  const el = p.full ? friendCard(p) : postCard(p);
+  el.classList.add('ff-in-home');
+  return el;
 }
 
 export function friendsApp(ctx) {

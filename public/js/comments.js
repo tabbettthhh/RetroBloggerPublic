@@ -1,6 +1,7 @@
 // Comments on posts. Visitors leave one with just a name (any name: nothing else about them is
-// asked for or kept), or reply to another comment; each waits for the owner's approval in the
-// back office. The owner's replies show under the comment they answer.
+// asked for or kept), or reply to another comment; each waits for the owner's approval. The
+// owner's replies show under the comment they answer. Friends comment from their own sites:
+// theirs go straight on, with their name linking to their site.
 import { h, niceDate, storage } from './util.js';
 import { withEmoticons } from './emoticons.js';
 import { sound } from './sound.js';
@@ -75,7 +76,15 @@ function oneComment(c, post, owner, replies) {
   return h(
     'li',
     { class: 'cm-item', id: `comment-${c.id}`, 'data-comment': c.id },
-    h('div', { class: 'cm-head' }, h('span', { class: 'cm-avatar', 'aria-hidden': 'true' }, (c.name.trim()[0] || '?').toUpperCase()), h('b', null, c.name), h('small', null, niceDate(c.date, true))),
+    h(
+      'div',
+      { class: 'cm-head' },
+      h('span', { class: 'cm-avatar' + (c.site ? ' friend' : ''), 'aria-hidden': 'true' }, (c.name.trim()[0] || '?').toUpperCase()),
+      // (A friend, commenting from their own site: their name links there.)
+      c.site ? h('a', { class: 'cm-site', href: c.site, target: '_blank', rel: 'noopener noreferrer' }, h('b', null, c.name)) : h('b', null, c.name),
+      c.site ? h('small', { class: 'cm-badge friend' }, '👥 friend') : null,
+      h('small', null, niceDate(c.date, true))
+    ),
     h('p', { class: 'cm-text' }, withEmoticons(c.message, 15)),
     c.reply ? h('div', { class: 'cm-owner' }, h('div', { class: 'cm-head' }, h('span', { class: 'cm-avatar owner', 'aria-hidden': 'true' }, '★'), h('b', null, owner), h('small', { class: 'cm-badge' }, 'replied')), h('p', { class: 'cm-text' }, withEmoticons(c.reply, 15))) : null,
     replies.length ? h('ul', { class: 'cm-list replies' }, replies.map((r) => oneComment(r, post, owner, []))) : null,

@@ -1087,6 +1087,8 @@ export function parseComment(key, text) {
     date: data.date ? String(data.date) : '',
     reply_to: COMMENT_ID.test(String(data.reply_to ?? '')) ? String(data.reply_to) : '',
     reply: data.reply ? String(data.reply).slice(0, 2000) : '',
+    // (From a friend, commenting from their own site: their site's address.)
+    site: /^https?:\/\/[^/\s"'<>]+$/i.test(String(data.site ?? '')) ? String(data.site) : '',
     message: String(body || '').trim().slice(0, 2000)
   };
 }
