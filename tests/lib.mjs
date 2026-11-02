@@ -112,7 +112,7 @@ export async function adminPage(base = BASE) {
   page.errors = [];
   page.on('pageerror', (e) => page.errors.push(e.message));
   page.on('dialog', (d) => d.accept());
-  await page.goto(`${base}/admin/`);
+  await page.goto(`${base}/admin/plain`);
   await page.waitForSelector('.admin-sections button');
   return page;
 }

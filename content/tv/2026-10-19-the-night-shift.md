@@ -37,4 +37,4 @@ episodes:
     date: 2026-10-20
     note: Meant to watch one. Watched four.
 ---
-An example TV review. Which episode hooked you, who you'd tell to watch it, and whether it's one to binge or savour. Log single episodes in the back office and they show up as an episode guide below.
+An example TV review. Which episode hooked you, who you'd tell to watch it, and whether it's one to binge or savour. Log single episodes when you edit it and they show up as an episode guide below.

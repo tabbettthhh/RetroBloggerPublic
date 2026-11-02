@@ -7,6 +7,10 @@
 /* The five sections (Home, Posts, Inbox, Look, More): a row on a computer, a bar along the bottom
    of a phone; each opens a short row of its own pages (the tabs below). */
 .admin-sections { display: flex; gap: 4px; padding: 8px 8px 0; flex: none; }
+/* The plain editor, kept as a safety net: says so, with the way back to the site. */
+.plain-note { flex: none; margin: 8px 8px 0; padding: 6px 10px; border: 1px solid #e3c46a; border-radius: 4px; background: #fff8dc; color: #4a3a10; font-size: 12px; line-height: 1.4; }
+.plain-note a { font-weight: bold; white-space: nowrap; }
+[data-theme="dark"] .plain-note { background: #3a3320; border-color: #6a5a2a; color: #eee3c0; }
 .sec-btn { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; border: 1px solid #b8c3d8; border-radius: 19px; background: linear-gradient(180deg, #fff, #eef1f7); color: #2b3f6b; font: inherit; font-size: 13px; cursor: pointer; }
 .sec-btn .sec-ico { display: inline-flex; color: #5b6f99; }
 .sec-btn[aria-current="page"] { border-color: #316ac5; background: linear-gradient(180deg, #4f8ef0, #2a64d6); color: #fff; font-weight: bold; }

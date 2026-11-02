@@ -106,7 +106,7 @@ function privacyBox(ctx, d, act) {
     h(
       'label',
       { class: 'row check fr-share' },
-      h('input', { type: 'checkbox', checked: d.letShare, onchange: (e) => post({ letShare: e.target.checked }, e.target.checked ? 'Friends may show your posts on their sites.' : 'Your posts now stay off your friends’ sites (they still see them in their back office).') }),
+      h('input', { type: 'checkbox', checked: d.letShare, onchange: (e) => post({ letShare: e.target.checked }, e.target.checked ? 'Friends may show your posts on their sites.' : 'Your posts now stay off your friends’ sites for their visitors (your friends still see them, signed in).') }),
       h('span', null, h('b', null, 'Let friends show my posts on their sites. '), h('small', null, 'Untick it and your friends still see your posts when they’re signed in on their own site, but never show them to their visitors.'))
     ),
     h(
@@ -137,7 +137,7 @@ function addressNotice(ctx, d, act) {
       h(
         'div',
         { class: 'info fr-move' },
-        h('div', null, h('strong', null, 'Has your site moved? '), `You’re in the back office at ${d.here.replace(/^https?:\/\//, '')}, but your friends know your site as ${d.me.replace(/^https?:\/\//, '')}. If it now lives here, move it and your friends’ sites will follow.`),
+        h('div', null, h('strong', null, 'Has your site moved? '), `You’re signed in at ${d.here.replace(/^https?:\/\//, '')}, but your friends know your site as ${d.me.replace(/^https?:\/\//, '')}. If it now lives here, move it and your friends’ sites will follow.`),
         h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn small go', onclick: () => moveTo(ctx, act, d.here) }, `Move my site to ${d.here.replace(/^https?:\/\//, '')}`))
       )
     );
@@ -161,8 +161,8 @@ function addressBox(ctx, d, act, redraw) {
     'details',
     { class: 'fr-how fr-address' },
     h('summary', null, 'My site’s address'),
-    h('p', null, `Your friends know your site as ${d.me ? d.me.replace(/^https?:\/\//, '') : '(set the first time you open Friends)'}. Your friend code carries this address. It stays put, even if you open the back office from another address.`),
-    h('p', null, 'Moved your site (to a domain of your own, say)? Add the domain to your site in Cloudflare first, then put its address here. Visitors who go to your old address are sent to the new one, each friend’s site is told and follows, and the back office keeps opening at both. The README’s “Your own domain” has every step.'),
+    h('p', null, `Your friends know your site as ${d.me ? d.me.replace(/^https?:\/\//, '') : '(set the first time you open Friends)'}. Your friend code carries this address. It stays put, even if you sign in at another address.`),
+    h('p', null, 'Moved your site (to a domain of your own, say)? Add the domain to your site in Cloudflare first, then put its address here. Visitors who go to your old address are sent to the new one, each friend’s site is told and follows, and signing in keeps working at both. The README’s “Your own domain” has every step.'),
     h('div', { class: 'row' }, input, h('button', { type: 'button', class: 'btn small go', onclick: () => {
       const v = input.value.trim();
       if (!v || v.replace(/\/+$/, '') === d.me) return ctx.toast('That’s already your site’s address.');

@@ -84,7 +84,7 @@ function fromSettings(st) {
 // theme.md as text: colours, emoji and lists in quotes or as JSON (which is valid YAML).
 function themeText(file) {
   const lines = Object.entries(file).filter(([, v]) => v && (!Array.isArray(v) || v.length)).map(([k, v]) => `${k}: ${typeof v === 'object' || k === 'emoji' || k === 'tab_icon' || /^#/.test(v) ? JSON.stringify(v) : v}`);
-  return `---\n${lines.join('\n')}\n---\nThe site's theme. Change it under Themes in the back office.\n`;
+  return `---\n${lines.join('\n')}\n---\nThe site's theme. Change it under Themes in the Control Panel.\n`;
 }
 // Reads a theme file written as above (or by hand, as simple "key: value" lines).
 function readThemeText(text) {

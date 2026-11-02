@@ -59,7 +59,7 @@ function statusWord(type, status, state) {
 
 // ---------- plumbing ----------
 
-const SIGNED_OUT = "Your sign-in has run out, so nothing was saved. Open the back office in a new tab and sign in, then come back to this tab and try again: what you've written is still here.";
+const SIGNED_OUT = "Your sign-in has run out, so nothing was saved. Open your site in a new tab and sign in again (your name on the welcome screen), then come back to this tab and try again: what you've written is still here.";
 async function api(path, opts = {}) {
   let r;
   try {
@@ -196,7 +196,7 @@ function drawTabs() {
   const sugg = data.suggestions.length;
   const waitingComments = (data.pendingComments || []).length;
   const unread = unreadCount();
-  document.title = (unread ? `(${unread}) ` : '') + 'Back office';
+  document.title = (unread ? `(${unread}) ` : '') + 'Plain editor';
   const defs = [
     ['notifications', h('span', { class: 'bell', 'aria-hidden': 'true' }), unread, 'Notifications'],
     ['status', 'Status'],
@@ -335,7 +335,7 @@ function topRoomControls() {
     'fieldset',
     { class: 'group' },
     h('legend', null, 'On a phone’s Home Screen'),
-    h('p', { class: 'hint' }, 'Opened from the Home Screen, an iPhone puts its clock over the top of the page and fades out what’s under it. If the top bar looks washed out, give it more room. This is for the site and this back office, and only when opened from the Home Screen.'),
+    h('p', { class: 'hint' }, 'Opened from the Home Screen, an iPhone puts its clock over the top of the page and fades out what’s under it. If the top bar looks washed out, give it more room. This is for the whole site, and only when it’s opened from the Home Screen.'),
     h('div', { class: 'field' }, h('span', { class: 'label' }, 'Room at the top'), row),
     onHomeScreen() ? h('p', { class: 'hint' }, 'You’re on the Home Screen now, so you can see it change as you choose.') : null
   );
@@ -810,7 +810,7 @@ function viewPlanner() {
     'div',
     { class: 'pl-head' },
     field('Name', name),
-    h('label', { class: 'row' }, priv, '🔒 Private (only in the back office, never on the site)'),
+    h('label', { class: 'row' }, priv, '🔒 Private (only you see it, signed in; never on the site)'),
     h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn small', disabled: plannerAt === 0 || null, onclick: () => move(-1) }, '← Earlier tab'), h('button', { type: 'button', class: 'btn small', disabled: plannerAt === lists.length - 1 || null, onclick: () => move(1) }, 'Later tab →'), h('button', { type: 'button', class: 'btn small danger', onclick: () => { if (!confirm(`Delete the list “${l.name}” and everything on it?`)) return; lists.splice(plannerAt, 1); plannerAt = Math.max(0, plannerAt - 1); save('List deleted.'); } }, 'Delete list'))
   );
   const row = (it, i) => {
@@ -2339,7 +2339,7 @@ function viewEditor() {
       [
         field('Date and time', date, SHELF[s.type] ? 'When you finished it, started it or added it. A time in the future publishes it later.' : 'Pick a time in the future to publish it later.'),
         h('label', { class: 'row' }, draft, 'Keep as a draft (only you can see it)'),
-        h('label', { class: 'row' }, only, '👥 Friends only (not on your site: only your friends see it, in their back office)'),
+        h('label', { class: 'row' }, only, '👥 Friends only (not on your site for visitors: only your friends see it, signed in on theirs)'),
         h('label', { class: 'row' }, pin, '📌 Pin it to the top of the feed and its section'),
         h('label', { class: 'row' + (s.photos.length ? '' : ' muted') }, grid, s.photos.length ? '▦ Show it on my profile grid (the About page)' : '▦ Show it on my profile grid (add a photo first)'),
         coverPick,
@@ -3755,7 +3755,7 @@ async function saveVisa(v, saved, btn) {
   btn.disabled = true;
   try {
     if (v.file) v.picture = await uploadDesignPicture(v.file, 'visa');
-    await putFile('passport.md', frontMatter(visaFile(v)) + '\nThe visa in the passport. Change it under Designs in the back office.\n');
+    await putFile('passport.md', frontMatter(visaFile(v)) + '\nThe visa in the passport. Change it under Designs in the Control Panel.\n');
     if (saved.picture && saved.picture !== v.picture) await delFile(saved.picture).catch(() => {});
     if (v.blob) URL.revokeObjectURL(v.blob);
     visaDraft = null;
@@ -3957,7 +3957,7 @@ async function saveKeepsakes(k, saved, btn) {
       const d = k.custom.find((x) => x.id === id);
       if (d) d.picture = await uploadDesignPicture(file, 'keepsake-' + id);
     }
-    await putFile('keepsakes.md', frontMatter(keepFile(k)) + '\nKeepsakes switched off, and ones you designed. Change them under Designs in the back office.\n');
+    await putFile('keepsakes.md', frontMatter(keepFile(k)) + '\nKeepsakes switched off, and ones you designed. Change them under Designs in the Control Panel.\n');
     // Pictures no longer used by any design are removed.
     const now = new Set(k.custom.map((d) => d.picture).filter(Boolean));
     for (const d of saved.custom) if (d.picture && !now.has(d.picture)) await delFile(d.picture).catch(() => {});

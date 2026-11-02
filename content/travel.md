@@ -12,4 +12,4 @@ per_year:
 top_airlines: [British Airways, easyJet, KLM]
 top_aircraft: [Airbus A320, Boeing 737-800, Embraer 190]
 ---
-Example numbers. Replace them with your own totals in the back office under **Travel stats**.
+Example numbers. Replace them with your own totals under **Control Panel › Travel stats**.

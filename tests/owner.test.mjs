@@ -239,6 +239,29 @@ await test('the Control Panel: categories, each in the same place, and back', as
   }
 });
 
+await test('no separate back office: /admin is your site, signed in; the plain editor is kept as a safety net', async () => {
+  for (const path of ['/admin', '/admin/', '/admin/index.html']) eq((await fetch(BASE + path, { redirect: 'manual' })).headers.get('location'), '/?owner=1#/', path + ' → your site, signed in');
+  const plain = await fetch(BASE + '/admin/plain');
+  const html = await plain.text();
+  assert(plain.ok && html.includes('The plain editor') && html.includes('/admin/signin?to=%23%2F'), 'the plain editor, saying what it is, with the way back');
+  eq(plain.headers.get('cache-control'), 'no-store', 'never cached');
+  await site(PHONE, async (p) => {
+    await p.waitForSelector('.okit-me');
+    await p.locator('.okit-me').first().click();
+    await p.locator('.okit-menu button', { hasText: 'Control Panel' }).click();
+    await p.waitForSelector('.okit-host .cp-item');
+    eq(await p.locator('.cp-plain a').getAttribute('href'), '/admin/plain', 'a quiet link to it, at the foot of the Control Panel');
+  });
+  // And it still works: it opens, and its way back goes to your site, signed in.
+  await site(PHONE, async (p) => {
+    await p.waitForSelector('.admin-sections button');
+    assert((await p.locator('.plain-note').innerText()).includes('safety net'), 'says why it’s there');
+    await p.locator('.plain-note a').click();
+    await p.waitForURL((u) => u.search.includes('owner=1'));
+    await p.waitForSelector('.okit-me');
+  }, '/admin/plain');
+});
+
 await test('Themes: the real site wears what you try; closing without saving puts it back; saving keeps it', async () => {
   await putFile('theme.md', '---\ntheme: classic\n---\n');
   await site(DESK, async (p) => {

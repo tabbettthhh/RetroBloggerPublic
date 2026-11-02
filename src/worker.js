@@ -102,6 +102,10 @@ async function route(request, env, ctx) {
       const back = /^#\/[\w\-/%.]*$/.test(to) ? to : '#/';
       return new Response(null, { status: 302, headers: { Location: `/?owner=1${back}`, 'Cache-Control': 'no-store' } });
     }
+    // There's no separate back office any more: /admin is your site, signed in. (The plain
+    // editor at /admin/plain is kept as a safety net, in case something on the site isn't
+    // working.)
+    if (p === '/admin' || p === '/admin/' || p === '/admin/index.html') return new Response(null, { status: 302, headers: { Location: '/?owner=1#/', 'Cache-Control': 'no-store' } });
     if (p.startsWith('/admin/api/')) {
       // Changes only ever come from your own site's pages (never a form on someone else's).
       const origin = request.headers.get('Origin');
@@ -171,14 +175,14 @@ const LOCKED = {
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 function lockedPage(check, url, isApi) {
   const [title, how] = LOCKED[check.why] || LOCKED.bad;
-  if (isApi) return json({ error: `Back office is locked: ${title.replace(/’/g, "'")}.`, why: check.why }, 403);
+  if (isApi) return json({ error: `Signing in isn’t working: ${title.replace(/’/g, "'")}.`.replace(/’/g, "'"), why: check.why }, 403);
   if (check.why === 'setup') return setupGuide(url);
   const body = how.replace('{host}', esc(url.hostname)).replace('{email}', esc(check.email || ''));
   const signOut = ['bad', 'expired', 'email', 'audience'].includes(check.why) ? '<p><a href="/cdn-cgi/access/logout" style="display:inline-block;padding:8px 14px;border:1px solid #003c74;border-radius:3px;background:#ecebe6;color:#000;text-decoration:none">Sign out, then sign in again</a></p>' : '';
   return new Response(
     '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Back office</title><body style="font-family:Tahoma,sans-serif;padding:24px;max-width:620px;line-height:1.5">' +
-      `<h1 style="font-size:22px">Back office is locked</h1><h2 style="font-size:17px;color:#0d3a9a">${title}</h2><p>${body}</p>${signOut}` +
-      '<p style="color:#666;font-size:13px">Only the site’s owner can open the back office. If that’s not you, there’s nothing to see here: <a href="/">back to the site</a>.</p></body>',
+      `<h1 style="font-size:22px">Your owner tools are locked</h1><h2 style="font-size:17px;color:#0d3a9a">${title}</h2><p>${body}</p>${signOut}` +
+      '<p style="color:#666;font-size:13px">Only the site’s owner can sign in here. If that’s not you, there’s nothing to see here: <a href="/">back to the site</a>.</p></body>',
     { status: 403, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } }
   );
 }
@@ -217,7 +221,7 @@ export function setupPrompt(host) {
   return [
     `I've just put my own website online with Cloudflare, using the open-source "My Corner" blog. Its address is https://${host}. I'm not technical, so please guide me one small step at a time and wait for me to say "done" before the next one.`,
     '',
-    'The goal: lock the back office (the /admin part of my site) so only I can get in, using Cloudflare Zero Trust Access (free plan). The rest of the site stays public.',
+    'The goal: lock the owner’s sign-in (the /admin part of my site) so only I can get in, using Cloudflare Zero Trust Access (free plan). The rest of the site stays public.',
     '',
     'Cloudflare changes its menus now and then, so please check the current Cloudflare documentation as we go:',
     '- https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/self-hosted-public-app/',
@@ -230,7 +234,7 @@ export function setupPrompt(host) {
     '3. Give it an Allow policy that includes only my own email address, and sign in with a one-time PIN sent by email.',
     '4. Copy the application’s Application Audience (AUD) Tag.',
     '5. In Workers & Pages, open my site (the Worker), then Settings > Variables and Secrets, and set: ACCESS_TEAM_DOMAIN = my team domain; ACCESS_AUD = the AUD tag; ADMIN_EMAIL = my email (or none); CONTACT_EMAIL = my email (or none). Save and deploy.',
-    `6. Visit https://${host}/admin. Cloudflare should email me a code; once I'm in, we're done. If the page says the back office is locked, it explains why: help me fix what it says.`,
+    `6. Visit https://${host}/admin. Cloudflare should email me a code; once I'm in, we're done. If the page says my owner tools are locked, it explains why: help me fix what it says.`,
     '',
     'Please never ask me to paste passwords, one-time codes or API tokens into this chat. The team domain, AUD tag and my site address are fine to share.'
   ].join('\n');
@@ -254,10 +258,10 @@ function setupGuide(url) {
     ? '<p><b>Got a domain of your own</b> (like myname.com)? Set things up at this address first. Then the README’s “Your own domain” section moves your site there, and this address keeps working.</p>'
     : '';
   const page =
-    '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Set up your back office</title>' +
+    '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Set up signing in</title>' +
     '<body style="font-family:Tahoma,sans-serif;padding:24px;max-width:680px;line-height:1.55;color:#1b1b1b">' +
     '<h1 style="font-size:22px;margin-bottom:4px">Your site is online. One more step!</h1>' +
-    '<p style="margin-top:0">The back office is where you write posts and change everything. It stays shut until you lock it so that only you can get in. It takes about ten minutes, and costs nothing.</p>' +
+    '<p style="margin-top:0">Signed in, you write posts and change everything right on your site. Signing in stays shut until you lock it so that only you can get in. It takes about ten minutes, and costs nothing.</p>' +
     `<ol style="padding-left:22px">${steps.map((t) => `<li style="margin-bottom:8px">${t}</li>`).join('')}</ol>` +
     domain +
     '<h2 style="font-size:17px;color:#0d3a9a;margin-top:24px">Rather have an AI help?</h2>' +
