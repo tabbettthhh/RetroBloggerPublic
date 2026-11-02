@@ -951,3 +951,15 @@
 .jk-head { font: 11px 'Share Tech Mono', monospace; color: #7a6a52; }
 .jk-text { display: flex; flex-direction: column; font: 19px/1.1 Caveat, cursive; color: var(--pen); }
 .jk-ha { position: absolute; right: 10px; bottom: 6px; font: 700 18px Caveat, cursive; color: #c0392b; rotate: -12deg; }
+
+/* Long lines in keepsakes: they wrap and break inside the keepsake, never poke out of it. */
+.ks .pf-note { min-width: 0; overflow-wrap: anywhere; }
+.ks:has(> .pf-note.long) { flex-wrap: wrap; }
+.ks > .pf-note.long { flex: 1 1 100%; font-size: 15px; line-height: 1.12; }
+.ks > .pf-note.longer { font-size: 13.5px; }
+.ks :is(b, strong, small, span, i, em) { overflow-wrap: anywhere; }
+.wb-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ks li { overflow-wrap: anywhere; }
+/* Stamps and tags that are meant for a few words: they keep their shape and say what fits. */
+.lc-stamps li { max-width: calc(100% - 10px); }
+.rk-tag small { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }

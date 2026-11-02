@@ -179,3 +179,5 @@
 .em-frame small { font-size: 8px; letter-spacing: 2px; }
 .em-photo { display: grid; place-items: center; width: 70px; height: 70px; font-size: 40px; color: #7a6a52; background: #e9e3d2; }
 .em-frame b { font: 700 13px 'Libre Baskerville', Georgia, serif; overflow-wrap: anywhere; }
+.mmp-centre { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; max-width: 46%; }
+.mmp-twig { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; max-width: 34%; }

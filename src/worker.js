@@ -303,7 +303,7 @@ async function readText(env, key) {
 }
 
 const PARSED_CACHE = 'data/_parsed.json';
-const PARSED_VERSION = 31; // bump when buildPost changes shape
+const PARSED_VERSION = 32; // bump when buildPost changes shape
 
 // "reading [book]" (or [film], [podcast], [music]) becomes "reading The Remains of the Day" while a book is marked as reading.
 function fillStatus(status, posts) {
