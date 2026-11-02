@@ -1,0 +1,419 @@
+/* ---------- the highlights cabinet (see js/cabinet.js) ----------
+   A palace display cabinet, as in the State Rooms: polished mahogany, gilt-bronze mounts and
+   lion's-paw feet, a case lined with silk damask, bevelled glass doors that stay closed until you
+   open them, and glass shelves lit from above with everything reflected in them. The textures
+   (wood grain, silk, gold leaf) are images in /img/cabinet; the colours change with the season
+   or festive day. */
+.cabinet {
+  --cab-wood: #4a1810; --cab-wood-hi: #6e2716; --cab-wood-lo: #250b05;
+  --cab-gold: #e3bd5a; --cab-gold-lo: #a37a22; --cab-velvet: #8a0f1c; --cab-velvet-lo: #4a0912;
+  --cab-glow: rgba(255, 228, 160, .42); --cab-ink: #f7e7b8; --cab-label: #f5ecd6; --cab-label-ink: #3a2a14;
+  position: relative; margin: 6px 0 4px; filter: drop-shadow(0 10px 14px rgba(0, 0, 0, .28));
+}
+/* The seasons. */
+.cabinet[data-cab="winter"] { --cab-wood: #24304a; --cab-wood-hi: #3a4a6c; --cab-wood-lo: #141c2e; --cab-gold: #e6edf7; --cab-gold-lo: #98a8bf; --cab-velvet: #1c2a4a; --cab-velvet-lo: #101a30; --cab-glow: rgba(255, 214, 150, .5); --cab-ink: #eef3fb; }
+.cabinet[data-cab="spring"] { --cab-wood: #a9845a; --cab-wood-hi: #cfac7e; --cab-wood-lo: #7c5c3a; --cab-gold: #d9b45a; --cab-gold-lo: #94742a; --cab-velvet: #6f8f66; --cab-velvet-lo: #4a6444; --cab-glow: rgba(255, 246, 220, .5); --cab-ink: #fffbea; }
+.cabinet[data-cab="summer"] { --cab-wood: #b97b34; --cab-wood-hi: #dca25a; --cab-wood-lo: #84541f; --cab-gold: #f3cf62; --cab-gold-lo: #b88a22; --cab-velvet: #efe2c4; --cab-velvet-lo: #d4c29a; --cab-glow: rgba(255, 244, 196, .55); --cab-ink: #fff8e2; --cab-label: #fffaf0; }
+.cabinet[data-cab="autumn"] { --cab-wood: #4f1a10; --cab-wood-hi: #7a2c18; --cab-wood-lo: #2e0d07; --cab-gold: #d4a548; --cab-gold-lo: #8c6720; --cab-velvet: #6b1023; --cab-velvet-lo: #420816; --cab-glow: rgba(255, 196, 120, .5); }
+/* Festive days with their own ornament. */
+.cabinet[data-cab="dragon"] { --cab-wood: #9e0f19; --cab-wood-hi: #c81e28; --cab-wood-lo: #5e070d; --cab-gold: #f4cf5e; --cab-gold-lo: #b0861e; --cab-velvet: #6e0a12; --cab-velvet-lo: #42050a; --cab-glow: rgba(255, 210, 120, .5); }
+.cabinet[data-cab="carpet"] { --cab-wood: #4a1712; --cab-wood-hi: #6e241b; --cab-wood-lo: #2a0b08; --cab-gold: #e4bf6a; --cab-gold-lo: #9c7a2c; --cab-velvet: #7a1418; --cab-velvet-lo: #1f2f6b; }
+.cabinet[data-cab="papel"] { --cab-wood: #3a1d4a; --cab-wood-hi: #5c2f70; --cab-wood-lo: #22102c; --cab-gold: #f7b733; --cab-gold-lo: #c27b12; --cab-velvet: #2b1a3a; --cab-velvet-lo: #1a0f24; --cab-glow: rgba(255, 190, 90, .5); }
+.cabinet[data-cab="diya"] { --cab-wood: #5a1414; --cab-wood-hi: #8a2a18; --cab-wood-lo: #340a0a; --cab-gold: #f2c24a; --cab-velvet: #8a1d4a; --cab-velvet-lo: #4e0f2a; --cab-glow: rgba(255, 200, 100, .6); }
+.cabinet[data-cab="lantern"] { --cab-wood: #0f3340; --cab-wood-hi: #1d5566; --cab-wood-lo: #081e26; --cab-gold: #e8c46a; --cab-gold-lo: #9d7b2a; --cab-velvet: #123a4a; --cab-velvet-lo: #0a2430; --cab-glow: rgba(255, 220, 140, .55); }
+.cabinet[data-cab="lantern-east"] { --cab-wood: #7e1020; --cab-wood-hi: #a81d2e; --cab-wood-lo: #4a0912; --cab-gold: #f2c95c; --cab-velvet: #5c0c18; }
+.cabinet[data-cab="holly"] { --cab-wood: #3e1210; --cab-wood-hi: #64201a; --cab-gold: #e7c25e; --cab-velvet: #14402a; --cab-velvet-lo: #0b2818; }
+/* In dark mode (and on the night wallpaper) the lights inside are a little brighter. */
+:root[data-theme="dark"] .cabinet { --cab-glow: rgba(255, 226, 150, .62); }
+
+.cabinet { isolation: isolate; --grain-h: url("/img/cabinet/grain-h.webp"); --grain-v: url("/img/cabinet/grain-v.webp"); --silk: url("/img/cabinet/silk.webp"); --leaf: url("/img/cabinet/gold-leaf.webp"); --gilt: linear-gradient(180deg, #fff3c0 0%, #f1cd6a 14%, #c39234 34%, #8a5f16 50%, #d9ae4c 66%, #fbe7a0 82%, #a3741f 100%);
+  position: relative; max-width: 560px; margin: 10px auto 26px; padding-bottom: 14px; filter: none; }
+/* (Its shadow on the floor.) */
+.cabinet::after { content: ''; position: absolute; left: 4%; right: 4%; bottom: -6px; height: 22px; z-index: -1; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0, 0, 0, .55), transparent 70%); filter: blur(2px); }
+
+/* Polished wood: the colour, its grain (multiplied in), and the sheen of the polish. */
+.cab-wood, .cab-cornice, .cab-apron, .cab-plinth, .cab-body { background-color: var(--cab-wood); }
+
+/* The crown. */
+.cab-crown { position: relative; z-index: 2; margin: 0 7% -1px; line-height: 0; filter: drop-shadow(0 -1px 0 rgba(255, 255, 255, .15)); }
+.cab-pediment { display: block; width: 100%; height: auto; overflow: visible; }
+.cab-papel { position: absolute; left: 6%; right: 6%; bottom: 8px; width: 88%; height: auto; z-index: 3; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .35)); }
+.cab-garland { position: absolute; left: 6%; right: 6%; bottom: -2px; z-index: 3; display: flex; justify-content: space-between; padding: 0 4px 2px; border-bottom: 2px solid var(--g1); border-radius: 0 0 40% 40% / 0 0 10px 10px; box-shadow: 0 2px 0 var(--g2); filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .35)); }
+.cab-garland span { width: 19px; height: 19px; background: center / contain no-repeat; }
+
+/* The cornice: a gilt bead, the moulding, dentils, another bead; corner mounts; the name on a brass plate. */
+.cab-cornice { position: relative; z-index: 3; display: flex; align-items: center; justify-content: center; min-height: 40px; margin: 0 1%; padding: 8px 40px 10px;
+  background: var(--grain-h) 0 0 / 260px auto, linear-gradient(180deg, var(--cab-wood-hi), var(--cab-wood) 46%, var(--cab-wood-lo)); background-blend-mode: multiply, normal;
+  box-shadow: inset 0 3px 0 -1px #f1cd6a, inset 0 4px 0 -1px #6e4a10, inset 0 -5px 0 -2px #d9ae4c, inset 0 -6px 0 -2px #5a3a08, inset 0 12px 14px -10px rgba(255, 255, 255, .28), inset 0 -14px 12px -10px rgba(0, 0, 0, .55), 0 4px 6px -2px rgba(0, 0, 0, .55); }
+.cab-corner { position: absolute; top: 3px; width: 34px; height: 34px; line-height: 0; }
+.cab-corner.left { left: 4px; }
+.cab-corner.right { right: 4px; }
+.cab-corner svg, .cab-capital svg, .cab-base svg, .cab-foot svg, .cab-escutcheon svg, .cab-apron-mount svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.cab-title { position: relative; padding: 3px 22px 4px; border-radius: 2px; color: #3a2606; font: 700 12px/1.3 'Cormorant Garamond', 'Playfair Display', Georgia, 'Times New Roman', serif; letter-spacing: .34em; text-transform: uppercase; text-shadow: 0 1px 0 rgba(255, 248, 220, .7), 0 -1px 0 rgba(60, 30, 0, .35);
+  background: var(--leaf) 0 0 / 128px, linear-gradient(180deg, #fff3c0 0%, #f1cd6a 14%, #c39234 34%, #8a5f16 50%, #d9ae4c 66%, #fbe7a0 82%, #a3741f 100%); background-blend-mode: overlay, normal; box-shadow: 0 1px 1px rgba(0, 0, 0, .6), 0 3px 5px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -1px 0 rgba(90, 60, 8, .6); }
+/* (Its two little screws.) */
+.cab-title::before, .cab-title::after { content: ''; position: absolute; top: 50%; width: 5px; height: 5px; margin-top: -2.5px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6d0, #b8862a 60%, #5a3a08); box-shadow: inset 0 0 0 .6px rgba(0, 0, 0, .35); }
+.cab-title::before { left: 7px; }
+.cab-title::after { right: 7px; }
+
+/* The body: a fluted column either side, the glass case between. */
+.cab-body { position: relative; z-index: 1; display: grid; grid-template-columns: 20px minmax(0, 1fr) 20px; gap: 0; margin: 0 2%; padding: 0 3px;
+  background: var(--grain-v) 0 0 / auto 300px, linear-gradient(90deg, var(--cab-wood-lo), var(--cab-wood) 8%, var(--cab-wood-hi) 50%, var(--cab-wood) 92%, var(--cab-wood-lo)); background-blend-mode: multiply, normal; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .4); }
+.cab-pilaster { position: relative; margin: 0; background: var(--grain-v) 0 0 / auto 300px, repeating-linear-gradient(90deg, var(--cab-wood-lo) 0 1px, var(--cab-wood-hi) 1px 3px, var(--cab-wood) 3px 4.5px, var(--cab-wood-lo) 4.5px 5px), var(--cab-wood); background-blend-mode: multiply, normal, normal; box-shadow: inset 2px 0 2px rgba(255, 255, 255, .12), inset -2px 0 3px rgba(0, 0, 0, .5); }
+.cab-capital { position: absolute; top: -2px; left: -5px; right: -5px; height: 22px; line-height: 0; }
+.cab-base { position: absolute; bottom: -1px; left: -4px; right: -4px; height: 10px; line-height: 0; }
+
+/* The case: lined with silk damask, lit from a lamp at the top. */
+.cab-glass { position: relative; overflow: hidden; margin: 6px 3px 6px; padding: 14px 10px 22px; border-radius: 1px;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 0, var(--cab-glow), transparent 75%),
+    radial-gradient(ellipse 120% 100% at 50% 40%, transparent 55%, rgba(0, 0, 0, .45)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='112' viewBox='0 0 80 112'%3E%3Cg fill='%23fff' fill-opacity='.13' stroke='%23000' stroke-opacity='.08' stroke-width='.6'%3E%3Cg%3E%3Cpath d='M40 14C47 24 52 38 40 58C28 38 33 24 40 14Z'/%3E%3Cpath d='M40 58C55 56 66 66 62 82C57 74 50 70 41 72C52 66 54 60 40 58Z'/%3E%3Cpath d='M40 58C25 56 14 66 18 82C23 74 30 70 39 72C28 66 26 60 40 58Z'/%3E%3Cpath d='M40 72C47 82 47 94 40 104C33 94 33 82 40 72Z'/%3E%3Cpath d='M40 30C46 34 58 32 64 22C56 26 48 26 40 30Z'/%3E%3Cpath d='M40 30C34 34 22 32 16 22C24 26 32 26 40 30Z'/%3E%3Ccircle cx='40' cy='64' r='3'/%3E%3Ccircle cx='26' cy='90' r='2.2'/%3E%3Ccircle cx='54' cy='90' r='2.2'/%3E%3C/g%3E%3Cg transform='translate(0 0)'%3E%3Cg transform='translate(-40 56) scale(.62) translate(40 -30)'%3E%3Cpath d='M40 14C47 24 52 38 40 58C28 38 33 24 40 14Z'/%3E%3Cpath d='M40 58C55 56 66 66 62 82C57 74 50 70 41 72C52 66 54 60 40 58Z'/%3E%3Cpath d='M40 58C25 56 14 66 18 82C23 74 30 70 39 72C28 66 26 60 40 58Z'/%3E%3Cpath d='M40 72C47 82 47 94 40 104C33 94 33 82 40 72Z'/%3E%3Cpath d='M40 30C46 34 58 32 64 22C56 26 48 26 40 30Z'/%3E%3Cpath d='M40 30C34 34 22 32 16 22C24 26 32 26 40 30Z'/%3E%3Ccircle cx='40' cy='64' r='3'/%3E%3Ccircle cx='26' cy='90' r='2.2'/%3E%3Ccircle cx='54' cy='90' r='2.2'/%3E%3C/g%3E%3Cg transform='translate(40 56) scale(.62) translate(40 -30)'%3E%3Cpath d='M40 14C47 24 52 38 40 58C28 38 33 24 40 14Z'/%3E%3Cpath d='M40 58C55 56 66 66 62 82C57 74 50 70 41 72C52 66 54 60 40 58Z'/%3E%3Cpath d='M40 58C25 56 14 66 18 82C23 74 30 70 39 72C28 66 26 60 40 58Z'/%3E%3Cpath d='M40 72C47 82 47 94 40 104C33 94 33 82 40 72Z'/%3E%3Cpath d='M40 30C46 34 58 32 64 22C56 26 48 26 40 30Z'/%3E%3Cpath d='M40 30C34 34 22 32 16 22C24 26 32 26 40 30Z'/%3E%3Ccircle cx='40' cy='64' r='3'/%3E%3Ccircle cx='26' cy='90' r='2.2'/%3E%3Ccircle cx='54' cy='90' r='2.2'/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/svg%3E") 0 0 / 56px 78px,
+    var(--silk) 0 0 / 96px,
+    linear-gradient(180deg, var(--cab-velvet), var(--cab-velvet-lo));
+  background-blend-mode: normal, normal, normal, soft-light, normal;
+  box-shadow: 0 0 0 2px #7a5414, 0 0 0 3px #f0cc6a, 0 0 0 4px #6e4a10, inset 0 8px 16px rgba(0, 0, 0, .55), inset 0 -6px 12px rgba(0, 0, 0, .4); }
+/* Central Asian carpet days: the case lined with a carpet, medallions and a border. */
+.cabinet[data-cab="carpet"] .cab-glass { background:
+  radial-gradient(ellipse 90% 60% at 50% -12%, var(--cab-glow), transparent 70%),
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%237a1418'/%3E%3Cpath d='M24 6 42 24 24 42 6 24z' fill='%231f2f6b'/%3E%3Cpath d='M24 13 35 24 24 35 13 24z' fill='%23a01c22'/%3E%3Cpath d='M24 19 29 24 24 29 19 24z' fill='%23f2d48a'/%3E%3Cg fill='%23f2d48a'%3E%3Ccircle cx='0' cy='0' r='3'/%3E%3Ccircle cx='48' cy='0' r='3'/%3E%3Ccircle cx='0' cy='48' r='3'/%3E%3Ccircle cx='48' cy='48' r='3'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 48px 48px; box-shadow: inset 0 0 0 6px #1f2f6b, inset 0 0 0 8px #f2d48a, inset 0 0 18px rgba(0, 0, 0, .45); }
+/* Eid and Ramadan: a lining of eight-pointed stars, geometric and quiet. */
+.cabinet[data-cab="lantern"] .cab-glass { background:
+  radial-gradient(ellipse 90% 60% at 50% -12%, var(--cab-glow), transparent 70%),
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill='none' stroke='%23e8c46a' stroke-opacity='.35' stroke-width='1.2'%3E%3Cpath d='M20 8l3.5 8.5L32 20l-8.5 3.5L20 32l-3.5-8.5L8 20l8.5-3.5z'/%3E%3Crect x='12' y='12' width='16' height='16' transform='rotate(45 20 20)'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 40px 40px, linear-gradient(180deg, var(--cab-velvet), var(--cab-velvet-lo)); }
+/* Diwali: a warm glow and a rangoli of dots along the lining. */
+.cabinet[data-cab="diya"] .cab-glass { background:
+  radial-gradient(ellipse 90% 60% at 50% -12%, var(--cab-glow), transparent 70%),
+  radial-gradient(circle, rgba(255, 200, 90, .28) 1.6px, transparent 2.2px) 0 0 / 14px 14px, linear-gradient(180deg, var(--cab-velvet), var(--cab-velvet-lo)); }
+/* The seasons' own touches on the glass. */
+.cabinet[data-cab="winter"] .cab-glass::before { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at 0 0, rgba(235, 245, 255, .55), transparent 24%), radial-gradient(circle at 100% 0, rgba(235, 245, 255, .45), transparent 20%), radial-gradient(circle at 0 100%, rgba(235, 245, 255, .4), transparent 18%), radial-gradient(circle at 100% 100%, rgba(235, 245, 255, .5), transparent 22%); }
+.cabinet[data-cab="spring"] .cab-glass::before { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90' viewBox='0 0 90 90'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.18' stroke-width='1'%3E%3Cpath d='M0 90C20 70 30 50 60 40'/%3E%3Ccircle cx='60' cy='40' r='4'/%3E%3Ccircle cx='40' cy='54' r='3'/%3E%3Ccircle cx='24' cy='68' r='3.4'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 90px 90px; }
+.cabinet[data-cab="summer"] .cab-glass::before { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: linear-gradient(120deg, transparent 20%, rgba(255, 246, 200, .28) 30%, transparent 42%, transparent 58%, rgba(255, 246, 200, .2) 66%, transparent 76%); }
+.cabinet[data-cab="autumn"] .cab-glass::before { content: ''; position: absolute; top: -4px; right: 12%; z-index: 3; width: 26px; height: 26px; pointer-events: none; transform: rotate(24deg); background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1.2 9.2 4.4l1.8-.8-.4 3 2.8-1.4-.6 2 2 .6-3.4 2.8.6 1.2-3.4-.4V15H7.4v-3.6l-3.4.4.6-1.2L1.2 7.8l2-.6-.6-2 2.8 1.4-.4-3 1.8.8z' fill='%23e2622b' stroke='%237a2a10' stroke-width='.6'/%3E%3C/svg%3E") center / contain no-repeat; }
+
+/* The lamp: a brass picture light along the top, casting down. */
+.cab-lamp { position: absolute; top: 0; left: 26%; right: 26%; height: 5px; z-index: 2; border-radius: 0 0 3px 3px; background: linear-gradient(180deg, #fff3c0 0%, #f1cd6a 14%, #c39234 34%, #8a5f16 50%, #d9ae4c 66%, #fbe7a0 82%, #a3741f 100%); box-shadow: 0 2px 3px rgba(0, 0, 0, .5), 0 6px 18px 6px var(--cab-glow); }
+
+/* A shelf: its nameplate on the back, the things standing on glass, the glass edged in gilt. */
+.cab-shelf { position: relative; padding: 4px 2px 0; }
+.cab-shelf + .cab-shelf { margin-top: 12px; }
+.cab-shelf::before { content: ''; position: absolute; left: 10%; right: 10%; top: -10px; height: 70%; pointer-events: none; background: radial-gradient(ellipse 60% 70% at 50% 0, rgba(255, 236, 190, .22), transparent 70%); }
+.cab-plate { position: relative; display: flex; justify-content: flex-start; margin: 0 0 8px 2px; }
+.cab-plate span { position: relative; padding: 1px 14px 2px; border-radius: 1px; color: #3a2606; font: 700 9px/1.6 Georgia, 'Times New Roman', serif; letter-spacing: .3em; text-transform: uppercase; text-shadow: 0 1px 0 rgba(255, 248, 220, .7);
+  background: var(--leaf) 0 0 / 96px, linear-gradient(180deg, #fff3c0 0%, #f1cd6a 14%, #c39234 34%, #8a5f16 50%, #d9ae4c 66%, #fbe7a0 82%, #a3741f 100%); background-blend-mode: overlay, normal; box-shadow: 0 1px 1px rgba(0, 0, 0, .7), 0 3px 6px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .6); }
+.cabinet[data-cab="winter"] .cab-plate span, .cabinet[data-cab="winter"] .cab-title { background: var(--leaf) 0 0 / 96px, linear-gradient(180deg, #ffffff, #e2e8f2 20%, #9aa8bd 50%, #dfe6f0 70%, #8796ad); background-blend-mode: overlay, normal; color: #1d2a40; }
+.cab-row { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; align-items: end; margin: 0; padding: 0 4px; list-style: none; }
+.cab-shelf-glass { position: relative; display: block; height: 7px; margin: 0 -4px; border-radius: 1px; background: linear-gradient(180deg, rgba(220, 240, 235, .55), rgba(170, 205, 200, .25) 40%, rgba(255, 255, 255, .5) 55%, transparent 60%), linear-gradient(180deg, transparent 60%, #f0cc6a 60%, #a3741f 85%, #5a3a08); box-shadow: 0 3px 4px rgba(0, 0, 0, .45); }
+.cab-item { display: flex; flex-direction: column; align-items: center; gap: 0; min-width: 0; }
+.cab-pick { position: relative; display: flex; align-items: flex-end; justify-content: center; width: 100%; height: 76px; padding: 0; border: 0; background: none; cursor: pointer; transition: transform .25s; }
+/* (Standing on the glass: a contact shadow, and its reflection below.) */
+.cab-pick::after { content: ''; position: absolute; left: 14%; right: 14%; bottom: -2px; height: 6px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0, 0, 0, .65), transparent 72%); }
+.cab-obj { -webkit-box-reflect: below 1px linear-gradient(transparent 72%, rgba(255, 255, 255, .22)); }
+.cabinet.open .cab-pick:hover, .cabinet.open .cab-pick:focus-visible { transform: translateY(-3px); }
+.cab-label { order: -1; display: none; }
+.cab-item { position: relative; }
+.cab-no1 { position: absolute; left: 50%; bottom: -15px; z-index: 3; translate: -50% 0; padding: 0 4px; border-radius: 1px; color: #3a2606; font: 800 6.5px/10px Georgia, serif; letter-spacing: .04em; white-space: nowrap; background: var(--leaf) 0 0 / 64px, linear-gradient(180deg, #fff3c0, #e1b64e 40%, #9c6e1c); background-blend-mode: overlay, normal; box-shadow: 0 1px 1px rgba(0, 0, 0, .7), inset 0 1px 0 rgba(255, 255, 255, .6); }
+
+/* The doors: two panes of glass in gilt frames, with the light caught across them. */
+.cab-doors { position: absolute; inset: 0; z-index: 5; display: flex; padding: 0; border: 0; background: none; cursor: pointer; perspective: 900px; }
+.cab-door { position: relative; flex: 1; transform-style: preserve-3d; transition: transform .9s cubic-bezier(.4, .1, .2, 1); }
+.cab-door.left { transform-origin: 0 50%; }
+.cab-door.right { transform-origin: 100% 50%; }
+.cab-pane { position: absolute; inset: 0; border: 4px solid transparent; border-image: linear-gradient(180deg, #fff3c0 0%, #f1cd6a 14%, #c39234 34%, #8a5f16 50%, #d9ae4c 66%, #fbe7a0 82%, #a3741f 100%) 1; box-shadow: inset 0 0 0 1px rgba(255, 250, 230, .28), inset 0 0 0 2px rgba(120, 160, 150, .2), inset 0 0 14px rgba(170, 210, 200, .18), 0 0 2px rgba(0, 0, 0, .6);
+  background: linear-gradient(118deg, transparent 0 22%, rgba(255, 255, 255, .16) 26%, rgba(255, 255, 255, .04) 34%, transparent 36%, transparent 62%, rgba(255, 255, 255, .1) 64%, transparent 69%), linear-gradient(180deg, rgba(255, 255, 255, .07), transparent 30%, rgba(190, 220, 210, .06)); }
+.cab-door.right .cab-pane { background: linear-gradient(118deg, transparent 0 8%, rgba(255, 255, 255, .12) 12%, transparent 20%, transparent 70%, rgba(255, 255, 255, .14) 74%, rgba(255, 255, 255, .03) 82%, transparent 84%), linear-gradient(180deg, rgba(255, 255, 255, .07), transparent 30%, rgba(190, 220, 210, .06)); }
+.cab-escutcheon { position: absolute; top: 50%; left: 50%; z-index: 2; width: 12px; height: 19px; margin: -10px 0 0 -6px; line-height: 0; transition: opacity .3s; }
+.cabinet.open .cab-door.left { transform: rotateY(-104deg); }
+.cabinet.open .cab-door.right { transform: rotateY(104deg); }
+.cabinet.open .cab-escutcheon { opacity: 0; }
+.cabinet.open .cab-doors { pointer-events: none; }
+.cab-doors:focus-visible .cab-pane { outline: 2px dashed #f0cc6a; outline-offset: -6px; }
+
+/* The apron, the plinth and the lion's paws. */
+.cab-apron { position: relative; z-index: 1; height: 16px; margin: 0 2%; background: var(--grain-h) 0 0 / 260px auto, linear-gradient(180deg, var(--cab-wood-hi), var(--cab-wood) 50%, var(--cab-wood-lo)); background-blend-mode: multiply, normal; box-shadow: inset 0 2px 0 -1px #d9ae4c, inset 0 3px 0 -1px #5a3a08, 0 2px 3px rgba(0, 0, 0, .5); }
+.cab-apron-mount { position: absolute; left: 50%; top: 0; width: 76px; height: 17px; margin-left: -38px; line-height: 0; }
+.cab-plinth { position: relative; height: 16px; margin: 0; border-radius: 2px; background: var(--grain-h) 0 0 / 260px auto, linear-gradient(180deg, var(--cab-wood-hi), var(--cab-wood) 46%, var(--cab-wood-lo)); background-blend-mode: multiply, normal; box-shadow: inset 0 2px 0 -1px #f1cd6a, inset 0 3px 0 -1px #6e4a10, inset 0 -2px 0 -1px #a3741f, 0 3px 4px rgba(0, 0, 0, .5); }
+.cab-foot { position: absolute; bottom: -20px; width: 30px; height: 26px; line-height: 0; }
+.cab-foot.left { left: 3%; }
+.cab-foot.right { right: 3%; transform: scaleX(-1); }
+.cab-credit { margin: 18px 0 0; color: #8a7a68; font-size: 10px; text-align: center; }
+
+/* ---------- the pieces in the collection ----------
+   All lit by the cabinet's lamp (warmed, a touch darker at the foot), standing on the glass with a
+   contact shadow and a reflection. */
+.cab-obj { position: relative; display: block; filter: sepia(.16) saturate(.86) brightness(.95) contrast(1.04); }
+.cab-obj::after { content: ''; position: absolute; inset: 0; z-index: 4; pointer-events: none; background: linear-gradient(180deg, rgba(255, 236, 190, .14), transparent 45%, rgba(20, 6, 0, .22)); mix-blend-mode: multiply; }
+.cab-obj img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* A gilt frame on a brass easel (photos, maps, film posters). */
+.cab-framed { width: 86%; transform: perspective(240px) rotateX(7deg); transform-origin: 50% 100%; }
+.cab-framed.is-poster { width: 60%; }
+.cab-frame { position: relative; z-index: 1; display: block; padding: 3px; background: var(--leaf) 0 0 / 60px, linear-gradient(180deg, #fff3c0 0%, #f1cd6a 14%, #c39234 34%, #8a5f16 50%, #d9ae4c 66%, #fbe7a0 82%, #a3741f 100%); background-blend-mode: overlay, normal; box-shadow: 0 1px 1px rgba(0, 0, 0, .6), 0 6px 8px -3px rgba(0, 0, 0, .7), inset 0 0 0 1px rgba(90, 60, 8, .7); }
+.cab-frame-in { position: relative; display: block; overflow: hidden; aspect-ratio: 4 / 3; background: #ece4d0; box-shadow: inset 0 0 0 1px rgba(60, 40, 0, .5), inset 0 0 4px rgba(0, 0, 0, .6); }
+.is-poster .cab-frame-in { aspect-ratio: 2 / 3; }
+.cab-frame-in::after { content: ''; position: absolute; inset: 0; background: linear-gradient(125deg, rgba(255, 255, 255, .22), transparent 32%, transparent 70%, rgba(255, 255, 255, .06)); }
+.cab-easel { position: absolute; z-index: 0; left: 50%; bottom: -2px; width: 46%; height: 34%; translate: -50% 0; background: linear-gradient(100deg, transparent 46%, #b8862a 47%, #f1cd6a 49%, #8a5f16 51%, transparent 52%) 0 0 / 100% 100%, linear-gradient(0deg, #8a5f16, #f1cd6a 40%, #a3741f) 0 70% / 100% 2px no-repeat; }
+.cab-blank { display: flex; align-items: center; justify-content: center; height: 100%; padding: 3px; color: #4a3a20; font: italic 7px/1.2 Georgia, serif; text-align: center; }
+/* The map: a block of tiles with the place at its centre, folded twice, with a pin in it. */
+.cab-map { position: absolute; inset: 0; overflow: hidden; background: #efe9da; }
+.cab-map-tiles { position: absolute; display: grid; grid-template-columns: repeat(3, 1fr); width: 300%; left: calc(50% - (100% + var(--fx) * 100%)); top: calc(50% - (100% + var(--fy) * 100%) * .75); filter: sepia(.35) saturate(.75) contrast(.95) brightness(1.02); }
+.cab-map-tiles img { width: 100%; aspect-ratio: 1; height: auto; display: block; }
+.cab-map-folds { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0, 0, 0, .12), rgba(255, 255, 255, .14) 33.2%, rgba(0, 0, 0, .16) 33.4%, rgba(255, 255, 255, .1) 66.5%, rgba(0, 0, 0, .14) 66.7%, rgba(255, 255, 255, .1)), linear-gradient(180deg, rgba(255, 255, 255, .08) 0 49.6%, rgba(0, 0, 0, .14) 50%, rgba(255, 255, 255, .05) 50.4%); mix-blend-mode: multiply; }
+.cab-map-pin { position: absolute; left: 50%; top: 50%; width: 10px; height: 14px; margin: -13px 0 0 -5px; filter: drop-shadow(1px 2px 1px rgba(0, 0, 0, .45)); }
+.cab-map-pin svg { width: 100%; height: 100%; display: block; }
+.cab-map-name { position: absolute; z-index: 2; left: 50%; bottom: 3px; translate: -50% 0; max-width: 90%; padding: 0 3px; overflow: hidden; color: #2b2116; font: 700 5.5px/1.5 Georgia, serif; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; text-overflow: ellipsis; background: rgba(246, 240, 226, .92); box-shadow: 0 0 0 .5px rgba(60, 40, 0, .4); }
+/* A record, half out of its sleeve. */
+.cab-record { width: 78%; aspect-ratio: 1; }
+.cab-sleeve { position: absolute; inset: 0; z-index: 1; overflow: hidden; border-radius: 1px; background: #ddd2bb; box-shadow: 0 1px 1px rgba(0, 0, 0, .5), 0 6px 8px -3px rgba(0, 0, 0, .7), inset 0 0 0 1px rgba(0, 0, 0, .15); }
+.cab-sleeve::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, transparent 38%, rgba(255, 255, 255, .06) 39%, transparent 41%), linear-gradient(125deg, rgba(255, 255, 255, .14), transparent 40%, rgba(0, 0, 0, .14)); pointer-events: none; }
+/* (No cover: dark leather, a gilt ring, the title in gold leaf.) */
+.cab-sleeve.leather { display: flex; align-items: center; justify-content: center; background: var(--grain-h) 0 0 / 120px, radial-gradient(circle at 35% 30%, #5a1a1e, #2e0a0d 75%); background-blend-mode: soft-light, normal; }
+.cab-sleeve-ring { position: absolute; inset: 14%; border-radius: 50%; box-shadow: 0 0 0 1px #c9a24a, inset 0 0 0 1px rgba(201, 162, 74, .5); }
+.cab-sleeve-title { position: relative; max-width: 64%; color: #e9c870; font: 700 6px/1.2 Georgia, 'Times New Roman', serif; letter-spacing: .06em; text-align: center; text-shadow: 0 -.5px 0 rgba(0, 0, 0, .7), 0 .5px 0 rgba(255, 240, 190, .25); overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; }
+.cab-vinyl { position: absolute; top: 4%; left: 30%; width: 92%; aspect-ratio: 1; border-radius: 50%; background: conic-gradient(from 20deg, transparent, rgba(255, 255, 255, .14) 8%, transparent 16%, transparent 50%, rgba(255, 255, 255, .1) 58%, transparent 66%), repeating-radial-gradient(circle, #121212 0 1px, #1b1b1b 1px 2px), #111; box-shadow: 0 2px 4px rgba(0, 0, 0, .6); }
+.cab-vinyl-label { position: absolute; left: 50%; top: 50%; width: 34%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; background: radial-gradient(circle, #111 0 7%, #7a1f24 8% 100%); box-shadow: inset 0 0 0 2px rgba(201, 162, 74, .7); }
+/* A cinema ticket on ivory card, gilt-edged; its back says why. */
+.cab-ticket { width: 58%; aspect-ratio: 5 / 8; transform: rotate(3deg); transform-style: preserve-3d; }
+.cab-ticket-face, .cab-ticket-back { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 5px 3px 4px; backface-visibility: hidden; background: var(--silk) 0 0 / 60px, linear-gradient(180deg, #f3e8cf, #e2cfa6); background-blend-mode: soft-light, normal; box-shadow: 0 1px 1px rgba(0, 0, 0, .45), 0 6px 8px -3px rgba(0, 0, 0, .65), inset 0 0 0 1.5px #c9a24a, inset 0 0 0 2.5px #f3e8cf, inset 0 0 0 3px rgba(122, 31, 36, .5);
+  -webkit-mask: radial-gradient(circle at 0 50%, transparent 3px, #000 3.5px) left / 51% 100% no-repeat, radial-gradient(circle at 100% 50%, transparent 3px, #000 3.5px) right / 51% 100% no-repeat; mask: radial-gradient(circle at 0 50%, transparent 3px, #000 3.5px) left / 51% 100% no-repeat, radial-gradient(circle at 100% 50%, transparent 3px, #000 3.5px) right / 51% 100% no-repeat; }
+.cab-ticket-face { color: #7a1f24; }
+.cab-ticket-top { font: 700 5px/1 Georgia, serif; letter-spacing: .3em; border-bottom: .5px solid currentColor; padding-bottom: 1px; }
+.cab-ticket-title { color: #2a1a0c; font: 700 7px/1.1 Georgia, serif; text-align: center; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; }
+.cab-ticket-admit { font: 800 5.5px/1 'Courier New', monospace; letter-spacing: .12em; border-top: 1px dashed rgba(122, 31, 36, .5); padding-top: 2px; }
+.cab-ticket-no { color: #6a5434; font: 5px/1 'Courier New', monospace; }
+.cab-ticket-back { transform: rotateY(180deg); justify-content: center; gap: 6px; padding: 10% 10%; color: #1b2a5a; font: 400 13px/1.15 'Caveat', 'Gaegu', cursive; text-align: center; }
+.cab-ticket-back small { color: #6a5434; font: 9px/1 Georgia, serif; }
+/* A VHS tape, standing in its sleeve, the title on the spine. */
+.cab-vhs { width: 50%; aspect-ratio: 103 / 187; }
+.cab-vhs-case { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; border-radius: 1px; background: var(--grain-v) 0 0 / auto 160px, linear-gradient(90deg, #1e1a17, #3a302a 30%, #2a221d 70%, #141110); background-blend-mode: soft-light, normal; box-shadow: 0 1px 1px rgba(0, 0, 0, .55), 0 6px 8px -3px rgba(0, 0, 0, .75), inset 1px 0 0 rgba(255, 255, 255, .1); }
+.cab-vhs-spine { writing-mode: vertical-rl; transform: rotate(180deg); max-height: 88%; padding: 4px 2px; overflow: hidden; color: #2a1d10; font: 400 9px/1 'Caveat', 'Gaegu', cursive; white-space: nowrap; text-overflow: ellipsis; background: linear-gradient(90deg, #efe4c8, #e2d3ae); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .4); }
+.cab-vhs-tape { position: absolute; inset: 4% 6%; z-index: 1; border-radius: 1px; background: linear-gradient(180deg, #2a2a2a, #111); }
+.cab-vhs-window { position: absolute; left: 22%; right: 22%; top: 30%; height: 16%; background: radial-gradient(circle at 30% 50%, #3a2a1a 0 34%, #0c0c0c 35%), radial-gradient(circle at 70% 50%, #3a2a1a 0 24%, #0c0c0c 25%); }
+/* A cassette, its label on old paper, written by hand. */
+.cab-cassette { width: 92%; aspect-ratio: 10 / 6.4; border-radius: 3px; background: linear-gradient(160deg, rgba(74, 64, 58, .96), rgba(32, 28, 26, .96)); box-shadow: 0 1px 1px rgba(0, 0, 0, .5), 0 6px 8px -3px rgba(0, 0, 0, .75), inset 0 1px 0 rgba(255, 255, 255, .2), inset 0 0 0 1px rgba(255, 255, 255, .05); }
+.cab-cassette-label { position: absolute; left: 7%; right: 7%; top: 8%; height: 34%; padding: 1px 3px; overflow: hidden; color: #1b2a5a; font: 400 9px/1.2 'Caveat', 'Gaegu', cursive; white-space: nowrap; text-overflow: ellipsis; background: repeating-linear-gradient(180deg, #efe4c8 0 4px, #dccba0 4px 4.5px); }
+.cab-cassette-window { position: absolute; left: 24%; right: 24%; top: 46%; height: 24%; border-radius: 6px; background: radial-gradient(circle at 25% 50%, #e8e2d4 0 14%, #555 15% 22%, transparent 23%), radial-gradient(circle at 75% 50%, #e8e2d4 0 14%, #555 15% 22%, transparent 23%), linear-gradient(180deg, #2a1a10, #4a2e1a); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .8); }
+.cab-cassette-screws { position: absolute; inset: 4% 3%; pointer-events: none; background: radial-gradient(circle, #c8b98e 0 1px, #5a4a2a 1.4px, transparent 1.8px) 0 0 / 3px 3px no-repeat, radial-gradient(circle, #c8b98e 0 1px, #5a4a2a 1.4px, transparent 1.8px) 100% 0 / 3px 3px no-repeat, radial-gradient(circle, #c8b98e 0 1px, #5a4a2a 1.4px, transparent 1.8px) 0 100% / 3px 3px no-repeat, radial-gradient(circle, #c8b98e 0 1px, #5a4a2a 1.4px, transparent 1.8px) 100% 100% / 3px 3px no-repeat; }
+
+/* ---------- the experience ----------
+   The key, the lamp warming up, dust in the light, the reflections and depth as you move, and the
+   handle that closes it again. */
+.cab-key { position: absolute; left: 50%; top: 42%; width: 4px; height: 9px; margin-left: -2px; border-radius: 1px; background: linear-gradient(180deg, #fff3c0 0%, #f1cd6a 14%, #c39234 34%, #8a5f16 50%, #d9ae4c 66%, #fbe7a0 82%, #a3741f 100%); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .5); transition: transform .35s cubic-bezier(.4, .1, .3, 1); }
+.cabinet.unlocking .cab-key { transform: rotate(90deg); }
+.cab-warmth { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse 80% 55% at 50% 0, rgba(255, 214, 140, .32), transparent 75%); transition: opacity 1.4s ease .3s; }
+.cabinet.open .cab-warmth { opacity: 1; }
+.cab-dust { position: absolute; left: 22%; right: 22%; top: 0; bottom: 30%; z-index: 3; pointer-events: none; overflow: hidden; opacity: .5; transition: opacity 1s; -webkit-mask: linear-gradient(180deg, #000, transparent); mask: linear-gradient(180deg, #000, transparent); }
+.cabinet.open .cab-dust { opacity: .9; }
+.cab-dust i { position: absolute; left: var(--d); bottom: -4%; width: var(--s); height: var(--s); border-radius: 50%; background: rgba(255, 240, 210, .8); box-shadow: 0 0 3px rgba(255, 230, 180, .9); animation: cab-mote var(--t) linear var(--w) infinite; }
+@keyframes cab-mote { 0% { transform: translate(0, 0); opacity: 0; } 15% { opacity: .9; } 50% { transform: translate(10px, -160px); } 85% { opacity: .7; } 100% { transform: translate(-6px, -320px); opacity: 0; } }
+/* (Moving around it: the reflections slide one way, the back of the case the other.) */
+.cabinet { --px: 0; --py: 0; }
+.cab-pane { background-position: calc(var(--px) * 26px) 0, 0 0; transition: background-position .2s ease-out; }
+.cab-row { transform: translateX(calc(var(--px) * 1.5px)); transition: transform .2s ease-out; }
+.cab-glass { background-position: 0 0, 0 0, calc(var(--px) * -4px) calc(var(--py) * -3px), 0 0, 0 0; }
+.cab-shut { position: absolute; right: 8%; top: -1px; z-index: 6; display: none; align-items: center; gap: 5px; padding: 2px 9px 3px 4px; border: 0; border-radius: 0 0 3px 3px; color: #3a2606; font: 700 9px/1.4 Georgia, serif; letter-spacing: .12em; text-transform: uppercase; background: var(--leaf) 0 0 / 64px, linear-gradient(180deg, #fff3c0 0%, #f1cd6a 14%, #c39234 34%, #8a5f16 50%, #d9ae4c 66%, #fbe7a0 82%, #a3741f 100%); background-blend-mode: overlay, normal; box-shadow: 0 1px 2px rgba(0, 0, 0, .6); cursor: pointer; }
+.cab-shut span { width: 12px; height: 6px; border: 2px solid #8a5f16; border-top: 0; border-radius: 0 0 6px 6px; }
+.cabinet.open .cab-shut { display: inline-flex; }
+@media (prefers-reduced-motion: reduce) { .cab-dust { display: none; } .cab-door, .cab-pick, .cab-key, .cab-warmth, .cab-row, .cab-pane { transition: none; } }
+
+@media (max-width: 420px) {
+  .cab-pick { height: 62px; }
+  .cab-row { gap: 5px; }
+  .cab-glass { padding: 12px 6px 22px; }
+  .cab-body { grid-template-columns: 14px minmax(0, 1fr) 14px; }
+  .cab-cornice { padding: 8px 32px 10px; }
+  .cab-corner { width: 24px; height: 24px; }
+}
+
+/* ---------- the closer look ----------
+   A dark room, a spotlight, the piece in your hands at its real proportions doing its thing, and
+   its museum label. */
+.cab-dialog { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; color: #f4e8cf; background: radial-gradient(ellipse 70% 55% at 50% 34%, #3a2414, #140a05 70%, #070302); overflow: auto; }
+.cab-dialog::backdrop { background: rgba(5, 2, 0, .8); }
+.cab-spot { position: fixed; left: 50%; top: 0; width: 120vmin; height: 70vh; translate: -50% 0; pointer-events: none; background: radial-gradient(ellipse 40% 60% at 50% 0, rgba(255, 230, 180, .2), transparent 70%); }
+.cab-close { position: fixed; top: calc(10px + var(--safe-top, env(safe-area-inset-top))); right: 12px; z-index: 3; width: 42px; height: 42px; border: 1px solid rgba(233, 200, 112, .5); border-radius: 50%; color: #e9c870; font-size: 24px; background: rgba(0, 0, 0, .35); cursor: pointer; }
+.cab-stage { position: relative; display: flex; align-items: center; justify-content: center; height: min(52vh, 420px); margin-top: calc(40px + var(--safe-top, env(safe-area-inset-top))); perspective: 1200px; touch-action: pan-y; }
+.cab-stage > .cab-obj { width: min(62vw, 260px); filter: sepia(.08) saturate(.95) brightness(1); }
+.cab-stage > .cab-framed { width: min(70vw, 300px); transform: none; }
+.cab-stage > .cab-framed.is-poster { width: min(48vw, 210px); }
+.cab-stage > .cab-ticket { width: min(44vw, 180px); transform: none; transition: transform 1.1s cubic-bezier(.3, .1, .2, 1) .5s; }
+.cab-stage > .cab-ticket.act { transform: rotateY(180deg); }
+.cab-stage > .cab-vhs { width: min(30vw, 130px); }
+.cab-stage > .lib-book { width: min(560px, 88vw); }
+.cab-stage > .cab-record { width: min(50vw, 240px); translate: -20% 0; }
+.cab-stage .cab-easel { display: none; }
+.cab-stage .cab-obj::after { display: none; }
+.cab-stage .cab-obj { -webkit-box-reflect: unset; }
+/* (Their moments.) */
+.cab-stage > .cab-record .cab-vinyl { transition: left .9s cubic-bezier(.3, .1, .2, 1) .3s; }
+.cab-stage > .cab-record.act .cab-vinyl { left: 48%; animation: cab-spin 1.8s linear 1.2s infinite; }
+@keyframes cab-spin { to { transform: rotate(360deg); } }
+.cab-stage > .is-map .cab-frame-in { aspect-ratio: 4 / 3; }
+.cab-stage > .is-map .cab-map { transform-origin: 0 50%; transform: scaleX(.34); transition: transform 1s cubic-bezier(.3, .1, .2, 1) .35s; }
+.cab-stage > .is-map.act .cab-map { transform: none; }
+.cab-stage > .is-map .cab-map-folds { transition: opacity 1s .9s; }
+.cab-stage > .is-map.act .cab-map-folds { opacity: .45; }
+.cab-stage > .cab-vhs .cab-vhs-tape { transition: transform .9s cubic-bezier(.3, .1, .2, 1) .35s; }
+.cab-stage > .cab-vhs.act .cab-vhs-tape { transform: translateY(-46%); }
+.cab-stage > .cab-cassette { transition: transform 1s cubic-bezier(.3, .1, .2, 1) .3s; }
+.cab-stage > .cab-cassette.act { transform: rotate(-4deg) translateY(-6px); }
+.cab-stage > .cab-framed .cab-frame-in::after { transition: background-position 1.6s ease .4s; background-size: 200% 100%; background-position: 100% 0; }
+.cab-stage > .cab-framed.act .cab-frame-in::after { background-position: 0 0; }
+.cab-stage .cab-map-name { font-size: 11px; }
+.cab-stage .cab-sleeve-title { font-size: 15px; }
+.cab-stage .cab-ticket-top { font-size: 11px; }
+.cab-stage .cab-ticket-title { font-size: 18px; }
+.cab-stage .cab-ticket-admit { font-size: 11px; }
+.cab-stage .cab-ticket-no { font-size: 10px; }
+.cab-stage .cab-ticket-back { font-size: 22px; }
+.cab-stage .cab-vhs-spine { font-size: 20px; padding: 10px 4px; }
+.cab-stage .cab-cassette-label { font-size: 22px; padding: 3px 8px; }
+.cab-stage .cab-blank { font-size: 15px; }
+.cab-nav { position: fixed; top: 34%; z-index: 3; width: 44px; height: 64px; border: 0; color: #e9c870; font: 300 40px/1 Georgia, serif; background: none; cursor: pointer; text-shadow: 0 2px 6px rgba(0, 0, 0, .8); }
+.cab-nav.prev { left: 4px; }
+.cab-nav.next { right: 4px; }
+.cab-museum { position: relative; width: min(88vw, 380px); margin: 18px auto 30px; padding: 14px 16px 12px; color: #2b1d0e; text-align: center; background: var(--silk, none) 0 0 / 80px, linear-gradient(180deg, #f6eedb, #e9dcbd); background-blend-mode: soft-light, normal; box-shadow: 0 10px 24px rgba(0, 0, 0, .6), inset 0 0 0 1px rgba(122, 90, 30, .35), inset 0 0 0 4px #f6eedb, inset 0 0 0 5px rgba(201, 162, 74, .7); }
+.cab-museum-no { margin: 0; color: #8c6720; font: 700 10px Georgia, serif; letter-spacing: .22em; text-transform: uppercase; }
+.cab-museum h3 { margin: 6px 0 2px; font: 700 21px/1.2 'Cormorant Garamond', Georgia, 'Times New Roman', serif; }
+.cab-museum-sub { margin: 0 0 6px; color: #6a5434; font: italic 14px Georgia, serif; }
+.cab-why { margin: 10px 0 10px; padding: 8px 12px; border-left: 2px solid #c9a227; background: rgba(255, 255, 255, .45); text-align: left; font: italic 15px/1.45 Georgia, serif; }
+.cab-why small { display: block; margin-bottom: 2px; color: #8c6720; font: 700 9px Georgia, serif; font-style: normal; letter-spacing: .2em; text-transform: uppercase; }
+.cab-museum-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 12px; margin-top: 6px; }
+.cab-open { color: #7a1f24; font: 700 13px Georgia, serif; letter-spacing: .04em; text-decoration: none; border-bottom: 1px solid rgba(122, 31, 36, .4); }
+.cab-credit { color: #8a7a68; font-size: 10px; }
+@media (prefers-reduced-motion: reduce) { .cab-stage * { transition: none !important; animation: none !important; } }
+
+/* A post in the cabinet: a little gold rosette by its comments, leading to it. */
+.card-rosette { display: inline-flex; align-items: center; gap: 4px; margin: 0 0 8px 6px; padding: 2px 9px 2px 4px; border-radius: 10px; color: #6a4a10; font-size: 12px; text-decoration: none; background: linear-gradient(180deg, #fff3c2, #f3d27a); box-shadow: inset 0 0 0 1px #c9a227; }
+.card-rosette::before { content: ''; width: 14px; height: 14px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M5 9 3 15l3-1.4L7.4 16 8 10zM11 9l2 6-3-1.4L8.6 16 8 10z' fill='%23b8323f'/%3E%3Ccircle cx='8' cy='6.5' r='5.4' fill='%23e3bd5a' stroke='%238c6720' stroke-width='.8'/%3E%3Ccircle cx='8' cy='6.5' r='3' fill='none' stroke='%238c6720' stroke-width='.7'/%3E%3C/svg%3E") center / contain no-repeat; }
+:root[data-theme="dark"] .card-rosette { color: #3a2a0c; }
+
+
+/* (The weave of the lining, whatever it is: silk damask, a carpet, a star lattice.) */
+.cab-glass::after { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: var(--silk) 0 0 / 80px; mix-blend-mode: soft-light; opacity: .9; }
+.cabinet[data-cab="carpet"] .cab-glass::after { background: var(--silk) 0 0 / 40px; opacity: 1; }
+
+/* ---------- the room (#/highlights) ----------
+   A State Room: crimson silk damask in white-and-gold panelling, a dado rail, a herringbone
+   parquet floor, a chandelier's light from above. Nothing else of the site shows. */
+html.in-room, html.in-room body { overflow: hidden; }
+/* One thing at a time: the desktop, its bars, menus and dock step out while you're in the room
+   (and come back as they were when you leave). */
+html.in-room body > :not(.cab-room):not(.cab-dialog):not(script):not(style) { visibility: hidden !important; }
+.cab-room { position: fixed; inset: 0; z-index: 2147482000; overflow: hidden; background: #2a0d0a; color: #f4e8cf; }
+.room-wall { position: absolute; inset: 0 0 18% 0; background: radial-gradient(ellipse 60% 70% at 50% 40%, transparent 40%, rgba(10, 2, 0, .55)), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='112' viewBox='0 0 80 112'%3E%3Cg fill='%23fff' fill-opacity='.13' stroke='%23000' stroke-opacity='.08' stroke-width='.6'%3E%3Cg%3E%3Cpath d='M40 14C47 24 52 38 40 58C28 38 33 24 40 14Z'/%3E%3Cpath d='M40 58C55 56 66 66 62 82C57 74 50 70 41 72C52 66 54 60 40 58Z'/%3E%3Cpath d='M40 58C25 56 14 66 18 82C23 74 30 70 39 72C28 66 26 60 40 58Z'/%3E%3Cpath d='M40 72C47 82 47 94 40 104C33 94 33 82 40 72Z'/%3E%3Cpath d='M40 30C46 34 58 32 64 22C56 26 48 26 40 30Z'/%3E%3Cpath d='M40 30C34 34 22 32 16 22C24 26 32 26 40 30Z'/%3E%3Ccircle cx='40' cy='64' r='3'/%3E%3Ccircle cx='26' cy='90' r='2.2'/%3E%3Ccircle cx='54' cy='90' r='2.2'/%3E%3C/g%3E%3Cg transform='translate(0 0)'%3E%3Cg transform='translate(-40 56) scale(.62) translate(40 -30)'%3E%3Cpath d='M40 14C47 24 52 38 40 58C28 38 33 24 40 14Z'/%3E%3Cpath d='M40 58C55 56 66 66 62 82C57 74 50 70 41 72C52 66 54 60 40 58Z'/%3E%3Cpath d='M40 58C25 56 14 66 18 82C23 74 30 70 39 72C28 66 26 60 40 58Z'/%3E%3Cpath d='M40 72C47 82 47 94 40 104C33 94 33 82 40 72Z'/%3E%3Cpath d='M40 30C46 34 58 32 64 22C56 26 48 26 40 30Z'/%3E%3Cpath d='M40 30C34 34 22 32 16 22C24 26 32 26 40 30Z'/%3E%3Ccircle cx='40' cy='64' r='3'/%3E%3Ccircle cx='26' cy='90' r='2.2'/%3E%3Ccircle cx='54' cy='90' r='2.2'/%3E%3C/g%3E%3Cg transform='translate(40 56) scale(.62) translate(40 -30)'%3E%3Cpath d='M40 14C47 24 52 38 40 58C28 38 33 24 40 14Z'/%3E%3Cpath d='M40 58C55 56 66 66 62 82C57 74 50 70 41 72C52 66 54 60 40 58Z'/%3E%3Cpath d='M40 58C25 56 14 66 18 82C23 74 30 70 39 72C28 66 26 60 40 58Z'/%3E%3Cpath d='M40 72C47 82 47 94 40 104C33 94 33 82 40 72Z'/%3E%3Cpath d='M40 30C46 34 58 32 64 22C56 26 48 26 40 30Z'/%3E%3Cpath d='M40 30C34 34 22 32 16 22C24 26 32 26 40 30Z'/%3E%3Ccircle cx='40' cy='64' r='3'/%3E%3Ccircle cx='26' cy='90' r='2.2'/%3E%3Ccircle cx='54' cy='90' r='2.2'/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/svg%3E") 0 0 / 64px 90px, url("/img/cabinet/silk.webp") 0 0 / 96px, linear-gradient(180deg, #7c0e1a, #5a0912); background-blend-mode: normal, normal, soft-light, normal; }
+/* (White-and-gold panelling: a cornice at the top, the panels' mouldings, the dado.) */
+.room-wall::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: calc(46px + env(safe-area-inset-top)); background: linear-gradient(180deg, #f6efe0, #e6dcc6 60%, #cbbd9c); box-shadow: inset 0 -3px 0 -1px #c9a24a, inset 0 -5px 0 -2px #f6efe0, inset 0 -6px 0 -2px #a3741f, 0 6px 10px rgba(0, 0, 0, .45); }
+.room-panel { position: absolute; top: calc(66px + env(safe-area-inset-top)); bottom: 46px; width: 9%; min-width: 22px; border: 3px solid transparent; border-image: linear-gradient(180deg, #fff3c0 0%, #f1cd6a 14%, #c39234 34%, #8a5f16 50%, #d9ae4c 66%, #fbe7a0 82%, #a3741f 100%) 1; background: rgba(0, 0, 0, .12); box-shadow: inset 0 0 0 4px rgba(246, 239, 224, .9), inset 0 0 0 5px #c9a24a, inset 0 0 18px rgba(0, 0, 0, .45), 0 0 0 6px rgba(246, 239, 224, .92), 0 0 0 7px #c9a24a; }
+.room-panel.left { left: 3%; }
+.room-panel.right { right: 3%; }
+.room-dado { position: absolute; left: 0; right: 0; bottom: 0; height: 30px; background: linear-gradient(180deg, #f6efe0, #e4d8bd 55%, #c8b88e); box-shadow: inset 0 3px 0 -1px #c9a24a, inset 0 4px 0 -1px #a3741f, inset 0 -3px 0 -1px #a3741f, 0 -4px 10px rgba(0, 0, 0, .35); }
+.room-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 18%; overflow: hidden; perspective: 260px; }
+.room-floor::before { content: ''; position: absolute; left: -50%; right: -50%; top: 0; bottom: -60%; transform: rotateX(58deg); transform-origin: 50% 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, .55), transparent 40%), url("/img/cabinet/grain-h.webp") 0 0 / 180px, repeating-linear-gradient(45deg, #8a5a30 0 18px, #6e4524 18px 19px, #9c6a3a 19px 37px, #5e3a1e 37px 38px), linear-gradient(#7a4e28, #7a4e28); background-blend-mode: normal, multiply, normal, normal; }
+.room-floor::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 50% 90% at 50% 0, rgba(255, 220, 160, .25), transparent 70%), linear-gradient(180deg, rgba(0, 0, 0, .25), transparent 30%); }
+.room-light { position: absolute; left: 50%; top: 0; width: 140vmin; height: 90vh; translate: -50% -18%; pointer-events: none; background: radial-gradient(ellipse 40% 50% at 50% 30%, rgba(255, 228, 170, .28), transparent 70%); }
+.room-head { position: absolute; z-index: 3; left: 0; right: 0; top: 0; display: flex; align-items: center; justify-content: center; height: 44px; padding-top: env(safe-area-inset-top); box-sizing: content-box; pointer-events: none; }
+/* (The cornice band stays across the top as the room scrolls under it.) */
+.room-head { height: 46px; background: linear-gradient(180deg, #f6efe0, #e6dcc6 60%, #cbbd9c); box-shadow: inset 0 -3px 0 -1px #c9a24a, inset 0 -5px 0 -2px #f6efe0, inset 0 -6px 0 -2px #a3741f, 0 6px 10px rgba(0, 0, 0, .45); }
+.room-leave { position: absolute; left: 10px; top: calc(4px + env(safe-area-inset-top)); display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px 0 10px; border: 1px solid #a3741f; border-radius: 3px; color: #3a2606; font: 700 12px Georgia, 'Times New Roman', serif; letter-spacing: .14em; text-transform: uppercase; background: url("/img/cabinet/gold-leaf.webp") 0 0 / 80px, linear-gradient(180deg, #fff3c0 0%, #f1cd6a 14%, #c39234 34%, #8a5f16 50%, #d9ae4c 66%, #fbe7a0 82%, #a3741f 100%); background-blend-mode: overlay, normal; box-shadow: 0 2px 4px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255, 255, 255, .6); cursor: pointer; pointer-events: auto; }
+.room-leave span { font-size: 18px; line-height: 1; margin-top: -2px; }
+.room-title { margin: 0; color: #4a3010; font: 700 13px/1 'Cormorant Garamond', Georgia, 'Times New Roman', serif; letter-spacing: .3em; text-transform: uppercase; text-shadow: 0 1px 0 rgba(255, 250, 235, .7); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.room-title small { font-size: 8px; letter-spacing: .3em; color: #7a5a20; }
+@media (max-width: 520px) { .room-title { margin-left: 90px; } }
+.room-stage { position: absolute; inset: 0; z-index: 2; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; align-items: center; padding: calc(64px + env(safe-area-inset-top)) 4vw max(5vh, calc(22px + env(safe-area-inset-bottom))); }
+.room-set { flex: none; display: flex; align-items: flex-end; justify-content: center; gap: 34px; margin: auto auto 0; }
+.room-set > .cabinet { flex: none; width: min(520px, 92vw); margin: 0 0 6px; }
+@media (max-width: 899px) {
+  .room-set { flex-direction: column; align-items: center; gap: 34px; margin: auto 0 0; }
+  .room-set > .cabinet { order: -1; }
+  .room-set > .lib { width: min(340px, 90vw); }
+}
+.room-empty { align-self: center; color: #e9c870; font: italic 16px Georgia, serif; }
+/* (The cabinet's shadow on the parquet.) */
+.cab-room .cabinet::after { bottom: -12px; height: 30px; background: radial-gradient(ellipse at center, rgba(0, 0, 0, .75), transparent 70%); }
+
+/* On the About page: the way in, a mahogany panel with its name in gold. */
+.cab-entrance { display: block; margin: 4px 0 2px; padding: 5px; border-radius: 3px; text-decoration: none; background: url("/img/cabinet/grain-h.webp") 0 0 / 220px, linear-gradient(180deg, #6e2716, #4a1810 50%, #250b05); background-blend-mode: multiply, normal; box-shadow: 0 6px 14px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .15); }
+.cab-entrance-frame { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 14px 14px 12px; border: 2px solid transparent; border-image: linear-gradient(180deg, #fff3c0 0%, #f1cd6a 14%, #c39234 34%, #8a5f16 50%, #d9ae4c 66%, #fbe7a0 82%, #a3741f 100%) 1; text-align: center; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='112' viewBox='0 0 80 112'%3E%3Cg fill='%23fff' fill-opacity='.13' stroke='%23000' stroke-opacity='.08' stroke-width='.6'%3E%3Cg%3E%3Cpath d='M40 14C47 24 52 38 40 58C28 38 33 24 40 14Z'/%3E%3Cpath d='M40 58C55 56 66 66 62 82C57 74 50 70 41 72C52 66 54 60 40 58Z'/%3E%3Cpath d='M40 58C25 56 14 66 18 82C23 74 30 70 39 72C28 66 26 60 40 58Z'/%3E%3Cpath d='M40 72C47 82 47 94 40 104C33 94 33 82 40 72Z'/%3E%3Cpath d='M40 30C46 34 58 32 64 22C56 26 48 26 40 30Z'/%3E%3Cpath d='M40 30C34 34 22 32 16 22C24 26 32 26 40 30Z'/%3E%3Ccircle cx='40' cy='64' r='3'/%3E%3Ccircle cx='26' cy='90' r='2.2'/%3E%3Ccircle cx='54' cy='90' r='2.2'/%3E%3C/g%3E%3Cg transform='translate(0 0)'%3E%3Cg transform='translate(-40 56) scale(.62) translate(40 -30)'%3E%3Cpath d='M40 14C47 24 52 38 40 58C28 38 33 24 40 14Z'/%3E%3Cpath d='M40 58C55 56 66 66 62 82C57 74 50 70 41 72C52 66 54 60 40 58Z'/%3E%3Cpath d='M40 58C25 56 14 66 18 82C23 74 30 70 39 72C28 66 26 60 40 58Z'/%3E%3Cpath d='M40 72C47 82 47 94 40 104C33 94 33 82 40 72Z'/%3E%3Cpath d='M40 30C46 34 58 32 64 22C56 26 48 26 40 30Z'/%3E%3Cpath d='M40 30C34 34 22 32 16 22C24 26 32 26 40 30Z'/%3E%3Ccircle cx='40' cy='64' r='3'/%3E%3Ccircle cx='26' cy='90' r='2.2'/%3E%3Ccircle cx='54' cy='90' r='2.2'/%3E%3C/g%3E%3Cg transform='translate(40 56) scale(.62) translate(40 -30)'%3E%3Cpath d='M40 14C47 24 52 38 40 58C28 38 33 24 40 14Z'/%3E%3Cpath d='M40 58C55 56 66 66 62 82C57 74 50 70 41 72C52 66 54 60 40 58Z'/%3E%3Cpath d='M40 58C25 56 14 66 18 82C23 74 30 70 39 72C28 66 26 60 40 58Z'/%3E%3Cpath d='M40 72C47 82 47 94 40 104C33 94 33 82 40 72Z'/%3E%3Cpath d='M40 30C46 34 58 32 64 22C56 26 48 26 40 30Z'/%3E%3Cpath d='M40 30C34 34 22 32 16 22C24 26 32 26 40 30Z'/%3E%3Ccircle cx='40' cy='64' r='3'/%3E%3Ccircle cx='26' cy='90' r='2.2'/%3E%3Ccircle cx='54' cy='90' r='2.2'/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/svg%3E") 0 0 / 48px 67px, linear-gradient(180deg, #8a0f1c, #5a0912); box-shadow: inset 0 0 18px rgba(0, 0, 0, .55); }
+.cab-entrance small { color: #e9c870; font: 700 9px Georgia, serif; letter-spacing: .4em; text-transform: uppercase; }
+.cab-entrance strong { color: #f6e2a4; font: 700 24px/1.1 'Cormorant Garamond', Georgia, 'Times New Roman', serif; letter-spacing: .14em; text-transform: uppercase; text-shadow: 0 1px 0 #5a3a08, 0 2px 6px rgba(0, 0, 0, .5); }
+.cab-entrance-sub { max-width: 34ch; color: #f2dfc4; font: italic 12.5px/1.35 Georgia, serif; }
+.cab-entrance-go { margin-top: 6px; padding: 3px 14px 4px; border-radius: 2px; color: #3a2606; font: 700 11px Georgia, serif; letter-spacing: .16em; text-transform: uppercase; background: url("/img/cabinet/gold-leaf.webp") 0 0 / 80px, linear-gradient(180deg, #fff3c0 0%, #f1cd6a 14%, #c39234 34%, #8a5f16 50%, #d9ae4c 66%, #fbe7a0 82%, #a3741f 100%); background-blend-mode: overlay, normal; box-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
+.cab-entrance:hover .cab-entrance-go, .cab-entrance:focus-visible .cab-entrance-go { filter: brightness(1.08); }
+
+
+/* ---------- the library: a low bookcase either side ---------- */
+.lib { --w: #4a1810; --w-hi: #6e2716; --w-lo: #250b05; --grain-h: url("/img/cabinet/grain-h.webp"); --grain-v: url("/img/cabinet/grain-v.webp");
+  --leather-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  position: relative; isolation: isolate; flex: none; width: 300px; margin-bottom: 6px; }
+.lib::after { content: ''; position: absolute; left: 2%; right: 2%; bottom: -8px; height: 18px; z-index: -1; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0, 0, 0, .6), transparent 70%); filter: blur(2px); }
+/* A slab of white marble, its veins and polished edge. */
+.lib-top { position: relative; z-index: 2; height: 13px; margin: 0 -9px; border-radius: 2px 2px 1px 1px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .7), transparent 30%, transparent 62%, rgba(0, 0, 0, .18) 64%, rgba(0, 0, 0, .05)),
+    linear-gradient(104deg, transparent 0 18%, rgba(120, 118, 128, .35) 18.4%, transparent 19.2% 46%, rgba(120, 118, 128, .22) 46.3% 46.7%, transparent 47.3% 71%, rgba(110, 108, 120, .3) 71.2% 71.8%, transparent 72.4%),
+    linear-gradient(77deg, transparent 0 33%, rgba(140, 136, 146, .28) 33.3% 33.8%, transparent 34.6% 84%, rgba(140, 136, 146, .2) 84.2% 84.6%, transparent 85%),
+    url("/img/cabinet/silk.webp") 0 0 / 70px, linear-gradient(90deg, #e9e3d8, #f7f3ec 40%, #e2dbcf);
+  background-blend-mode: normal, normal, normal, soft-light, normal;
+  box-shadow: 0 2px 0 #b8b0a2, 0 4px 6px rgba(0, 0, 0, .55), inset 0 -1px 0 rgba(0, 0, 0, .15); }
+.lib-frieze, .lib-body, .lib-plinth { background: var(--grain-h) 0 0 / 260px auto, linear-gradient(180deg, var(--w-hi), var(--w) 46%, var(--w-lo)); background-blend-mode: multiply, normal; }
+.lib-frieze { display: flex; justify-content: center; align-items: center; height: 26px; box-shadow: inset 0 -2px 0 -1px #f1cd6a, inset 0 -3px 0 -1px #6e4a10, inset 0 2px 3px rgba(0, 0, 0, .5); }
+.lib-plate-name { padding: 1px 12px 2px; border-radius: 1px; color: #3a2606; font: 700 8.5px/1.6 Georgia, 'Times New Roman', serif; letter-spacing: .26em; text-transform: uppercase; text-shadow: 0 1px 0 rgba(255, 248, 220, .7);
+  background: url("/img/cabinet/gold-leaf.webp") 0 0 / 80px, linear-gradient(180deg, #fff3c0 0%, #f1cd6a 14%, #c39234 34%, #8a5f16 50%, #d9ae4c 66%, #fbe7a0 82%, #a3741f 100%); background-blend-mode: overlay, normal; box-shadow: 0 1px 2px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .5); }
+/* The carcass: two stiles, and the dark inside lit from above. */
+.lib-body { position: relative; padding: 8px 13px 0; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .4); }
+.lib-body::before { content: ''; position: absolute; inset: 8px 13px 0; z-index: 0; background: radial-gradient(ellipse 80% 60% at 50% 0, rgba(255, 220, 160, .14), transparent 70%), var(--grain-h) 0 0 / 200px auto, linear-gradient(180deg, #1a0703, #2c0e07); background-blend-mode: normal, multiply, normal; box-shadow: inset 0 6px 10px rgba(0, 0, 0, .7), inset 6px 0 8px rgba(0, 0, 0, .5), inset -6px 0 8px rgba(0, 0, 0, .5); }
+.lib-shelf { position: relative; z-index: 1; display: flex; align-items: flex-end; gap: 1px; height: 98px; margin: 0; padding: 0 8px; list-style: none; }
+.lib-shelf::after { content: ''; position: absolute; left: -1px; right: -1px; bottom: -8px; height: 8px; z-index: 2; background: var(--grain-h) 0 0 / 200px auto, linear-gradient(180deg, var(--w-hi), var(--w-lo)); background-blend-mode: multiply, normal; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .15), 0 3px 4px rgba(0, 0, 0, .5); }
+.lib-shelf + .lib-shelf { margin-top: 8px; }
+.lib-shelf:last-child { margin-bottom: 8px; }
+.lib-shelf li { display: flex; align-items: flex-end; }
+.lib-pick { display: block; padding: 0; margin: 0; border: 0; background: none; cursor: pointer; transition: transform .22s cubic-bezier(.2, .8, .2, 1); }
+.lib-pick:hover, .lib-pick:focus-visible { transform: translateY(-4px); }
+.lib-pick.pulled { transform: translateY(-14px) rotate(-2deg); }
+.lib-pick:focus-visible { outline: 2px solid #f1cd6a; outline-offset: 1px; }
+/* A leather spine: rounded (lit from the left), gilt fillets at head and tail, sometimes raised
+   bands, and a darker morocco label tooled with the title. */
+.lib-spine { position: relative; display: block; width: var(--bw); height: var(--h); border-radius: 3px 3px 1px 1px;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, .55), rgba(255, 255, 255, .16) 28%, rgba(255, 255, 255, .05) 48%, rgba(0, 0, 0, .18) 74%, rgba(0, 0, 0, .6)),
+    linear-gradient(180deg, transparent 0 6%, #d9ae4c 6% 7.2%, transparent 7.2% 8.8%, #b8892e 8.8% 9.6%, transparent 9.6% 90.4%, #b8892e 90.4% 91.2%, transparent 91.2% 92.8%, #d9ae4c 92.8% 94%, transparent 94%),
+    var(--leather-grain) 0 0 / 60px, linear-gradient(180deg, var(--c1), var(--c2));
+  background-blend-mode: normal, normal, overlay, normal;
+  box-shadow: 1px 0 1px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .12); }
+.lib-spine.banded::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(180deg, transparent 0 15%, rgba(0, 0, 0, .45) 15% 16%, rgba(255, 255, 255, .22) 16% 17.5%, rgba(0, 0, 0, .35) 17.5% 18.5%, transparent 18.5% 81.5%, rgba(0, 0, 0, .45) 81.5% 82.5%, rgba(255, 255, 255, .22) 82.5% 84%, rgba(0, 0, 0, .35) 84% 85%, transparent 85%); }
+.lib-label { position: absolute; left: 2px; right: 2px; top: 22%; bottom: 22%; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 1px;
+  background: var(--leather-grain) 0 0 / 50px, linear-gradient(90deg, #0c0604, #2a1a12 40%, #0c0604); background-blend-mode: overlay, normal;
+  box-shadow: inset 0 0 0 1px rgba(217, 174, 76, .7), inset 0 0 0 2px rgba(0, 0, 0, .6); }
+.lib-label span { writing-mode: vertical-rl; transform: rotate(180deg); max-height: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #f0cf72; font: 700 7.5px/1 Georgia, 'Times New Roman', serif; letter-spacing: .08em; text-transform: uppercase; text-shadow: 0 0 1px rgba(0, 0, 0, .8), 0 -.5px 0 rgba(255, 240, 190, .3); }
+/* A brass bookend after a short row. */
+.lib-end { width: 9px; height: 56px; margin-left: 2px; border-radius: 1px 7px 0 0; background: url("/img/cabinet/gold-leaf.webp") 0 0 / 60px, linear-gradient(90deg, #8a5f16, #f1cd6a 30%, #c39234 60%, #6e4a10); background-blend-mode: overlay, normal; box-shadow: 1px 1px 2px rgba(0, 0, 0, .5); }
+.lib-plinth { height: 18px; border-radius: 0 0 2px 2px; box-shadow: inset 0 2px 0 -1px #f1cd6a, inset 0 3px 0 -1px #6e4a10, inset 0 -2px 0 -1px #a3741f, 0 3px 4px rgba(0, 0, 0, .5); }
+
+/* The book, open in your hands. */
+.lib-book { position: relative; display: flex; width: min(560px, 86vw); aspect-ratio: 1.55; perspective: 1600px; filter: drop-shadow(0 18px 22px rgba(0, 0, 0, .55)); }
+.lib-boards { position: absolute; top: -8px; bottom: -9px; left: 50%; right: -10px; border-radius: 3px 5px 5px 3px; background: var(--leather-grain) 0 0 / 70px, linear-gradient(180deg, var(--c1), var(--c2)); background-blend-mode: overlay, normal; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .5); transition: left .8s cubic-bezier(.3, .7, .2, 1); }
+.lib-book.act .lib-boards { left: -10px; }
+.lib-page { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 6% 6.5%; color: #3a2a14; font-family: Georgia, 'Times New Roman', serif;
+  background: url("/img/cabinet/silk.webp") 0 0 / 120px, linear-gradient(90deg, #efe5cd, #f7f0de 60%, #e9dcbe); background-blend-mode: soft-light, normal; box-shadow: inset 0 0 0 1px rgba(120, 90, 40, .15); }
+.lib-page.left { align-items: center; justify-content: center; gap: 6px; text-align: center; border-radius: 2px 0 0 2px; background: linear-gradient(90deg, transparent 80%, rgba(80, 50, 10, .22)), url("/img/cabinet/silk.webp") 0 0 / 120px, linear-gradient(90deg, #e9dcbe, #f7f0de 40%, #efe5cd); background-blend-mode: normal, soft-light, normal; opacity: 0; transition: opacity .3s .45s; }
+.lib-book.act .lib-page.left { opacity: 1; }
+.lib-page.right { justify-content: space-between; border-radius: 0 2px 2px 0; background: linear-gradient(90deg, rgba(80, 50, 10, .24), transparent 20%), url("/img/cabinet/silk.webp") 0 0 / 120px, linear-gradient(90deg, #efe5cd, #f7f0de 60%, #e9dcbe); background-blend-mode: normal, soft-light, normal; }
+.lib-page small { color: #8a6a2a; font: 700 9px/1 Georgia, serif; letter-spacing: .24em; text-transform: uppercase; }
+.lib-page.right small { align-self: flex-end; letter-spacing: .1em; font-weight: 400; font-style: italic; text-transform: none; font-size: 11px; }
+.lib-page strong { font: 600 clamp(15px, 3.4vw, 22px)/1.15 'Cormorant Garamond', Georgia, serif; }
+.lib-page em { color: #6a5434; font-size: clamp(10px, 2.2vw, 13px); }
+.lib-plate { display: block; width: 62%; aspect-ratio: 4 / 3; padding: 3px; background: #fbf8f0; box-shadow: 0 0 0 1px #c9b98f, 0 1px 3px rgba(0, 0, 0, .25); }
+.lib-plate img { display: block; width: 100%; height: 100%; object-fit: cover; filter: sepia(.25) contrast(.95); }
+.lib-fleuron { color: #9b7a34; font-size: clamp(22px, 5vw, 34px); line-height: 1; }
+.lib-hand { font: italic clamp(13px, 2.8vw, 18px)/1.45 Georgia, 'Times New Roman', serif; color: #2b2410; }
+.lib-hand::before { content: '“'; } .lib-hand::after { content: '”'; }
+.lib-text { font-size: clamp(10px, 2.2vw, 12.5px); line-height: 1.55; text-align: justify; hyphens: auto; }
+.lib-text::first-letter { float: left; margin: 2px 4px 0 0; color: #7a1414; font: 600 2.6em/.8 'Cormorant Garamond', Georgia, serif; }
+/* The front board, closed when it arrives, then opened. */
+.lib-cover { position: absolute; z-index: 3; top: -8px; bottom: -9px; left: 50%; right: -10px; display: flex; align-items: center; justify-content: center; padding: 12%; border-radius: 3px 5px 5px 3px; transform-origin: 0 50%; backface-visibility: hidden; transition: transform .9s cubic-bezier(.3, .7, .2, 1);
+  background: var(--leather-grain) 0 0 / 70px, linear-gradient(90deg, rgba(0, 0, 0, .35), transparent 8%), linear-gradient(180deg, var(--c1), var(--c2)); background-blend-mode: overlay, normal, normal;
+  box-shadow: inset 0 0 0 7px transparent, inset 0 0 0 8px rgba(217, 174, 76, .8), inset 0 0 0 11px transparent, inset 0 0 0 12px rgba(217, 174, 76, .5), 2px 3px 8px rgba(0, 0, 0, .5); }
+.lib-cover span { color: #f0cf72; font: 600 clamp(13px, 3vw, 19px)/1.2 'Cormorant Garamond', Georgia, serif; letter-spacing: .08em; text-align: center; text-transform: uppercase; text-shadow: 0 1px 0 rgba(0, 0, 0, .7); }
+.lib-book.act .lib-cover { transform: rotateY(-180deg); }
+.cab-museum-note { margin: 0 0 6px; color: #8a6a2a; font: 700 10px/1.4 Georgia, serif; letter-spacing: .16em; text-transform: uppercase; }
+@media (prefers-reduced-motion: reduce) { .lib-cover { display: none; } .lib-boards { left: -10px; transition: none; } .lib-page.left { opacity: 1; transition: none; } .lib-pick { transition: none; } }

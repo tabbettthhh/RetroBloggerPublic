@@ -113,35 +113,65 @@ export async function adminPage(base = BASE) {
   page.on('pageerror', (e) => page.errors.push(e.message));
   page.on('dialog', (d) => d.accept());
   await page.goto(`${base}/admin/`);
-  await page.waitForSelector('.admin-tabs button');
+  await page.waitForSelector('.admin-sections button');
   return page;
 }
 export async function toastText(page) {
   await page.waitForSelector('.toast:not([hidden])', { timeout: 15000 });
   return page.locator('.toast').textContent();
 }
+// Opens a page of the back office by its tab's name, through its section (Home, Posts, Inbox, Look,
+// More) when that section isn't the one showing.
+export async function openTab(page, label) {
+  const tab = label === 'Notifications' ? page.locator('.admin-tabs button.tab-bell') : page.locator('.admin-tabs button', { hasText: label }).first();
+  await tab.waitFor({ state: 'attached' });
+  if (!(await tab.isVisible())) await page.locator(`.admin-sections button[data-section="${await tab.getAttribute('data-section')}"]`).click();
+  await tab.click();
+}
+// The editor keeps its extras in folds (more about it, how it looks, options): open them all.
+export async function unfold(page) {
+  // (As if each were clicked open: the page hears the same toggle.)
+  await page.evaluate(() => document.querySelectorAll('.ed-fold:not([open])').forEach((d) => (d.open = true)));
+  await page.waitForTimeout(50);
+}
 export async function newPost(page, type) {
-  await page.locator('.admin-tabs button', { hasText: /^(New post|Edit post)$/ }).click();
+  await openTab(page, /^(New post|Edit post)$/);
   await page.locator('.type-tabs button', { hasText: new RegExp(`^${type}$`) }).click();
+  await unfold(page);
 }
 export async function waitPhotos(page) {
   await page.waitForFunction(() => ![...document.querySelectorAll('.thumb-wait')].some((e) => e.textContent.includes('Preparing')), null, { timeout: 30000 });
 }
 export async function editPost(page, titleText) {
-  await page.locator('.admin-tabs button', { hasText: 'Posts' }).click();
+  await openTab(page, 'Posts');
   // Older posts are folded away by month: search for it, as you would.
   const search = page.getByRole('searchbox', { name: 'Search posts' });
   if (await search.count()) await search.fill(String(titleText).replace(/["“”]/g, ' ').trim());
   // The list can redraw just as it's clicked (a refresh landing): try again if so.
   for (let tries = 0; ; tries++) {
     try {
-      const row = page.locator('.list-row').filter({ hasText: titleText }).first();
-      await row.locator('button', { hasText: 'Edit' }).click({ timeout: 8000 });
+      const row = page.locator('.list-row:visible').filter({ hasText: titleText }).first();
+      await row.locator('.row-main').click({ timeout: 8000 });
       await page.waitForSelector('.type-tabs, .hint:has-text("Editing")', { timeout: 8000 });
+      await unfold(page);
       return;
     } catch (e) {
       if (tries >= 3) throw e;
       await page.waitForTimeout(500);
+    }
+  }
+}
+// Something from a post's ⋯ menu in the posts list (Pin, To grid, Delete…).
+export async function rowMenu(row, label) {
+  // (The list can redraw just as the menu opens, a refresh landing: open it again if so.)
+  for (let tries = 0; ; tries++) {
+    try {
+      await row.locator('.row-more > summary').click({ timeout: 5000 });
+      await row.locator('.row-menu button', { hasText: label }).click({ timeout: 3000 });
+      return;
+    } catch (e) {
+      if (tries >= 4) throw e;
+      await row.page().waitForTimeout(400);
     }
   }
 }
