@@ -95,7 +95,17 @@ async function route(request, env, ctx) {
   if (p === '/admin' || p.startsWith('/admin/')) {
     const check = await adminCheck(request, env);
     if (!check.ok) return lockedPage(check, url, p.startsWith('/admin/api/'));
+    // Signing in from the owner's tile on the welcome screen: once Cloudflare Access has let you
+    // through, back to the site (where it's on), never to a separate back office.
+    if (p === '/admin/signin') {
+      const to = url.searchParams.get('to') || '';
+      const back = /^#\/[\w\-/%.]*$/.test(to) ? to : '#/';
+      return new Response(null, { status: 302, headers: { Location: `/?owner=1${back}`, 'Cache-Control': 'no-store' } });
+    }
     if (p.startsWith('/admin/api/')) {
+      // Changes only ever come from your own site's pages (never a form on someone else's).
+      const origin = request.headers.get('Origin');
+      if (method !== 'GET' && origin && origin !== url.origin) return json({ error: 'Not from this site.' }, 403);
       const res = await adminApi(request, env, url, ctx);
       // Anything saved might be news for your friends: their sites hear straight away (and
       // nothing is sent when what they see hasn't changed).
@@ -700,6 +710,9 @@ async function adminApi(request, env, url, ctx) {
   const p = url.pathname.slice('/admin/api/'.length);
   const m = request.method;
   const key = url.searchParams.get('key');
+
+  // Whether you're signed in (the site asks, to switch on its owner's tools).
+  if (p === 'me' && m === 'GET') return json({ owner: true });
 
   if (p === 'overview' && m === 'GET') {
     const data = await buildEverything(env, { includeHidden: true });

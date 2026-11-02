@@ -52,13 +52,13 @@ export function renderWelcome(data, onEnter, { overlay = false } = {}) {
         h('span', { class: 'tile-text' }, h('strong', null, word('visitor', 'Visitor')), h('small', null, 'No sign-in needed')),
         h('span', { class: 'tile-go', 'aria-hidden': 'true' }, '›')
       ),
-      // The owner's account: into the back office. It's locked by Cloudflare Access as before,
-      // so anyone else who taps it meets a sign-in they can't get past.
+      // The owner's account: sign in (Cloudflare Access, as before; anyone else meets a sign-in
+      // they can't get past) and come back to the site with your tools on it.
       h(
         'a',
-        { class: 'visitor-tile owner-tile', href: '/admin/' },
+        { class: 'owner-tile', href: '/admin/signin' },
         h('span', { class: 'tile-avatar owner', html: ICON.person() }),
-        h('span', { class: 'tile-text' }, h('strong', null, data.site.owner || 'Owner'), h('small', null, 'Back office · sign in')),
+        h('span', { class: 'tile-text' }, h('strong', null, data.site.owner || 'Owner'), h('small', null, 'Sign in to write and edit')),
         h('span', { class: 'tile-go lock', 'aria-hidden': 'true', html: LOCK })
       ),
       !overlay && !standalone
