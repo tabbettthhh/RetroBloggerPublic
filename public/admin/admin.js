@@ -4130,6 +4130,13 @@ export const kit = {
   themesLive: (live) => (themesCtx.live = live),
   highlights: () => allHighlights(),
   saveHighlights: (all) => saveHighlights(all),
+  // Notes between friends: your mail, sending one, marking them read, deleting one.
+  mail: {
+    list: () => api('mail'),
+    send: (friend, text, replyTo = '') => api('mail/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friend, text, reply_to: replyTo }) }),
+    read: (ids, read = true) => api('mail/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, read }) }),
+    remove: (id) => api('mail/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+  },
   // A comment from you on a friend's post (it goes on at their site, straight away).
   friendComment: (friend, post, message, replyTo = '') => api('friends/comment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friend, post, message, reply_to: replyTo }) })
 };
