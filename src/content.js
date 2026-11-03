@@ -727,7 +727,7 @@ export const THEME_OPTIONS = {
   header: ['banner', 'card', 'minimal', 'hidden'],
   name_style: ['plain', 'rainbow', 'glitter', 'glow', 'wordart', 'outline', 'chrome'],
   trail: ['none', 'sparkles', 'hearts', 'stars', 'bubbles', 'rainbow', 'pixels'],
-  falling: ['none', 'snow', 'petals', 'hearts', 'stars', 'leaves', 'confetti', 'bubbles', 'sunshine'],
+  falling: ['season', 'none', 'snow', 'petals', 'hearts', 'stars', 'leaves', 'confetti', 'bubbles', 'sunshine'],
   seasons: ['off', 'auto', 'winter', 'spring', 'summer', 'autumn', 'lunar_new_year', 'hanami', 'childrens_day', 'dragon_boat', 'tanabata', 'mid_autumn', 'nowruz', 'holi', 'ramadan', 'eid_al_fitr', 'eid_al_adha', 'diwali', 'yalda', 'dia_de_reyes', 'carnival', 'dia_de_muertos', 'st_patricks', 'easter', 'midsummer', 'bonfire_night', 'halloween', 'hanukkah', 'christmas', 'my_1', 'my_2', 'my_3', 'my_4', 'my_5', 'my_6', 'my_7', 'my_8', 'my_9', 'my_10', 'my_11', 'my_12'],
   hemisphere: ['north', 'south'],
   glass_style: ['season', 'winter', 'spring', 'summer', 'autumn', 'festive', 'gloss'],
@@ -822,7 +822,7 @@ export function parseTheme(text) {
       const one = {};
       const charms = [...new Set((Array.isArray(o.charms) ? o.charms : []).map((x) => (THEME_CHARMS.includes(String(x)) && !['none', 'plain'].includes(x) ? String(x) : emojiOnly(x, 1)[0])).filter(Boolean))].slice(0, 8);
       if (charms.length) one.charms = charms;
-      if (THEME_OPTIONS.falling.includes(String(o.falling))) one.falling = String(o.falling);
+      if (THEME_OPTIONS.falling.includes(String(o.falling)) && o.falling !== 'season') one.falling = String(o.falling);
       const where = [...new Set((Array.isArray(o.where) ? o.where : []).map(String).filter((x) => STICKER_SPOTS.includes(x)))];
       if (where.length) one.where = where;
       if (Array.isArray(o.settle)) one.settle = [...new Set(o.settle.map(String).filter((x) => ['bars', 'icons', 'taskbar', 'ground', 'posts', 'menu', 'profile'].includes(x)))];
@@ -852,7 +852,7 @@ export function parseTheme(text) {
       if (!x || typeof x !== 'object' || !okMd(x.from)) return null;
       const what = THEME_CHARMS.includes(String(x.what)) && !['none', 'plain'].includes(x.what) ? String(x.what) : emojiOnly(x.what, 1)[0] || 'twinkle';
       const one = { name: short(String(x.name ?? '').replace(/[<>]/g, ''), 40) || 'My day', from: String(x.from), to: okMd(x.to) ? String(x.to) : String(x.from), what };
-      if (THEME_OPTIONS.falling.includes(String(x.falling)) && x.falling !== 'none') one.falling = String(x.falling);
+      if (THEME_OPTIONS.falling.includes(String(x.falling)) && !['none', 'season'].includes(x.falling)) one.falling = String(x.falling);
       return one;
     })
     .filter(Boolean);

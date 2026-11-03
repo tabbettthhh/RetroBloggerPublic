@@ -375,6 +375,20 @@ async function siteAt(fn, { desktop = true, reducedMotion = 'no-preference', tim
   }
 }
 
+await test('falling: "With the season" lets a festive day bring its own; "Nothing at all" means nothing', async () => {
+  await putFile('theme.md', '---\ntheme: classic\nseasons: dia_de_muertos\n---\n');
+  await siteAt(async (p) => {
+    await p.waitForTimeout(400);
+    eq(await p.locator('canvas.fx-layer').count(), 1, 'the day’s petals, gently');
+  });
+  await putFile('theme.md', '---\ntheme: classic\nseasons: dia_de_muertos\nfalling: none\n---\n');
+  eq((await publicData()).theme.falling, 'none', 'Nothing is kept');
+  await siteAt(async (p) => {
+    await p.waitForTimeout(400);
+    eq(await p.locator('canvas.fx-layer').count(), 0, 'nothing falling at all, festive day or not');
+  });
+});
+
 await test('effects: your name in lights, a pointer trail and things falling (but never for visitors who want stillness)', async () => {
   await putFile('theme.md', '---\ntheme: bunny\nname_style: rainbow\ntrail: sparkles\nfalling: petals\n---\n');
   eq((await publicData()).theme, { theme: 'bunny', name_style: 'rainbow', trail: 'sparkles', falling: 'petals' }, 'saved');
@@ -448,7 +462,7 @@ await test('the editor: effects, after dark, colours from a picture, surprise me
   await page.waitForFunction(() => document.querySelector('.tm-frame')?.contentDocument?.documentElement.dataset.skNameStyle === 'glitter', null, { timeout: 10000 });
   // Undo steps back one change at a time.
   await page.locator('button', { hasText: '↶ Undo' }).click();
-  eq(await page.locator('.chip-row[aria-label="Falling over the page"] .chip-btn[aria-pressed="true"]').innerText(), 'Nothing', 'snow undone');
+  eq(await page.locator('.chip-row[aria-label="Falling over the page"] .chip-btn[aria-pressed="true"]').innerText(), 'With the season or festive day', 'snow undone (back to the season)');
   eq(await page.locator('.chip-row[aria-label="Your name"] .chip-btn[aria-pressed="true"]').innerText(), 'Glitter', 'glitter kept');
   // Tab icon and after dark.
   await page.locator('.tm-tab', { hasText: 'Tab icon' }).click();
