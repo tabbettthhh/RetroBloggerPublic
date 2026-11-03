@@ -98,7 +98,7 @@ for (const [name, opts] of [['a computer', DESK], ['a phone', PHONE]]) {
       await p.locator('.okit-me').first().click();
       await p.locator('.okit-menu button', { hasText: 'Control Panel' }).click();
       await p.waitForSelector('.okit-host .cp-item');
-      eq(await p.locator('.okit-host .cp-item').count(), 12, 'its categories');
+      eq(await p.locator('.okit-host .cp-item').count(), 13, 'its categories');
       await p.locator('.okit-close').click();
       await p.waitForFunction(() => !document.querySelector('.okit-host'));
     });

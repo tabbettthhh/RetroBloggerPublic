@@ -908,7 +908,7 @@ async function adminApi(request, env, url, ctx) {
   }
 
   // ---- Friends ----
-  if (p.startsWith('friends')) {
+  if (p.startsWith('friends') || p === 'mail' || p.startsWith('mail/')) {
     const fkey = url.searchParams.get('friend') || '';
     // Your site's own address, as friends will reach it, is taken from the back office itself.
     await friends.rememberMe(env, url.origin);
@@ -952,6 +952,11 @@ async function adminApi(request, env, url, ctx) {
         return json({ ok: true, ...out });
       }
       if (p === 'friends/photo' && m === 'GET') return friends.friendPhoto(env, fkey, url.searchParams.get('p') || '');
+      // Notes between friends: your mail, sending one, marking them read, deleting one.
+      if (p === 'mail' && m === 'GET') return json(await friends.myMail(env));
+      if (p === 'mail/send' && m === 'POST') return json(await friends.sendNote(env, String(body.friend || ''), body));
+      if (p === 'mail/read' && m === 'POST') return json(await friends.markMail(env, body.ids === 'all' ? 'all' : body.ids || [], body.read !== false));
+      if (p === 'mail/delete' && m === 'POST') return json(await friends.deleteNote(env, String(body.id || '')));
       // A comment from you on a friend's post (it goes on at their site, straight away).
       if (p === 'friends/comment' && m === 'POST') return json(await friends.commentOnFriend(env, fkey || String(body.friend || ''), body));
     } catch (e) {
