@@ -85,11 +85,13 @@ const FRIENDS = ['buddies', 'friendPosts', 'friendLooks', 'friendKeepsakes', 'fr
 function keepPublic(d) {
   publicCopy = Object.fromEntries([...MINE, ...FRIENDS].map((k) => [k, d[k]]));
 }
-function merge(d) {
+// `fromSite`: the site's own copy has just been fetched afresh, so its theme is the newest (it
+// may have been changed on another device since your copy was read); yours is then read again.
+function merge(d, fromSite = false) {
   if (!owner || previewing) return;
   // (A post whose header can't be read stays in the Control Panel, where it can be fixed.)
   d.posts = owner.posts.filter((p) => !p.error);
-  for (const k of MINE.slice(1)) if (owner[k] !== undefined) d[k] = owner[k];
+  for (const k of MINE.slice(1)) if (owner[k] !== undefined && !(fromSite && k === 'theme')) d[k] = owner[k];
   // (Whose site it is, for the Explore menu: yours, with your name and picture.)
   d.ownerView = true;
   // Your friends, all of them, whoever else sees them: the Friends tab, and (unless you've said
@@ -1330,6 +1332,12 @@ function decorate() {
   }
 }
 
+let refreshing = null;
+function refreshSoon() {
+  if (refreshing || writing() || host) return;
+  refreshing = kit.refresh().catch(() => {}).finally(() => setTimeout(() => (refreshing = null), 15000));
+}
+
 export async function startOwner(s) {
   site = s;
   keepPublic(site.data);
@@ -1346,7 +1354,10 @@ export async function startOwner(s) {
   ownerHooks.trying = () => trying;
   ownerHooks.fresh = (d) => {
     keepPublic(d);
-    merge(d);
+    merge(d, true);
+    // (Something changed on the site, perhaps from another device: your own copy is read again
+    // too, so drafts, the inbox and the theme here are never left behind.)
+    refreshSoon();
   };
   // Whatever the site draws next gets your tools.
   let queued = false;

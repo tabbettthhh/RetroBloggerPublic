@@ -1578,10 +1578,10 @@ export function applySkin(settings, doc = document) {
   settings ||= {};
   // (The back office's preview can ask to see the night look whatever the time.)
   const dark = settings.night_theme && (settings.night_preview ?? isNight());
-  if (doc === document && settings.night_theme && settings.night_preview == null) {
-    clearTimeout(nightTimer);
-    nightTimer = setTimeout(() => applySkin(settings, doc), untilSwitch());
-  }
+  // (A theme put on replaces the last one's switch between day and night: otherwise a theme
+  // you've moved on from could come back at the next sunset or sunrise.)
+  if (doc === document) clearTimeout(nightTimer);
+  if (doc === document && settings.night_theme && settings.night_preview == null) nightTimer = setTimeout(() => applySkin(settings, doc), untilSwitch());
   const eff = dark ? nightSettings(settings) : settings;
   const t = resolveSkin(eff);
   if (dark) t.night = true;
