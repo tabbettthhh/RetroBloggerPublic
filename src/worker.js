@@ -6,6 +6,7 @@ import { stripImage, UnsupportedImage, CLEAN_TYPES } from './strip.js';
 import { parseVisited } from './content.js';
 import { TYPES, buildPost, isVisible, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parsePlanner, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
 import { adminCheck } from './auth.js';
+import { VERSION } from './version.js';
 import * as friends from './friends.js';
 
 const ROBOTS_TAG = 'noindex, nofollow, noarchive, nosnippet, noimageai';
@@ -692,6 +693,27 @@ async function friendComment(env, who, { post: id, message, reply_to }) {
   return { ok: true };
 }
 
+// This copy's version, and the template's newest (asked of GitHub at most every six hours, and
+// kept). A copy made with the Deploy button updates itself overnight ("Update my site").
+const TEMPLATE = 'tabbettthhh/RetroBloggerPublic';
+const VERSION_CHECK = 'data/_version-check.json';
+async function updateCheck(env, again = false) {
+  let kept = null;
+  try {
+    kept = JSON.parse((await readText(env, VERSION_CHECK)) || 'null');
+  } catch {}
+  if (!again && kept && Date.now() - kept.at < 6 * 60 * 60 * 1000) return { mine: VERSION, latest: kept.latest, at: kept.at, template: TEMPLATE };
+  let latest = '';
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${TEMPLATE}/main/src/version.js`, { headers: { 'User-Agent': 'MyCorner-UpdateCheck/1' }, signal: AbortSignal.timeout(5000) });
+    latest = r.ok ? /VERSION\s*=\s*'([\w.-]{1,30})'/.exec(await r.text())?.[1] || '' : '';
+  } catch {}
+  if (!latest) return { mine: VERSION, latest: kept?.latest || '', at: kept?.at || 0, template: TEMPLATE, unreachable: true };
+  const at = Date.now();
+  await env.CONTENT.put(VERSION_CHECK, JSON.stringify({ latest, at }));
+  return { mine: VERSION, latest, at, template: TEMPLATE };
+}
+
 async function suggest(request, env) {
   if (looksLikeBot(request)) return json({ error: 'Not accepted' }, 400);
   let body;
@@ -738,6 +760,8 @@ async function adminApi(request, env, url, ctx) {
 
   // Whether you're signed in (the site asks, to switch on its owner's tools).
   if (p === 'me' && m === 'GET') return json({ owner: true });
+  // Whether this copy of the site has the latest version of the template.
+  if (p === 'version' && m === 'GET') return json(await updateCheck(env, url.searchParams.get('again') === '1'));
 
   if (p === 'overview' && m === 'GET') {
     const data = await buildEverything(env, { includeHidden: true });
