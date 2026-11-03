@@ -233,10 +233,16 @@ await test('the Control Panel: categories, each in the same place, and back', as
       assert((await p.locator('.okit-host .xp-title-text').innerText()).includes('Friends'), 'its name in the bar');
       await p.locator('.okit-host .okit-back').click();
       await p.waitForSelector('.okit-host .cp-item');
+      // At its foot: which version this is (here, offline, it can't ask GitHub for the newest).
+      await p.waitForFunction(() => /Version of|Up to date|newer version/.test(document.querySelector('.cp-version')?.textContent || ''));
       await p.keyboard.press('Escape');
       await p.waitForFunction(() => !document.querySelector('.okit-host'));
     });
   }
+  const v = await (await fetch(`${BASE}/admin/api/version`)).json();
+  const { VERSION } = await import('../src/version.js');
+  eq(v.mine, VERSION, 'this copy’s version');
+  assert(/^\d{4}-\d{2}-\d{2}[a-z]?$/.test(VERSION), 'a date, and a letter for a second change that day');
 });
 
 await test('signed in, the Explore menu is yours; your picture: one of the site’s own, or a photo', async () => {

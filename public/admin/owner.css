@@ -263,6 +263,12 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 .cp-home { display: flex; flex-direction: column; gap: 16px; color: var(--ok-ink, #14254d); }
 .cp-pick { margin: 0; font: bold 18px var(--font-xp-title, Tahoma, sans-serif); color: color-mix(in srgb, var(--ok-bar, #0054e3) 75%, #000); }
 .cp-group h3 { margin: 0 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--ok-line, #c7c3ae); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in srgb, var(--ok-sel, #316ac5) 70%, var(--ok-ink, #14254d)); }
+.cp-version { margin: 4px 0 0; padding: 8px 10px; border: 1px solid var(--ok-line, #c7c3ae); border-radius: 8px; background: color-mix(in srgb, var(--ok-paper, #ece9d8) 50%, #fff); font-size: 12px; line-height: 1.45; }
+.cp-version.behind { border-color: var(--ok-accent, #f2861e); border-left-width: 4px; background: color-mix(in srgb, var(--ok-accent, #f2861e) 10%, #fff); }
+.cp-version .cp-ok { color: #2a7a2a; }
+.cp-version a { color: inherit; font-weight: bold; }
+:root[data-theme="dark"] .cp-version { background: #2a2a2e; border-color: #555; }
+:root[data-theme="dark"] .cp-version .cp-ok { color: #8fd18f; }
 .cp-plain { margin: 4px 0 0; font-size: 11px; opacity: .75; text-align: center; }
 .cp-plain a { color: inherit; }
 .cp-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }

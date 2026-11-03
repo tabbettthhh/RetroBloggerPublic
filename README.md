@@ -111,6 +111,8 @@ Leave the workers.dev address switched on. It costs nothing, and it's what keeps
 
 Your site keeps itself up to date with the template it was made from. Every night, a small job called **Update my site** brings in the latest version, keeping your own settings (your site's name, your storage and your address). Cloudflare then puts it live, as it does for any change. Your posts, photos and theme live in your Cloudflare storage, so an update never touches them. To update straight away, open your site's repository on GitHub, go to **Actions › Update my site** and press **Run workflow**.
 
+**Is mine up to date?** Signed in, the foot of the **Control Panel** says so: ✓ up to date, or that a newer version is ready (with its date and yours). If a newer one is ready for more than a day, your copy probably doesn't have the update job yet: see below.
+
 **Made your site before updates were added?** Your copy doesn't have the job yet. Add it once, and it looks after itself from then on:
 
 1. Open your site's repository on GitHub (the one the Deploy button made for you).
@@ -531,7 +533,7 @@ npm run seed:local                  # example posts into the local bucket
 npm run dev                         # http://localhost:8787
 ```
 
-`npm run deploy` publishes from your machine. After editing `content/`, run `npm run examples` to refresh the example pack.
+`npm run deploy` publishes from your machine. Each change to the template moves `src/version.js` on (the date, then a letter for another change that day), which is how copies know a newer version is out. After editing `content/`, run `npm run examples` to refresh the example pack.
 
 **Checks:** `npm test` runs the end-to-end checks in `tests/` against a fresh local copy of the site for each group: every kind of post saved, edited and re-saved without losing anything, photos (sideways, HEIC, twenty at once), the export zip, Goodreads imports, long journal entries split into pages, every page on a phone, a tablet and a desktop filled with awkward content, then with none, and two local sites becoming friends (port 8801 for the second). They need Playwright once: `npm i --no-save playwright && npx playwright install chromium`. `npm test -- admin journal` runs just those groups.
 

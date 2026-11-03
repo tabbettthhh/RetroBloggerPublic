@@ -4128,6 +4128,8 @@ export const kit = {
   plannerText: (lists) => plannerText(lists),
   // Themes on the site itself: the real site wears what you're trying (see themes.js).
   themesLive: (live) => (themesCtx.live = live),
+  // This copy's version, and whether the template has a newer one.
+  version: (again = false) => api('version' + (again ? '?again=1' : '')),
   highlights: () => allHighlights(),
   saveHighlights: (all) => saveHighlights(all),
   // Notes between friends: your mail, sending one, marking them read, deleting one.

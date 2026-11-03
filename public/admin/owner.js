@@ -422,9 +422,42 @@ function cpHome() {
         )
       ),
       // The safety net: the plain editor, if something on the site ever stops working.
+      versionLine(),
       h('p', { class: 'cp-plain' }, 'Something on your site not working? ', h('a', { href: '/admin/plain', target: '_blank', rel: 'noopener' }, 'Open the plain editor'), ' (everything here, in plain pages).')
     )
   );
+}
+// At the foot of the Control Panel: whether your site has the latest version. (A copy made with
+// the Deploy button brings each new version in by itself overnight.)
+const niceVersion = (v) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(v || ''));
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : String(v || '');
+};
+function versionLine() {
+  const line = h('div', { class: 'cp-version', role: 'status' }, h('span', null, 'Checking for a newer version…'));
+  const show = async (again) => {
+    let v;
+    try {
+      v = await kit.version(again);
+    } catch {
+      return line.replaceChildren(h('span', null, 'Couldn’t check for a newer version just now.'));
+    }
+    const repo = `https://github.com/${v.template}`;
+    const ago = v.at ? ` (checked ${new Date(v.at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })})` : '';
+    const again2 = btn('Check again', 'link', (e) => busyOn(e.currentTarget, () => show(true)));
+    if (!v.latest) return line.replaceChildren(h('span', null, `Version of ${niceVersion(v.mine)}. Couldn’t reach GitHub to check for a newer one just now. `), again2);
+    if (v.latest <= v.mine) return line.replaceChildren(h('span', { class: 'cp-ok' }, `✓ Up to date: the version of ${niceVersion(v.mine)}${ago}. `), again2);
+    line.classList.add('behind');
+    line.replaceChildren(
+      h('b', null, `A newer version is ready (${niceVersion(v.latest)}; yours is ${niceVersion(v.mine)}).`),
+      h('span', null, ' A copy made with the Deploy button brings it in by itself overnight. To have it now: your site’s repository on GitHub › Actions › Update my site › Run workflow. Still not arriving? '),
+      h('a', { href: `${repo}#getting-updates`, target: '_blank', rel: 'noopener' }, 'Getting updates'),
+      h('span', null, ' has the one-time setup for sites made before updates existed. '),
+      again2
+    );
+  };
+  show(false);
+  return line;
 }
 function openPage(id) {
   if (id === 'themes') return openThemes();
