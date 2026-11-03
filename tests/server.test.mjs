@@ -1,6 +1,6 @@
 // The server on its own: fresh data straight after publishing, the export zip, photo
 // cleaning and the visitor-facing endpoints.
-import { api, test, report, assert, eq, putFile, getFile, upload, PHOTOS, BASE, chromium } from './lib.mjs';
+import { api, test, report, assert, eq, putFile, getFile, upload, publicData, overview, PHOTOS, BASE, chromium } from './lib.mjs';
 import { unzipSync, strFromU8 } from 'fflate';
 
 await test('a post shows up straight away in a tab that already had the site open', async () => {
@@ -116,6 +116,92 @@ await test('old addresses send visitors to your main address (but never the back
   eq(await go(envWith('https://my-corner.someone.workers.dev'), 'https://my-corner.someone.workers.dev/'), 'stays', 'not moved');
   eq(await go(envWith(null), 'https://my-corner.someone.workers.dev/'), 'stays', 'no address set');
   eq(await go(envWith('http://localhost:8800'), 'https://my-corner.someone.workers.dev/'), 'stays', 'never to a local address');
+});
+
+await test('the site’s own scripts and styles: under this update’s id, kept by browsers until the next one', async () => {
+  const html = await (await fetch(BASE + '/')).text();
+  const id = /\/v\/([\w-]+)\/js\/app\.js/.exec(html)?.[1];
+  assert(id, 'the page asks for them under an id');
+  assert(!/(href|src)="\/(js|css)\//.test(html), 'every one of them');
+  const a = await fetch(`${BASE}/v/${id}/js/app.js`);
+  eq(a.status, 200, 'there');
+  eq(await a.text(), await (await fetch(`${BASE}/js/app.js`)).text(), 'the same file');
+  for (const bad of [`/v/${id}/admin/owner.js`, `/v/${id}/js/nothing.js`, '/v/x/js/app.js', `/v/${id}/js/..%2Fadmin/owner.js`, `/v/${id}/js/.%2E/admin/owner.js`]) eq((await fetch(BASE + bad)).status, 404, bad);
+  // Your owner tools keep their own address (behind the lock), pointing at the same copies as the site.
+  const owner = await (await fetch(`${BASE}/admin/owner.js?v=${id}`)).text();
+  assert(owner.includes(`from '/v/${id}/js/util.js'`) && owner.includes(`'/admin/admin.js?v=${id}'`) && owner.includes(`'/admin/owner.css?v=${id}'`), 'the same copies');
+  // On the internet they're kept for good (here on your own computer, checked each time).
+  const { default: worker } = await import('../src/worker.js');
+  const env = {
+    CF_VERSION_METADATA: { id: 'abcdef12-3456' },
+    CONTENT: { get: async () => null, list: async () => ({ objects: [] }) },
+    ASSETS: { fetch: async (r) => (new URL(r.url).pathname === '/' ? new Response('<link rel="stylesheet" href="/css/base.css"><script type="module" src="/js/app.js"></script>', { headers: { 'Content-Type': 'text/html', ETag: '"page"' } }) : new Response('x', { headers: { 'Content-Type': 'text/javascript' } })) }
+  };
+  const get = (path, e = env) => worker.fetch(new Request('https://corner.example' + path, { headers: { 'If-None-Match': '"page"' } }), e, { waitUntil() {} });
+  eq((await get('/v/abcdef12-3456/js/app.js')).headers.get('cache-control'), 'public, max-age=31536000, immutable', 'this update’s: for good');
+  eq((await get('/v/older-update/js/app.js')).headers.get('cache-control'), 'public, no-cache', 'an older id: the new file, checked next time');
+  const page = await get('/');
+  eq([page.status, page.headers.get('cache-control'), page.headers.get('etag')], [200, 'no-cache', null], 'the page itself: always fresh');
+  eq(await page.text(), '<link rel="stylesheet" href="/v/abcdef12-3456/css/base.css"><script type="module" src="/v/abcdef12-3456/js/app.js"></script>', 'pointing at this update’s');
+  const before = await get('/', { ...env, CF_VERSION_METADATA: undefined });
+  assert((await before.text()).includes('src="/js/app.js"'), 'without an id (settings from before this): as before');
+});
+
+await test('the page asks for every script the first screen needs at once (not one revealing the next)', async () => {
+  const fs = await import('node:fs');
+  const dir = new URL('../public/js/', import.meta.url);
+  const imports = (f) => [...fs.readFileSync(new URL(f, dir), 'utf8').matchAll(/^import\s[^;]*?from\s*'\.\/([\w-]+\.js)'/gm)].map((m) => m[1]);
+  const needed = new Set();
+  const walk = (f) => !needed.has(f) && (needed.add(f), imports(f).forEach(walk));
+  ['app.js', 'phone.js', 'desktop.js'].forEach(walk);
+  const html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
+  const preloaded = new Set([...html.matchAll(/rel="modulepreload" href="\/js\/([\w-]+\.js)"/g)].map((m) => m[1]));
+  eq([...needed].filter((f) => !preloaded.has(f)), [], 'every one of them');
+});
+
+await test('a photo the browser already has isn’t sent again', async () => {
+  await upload('photos/2026-10-22-again/1.jpg', PHOTOS[0]);
+  await putFile('photos/2026-10-22-again.md', '---\ndate: 2026-10-22 10:00\nphotos: [1.jpg]\n---\nOnce\n');
+  const url = `${BASE}/media/photos/2026-10-22-again/1.jpg`;
+  const r1 = await fetch(url);
+  const tag = r1.headers.get('etag');
+  assert(r1.status === 200 && tag && (await r1.arrayBuffer()).byteLength > 1000, 'the first time: the photo');
+  const r2 = await fetch(url, { headers: { 'If-None-Match': tag } });
+  eq([r2.status, (await r2.arrayBuffer()).byteLength], [304, 0], 'again: "not changed", nothing sent');
+  eq((await fetch(url, { headers: { 'If-None-Match': '"another"' } })).status, 200, 'a different photo by that name: sent');
+});
+
+await test('odd requests are turned away politely, never with a server error', async () => {
+  for (const path of ['/api/comment', '/api/guestbook', '/api/suggest', '/api/push/subscribe', '/api/push/unsubscribe'])
+    for (const body of ['null', '[]', '"x"', '{', '1'])
+      assert((await fetch(BASE + path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' }, body })).status < 500, `${path} ${body}`);
+});
+
+await test('lots of comments and guestbook entries: every one shown, and a change shows straight away', async () => {
+  await putFile('thoughts/2026-10-01-chatty.md', '---\ndate: 2026-10-01 09:00\n---\nTalk to me\n');
+  const files = {};
+  const at = (i) => `20261001T1000${String(i).padStart(5, '0')}`;
+  for (let i = 0; i < 120; i++) files[`comments/thoughts/2026-10-01-chatty/${at(i)}-n${i}.md`] = `---\nname: "Reader ${i}"\ndate: "2026-10-01 10:00"\n---\nComment ${i}\n`;
+  for (let i = 0; i < 40; i++) files[`guestbook/${at(i)}-g${i}.md`] = `---\nname: "Guest ${i}"\ndate: "2026-10-01 10:${String(i).padStart(2, '0')}"\n---\nHello ${i}\n`;
+  await api('batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ files: Object.entries(files).map(([key, text]) => ({ key, text })) }) });
+  const chatty = (d) => d.posts.find((p) => p.slug === '2026-10-01-chatty').comments;
+  const guests = (list) => list.filter((g) => /^Guest /.test(g.name));
+  let d = await publicData();
+  eq(chatty(d).length, 120, 'every comment');
+  eq(guests(d.guestbook).length, 40, 'every guestbook entry');
+  const ov = await overview();
+  eq(ov.approvedComments.filter((c) => c.post === 'thoughts/2026-10-01-chatty').length, 120, 'in the back office too');
+  eq(guests(ov.approvedGuestbook).length, 40, 'and the guestbook');
+  // One edited, one deleted: straight away.
+  await putFile(`comments/thoughts/2026-10-01-chatty/${at(7)}-n7.md`, '---\nname: "Reader 7"\ndate: "2026-10-01 10:00"\n---\nChanged my mind\n');
+  await api('file?key=' + encodeURIComponent(`guestbook/${at(3)}-g3.md`), { method: 'DELETE' });
+  d = await publicData();
+  eq(chatty(d).find((c) => c.name === 'Reader 7').message, 'Changed my mind', 'the edit');
+  eq(guests(d.guestbook).length, 39, 'the deletion');
+  // (Tidied away: the post takes its comments with it.)
+  await api('file?key=' + encodeURIComponent('thoughts/2026-10-01-chatty.md'), { method: 'DELETE' });
+  for (let i = 0; i < 40; i++) if (i !== 3) await api('file?key=' + encodeURIComponent(`guestbook/${at(i)}-g${i}.md`), { method: 'DELETE' });
+  eq((await overview()).approvedComments.filter((c) => c.post === 'thoughts/2026-10-01-chatty').length, 0, 'tidied');
 });
 
 const failed = report();

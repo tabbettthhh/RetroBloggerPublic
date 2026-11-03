@@ -19,6 +19,7 @@ const SETTINGS = DIR + 'settings.json';
 const MINE = DIR + 'mine/';
 const VISITORS = DIR + 'visitors/';
 const ANNOUNCED = DIR + 'announced.json';
+const OUTBOX = DIR + 'outbox.json';
 export const KINDS = ['comments', 'notes', 'friends'];
 const MAX_MINE = 20;
 const MAX_VISITORS = 2000;
@@ -58,7 +59,8 @@ async function vapidKeys(env) {
   const pair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
   const keys = { publicKey: b64url(await crypto.subtle.exportKey('raw', pair.publicKey)), privateJwk: await crypto.subtle.exportKey('jwk', pair.privateKey), made: Date.now() };
   await putJson(env, KEYS, keys);
-  return keys;
+  // (Two visits making the first pair at the same moment: both go on with the one that was kept.)
+  return (await readJson(env, KEYS, null)) || keys;
 }
 export async function publicKey(env) {
   return (await vapidKeys(env)).publicKey;
@@ -170,9 +172,7 @@ export async function encryptFor(sub, payload) {
   return concat(salt, rs, new Uint8Array([asPublic.length]), asPublic, body);
 }
 // The site's signature for one push service (VAPID): good for twelve hours.
-async function vapidHeader(env, endpoint, contact) {
-  const keys = await vapidKeys(env);
-  const aud = new URL(endpoint).origin;
+async function vapidHeader(keys, aud, contact) {
   const head = b64url(enc.encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
   const claims = b64url(enc.encode(JSON.stringify({ aud, exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60, sub: contact })));
   const key = await crypto.subtle.importKey('jwk', keys.privateJwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
@@ -181,11 +181,11 @@ async function vapidHeader(env, endpoint, contact) {
 }
 // Sends one message to one device. A device that has gone (unsubscribed, the app removed) is
 // forgotten. Returns whether it was taken.
-async function sendOne(env, key, sub, message, contact) {
+async function sendOne(env, key, sub, message, signed) {
   try {
     const res = await fetch(sub.endpoint, {
       method: 'POST',
-      headers: { 'Content-Encoding': 'aes128gcm', 'Content-Type': 'application/octet-stream', TTL: '86400', Urgency: 'normal', Authorization: await vapidHeader(env, sub.endpoint, contact) },
+      headers: { 'Content-Encoding': 'aes128gcm', 'Content-Type': 'application/octet-stream', TTL: '86400', Urgency: 'normal', Authorization: await signed(sub.endpoint) },
       body: await encryptFor(sub, JSON.stringify(message)),
       signal: AbortSignal.timeout(8000)
     });
@@ -196,21 +196,32 @@ async function sendOne(env, key, sub, message, contact) {
     return false;
   }
 }
-async function sendAll(env, prefix, message, contact) {
-  const list = await subsIn(env, prefix);
+// One message to a list of devices. (The site's key is read once, and signed once for each push
+// service, not for every device.)
+async function sendList(env, objects, message, contact) {
+  if (!objects.length) return 0;
+  const keys = await vapidKeys(env);
+  const signatures = new Map();
+  const signed = (endpoint) => {
+    const aud = new URL(endpoint).origin;
+    if (!signatures.has(aud)) signatures.set(aud, vapidHeader(keys, aud, contact));
+    return signatures.get(aud);
+  };
   let sent = 0;
   // (A few at a time.)
-  for (let i = 0; i < list.length; i += 20) {
-    const batch = list.slice(i, i + 20);
+  for (let i = 0; i < objects.length; i += 10) {
     const done = await Promise.all(
-      batch.map(async (o) => {
+      objects.slice(i, i + 10).map(async (o) => {
         const sub = await readJson(env, o.key, null);
-        return sub ? sendOne(env, o.key, sub, message, contact) : false;
+        return sub ? sendOne(env, o.key, sub, message, signed) : false;
       })
     );
     sent += done.filter(Boolean).length;
   }
   return sent;
+}
+async function sendAll(env, prefix, message, contact) {
+  return sendList(env, await subsIn(env, prefix), message, contact);
 }
 // Who the push services can ask about these messages: your site's own address.
 const contactOf = (origin) => (/^https:\/\//.test(origin || '') ? origin : 'https://example.com');
@@ -249,9 +260,47 @@ export async function announcePosts(env, posts, siteName, origin = '') {
   }
   await putJson(env, ANNOUNCED, { ids: [...new Set([...ids, ...known])].slice(0, 500) });
   if (!(await settings(env)).visitors) return 0;
+  if (!(await subsIn(env, VISITORS)).length) return 0;
   const p = fresh[0];
   const more = fresh.length - 1;
   const href = p.type === 'places' ? `/#/journal/${p.slug}` : ['books', 'films', 'podcasts', 'music', 'tv'].includes(p.type) ? `/#/${p.type}/${p.slug}` : `/#/post/${p.type}/${p.slug}`;
   const WHAT = { thoughts: 'A new thought', places: 'A new place', photos: 'New photos', lists: 'A new list', quotes: 'A new quote', books: 'A new book review', films: 'A new film review', tv: 'A new TV review', podcasts: 'A new podcast review', music: 'A new music review' };
-  return sendAll(env, VISITORS, { title: `${siteName}: ${WHAT[p.type] || 'Something new'}`, body: short(p.title || p.excerpt || 'Have a look') + (more > 0 ? ` (and ${more} more)` : ''), url: href, tag: 'new-post' }, contactOf(origin));
+  // (Sent in rounds: see sendOutbox. A newer post's message replaces one still going out.)
+  await putJson(env, OUTBOX, { message: { title: `${siteName}: ${WHAT[p.type] || 'Something new'}`, body: short(p.title || p.excerpt || 'Have a look') + (more > 0 ? ` (and ${more} more)` : ''), url: href, tag: 'new-post' }, contact: contactOf(origin), after: '', at: Date.now() });
+  return fresh.length;
+}
+
+// The message for visitors, sent a round at a time: Cloudflare's free plan lets one visit to
+// your site make only 50 requests out, so each round is the next 25 visitors who asked, and the
+// rest follow at the next round (straight after a save, and every 20 minutes). Returns how many
+// were sent this round.
+const PER_ROUND = 25;
+export async function sendOutbox(env) {
+  const box = await readJson(env, OUTBOX, null);
+  if (!box?.message) return 0;
+  // (One round at a time: another one under way is left to finish.)
+  if (box.busy && Date.now() - box.busy < 60 * 1000) return 0;
+  await putJson(env, OUTBOX, { ...box, busy: Date.now() });
+  // (What's next, unless a newer message has taken its place meanwhile.)
+  const next = async (after) => {
+    if ((await readJson(env, OUTBOX, null))?.at !== box.at) return;
+    if (after === null) await env.CONTENT.delete(OUTBOX);
+    else await putJson(env, OUTBOX, { ...box, after, busy: 0 });
+  };
+  let page;
+  try {
+    // (Visitors' notifications switched off since: nobody else gets it.)
+    if (!(await settings(env)).visitors) {
+      await next(null);
+      return 0;
+    }
+    page = await env.CONTENT.list({ prefix: VISITORS, limit: PER_ROUND, ...(box.after ? { startAfter: box.after } : {}) });
+  } catch (e) {
+    // (Storage didn't answer: tried again next round.)
+    await next(box.after || '').catch(() => {});
+    throw e;
+  }
+  const sent = await sendList(env, page.objects, box.message, box.contact);
+  await next(page.truncated && page.objects.length ? page.objects[page.objects.length - 1].key : null);
+  return sent;
 }

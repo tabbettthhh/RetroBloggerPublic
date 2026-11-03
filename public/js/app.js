@@ -17,10 +17,18 @@ const desktopQuery = window.matchMedia('(min-width: 900px) and (pointer: fine)')
 const isDesktop = desktopQuery.matches;
 
 async function load() {
-  // Fetched early by the page itself (see index.html), so this is usually already here.
-  const res = await fetch('/api/all');
-  if (!res.ok) throw new Error('Could not load');
-  return res.json();
+  // Fetched early by the page itself (see index.html), so this is usually already here. (A
+  // connection that drops for a moment, on a train say, gets two more tries before giving up.)
+  for (let tries = 0; ; tries++) {
+    try {
+      const res = await fetch('/api/all', tries ? { cache: 'no-cache' } : {});
+      if (!res.ok) throw new Error('Could not load');
+      return await res.json();
+    } catch (e) {
+      if (tries >= 2) throw e;
+      await new Promise((r) => setTimeout(r, 1500 * (tries + 1)));
+    }
+  }
 }
 
 // A page left open (a tab in the background, or the site saved to a phone's home screen) picks
@@ -115,6 +123,17 @@ if (window.parent !== window) {
     setSoundPack(applySkin(e.data.theme || {}).sounds);
   });
 }
+
+// A photo that can't be shown (deleted since the page loaded, or a friend's site not answering)
+// leaves a quiet gap instead of a broken-picture icon.
+document.addEventListener(
+  'error',
+  (e) => {
+    if (e.target instanceof HTMLImageElement) e.target.classList.add('img-gone');
+  },
+  true
+);
+document.addEventListener('load', (e) => e.target instanceof HTMLImageElement && e.target.classList.remove('img-gone'), true);
 
 async function main() {
   // Back from signing in as the owner: straight in, no welcome screen.

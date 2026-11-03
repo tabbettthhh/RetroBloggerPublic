@@ -60,7 +60,9 @@ export async function openOwnerDoor(site) {
     return;
   }
   try {
-    const { startOwner } = await import('/admin/owner.js');
+    // (This update's copy, like this file itself: see deployId in the server.)
+    const id = /^\/v\/([\w-]{8,64})\//.exec(new URL(import.meta.url).pathname)?.[1];
+    const { startOwner } = await import(id ? `/admin/owner.js?v=${id}` : '/admin/owner.js');
     await startOwner(site);
   } catch (e) {
     console.error('Owner mode could not start', e);

@@ -543,9 +543,14 @@ export async function refreshFriends(env, only) {
         names[friend.key] = { name: feed.name, owner: feed.owner };
         reached++;
       } catch (e) {
-        const old = await env.CONTENT.get(`data/_friendcache/${friend.key}.json`);
-        const prev = old ? JSON.parse(await old.text()) : {};
-        await env.CONTENT.put(`data/_friendcache/${friend.key}.json`, JSON.stringify({ ...prev, tried: at, ok: false, error: String(e.message || e).slice(0, 120) }));
+        // (Their last good copy is kept, marked as not reached this time. Noting that is a nicety:
+        // it never stops the other friends' feeds being read.)
+        try {
+          const prev = (await readCache(env, friend.key)) || {};
+          await env.CONTENT.put(`data/_friendcache/${friend.key}.json`, JSON.stringify({ ...prev, tried: at, ok: false, error: String(e?.message || e).slice(0, 120) }));
+        } catch (e2) {
+          console.error('friend cache', e2?.message || e2);
+        }
       }
     })
   );
@@ -653,7 +658,7 @@ export async function moveSite(env, address) {
   if (!to) throw new Error('That address can’t be used: it needs to start https:// and be your site’s address on the internet.');
   // Visitors at your old address get sent to the new one, so make sure it really is this site.
   if (to.startsWith('https:')) {
-    const ok = await fetch(to + '/robots.txt').then((r) => (r.ok ? r.text() : ''), () => '');
+    const ok = await fetch(to + '/robots.txt', { signal: AbortSignal.timeout(8000) }).then((r) => (r.ok ? r.text() : ''), () => '');
     if (!ok.includes('Disallow: /admin')) throw new Error(`Your site doesn’t answer at ${to} yet. Add it as a Custom Domain first (Workers & Pages › your site › Settings › Domains & Routes), wait a few minutes, then try again.`);
   }
   for (const f of store.friends) f.as ||= store.me;
@@ -752,17 +757,31 @@ async function receiveNote(env, friend, info) {
   await push.notifyOwner(env, 'notes', { title: `✉ A note from ${name}`, body: text, url: '/?owner=1&open=mail#/', tag: 'mail' }, (await loadFriends(env)).me).catch(() => {});
   return { ok: true };
 }
+// (Each note is kept here as it was read, and read again only once it has changed: your mailbox,
+// checked every minute or two while the site is open, costs one look at the list of notes.)
+const notesRead = new WeakMap();
 async function readMail(env, limit = MAIL_KEEP) {
   const keys = (await listMail(env)).slice(0, limit);
+  let kept = notesRead.get(env);
+  if (!kept) notesRead.set(env, (kept = new Map()));
   const notes = await Promise.all(
     keys.map(async (o) => {
+      const had = kept.get(o.key);
+      if (had && had.etag === o.etag) return { ...had.note };
       try {
-        return JSON.parse(await (await env.CONTENT.get(o.key)).text());
+        const note = JSON.parse(await (await env.CONTENT.get(o.key)).text());
+        kept.set(o.key, { etag: o.etag, note });
+        return { ...note };
       } catch {
         return null;
       }
     })
   );
+  // (Only the ones still there are kept.)
+  if (limit >= MAIL_KEEP) {
+    const now = new Set(keys.map((o) => o.key));
+    for (const k of kept.keys()) if (!now.has(k)) kept.delete(k);
+  }
   return notes.filter(Boolean);
 }
 // Your mail, for you signed in: every note, newest first, with who it's from (or to).

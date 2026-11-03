@@ -18,6 +18,8 @@ body {
   overscroll-behavior: none;
 }
 img { max-width: 100%; display: block; }
+/* A photo that couldn't be shown (see app.js): a quiet gap, not a broken-picture icon. */
+img.img-gone { opacity: 0; }
 a { color: #0b4fc4; }
 button { font: inherit; }
 .sr, .hp { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

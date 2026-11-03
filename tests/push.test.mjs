@@ -166,6 +166,22 @@ await test('visitors: only if you allow it, only if they ask, only about your ne
   assert(!JSON.stringify(m).includes('Jo') && !JSON.stringify(m).includes('owner'), 'nothing else');
   // Already-there posts were never announced.
   assert(!got.some((g) => g.path === visitor.path && read(visitor, g).body === 'Already here'), 'no back catalogue');
+  // Lots of visitors: everyone hears, once each, a round of 25 at a time (Cloudflare's free plan
+  // lets one visit to the site make only so many requests out); the next round follows the next
+  // save (or the next check, every 20 minutes).
+  const crowd = [visitor, ...Array.from({ length: 30 }, (_, i) => device(`crowd-${i}`))];
+  for (const c of crowd.slice(1)) eq((await fetch(`${BASE}/api/push/subscribe`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: c.sub }) })).status, 200, 'another visitor asks');
+  from = got.length;
+  await putFile('thoughts/for-everyone.md', `---\ndate: ${at(0)}\ntitle: For everyone\n---\nHello all.\n`);
+  const heard = () => crowd.filter((c) => sentTo(c, from).length).length;
+  await until(() => heard() >= 25, 'the first round');
+  await new Promise((r) => setTimeout(r, 1500));
+  eq(heard(), 25, 'one round of 25');
+  await putFile('wishlist.md', '- Somewhere sunny\n');
+  await until(() => heard() === crowd.length, 'the rest, in the next round');
+  await new Promise((r) => setTimeout(r, 1500));
+  assert(crowd.every((c) => sentTo(c, from).length === 1 && read(c, sentTo(c, from)[0]).body === 'For everyone'), 'once each, readable by each');
+  for (const c of crowd.slice(1)) await fetch(`${BASE}/api/push/unsubscribe`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: c.sub.endpoint }) });
   // They change their mind; or their browser has gone: forgotten.
   await fetch(`${BASE}/api/push/unsubscribe`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: visitor.sub.endpoint }) });
   eq((await api('push')).visitorCount, 0, 'unsubscribed');

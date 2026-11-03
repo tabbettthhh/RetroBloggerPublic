@@ -22,14 +22,24 @@ function getCookie(request, name) {
   return null;
 }
 
-async function getKeys(team) {
+// Cloudflare's keys for your team, kept for an hour. Asked for again sooner when a sign-in names a
+// key that isn't among them (Cloudflare has just changed its key: at most once a minute), and
+// the ones kept are used if Cloudflare can't be reached just then.
+async function getKeys(team, again = false) {
   const now = Date.now();
-  if (certCache.team === team && now - certCache.at < 60 * 60 * 1000 && certCache.keys.length) return certCache.keys;
-  const res = await fetch(`https://${team}/cdn-cgi/access/certs`);
-  if (!res.ok) throw new Error('Could not load Access certificates');
-  const { keys = [] } = await res.json();
-  certCache = { at: now, team, keys };
-  return keys;
+  const mine = certCache.team === team && certCache.keys.length;
+  if (mine && now - certCache.at < 60 * 60 * 1000 && !(again && now - certCache.at > 60 * 1000)) return certCache.keys;
+  try {
+    const res = await fetch(`https://${team}/cdn-cgi/access/certs`, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) throw new Error('Could not load Access certificates');
+    const { keys = [] } = await res.json();
+    if (!Array.isArray(keys) || !keys.length) throw new Error('No Access certificates');
+    certCache = { at: now, team, keys };
+    return keys;
+  } catch (e) {
+    if (mine) return certCache.keys;
+    throw e;
+  }
 }
 
 // Whether a request may use the back office, and if not, why not (shown on the locked page so
@@ -68,6 +78,7 @@ export async function adminCheck(request, env) {
   } catch {
     return { ok: false, why: 'keys' };
   }
+  if (!keys.some((k) => k.kid === header.kid)) keys = await getKeys(team, true).catch(() => keys);
   try {
     const jwk = keys.find((k) => k.kid === header.kid);
     if (!jwk) return { ok: false, why: 'bad' };
