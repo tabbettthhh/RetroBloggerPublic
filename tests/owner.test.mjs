@@ -310,6 +310,58 @@ await test('no separate back office: /admin is your site, signed in; the plain e
   }, '/admin/plain');
 });
 
+await test('a theme changed elsewhere reaches pages already open, words and all (signed in or not)', async () => {
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+  const browser = await chromium.launch();
+  try {
+    const pages = [];
+    for (const path of ['/#/', '/?owner=1#/']) {
+      const p = await browser.newPage(DESK);
+      p.errors = [];
+      p.on('pageerror', (e) => p.errors.push(e.message));
+      await p.clock.install();
+      await p.addInitScript(() => sessionStorage.setItem('entered', '1'));
+      await p.goto(BASE + path);
+      await p.waitForSelector('.start-btn');
+      if (path.includes('owner')) await p.waitForSelector('.okit-me');
+      pages.push(p);
+    }
+    // Changed on another device: a new theme, with its own word on the Explore button.
+    await putFile('theme.md', '---\ntheme: matcha\nlabels:\n  explore: Begin\n---\n');
+    for (const p of pages) {
+      await p.clock.fastForward('02:00');
+      await p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+      await p.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue('--sk-main').trim() === '#7d9f68', null, { timeout: 15000 });
+      await p.waitForFunction(() => document.querySelector('.start-btn')?.textContent.trim() === 'Begin', null, { timeout: 15000 });
+      assert(!p.errors.length, p.errors.join('; '));
+    }
+  } finally {
+    await browser.close();
+  }
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+});
+
+await test('in dark mode, what you type in your windows can always be read', async () => {
+  const browser = await chromium.launch();
+  try {
+    const p = await browser.newPage(PHONE);
+    await p.addInitScript(() => {
+      sessionStorage.setItem('entered', '1');
+      localStorage.setItem('theme', 'dark');
+    });
+    await p.goto(BASE + '/?owner=1#/');
+    await p.waitForSelector('.okit-me');
+    await p.locator('.okit-me').first().click();
+    await p.locator('.okit-menu button', { hasText: 'Control Panel' }).click();
+    await p.locator('.cp-item[data-cp="site"]').click();
+    await p.waitForSelector('.okit-host input.input');
+    const [fg, bg] = await p.locator('.okit-host input.input').first().evaluate((i) => [getComputedStyle(i).color, getComputedStyle(i).backgroundColor]);
+    assert(fg !== bg && /^rgb\((\d{1,2}|1[0-4]\d), /.test(fg), `dark ink on the light box: ${fg} on ${bg}`);
+  } finally {
+    await browser.close();
+  }
+});
+
 await test('Themes: the real site wears what you try; closing without saving puts it back; saving keeps it', async () => {
   await putFile('theme.md', '---\ntheme: classic\n---\n');
   await site(DESK, async (p) => {
