@@ -1,5 +1,5 @@
 // Friends: two copies of the site (this one, and a second on TEST_BASE2) become buddies with a
-// friend code, follow each other's posts, and refuse anyone else. Following only: no messages.
+// friend code, follow each other's posts, send each other notes, and refuse anyone else.
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { test, report, assert, eq, launch, close, adminPage, api, putFile, publicData, overview, PHOTOS, BASE, chromium, openTab } from './lib.mjs';
@@ -19,6 +19,15 @@ async function until(fn, what, ms = 15000) {
     await new Promise((r) => setTimeout(r, 250));
   }
   assert(false, what);
+}
+async function assertThrows(fn, what) {
+  let threw = false;
+  try {
+    await fn();
+  } catch {
+    threw = true;
+  }
+  assert(threw, what);
 }
 const post_ = (fn, p, body) => fn(p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
 const b64url = (buf) => Buffer.from(buf).toString('base64url');
@@ -361,6 +370,84 @@ await test('signed in: their posts in your Home, a dot on Friends, and comments 
   eq((await post_(api, 'friends/settings', { inHome: false })).inHome, false, 'not in Home');
   eq((await api('overview')).friendsMine.inHome, false, 'told to the site');
   await post_(api, 'friends/settings', { inHome: true, visibility: 'all' });
+});
+
+await test('notes between friends: the newest pops up, the rest wait in Mail; only for the one it’s to', async () => {
+  // Not from just anyone.
+  eq((await fetch(`${BASE2}/api/friends/note`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Friend-From': BASE }, body: '{"text":"hi"}' })).status, 403, 'unsigned: refused');
+  // Two notes from Sam to Lina.
+  await post_(api, 'mail/send', { friend: 'localhost_8801', text: 'Fancy a walk on Saturday?' });
+  await post_(api, 'mail/send', { friend: 'localhost_8801', text: 'Bring the camera!\nAnd snacks.' });
+  const lina = await api2('mail');
+  eq([lina.unread, lina.notes.map((n) => [n.name, n.text, n.out || false])], [2, [['Sam', 'Bring the camera!\nAnd snacks.', false], ['Sam', 'Fancy a walk on Saturday?', false]]], 'in Lina’s mail, newest first');
+  eq((await api('mail')).notes.filter((n) => n.out).length, 2, 'Sam keeps a copy of what he sent');
+  assert(!JSON.stringify(await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json()).includes('Fancy a walk'), 'never on the site');
+  await assertThrows(() => post_(api, 'mail/send', { friend: 'localhost_8801', text: '   ' }), 'an empty note isn’t sent');
+  const browser = await chromium.launch();
+  try {
+    // Lina, on a computer: the newest pops up over the tray; the other is in Mail.
+    const p = await browser.newPage({ viewport: { width: 1280, height: 860 } });
+    p.errors = [];
+    p.on('pageerror', (e) => p.errors.push(e.message));
+    await p.addInitScript(() => sessionStorage.setItem('entered', '1'));
+    await p.goto(BASE2 + '/?owner=1#/');
+    const pop = p.locator('.okit-mailpop.balloon');
+    await pop.waitFor();
+    const said = await pop.innerText();
+    assert(said.includes('Bring the camera') && !said.includes('Fancy a walk') && said.includes('1 more'), 'only the newest: ' + said);
+    await p.waitForFunction(() => [...document.querySelectorAll('.okit-mailbtn')].some((b) => b.offsetParent && b.querySelector('.okit-badge').textContent === '2'));
+    await pop.locator('button', { hasText: 'Read it' }).click();
+    await p.waitForSelector('.okit-mailwin .ml-read');
+    assert((await p.locator('.ml-read').innerText()).includes('Bring the camera'), 'open in Mail');
+    eq(await p.locator('.ml-row').count(), 2, 'both in the inbox');
+    eq(await p.locator('.ml:not(.narrow) .ml-side').count(), 1, 'side by side on a computer');
+    await p.waitForFunction(() => document.querySelector('.okit-mailbtn .okit-badge')?.textContent === '1');
+    await p.locator('.ml-read button', { hasText: 'Reply' }).click();
+    await p.locator('.ml-compose textarea').fill('Yes! See you at ten.');
+    await p.locator('.ml-compose button', { hasText: 'Send' }).click();
+    await p.waitForFunction(() => /Sent to Sam/.test(document.querySelector('.okit-toast')?.textContent || ''));
+    // Only once: it doesn't pop up again next time.
+    await p.reload();
+    await p.waitForSelector('.okit-mailbtn');
+    await p.waitForTimeout(1500);
+    eq(await p.locator('.okit-mailpop').count(), 0, 'popped once');
+    assert(!p.errors.length, p.errors.join('; '));
+    // Sam, on a phone: a banner along the top; Mail one thing at a time.
+    const q = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    q.errors = [];
+    q.on('pageerror', (e) => q.errors.push(e.message));
+    await q.addInitScript(() => sessionStorage.setItem('entered', '1'));
+    await q.goto(BASE + '/?owner=1#/');
+    const banner = q.locator('.okit-mailpop.banner');
+    await banner.waitFor();
+    assert((await banner.innerText()).includes('See you at ten'), 'Lina’s reply');
+    await q.waitForTimeout(500);
+    const box = await banner.boundingBox();
+    assert(box.y >= 0 && box.y < 60 && box.x >= 0 && box.x + box.width <= 390, 'along the top, within the screen: ' + JSON.stringify(box));
+    await banner.locator('.mp-x').click();
+    await q.locator('.okit-mailbtn').first().click();
+    await q.waitForSelector('.ml.narrow .ml-row');
+    eq(await q.locator('.ml-pane').isVisible(), false, 'the list first');
+    await q.locator('.ml-row').first().click();
+    await q.waitForSelector('.ml.narrow.reading .ml-read');
+    eq(await q.locator('.ml-side').isVisible(), false, 'then the note on its own');
+    await q.locator('.ml-read .ml-back').click();
+    await q.waitForSelector('.ml.narrow:not(.reading) .ml-row');
+    // From the Friends tab: a note to a buddy.
+    await q.keyboard.press('Escape');
+    await q.goto(BASE + '/?owner=1#/friends');
+    await q.locator('.okit-note-btn').first().click();
+    await q.waitForSelector('.ml-compose select');
+    eq(await q.locator('.ml-compose select').inputValue(), 'localhost_8801', 'to them');
+    assert(!q.errors.length, q.errors.join('; '));
+  } finally {
+    await browser.close();
+  }
+  eq((await api('mail')).notes.find((n) => !n.out).reply_to, lina.notes[0].id, 'a reply, to the note it answers');
+  // Deleting one.
+  const id = (await api2('mail')).notes[0].id;
+  await post_(api2, 'mail/delete', { id });
+  assert(!(await api2('mail')).notes.some((n) => n.id === id), 'deleted');
 });
 
 await test('a friend\'s new post reaches your site within moments, and an open page picks it up', async () => {

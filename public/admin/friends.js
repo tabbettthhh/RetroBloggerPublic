@@ -1,5 +1,5 @@
 // Friends, in the back office: a chat-style friends list of people who run their own copy
-// of this site, and their latest posts. (Following only: there are no messages.)
+// of this site, and their latest posts. (And notes between friends: see Mail, signed in.)
 import { h } from '/js/util.js';
 import { withEmoticons } from '/js/emoticons.js';
 import { friendHtml as cleanHtml } from '/js/friend-html.js';
@@ -343,6 +343,6 @@ function howItWorks() {
     h('p', null, 'Your friends’ sites tell yours the moment they post or change their status, and your site checks theirs every 20 minutes as well. Their photos come through your own site, so your browser never connects to theirs. Drafts and scheduled posts are never shared.'),
     h('p', null, 'Signed in, you see their posts in your Home and on a Friends tab, with your friends listed at the top. A dot on Friends tells you when there’s something new. Whether visitors see the tab too is up to you (above).'),
     h('p', null, 'You can comment on their posts right there: your comment goes straight on at their site, under your name, linking to yours. (Their visitors’ comments still wait for them to approve, and so do yours on your own site.)'),
-    h('p', null, 'There are no private messages. Remove a buddy and both sites stop following each other.')
+    h('p', null, 'You can send each other short notes, too: they arrive in Mail, and only the friend a note is to can read it. Remove a buddy and both sites stop following each other.')
   );
 }

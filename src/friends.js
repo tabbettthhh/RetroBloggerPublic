@@ -9,7 +9,7 @@
 // - Every request between friends is signed with it (an HMAC of the method, path, time and
 //   body), so only a friend can read your friend feed or post to your inbox, and nobody can
 //   pretend to be them. Requests more than five minutes old are refused.
-// - There are no messages: friends only read each other's posts, presence and status.
+// - Notes between friends (mail) go only to the friend they're for, kept on their site for them alone.
 // - Your site's address is set once (the first time you open Friends). If your site moves to
 //   another address (a domain of your own, say), "My site has moved" tells each friend's site,
 //   signed with the secret you share; their site checks you really are at the new address
@@ -254,6 +254,17 @@ export async function friendsApi(request, env, path, deps) {
 
   // A friend commenting on one of your posts, from their own site: it goes straight on (they're
   // your friend), under their name, linking to their site. (deps.friendComment keeps it.)
+  // A note from a friend ("You've got mail!"): kept for you, and nobody else, to read signed in.
+  if (path === '/api/friends/note' && method === 'POST') {
+    let info = {};
+    try {
+      info = JSON.parse(body);
+    } catch {}
+    const f = store.friends.find((x) => x.key === friend.key) || friend;
+    const out = await receiveNote(env, f, info);
+    return reply(out.ok ? { ok: true } : { error: out.error }, out.status || 200);
+  }
+
   if (path === '/api/friends/comment' && method === 'POST' && deps.friendComment) {
     let info = {};
     try {
@@ -688,6 +699,101 @@ export async function commentOnFriend(env, key, body) {
   if (res.status === 404 && !out.error) throw new Error('Their site needs updating before it can take comments from friends.');
   if (!res.ok) throw new Error(out.error === 'Not found' ? 'Their site needs updating before it can take comments from friends.' : out.error || 'Their site didn’t take that comment.');
   await refreshFriends(env, key);
+  return { ok: true };
+}
+
+// ---------- notes between friends ("You've got mail!") ----------
+// A short note, sent by your site to a friend's, signed like everything else between them. It's
+// kept on their site for them alone (never on the site, never sent on), as a small file under
+// data/_mail. Your own copy of what you sent is kept too, so you can see the conversation.
+const MAIL = 'data/_mail/';
+const NOTE_MAX = 600;
+const MAIL_KEEP = 300;
+const noteText = (v) => String(v ?? '').replace(/\r\n?/g, '\n').replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, '').replace(/\n{3,}/g, '\n\n').trim().slice(0, NOTE_MAX);
+const noteId = () => `${Date.now().toString(36).padStart(9, '0')}-${b64url(crypto.getRandomValues(new Uint8Array(4)))}`;
+async function keepNote(env, note) {
+  await env.CONTENT.put(`${MAIL}${note.id}.json`, JSON.stringify(note), { httpMetadata: { contentType: 'application/json' } });
+  // Only the newest few hundred are kept.
+  const all = await listMail(env);
+  for (const old of all.slice(MAIL_KEEP)) await env.CONTENT.delete(old.key);
+}
+async function listMail(env) {
+  const out = [];
+  let cursor;
+  do {
+    const page = await env.CONTENT.list({ prefix: MAIL, cursor, limit: 1000 });
+    out.push(...page.objects);
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+  // (Ids start with the time, so the newest sort last; newest first here.)
+  return out.sort((a, b) => b.key.localeCompare(a.key));
+}
+async function receiveNote(env, friend, info) {
+  const text = noteText(info.text);
+  if (text.length < 1) return { error: 'An empty note.', status: 400 };
+  // A friend can send plenty, but not a flood: twenty an hour.
+  const hour = Date.now() - 60 * 60 * 1000;
+  const recent = (await readMail(env, 60)).filter((n) => !n.out && n.friend === friend.key && n.at > hour);
+  if (recent.length >= 20) return { error: 'That’s a lot of notes in an hour. Try again later.', status: 429 };
+  await keepNote(env, { id: noteId(), friend: friend.key, name: clean(friend.owner || friend.name, 60) || friend.url, site: friend.url, text, at: Date.now(), read: false, reply_to: /^[0-9a-z]{9}-[\w-]{4,8}$/.test(String(info.reply_to || '')) ? String(info.reply_to) : '' });
+  return { ok: true };
+}
+async function readMail(env, limit = MAIL_KEEP) {
+  const keys = (await listMail(env)).slice(0, limit);
+  const notes = await Promise.all(
+    keys.map(async (o) => {
+      try {
+        return JSON.parse(await (await env.CONTENT.get(o.key)).text());
+      } catch {
+        return null;
+      }
+    })
+  );
+  return notes.filter(Boolean);
+}
+// Your mail, for you signed in: every note, newest first, with who it's from (or to).
+export async function myMail(env) {
+  const store = await loadFriends(env);
+  const known = new Map(store.friends.map((f) => [f.key, f]));
+  const notes = await readMail(env);
+  return {
+    notes: notes.map((n) => ({ ...n, still: known.has(n.friend) })),
+    unread: notes.filter((n) => !n.out && !n.read).length,
+    friends: store.friends.map((f) => ({ key: f.key, name: f.owner || f.name, site: f.url }))
+  };
+}
+// You, sending a note to a friend.
+export async function sendNote(env, key, body) {
+  const store = await loadFriends(env);
+  const friend = store.friends.find((f) => f.key === key);
+  if (!friend) throw new Error('That friend isn’t on your list any more.');
+  const text = noteText(body.text);
+  if (!text) throw new Error('Write something first.');
+  const reply_to = String(body.reply_to || '').slice(0, 20);
+  let res;
+  try {
+    res = await signedFetch(env, store, friend, 'POST', '/api/friends/note', { text, reply_to });
+  } catch {
+    throw new Error('Couldn’t reach their site just now. Try again in a moment.');
+  }
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(out.error === 'Not found' ? 'Their site needs updating before it can take notes.' : out.error || 'Their site didn’t take that note.');
+  await keepNote(env, { id: noteId(), out: true, friend: friend.key, name: friend.owner || friend.name, site: friend.url, text, at: Date.now(), read: true, reply_to });
+  return { ok: true };
+}
+// Marks notes as read (some, or all of them), or deletes one.
+export async function markMail(env, ids, read = true) {
+  const want = ids === 'all' ? null : new Set((Array.isArray(ids) ? ids : [ids]).map(String));
+  for (const n of await readMail(env)) {
+    if (n.out || n.read === read || (want && !want.has(n.id))) continue;
+    n.read = read;
+    await env.CONTENT.put(`${MAIL}${n.id}.json`, JSON.stringify(n), { httpMetadata: { contentType: 'application/json' } });
+  }
+  return { ok: true };
+}
+export async function deleteNote(env, id) {
+  if (!/^[0-9a-z]{9}-[\w-]{4,8}$/.test(String(id))) throw new Error('No such note.');
+  await env.CONTENT.delete(`${MAIL}${id}.json`);
   return { ok: true };
 }
 

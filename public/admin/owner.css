@@ -165,7 +165,7 @@ html.owner-preview .okit-hidden-post { outline: 0; }
 :root .okit .btn:active { box-shadow: var(--ok-press); translate: 0 1px; }
 :root .okit .btn.go { color: #fff; border-color: color-mix(in srgb, var(--ok-sel) 60%, #000); background: var(--ok-gloss), var(--ok-sel); text-shadow: 0 -1px 0 rgba(0, 0, 0, .3); }
 :root .okit .btn.danger { color: #9c2414; }
-:root .okit :is(.input, .select, .textarea):not(.ied-title):not(.ied-text) { border-color: var(--ok-line); border-radius: 5px; color: #1b1b1b; -webkit-text-fill-color: #1b1b1b; background: #fff; box-shadow: inset 0 2px 3px rgba(0, 0, 0, .12), 0 1px 0 rgba(255, 255, 255, .6); }
+:root .okit :is(.input, .select, .textarea):not(.ied-title):not(.ied-text) { border-color: var(--ok-line); border-radius: 5px; background: #fff; box-shadow: inset 0 2px 3px rgba(0, 0, 0, .12), 0 1px 0 rgba(255, 255, 255, .6); }
 :root .okit :is(.input, .select, .textarea):not(.ied-title):not(.ied-text):focus { border-color: var(--ok-sel); outline: 2px solid color-mix(in srgb, var(--ok-sel) 35%, transparent); outline-offset: 0; }
 :root .okit :is(.chip-btn, .type-tabs button) { color: var(--ok-ink); border: 1px solid var(--ok-line); background: var(--ok-gloss), linear-gradient(180deg, #fff, color-mix(in srgb, var(--ok-paper) 70%, #fff)); box-shadow: var(--ok-bevel), 0 1px 2px rgba(0, 0, 0, .15); }
 :root .okit :is(.chip-btn, .type-tabs button)[aria-pressed="true"] { color: var(--ok-sel-text); border: 1px solid color-mix(in srgb, var(--ok-sel) 70%, #000); background: var(--ok-gloss), var(--ok-sel); box-shadow: var(--ok-press); }
@@ -178,12 +178,6 @@ html.owner-preview .okit-hidden-post { outline: 0; }
 :root .okit .admin-tabs button[aria-selected="true"] { border-top-color: var(--ok-accent); background: #fff; }
 :root .okit .admin-body { border-color: var(--ok-line); }
 :root .okit-host { background: var(--ok-paper); }
-
-/* Dark mode: the windows and sheets stay on their light paper (as XP's dialogs did), with dark
-   ink, so nothing in them is ever light on light: the site around them goes dark as usual. */
-:root[data-theme="dark"] .okit-host { color-scheme: light; color: #1b1b1b; }
-:root[data-theme="dark"] .okit-host :is(h1, h2, h3, h4, p, small, b, strong, span, label, legend, li, dt, dd, td, th, .info, .hint, .status-preview) { color: inherit; }
-:root[data-theme="dark"] .okit-host :is(.hint, small) { color: #555; }
 
 /* Dark mode: the same, by night. */
 :root[data-theme="dark"] :is(.okit-menu, .okit-toast) { color: #eee; background: linear-gradient(90deg, var(--ok-bar) 0 26px, transparent 26px), #2a2a2e; }
@@ -297,7 +291,7 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 /* Comments on a friend's post: a glossy button at the foot of their card, opening the
    conversation underneath, in your theme's paper (their card keeps their look). */
 .okit-talk-wrap { margin: 8px 10px 10px; text-align: left; font: 13px/1.4 Tahoma, 'Segoe UI', sans-serif; color: var(--ok-ink, #14254d); }
-.okit-talk-btn { min-height: 28px; }
+.okit-talk-btn, .okit-talk-note { min-height: 28px; }
 .okit-talk-btn[aria-expanded="true"] { color: var(--ok-sel-text, #fff); border-color: color-mix(in srgb, var(--ok-sel, #316ac5) 70%, #000); background: var(--ok-gloss), var(--ok-sel, #316ac5); box-shadow: var(--ok-press); }
 .okit-talk { margin-top: 8px; padding: 8px 10px; border: 1px solid var(--ok-line, #c7c3ae); border-left: 4px solid var(--ok-sel, #316ac5); border-radius: 8px; background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--ok-paper, #ece9d8) 40%, #fff)); box-shadow: var(--ok-bevel), 0 1px 4px rgba(0, 0, 0, .12); }
 .okit-talk[hidden] { display: none; }
@@ -335,3 +329,93 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 .okit-me.in-dock .okit-face.has-pic > svg { width: 100%; height: 100%; }
 .okit-pic-btn { cursor: pointer; }
 .okit-pic-btn:hover, .okit-pic-btn:focus-visible { outline: 2px solid #fff; outline-offset: 1px; box-shadow: 0 0 0 4px var(--ok-accent, #f2861e); }
+
+/* ---------- Mail: notes between friends ---------- */
+/* The envelope, by your tile: in the taskbar's tray, in the dock, or floating. */
+.okit-mailbtn { position: relative; display: inline-grid; place-items: center; flex: none; width: 30px; height: 28px; align-self: center; margin-right: 4px; padding: 0; border: 1px solid rgba(255, 255, 255, .45); border-radius: 14px; color: var(--ok-bar-lo, #003399); background: var(--ok-gloss), color-mix(in srgb, var(--ok-bar-hi, #3d8af7) 45%, #fff); box-shadow: var(--ok-bevel), 0 1px 2px rgba(0, 0, 0, .25); cursor: pointer; }
+.okit-mailbtn svg { width: 18px; height: 18px; }
+.okit-mailbtn.has-new svg { animation: okit-env 1.6s ease-in-out 3; }
+@keyframes okit-env { 0%, 100% { transform: none; } 20% { transform: rotate(-10deg); } 40% { transform: rotate(8deg); } 60% { transform: rotate(-4deg); } }
+.okit-mailbtn.in-dock { width: 52px; height: 52px; margin: 0; border-radius: 12px; background: linear-gradient(180deg, #fff, #dfe9f8); }
+.okit-mailbtn.in-dock svg { width: 30px; height: 30px; }
+.okit-float .okit-mailbtn { width: 36px; height: 36px; margin: 0; border-radius: 50%; }
+@media (max-width: 440px) { .okit-mailbtn.in-dock { width: 40px; height: 40px; } .okit-mailbtn.in-dock svg { width: 24px; height: 24px; } }
+@media (prefers-reduced-motion: reduce) { .okit-mailbtn.has-new svg { animation: none; } }
+
+/* It's here: the newest note pops up. A balloon over the tray on a computer (like XP's); a banner
+   along the top on a phone or tablet. Never more than one; the rest wait in Mail. */
+.okit-mailpop { position: fixed; z-index: 9400; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; padding: 10px 12px; border: 1px solid #7a7a5a; color: #1a1a1a; background: #ffffe1; box-shadow: 0 6px 22px rgba(0, 0, 0, .3); font: 13px/1.4 Tahoma, 'Segoe UI', sans-serif; text-align: left; opacity: 0; transition: opacity .25s, transform .3s cubic-bezier(.2, 1.2, .4, 1); }
+.okit-mailpop.balloon { right: 16px; bottom: 54px; width: min(340px, calc(100vw - 32px)); border-radius: 10px; transform: translateY(12px); }
+.okit-mailpop.balloon::after { content: ''; position: absolute; right: 46px; bottom: -11px; width: 18px; height: 18px; background: #ffffe1; border-right: 1px solid #7a7a5a; border-bottom: 1px solid #7a7a5a; transform: skewX(35deg) rotate(45deg) scale(.7); }
+.okit-mailpop.banner { top: calc(10px + env(safe-area-inset-top)); left: 50%; width: min(520px, calc(100vw - 20px)); margin-left: calc(min(520px, calc(100vw - 20px)) / -2); border-radius: 14px; transform: translateY(-140%); }
+.okit-mailpop.on.balloon, .okit-mailpop.on.banner { opacity: 1; transform: none; }
+.okit-mailpop .mp-head { display: flex; align-items: center; gap: 8px; }
+.okit-mailpop .mp-env { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; color: #fff; background: var(--ok-gloss), var(--ok-sel, #316ac5); }
+.okit-mailpop .mp-head b { flex: 1; font-size: 14px; }
+.okit-mailpop .mp-x { width: 26px; height: 26px; border: 0; border-radius: 4px; background: none; font-size: 18px; line-height: 1; cursor: pointer; }
+.okit-mailpop .mp-x:hover { background: rgba(0, 0, 0, .08); }
+.okit-mailpop .mp-body { display: flex; gap: 10px; align-items: flex-start; }
+.okit-mailpop .mp-body p { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; margin: 2px 0 0; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; }
+.okit-mailpop .mp-acts { justify-content: flex-end; }
+.okit-mailpop .mp-acts small { margin-right: auto; opacity: .7; }
+@media (prefers-reduced-motion: reduce) { .okit-mailpop { transition: opacity .2s; transform: none !important; } }
+
+/* A friend's initial, in their own little square. */
+.ml-av { display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; border: 2px solid #fff; border-radius: 6px; color: #fff; background: linear-gradient(180deg, #ffb347, #e8692c); box-shadow: 0 1px 3px rgba(0, 0, 0, .3); font: bold 14px/1 Tahoma, sans-serif; }
+.ml-av.big { width: 44px; height: 44px; font-size: 19px; }
+
+/* The Mail window: folders and New note along the top; the list beside the note on a wide
+   screen, one at a time on a narrow one. */
+.okit-mailwin .admin-body { padding: 0; }
+.ml { display: flex; flex-direction: column; min-height: 100%; color: var(--ok-ink, #14254d); font: 13px/1.45 Tahoma, 'Segoe UI', sans-serif; text-align: left; }
+.ml-bar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--ok-line, #c7c3ae); background: var(--ok-gloss), color-mix(in srgb, var(--ok-paper, #ece9d8) 80%, #fff); }
+.ml-folders { display: flex; gap: 4px; }
+.ml-folder { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 12px; border: 1px solid var(--ok-line, #c7c3ae); border-radius: 15px; color: inherit; background: linear-gradient(180deg, #fff, var(--ok-paper, #ece9d8)); font: bold 12px Tahoma, sans-serif; cursor: pointer; }
+.ml-folder[aria-pressed="true"] { color: var(--ok-sel-text, #fff); border-color: color-mix(in srgb, var(--ok-sel, #316ac5) 70%, #000); background: var(--ok-gloss), var(--ok-sel, #316ac5); }
+.ml-folder .okit-badge { position: static; color: #fff; }
+.ml-split { flex: 1; display: grid; grid-template-columns: minmax(220px, 38%) 1fr; min-height: 340px; }
+.ml-side { border-right: 1px solid var(--ok-line, #c7c3ae); background: #fff; overflow: auto; }
+.ml-list { margin: 0; padding: 0; list-style: none; }
+.ml-row { display: flex; gap: 10px; align-items: flex-start; width: 100%; padding: 10px; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--ok-line, #c7c3ae) 60%, transparent); color: inherit; background: none; font: inherit; text-align: left; cursor: pointer; }
+.ml-row:hover { background: color-mix(in srgb, var(--ok-sel, #316ac5) 8%, #fff); }
+.ml-row.on { color: var(--ok-sel-text, #fff); background: var(--ok-sel, #316ac5); }
+.ml-words { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ml-top { display: flex; align-items: baseline; gap: 6px; }
+.ml-top b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: normal; }
+.ml-top small { flex: none; opacity: .7; }
+.ml-snip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .8; }
+.ml-row.unread .ml-top b, .ml-row.unread .ml-snip { font-weight: bold; opacity: 1; }
+.ml-row.unread .ml-top b::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--ok-accent, #f2861e); vertical-align: middle; }
+.ml-empty { margin: 0; padding: 18px 14px; font-style: italic; opacity: .75; }
+.ml-pane { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px 16px; background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--ok-paper, #ece9d8) 30%, #fff)); }
+.ml-none { align-items: center; justify-content: center; opacity: .55; }
+.ml-big-env svg { width: 56px; height: 56px; }
+.ml-from { display: flex; gap: 10px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--ok-line, #c7c3ae); }
+.ml-from > div { display: flex; flex-direction: column; min-width: 0; }
+.ml-from small, .ml-from a { opacity: .75; color: inherit; font-size: 12px; overflow-wrap: anywhere; }
+.ml-body { margin: 0; font-size: 15px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ml-acts { margin-top: auto; padding-top: 8px; }
+.ml-field { display: flex; align-items: center; gap: 8px; }
+.ml-field > span { font-weight: bold; }
+.ml-to { flex: 1; }
+.ml-text { min-height: 120px; }
+.ml-send { justify-content: flex-end; }
+.ml-count { margin-right: auto; opacity: .6; }
+.ml-hint { margin: 0; font-size: 12px; opacity: .7; }
+.ml-quote { margin: 0; padding: 6px 10px; border-left: 3px solid var(--ok-line, #c7c3ae); color: #555; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ml-quote small { display: block; font-weight: bold; }
+.ml-back-row { display: none; }
+/* Narrow: the list, or a note, one at a time, with Back. */
+.ml.narrow .ml-split { grid-template-columns: 1fr; }
+.ml.narrow .ml-side { border-right: 0; }
+.ml.narrow.reading .ml-side { display: none; }
+.ml.narrow:not(.reading) .ml-pane { display: none; }
+.ml.narrow .ml-back-row { display: block; }
+
+/* A note to a buddy, from the Friends tab. */
+.okit-buddy { display: flex; align-items: center; }
+.okit-buddy > .ff-buddy { flex: 1; min-width: 0; }
+.okit-note-btn { min-height: 28px; margin-right: 6px; padding: 0 9px; }
+
+:root[data-theme="dark"] .okit-mailpop { color: #eee; background: #3a3a28; border-color: #6a6a4a; }
+:root[data-theme="dark"] .okit-mailpop.balloon::after { background: #3a3a28; border-color: #6a6a4a; }
