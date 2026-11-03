@@ -20,6 +20,7 @@ import { forgetOwner, ownerHooks } from '/js/owner-door.js';
 import { rebuildRoom } from '/js/cabinet.js';
 import { applySkin } from '/js/skins.js';
 import { sound } from '/js/sound.js';
+import { pushState, currentSub, signUp, signOff, deviceName, isIOS } from '/js/push-client.js';
 
 const TYPES = [
   ['thoughts', 'Thought', '💭'],
@@ -381,7 +382,7 @@ async function editPost(p, el) {
 // each category opens in the same place, with ‹ back to the categories.
 const CP = [
   ['Writing', [['posts', 'Posts & drafts', 'Every post, drafts and scheduled ones included: find, pin, edit', '🗂'], ['highlights', 'Highlights', 'The cabinet’s shelves, in order, with why', '★'], ['planner', 'Planner', 'Your lists, private ones too', '📒']]],
-  ['People', [['notifications', 'Inbox', 'Comments, signatures, suggestions, nudges, friends’ news', '✉'], ['friends', 'Friends', 'Your buddies, and who sees what', '👥'], ['mail', 'Mail', 'Notes from friends, and ones you’ve sent', '📨'], ['status', 'Status', 'How you are, your message, a countdown', '💬']]],
+  ['People', [['notifications', 'Inbox', 'Comments, signatures, suggestions, nudges, friends’ news', '✉'], ['friends', 'Friends', 'Your buddies, and who sees what', '👥'], ['mail', 'Mail', 'Notes from friends, and ones you’ve sent', '📨'], ['notify', 'Notifications', 'On your phone or computer, even with the site closed', '🔔'], ['status', 'Status', 'How you are, your message, a countdown', '💬']]],
   ['Look', [['themes', 'Themes', 'Colours, wallpaper, fonts and the rest, on your real site as you choose', '🎨'], ['designs', 'Designs', 'The visa in your passport, and keepsakes of your own', '🎟']]],
   ['Your site', [['picture', 'Your picture', 'A photo of you, or one of the site’s own pictures', '🖼'], ['site', 'Site & wishlist', 'Its name, about you, place categories, the trips wishlist', '🏠'], ['travel', 'Travel stats', 'The flight log in your passport', '✈'], ['files', 'Export & files', 'Download everything, import, all your files', '💾']]]
 ];
@@ -464,6 +465,11 @@ function openPage(id) {
   if (id === 'mail') {
     setPage(id);
     return drawMail(host.body);
+  }
+  if (id === 'notify') {
+    setPage(id);
+    if (host) host.mail = false;
+    return drawNotify(host.body);
   }
   if (host) host.mail = false;
   setPage(id);
@@ -1340,6 +1346,94 @@ function decorateBuddies() {
   }
 }
 
+// ---------- notifications ----------
+// Control Panel › Notifications: this device on or off, what you're told about, a test, your
+// other devices, and whether visitors may ask to hear when you post. (See src/push.js.)
+async function drawNotify(body) {
+  body.replaceChildren(h('p', { class: 'okit-note' }, 'Loading…'));
+  let st;
+  try {
+    st = await kit.push.status();
+  } catch (e) {
+    body.replaceChildren(h('p', { class: 'okit-note' }, e.message));
+    return;
+  }
+  const state = pushState();
+  const mine = await currentSub();
+  const here = mine && st.devices.some((d) => d.endpoint === mine.endpoint);
+  const again = () => drawNotify(body);
+  const act = (fn, msg) => async (e) => {
+    const b = e.currentTarget;
+    b.disabled = true;
+    try {
+      await fn();
+      if (msg) toast(msg);
+      await again();
+    } catch (err) {
+      toast(err.message, true);
+      b.disabled = false;
+    }
+  };
+  const thisDevice = h(
+    'section',
+    { class: 'nt-box' },
+    h('h3', null, 'This device'),
+    state === 'homescreen'
+      ? h('p', null, `On ${isIOS() ? 'an iPhone or iPad' : 'this device'}, notifications only work from the Home Screen: tap Share, then “Add to Home Screen”, open the site from there, sign in, and come back here.`)
+      : state === 'unsupported'
+        ? h('p', null, 'This browser can’t show notifications. Try another browser, or your phone.')
+        : state === 'blocked'
+          ? h('p', null, 'Notifications are blocked for this site in this browser’s settings. Allow them there, then come back.')
+          : here
+            ? h('div', null, h('p', { class: 'nt-on' }, `🔔 On, as “${deviceName()}”.`), h('div', { class: 'okit-row' }, btn('Send a test', 'go', act(() => kit.push.test(), 'Sent: it should arrive in a moment.')), btn('Turn off here', '', act(async () => kit.push.unsubscribe(await signOff()), 'Off on this device.'))))
+            : h('div', null, h('p', null, 'Get told about the things you choose below on this device, even when the site isn’t open.'), btn('🔔 Turn on notifications here', 'go', act(async () => kit.push.subscribe(await signUp(st.publicKey), deviceName()), 'On: you’ll be told here.')))
+  );
+  const kinds = [
+    ['comments', 'Comments waiting for you', 'And guestbook signatures, suggestions, and comments from friends'],
+    ['notes', 'Notes from friends', 'When a friend sends you a note (Mail)'],
+    ['friends', 'Friends’ new posts', 'When a friend posts something new']
+  ];
+  const choose = (k) => (e) => kit.push.settings({ kinds: { [k]: e.target.checked } }).then(() => toast('Saved.'), (err) => toast(err.message, true));
+  const what = h('section', { class: 'nt-box' }, h('h3', null, 'Tell me about'), kinds.map(([k, label, sub]) => h('label', { class: 'nt-check' }, h('input', { type: 'checkbox', checked: st.kinds[k], onchange: choose(k) }), h('span', null, h('b', null, label), h('small', null, sub)))));
+  const devices = h(
+    'section',
+    { class: 'nt-box' },
+    h('h3', null, 'Your devices'),
+    st.devices.length
+      ? h(
+          'ul',
+          { class: 'nt-devices' },
+          st.devices.map((d) => h('li', null, h('span', null, h('b', null, d.name || 'A device'), h('small', null, ` since ${new Date(d.since).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}${mine?.endpoint === d.endpoint ? ' · this one' : ''}`)), btn('Remove', 'danger', act(() => kit.push.unsubscribe(d.endpoint), 'Removed.'))))
+        )
+      : h('p', { class: 'nt-none' }, 'None yet.')
+  );
+  const visitors = h(
+    'section',
+    { class: 'nt-box' },
+    h('h3', null, 'Visitors'),
+    h(
+      'label',
+      { class: 'nt-check' },
+      h('input', { type: 'checkbox', checked: st.visitors, onchange: (e) => kit.push.settings({ visitors: e.target.checked }).then(() => toast(e.target.checked ? 'Visitors can ask to hear when you post.' : 'Off: visitors aren’t told about new posts.'), (err) => toast(err.message, true)) }),
+      h('span', null, h('b', null, 'Let visitors ask to hear when I post'), h('small', null, 'A 🔔 Notify me button appears by your name. Only visitors who tap it, and allow it, are told; only about your new posts, never anything else. Nothing about them is kept but the address their browser gives for it.'))
+    ),
+    h('p', { class: 'nt-count' }, st.visitorCount ? `${st.visitorCount} ${st.visitorCount === 1 ? 'visitor gets' : 'visitors get'} notified when you post.` : 'Nobody has asked yet.')
+  );
+  body.replaceChildren(h('div', { class: 'nt' }, thisDevice, what, devices, visitors));
+}
+// Opened from a notification: straight to what it's about.
+function openFromNotice() {
+  const url = new URL(location.href);
+  const open = url.searchParams.get('open');
+  if (!open) return;
+  url.searchParams.delete('open');
+  history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+  if (open === 'mail') openMail();
+}
+navigator.serviceWorker?.addEventListener('message', (e) => {
+  if (e.data?.type === 'open' && typeof e.data.url === 'string' && e.data.url.startsWith('/')) location.href = e.data.url;
+});
+
 let decorating = false;
 function decorate() {
   writing();
@@ -1404,4 +1498,5 @@ export async function startOwner(s) {
   }).observe(document.body, { childList: true, subtree: true });
   decorate();
   startMail();
+  openFromNotice();
 }

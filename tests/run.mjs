@@ -29,12 +29,14 @@ const GROUPS = {
   pages: ['fuzz', 'interact'],
   // Two sites at once (a second on port 8801), becoming friends.
   friends: ['friends'],
+  // Notifications, with a friend's site and a pretend push service.
+  push: ['push'],
   // The back office lock with the developer bypass off: once with the lock's settings, once without.
   locked: [['locked', { LOCK_MODE: 'set' }]],
   'locked-unset': [['locked', { LOCK_MODE: 'unset' }]],
   empty: [['fuzz', { EMPTY: '1' }]]
 };
-const TWO_SITES = new Set(['friends']);
+const TWO_SITES = new Set(['friends', 'push']);
 // The local site's settings for each group: the back office open without a login, except
 // where the lock itself is being checked.
 const SITE_VARS = {
