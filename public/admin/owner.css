@@ -165,7 +165,7 @@ html.owner-preview .okit-hidden-post { outline: 0; }
 :root .okit .btn:active { box-shadow: var(--ok-press); translate: 0 1px; }
 :root .okit .btn.go { color: #fff; border-color: color-mix(in srgb, var(--ok-sel) 60%, #000); background: var(--ok-gloss), var(--ok-sel); text-shadow: 0 -1px 0 rgba(0, 0, 0, .3); }
 :root .okit .btn.danger { color: #9c2414; }
-:root .okit :is(.input, .select, .textarea):not(.ied-title):not(.ied-text) { border-color: var(--ok-line); border-radius: 5px; background: #fff; box-shadow: inset 0 2px 3px rgba(0, 0, 0, .12), 0 1px 0 rgba(255, 255, 255, .6); }
+:root .okit :is(.input, .select, .textarea):not(.ied-title):not(.ied-text) { border-color: var(--ok-line); border-radius: 5px; color: #1b1b1b; -webkit-text-fill-color: #1b1b1b; background: #fff; box-shadow: inset 0 2px 3px rgba(0, 0, 0, .12), 0 1px 0 rgba(255, 255, 255, .6); }
 :root .okit :is(.input, .select, .textarea):not(.ied-title):not(.ied-text):focus { border-color: var(--ok-sel); outline: 2px solid color-mix(in srgb, var(--ok-sel) 35%, transparent); outline-offset: 0; }
 :root .okit :is(.chip-btn, .type-tabs button) { color: var(--ok-ink); border: 1px solid var(--ok-line); background: var(--ok-gloss), linear-gradient(180deg, #fff, color-mix(in srgb, var(--ok-paper) 70%, #fff)); box-shadow: var(--ok-bevel), 0 1px 2px rgba(0, 0, 0, .15); }
 :root .okit :is(.chip-btn, .type-tabs button)[aria-pressed="true"] { color: var(--ok-sel-text); border: 1px solid color-mix(in srgb, var(--ok-sel) 70%, #000); background: var(--ok-gloss), var(--ok-sel); box-shadow: var(--ok-press); }
@@ -178,6 +178,12 @@ html.owner-preview .okit-hidden-post { outline: 0; }
 :root .okit .admin-tabs button[aria-selected="true"] { border-top-color: var(--ok-accent); background: #fff; }
 :root .okit .admin-body { border-color: var(--ok-line); }
 :root .okit-host { background: var(--ok-paper); }
+
+/* Dark mode: the windows and sheets stay on their light paper (as XP's dialogs did), with dark
+   ink, so nothing in them is ever light on light: the site around them goes dark as usual. */
+:root[data-theme="dark"] .okit-host { color-scheme: light; color: #1b1b1b; }
+:root[data-theme="dark"] .okit-host :is(h1, h2, h3, h4, p, small, b, strong, span, label, legend, li, dt, dd, td, th, .info, .hint, .status-preview) { color: inherit; }
+:root[data-theme="dark"] .okit-host :is(.hint, small) { color: #555; }
 
 /* Dark mode: the same, by night. */
 :root[data-theme="dark"] :is(.okit-menu, .okit-toast) { color: #eee; background: linear-gradient(90deg, var(--ok-bar) 0 26px, transparent 26px), #2a2a2e; }
