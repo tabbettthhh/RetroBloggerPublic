@@ -724,7 +724,9 @@ export const OPTIONS = {
   header: { name: 'Profile header', choices: { banner: 'Banner', card: 'Card', minimal: 'Minimal', hidden: 'Hidden' } },
   name_style: { name: 'Your name', choices: { plain: 'Plain', rainbow: 'Rainbow', glitter: 'Glitter', glow: 'Glow', wordart: 'WordArt', outline: 'Outline', chrome: 'Chrome' } },
   trail: { name: 'Pointer trail (computers)', choices: TRAILS },
-  falling: { name: 'Falling over the page', choices: FALLING },
+  // ("With the season" lets a season or festive day bring its own gentle fall; Nothing means
+  // nothing at all, whatever the date.)
+  falling: { name: 'Falling over the page', choices: { season: 'With the season or festive day', ...Object.fromEntries(Object.entries(FALLING).map(([k, v]) => [k, k === 'none' ? 'Nothing at all' : v])) } },
   seasons: { name: 'Seasons & festive days', choices: { off: 'Off', auto: 'Automatic, by the date', winter: 'Winter', spring: 'Spring', summer: 'Summer', autumn: 'Autumn', lunar_new_year: 'Lunar New Year', hanami: 'Cherry blossom', childrens_day: 'Children’s Day', dragon_boat: 'Dragon Boat Festival', tanabata: 'Tanabata', mid_autumn: 'Mid-Autumn Festival', nowruz: 'Nowruz', holi: 'Holi', ramadan: 'Ramadan', eid_al_fitr: 'Eid al-Fitr', eid_al_adha: 'Eid al-Adha', diwali: 'Diwali', yalda: 'Yalda Night', dia_de_reyes: 'Día de Reyes', carnival: 'Carnival', dia_de_muertos: 'Día de Muertos', st_patricks: 'St Patrick’s Day', easter: 'Easter', midsummer: 'Midsummer', bonfire_night: 'Bonfire Night', halloween: 'Halloween', hanukkah: 'Hanukkah', christmas: 'Christmas', ...Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`my_${i + 1}`, `My day ${i + 1}`])) } },
   hemisphere: { name: 'Where the seasons are', choices: { north: 'North of the equator', south: 'South of the equator' } },
   glass_style: { name: 'Glass', choices: { season: 'With the season or festive day', winter: 'Frost', spring: 'Petals and bloom', summer: 'Sun flare', autumn: 'Raindrops and a leaf', festive: 'Sparkles', gloss: 'Plain glass' } },
@@ -1608,8 +1610,9 @@ export function applySkin(settings, doc = document) {
   let extras = [];
   if (look) {
     const fall = look.noFall ? '' : festival ? look.falling || (look.quiet || look.own || !season ? '' : lookOf(season, t).falling) : look.falling;
-    // (Something you've chosen to fall yourself stays; the season only adds its drawing.)
-    if (t.falling === 'none' && fall) {
+    // (Something you've chosen to fall yourself stays, and so does Nothing; only "With the
+    // season" lets the season or the day bring its own, gently.)
+    if (t.falling === 'season' && fall) {
       t.falling = fall;
       t.gentle = true;
     }
@@ -1617,6 +1620,7 @@ export function applySkin(settings, doc = document) {
     const what = look.charms[dayNumber(now) % look.charms.length];
     extras = (look.where || ['corner-br']).map((where, i) => ({ what: where === 'cards' || where === 'title' ? look.charms[(dayNumber(now) + i) % look.charms.length] : what, where, size: where === 'desktop' ? 'l' : 'm', tilt: where === 'corner-bl' ? -6 : 0, x: 86, y: 78 }));
   }
+  if (t.falling === 'season') t.falling = 'none';
   // (For Floppy, who dresses for the day: see helper.js.)
   // (Floppy dresses for the time of year even when the site's seasons are off.)
   const floppySeason = season || seasonOf(now, south);

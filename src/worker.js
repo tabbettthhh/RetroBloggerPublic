@@ -611,7 +611,9 @@ function stamp() {
   const d = new Date();
   const iso = d.toISOString();
   const rand = crypto.getRandomValues(new Uint32Array(1))[0].toString(36);
-  return { iso, file: iso.replace(/[-:]/g, '').replace(/\..+$/, '') + '-' + rand };
+  // (To the thousandth of a second, so two left in the same second keep their order: an older
+  // name, without the thousandths, still sorts before a newer one from that second.)
+  return { iso, file: iso.replace(/[-:]/g, '').replace(/\.(\d+)Z$/, '$1') + '-' + rand };
 }
 
 async function readBody(request) {
