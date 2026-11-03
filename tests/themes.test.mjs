@@ -250,7 +250,8 @@ await test('every level: fonts, feed, header, menu, taskbar, icons and sounds', 
     await p.locator('.xp-others').click();
     const others = await p.locator('.menu-panel .menu-label').allInnerTexts();
     assert(!others.some((x) => /Wishlist/.test(x)) && others.some((x) => /Bookshelf/.test(x)), 'wishlist left out of Others: ' + others.join(','));
-    eq(await p.evaluate(async () => (await import('/js/sound.js')).isMuted()), true, 'sounds start off');
+    // (The site's own copy of its sound file: the one at the same address as the page's scripts.)
+    eq(await p.evaluate(async () => (await import(document.querySelector('script[type="module"]').src.replace(/app\.js$/, 'sound.js'))).isMuted()), true, 'sounds start off');
   });
   await site(async (p) => {
     const bar = await p.locator('.desktop .taskbar').boundingBox();

@@ -467,15 +467,13 @@ function leave() {
 // (When the owner changes the highlights: the room built again, with them.)
 export function rebuildRoom(data) {
   if (!room) return;
-  room.remove();
-  room = null;
+  takeDown();
   syncRoom(data, location.hash);
 }
 export function syncRoom(data, hash = location.hash, from = '') {
   const want = /^#\/highlights\/?$/.test(hash);
   if (!want) {
-    room?.remove();
-    room = null;
+    takeDown();
     document.documentElement.classList.remove('in-room');
     return;
   }
@@ -521,8 +519,16 @@ export function syncRoom(data, hash = location.hash, from = '') {
     what.style.zoom = String(Math.max(window.innerWidth > 640 ? 0.45 : 0.84, z).toFixed(3));
   };
   requestAnimationFrame(fit);
-  const onResize = () => (room ? fit() : window.removeEventListener('resize', onResize));
-  window.addEventListener('resize', onResize);
+  // (Only while this room stands: taken down with it.)
+  window.addEventListener('resize', fit);
+  unfit = () => window.removeEventListener('resize', fit);
+}
+let unfit = null;
+function takeDown() {
+  unfit?.();
+  unfit = null;
+  room?.remove();
+  room = null;
 }
 
 // On the About page: the way into the room.

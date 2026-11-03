@@ -117,6 +117,36 @@ export function mountMap(el, opts = {}) {
     else map.setView([52.48, -1.9], 5);
     el._map = map;
     el._markers = markers;
-    if ('ResizeObserver' in window) new ResizeObserver(() => map.invalidateSize()).observe(el);
+    const resized = 'ResizeObserver' in window ? new ResizeObserver(() => map.invalidateSize()) : null;
+    resized?.observe(el);
+    keepTrack({ el, map, resized });
   });
+}
+
+// A map whose page has gone (you went somewhere else) is taken down, a couple of seconds later:
+// the map library would otherwise keep every map you've looked at, tiles and all, for as long as
+// the site stays open.
+const maps = new Set();
+let sweep = 0;
+let watcher = null;
+const tidy = () => {
+  sweep ||= setTimeout(() => {
+    sweep = 0;
+    for (const m of maps) {
+      if (m.el.isConnected) continue;
+      maps.delete(m);
+      m.resized?.disconnect();
+      try {
+        m.map.remove();
+      } catch {}
+      delete m.el._map;
+      delete m.el._markers;
+    }
+    if (!maps.size) watcher?.disconnect();
+  }, 2000);
+};
+function keepTrack(m) {
+  watcher ||= new MutationObserver(tidy);
+  if (!maps.size) watcher.observe(document.body, { childList: true, subtree: true });
+  maps.add(m);
 }

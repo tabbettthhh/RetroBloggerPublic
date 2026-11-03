@@ -43,7 +43,12 @@ export default {
       res = await route(request, env, ctx);
     } catch (e) {
       console.error(e);
-      res = json({ error: 'Something went wrong on the server.' }, 500);
+      // (Someone opening a page gets a page saying so, with a way to try again; anything else, a
+      // short answer it can read.)
+      const page = request.method === 'GET' && (request.headers.get('Accept') || '').includes('text/html');
+      res = page
+        ? new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>One moment</title><body style="font-family:Tahoma,sans-serif;padding:24px;max-width:560px;line-height:1.5"><h1 style="font-size:20px">The site hit a snag</h1><p>Something went wrong for a moment. Try again in a few seconds.</p><p><a href="" style="display:inline-block;padding:8px 14px;border:1px solid #003c74;border-radius:3px;background:#ecebe6;color:#000;text-decoration:none">Try again</a></p></body>', { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Retry-After': '5' } })
+        : json({ error: 'Something went wrong on the server.' }, 500);
     }
     return finish(res, new URL(request.url).pathname);
   },
@@ -95,6 +100,10 @@ async function route(request, env, ctx) {
   const moved = await mainAddress(request, env, url);
   if (moved) return moved;
   if (p === '/manifest.webmanifest') return manifest(env);
+  // The site's own scripts and styles, under this deploy's id (see deployId below).
+  const pinned = PINNED.exec(p);
+  if (pinned) return pinnedFile(request, env, url, pinned[1], pinned[2]);
+  if (p.startsWith('/v/')) return new Response('Not found', { status: 404 });
 
   if (p === '/admin' || p.startsWith('/admin/')) {
     const check = await adminCheck(request, env);
@@ -122,10 +131,7 @@ async function route(request, env, ctx) {
       if (method !== 'GET' && res.ok) ctx.waitUntil(announce(env, url.origin).catch((e) => console.error(e)));
       return res;
     }
-    const res = await env.ASSETS.fetch(request);
-    const out = new Response(res.body, res);
-    out.headers.set('Cache-Control', 'no-store');
-    return out;
+    return ownerFile(request, env, url);
   }
 
   if (p === '/api/all' && method === 'GET') return apiAll(request, env, ctx);
@@ -140,12 +146,12 @@ async function route(request, env, ctx) {
   }
   if (p === '/api/push/subscribe' && method === 'POST') {
     if (looksLikeBot(request)) return json({ error: 'Not accepted' }, 400);
-    const out = await push.subscribeVisitor(env, await request.json().catch(() => ({})));
+    const out = await push.subscribeVisitor(env, await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({})));
     return json(out.ok ? { ok: true } : { error: out.error }, out.status || 200);
   }
   if (p === '/api/push/unsubscribe' && method === 'POST') {
-    const body = await request.json().catch(() => ({}));
-    return json(await push.unsubscribe(env, body.endpoint, 'visitor'));
+    const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
+    return json(await push.unsubscribe(env, body?.endpoint, 'visitor'));
   }
   if (p === '/api/nudge' && method === 'POST') return nudge(request, env);
   if (p.startsWith('/media/') && (method === 'GET' || method === 'HEAD')) return media(request, env, p);
@@ -171,19 +177,98 @@ async function route(request, env, ctx) {
 
 // Fonts, the map and photo libraries, icons and cursors hardly ever change, so browsers keep
 // them for a month instead of asking again on every visit. (Change one? Give it a new name.)
-// The site's own scripts and styles are still checked each visit, so an update shows at once.
 const LONG_LIVED = /^\/(fonts|vendor|icons|cursors)\//;
 async function staticFile(request, env, path) {
-  const res = await env.ASSETS.fetch(request);
+  const page = path === '/' || path.endsWith('.html');
+  const res = await env.ASSETS.fetch(page ? unconditional(request) : request);
   // (The notifications worker is always checked afresh, so a change to it reaches every device.)
   if (path === '/sw.js' && res.status === 200) {
     const sw = new Response(res.body, res);
     sw.headers.set('Cache-Control', 'no-cache');
     return sw;
   }
+  if (page) return pointAtDeploy(res, env);
   if (!LONG_LIVED.test(path) || res.status !== 200) return res;
   const out = new Response(res.body, res);
   out.headers.set('Cache-Control', 'public, max-age=2592000');
+  return out;
+}
+
+// The site's own scripts and styles change with each update, but not in between. Every deploy has
+// an id of its own (from Cloudflare, see "version_metadata" in wrangler.jsonc), and the page asks
+// for them under it: /v/<id>/js/app.js. A browser keeps those for good, instead of checking all
+// sixty-odd files on every visit; the next deploy has a new id, so new addresses, and an update
+// still shows at once. (Without an id, as on a copy whose settings predate this, everything is
+// asked for as before and checked each visit.)
+function deployId(env) {
+  const id = env.CF_VERSION_METADATA?.id;
+  return typeof id === 'string' && /^[\w-]{8,64}$/.test(id) ? id : '';
+}
+const PINNED = /^\/v\/([\w-]{8,64})(\/(?:js|css)\/[\w-]+\.(?:js|css))$/;
+const ID_OK = /^[\w-]{8,64}$/;
+// For good when it's this deploy's file. A page loaded just before a deploy may still ask under the
+// old id: it gets the new file, checked again next time. (On your own computer, always checked,
+// so a file you're editing shows as soon as you save it.)
+function keepFor(env, url, id, who) {
+  const local = env.DEV_ADMIN === 'true' && ['localhost', '127.0.0.1'].includes(url.hostname);
+  return id === deployId(env) && !local ? `${who}, max-age=31536000, immutable` : `${who}, no-cache`;
+}
+// The same request without "only if it changed" (a page must come fresh, to point at the
+// latest deploy's files).
+function unconditional(request) {
+  const r = new Request(request);
+  r.headers.delete('If-None-Match');
+  r.headers.delete('If-Modified-Since');
+  return r;
+}
+async function pinnedFile(request, env, url, id, path) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method not allowed', { status: 405 });
+  const res = await env.ASSETS.fetch(new Request(url.origin + path, request));
+  if (res.status !== 200) return res;
+  const out = new Response(res.body, res);
+  out.headers.set('Cache-Control', keepFor(env, url, id, 'public'));
+  return out;
+}
+// A page, pointing at this deploy's scripts and styles. (Your owner tools, under /admin, keep
+// their own address, so Cloudflare Access still guards them: they're marked with the id instead.)
+async function pointAtDeploy(res, env) {
+  const id = deployId(env);
+  if (res.status !== 200 || !id || !(res.headers.get('Content-Type') || '').includes('text/html')) return res;
+  const html = (await res.text())
+    .replace(/((?:href|src)=")\/((?:js|css)\/[\w-]+\.(?:js|css))"/g, `$1/v/${id}/$2"`)
+    .replace(/((?:href|src)=")\/(admin\/[\w-]+\.(?:js|css))"/g, `$1/$2?v=${id}"`);
+  const headers = new Headers(res.headers);
+  headers.delete('Content-Length');
+  headers.delete('ETag');
+  headers.set('Cache-Control', 'no-cache');
+  return new Response(html, { status: 200, headers });
+}
+// Your owner tools' files (only ever reached past the lock). Asked for with this deploy's id
+// (?v=…), they're kept like the site's own, privately, and point at the same copies of the site's
+// scripts as the site itself, so the two share them.
+async function ownerFile(request, env, url) {
+  const p = url.pathname;
+  const v = url.searchParams.get('v') || '';
+  const id = ID_OK.test(v) ? v : '';
+  const page = !/\.\w+$/.test(p) || p.endsWith('.html');
+  let res = await env.ASSETS.fetch(page ? unconditional(request) : id ? new Request(url.origin + p, request) : request);
+  if (page) {
+    res = await pointAtDeploy(res, env);
+    const out = new Response(res.body, res);
+    out.headers.set('Cache-Control', 'no-store');
+    return out;
+  }
+  if (id && res.status === 200 && p.endsWith('.js')) {
+    const text = (await res.text())
+      .replace(/(['"])\/((?:js|css)\/[\w-]+\.(?:js|css))\1/g, `$1/v/${id}/$2$1`)
+      .replace(/(['"])\/(admin\/[\w-]+\.(?:js|css|json))\1/g, `$1/$2?v=${id}$1`);
+    const headers = new Headers(res.headers);
+    headers.delete('Content-Length');
+    headers.delete('ETag');
+    res = new Response(text, { status: 200, headers });
+  }
+  const out = new Response(res.body, res);
+  out.headers.set('Cache-Control', id && res.status === 200 ? keepFor(env, url, id, 'private') : 'private, no-cache');
   return out;
 }
 
@@ -346,6 +431,22 @@ async function readText(env, key) {
 }
 
 const PARSED_CACHE = 'data/_parsed.json';
+// The cache file as this copy of the server last read or wrote it: read again (and worked
+// through again, which for hundreds of posts is most of the work) only when it has changed.
+const parsedKept = new WeakMap();
+async function readParsed(env) {
+  const kept = parsedKept.get(env);
+  try {
+    const obj = await env.CONTENT.get(PARSED_CACHE, kept ? { onlyIf: { etagDoesNotMatch: kept.etag } } : {});
+    if (!obj) return {};
+    if (kept && !('body' in obj)) return kept.c;
+    const c = JSON.parse(await obj.text());
+    parsedKept.set(env, { etag: obj.etag, c });
+    return c;
+  } catch {
+    return {};
+  }
+}
 const PARSED_VERSION = 32; // bump when buildPost changes shape
 
 // "reading [book]" (or [film], [podcast], [music]) becomes "reading The Remains of the Day" while a book is marked as reading.
@@ -356,8 +457,17 @@ function fillStatus(status, posts) {
   return status.replace(/\[(book|film|podcast|music|album|song|tv|show)\]/g, (m, kind) => current(TYPE[kind])?.title || m);
 }
 
+// Marks that something changed, so everything worked out before is worked out again. (Storage
+// takes one change a second to any one file: a change straight after another, a few photos
+// uploaded one after the other say, waits a moment and tries again, rather than failing the save.)
 async function bumpVersion(env) {
-  await env.CONTENT.put('data/_version', String(Date.now()));
+  const put = () => env.CONTENT.put('data/_version', String(Date.now()));
+  try {
+    await put();
+  } catch {
+    await new Promise((r) => setTimeout(r, 1100));
+    await put().catch((e) => console.error('version', e?.message || e));
+  }
 }
 
 function tzOffset(env) {
@@ -366,7 +476,12 @@ function tzOffset(env) {
 
 // includeHidden: everything, for the back office. forFriends: what's live, friends-only posts too
 // (for your friends' sites). Otherwise: what the public sees.
-async function buildEverything(env, { includeHidden = false, forFriends = false } = {}) {
+// (The back office's view is always worked out fresh; the site's and your friends' are shared, see
+// everything() below.)
+function buildEverything(env, opts = {}) {
+  return opts.includeHidden ? buildFresh(env, opts) : everything(env, opts);
+}
+async function buildFresh(env, { includeHidden = false, forFriends = false } = {}) {
   const tz = tzOffset(env);
   const objects = await listAll(env);
   const mdKeys = objects.map((o) => o.key).filter((k) => k.endsWith('.md'));
@@ -376,16 +491,20 @@ async function buildEverything(env, { includeHidden = false, forFriends = false 
     return TYPES.includes(folder) && file && !more;
   });
   // Parsed posts are kept in one cache file and only re-read when a file changes, so a big
-  // shelf (hundreds of imported books) doesn't mean hundreds of reads on every visit.
+  // shelf (hundreds of imported books) doesn't mean hundreds of reads on every visit. Comments
+  // and guestbook entries are kept in it too.
   const etags = new Map(objects.map((o) => [o.key, o.etag]));
   let cache = {};
-  try {
-    const c = JSON.parse((await readText(env, PARSED_CACHE)) || '{}');
-    if (c.v === PARSED_VERSION && c.tz === tz) cache = c.posts || {};
-  } catch {}
+  let extras = {};
+  const c = await readParsed(env);
+  if (c.v === PARSED_VERSION && c.tz === tz) (cache = { ...c.posts }), (extras = { ...c.extras });
+  // (Cloudflare lets one visit read only so many files: a big refresh, after an update say, is
+  // finished over the next few visits. Until then a changed post shows as it was, and a new one
+  // a moment later.)
   const stale = postKeys.filter((k) => cache[k]?.etag !== etags.get(k));
-  const texts = await Promise.all(stale.map((k) => readText(env, k)));
-  stale.forEach((k, i) => {
+  const todo = stale.slice(0, READS_PER_BUILD);
+  const texts = await Promise.all(todo.map((k) => readText(env, k)));
+  todo.forEach((k, i) => {
     if (texts[i] == null) return;
     let post;
     try {
@@ -398,10 +517,34 @@ async function buildEverything(env, { includeHidden = false, forFriends = false 
     }
     cache[k] = { etag: etags.get(k), post };
   });
-  const keep = new Set(postKeys);
+  const gbKeys = mdKeys.filter((k) => k.startsWith('guestbook/'));
+  const commentKeys = mdKeys.filter((k) => isCommentKey(k));
+  const extraKeys = [...gbKeys, ...commentKeys];
+  const extraStale = extraKeys.filter((k) => extras[k]?.etag !== etags.get(k));
+  const extraTodo = extraStale.slice(0, Math.max(0, READS_PER_BUILD - todo.length));
+  const extraTexts = await Promise.all(extraTodo.map((k) => readText(env, k)));
+  extraTodo.forEach((k, i) => {
+    if (extraTexts[i] == null) return;
+    try {
+      extras[k] = { etag: etags.get(k), value: k.startsWith('guestbook/') ? parseGuestbookEntry(k, extraTexts[i]) : parseComment(k, extraTexts[i]) };
+    } catch (e) {
+      console.error(k, e);
+    }
+  });
   let dropped = false;
+  const keep = new Set(postKeys);
   for (const k of Object.keys(cache)) if (!keep.has(k)) (delete cache[k], (dropped = true));
-  if (stale.length || dropped) await env.CONTENT.put(PARSED_CACHE, JSON.stringify({ v: PARSED_VERSION, tz, posts: cache }));
+  const keepExtra = new Set(extraKeys);
+  for (const k of Object.keys(extras)) if (!keepExtra.has(k)) (delete extras[k], (dropped = true));
+  // (Saving it is a nicety: if several visits try at once, one of them saves it.)
+  if (todo.length || extraTodo.length || dropped) {
+    const fresh = { v: PARSED_VERSION, tz, posts: cache, extras };
+    await env.CONTENT.put(PARSED_CACHE, JSON.stringify(fresh)).then(
+      (o) => o && parsedKept.set(env, { etag: o.etag, c: fresh }),
+      (e) => console.error('parsed cache', e?.message || e)
+    );
+  }
+  const partial = stale.length > todo.length || extraStale.length > extraTodo.length;
   const now = Date.now();
   const posts = [];
   for (const k of postKeys) {
@@ -410,12 +553,9 @@ async function buildEverything(env, { includeHidden = false, forFriends = false 
   }
   posts.sort((a, b) => b.ts - a.ts || b.slug.localeCompare(a.slug));
 
-  const gbKeys = mdKeys.filter((k) => k.startsWith('guestbook/'));
-  const gbTexts = await Promise.all(gbKeys.map((k) => readText(env, k)));
-  const guestbook = gbKeys
-    .map((k, i) => parseGuestbookEntry(k, gbTexts[i] || ''))
-    .map(({ key, ...rest }) => rest)
-    .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  const parsedGuestbook = gbKeys.map((k) => extras[k]?.value).filter(Boolean);
+  const parsedComments = commentKeys.map((k) => extras[k]?.value).filter(Boolean);
+  const guestbook = parsedGuestbook.map(({ key, ...rest }) => rest).sort((a, b) => String(b.date).localeCompare(String(a.date)));
 
   const [siteText, wishText, travelText, logText, catText, passportText, keepText, themeText, highlightsText, plannerText] = await Promise.all([
     readText(env, 'site.md'),
@@ -445,13 +585,9 @@ async function buildEverything(env, { includeHidden = false, forFriends = false 
 
   const site = parseSite(siteText);
   // Approved comments, each with its post (and none at all while comments are switched off).
-  const commentKeys = site.comments ? mdKeys.filter((k) => isCommentKey(k)) : [];
-  const commentTexts = await Promise.all(commentKeys.map((k) => readText(env, k)));
   const byPost = {};
-  commentKeys.forEach((k, i) => {
-    const { key, post, ...c } = parseComment(k, commentTexts[i] || '');
-    (byPost[post] ||= []).push(c);
-  });
+  if (site.comments)
+    for (const { key, post, ...c } of parsedComments) (byPost[post] ||= []).push(c);
   for (let i = 0; site.comments && i < posts.length; i++) {
     const list = (byPost[`${posts[i].type}/${posts[i].slug}`] || []).sort((a, b) => String(a.date).localeCompare(String(b.date)) || a.id.localeCompare(b.id));
     posts[i] = { ...posts[i], comments: list.slice(0, 300) };
@@ -461,7 +597,7 @@ async function buildEverything(env, { includeHidden = false, forFriends = false 
   site.history = parseStatusLog(logText)
     .filter((e, i) => !(i === 0 && e.text === site.status))
     .slice(0, 30);
-  return {
+  const out = {
     site,
     posts,
     wishlist: parseWishlist(wishText),
@@ -482,6 +618,35 @@ async function buildEverything(env, { includeHidden = false, forFriends = false 
     guestbook,
     generated: now
   };
+  // (Not sent anywhere: for the back office, which lists every file and comment, and to know
+  // whether the big refresh above is still under way.)
+  Object.defineProperty(out, 'inside', { value: { objects, comments: parsedComments, guestbook: parsedGuestbook, partial } });
+  return out;
+}
+
+// The site, worked out once and shared by the requests that arrive together (a page's photos all
+// ask at once), until anything changes (every save marks a new version), or for a minute at
+// most. Whoever uses it must leave what they're given as it is (they get their own copy of the
+// top level and the list of posts, to add to).
+const READS_PER_BUILD = 500;
+const builds = new WeakMap();
+async function everything(env, opts = {}) {
+  const version = (await readText(env, 'data/_version').catch(() => null)) || '0';
+  const key = `${version}|${Math.floor(Date.now() / 60000)}|${opts.forFriends ? 'friends' : 'public'}`;
+  let mine = builds.get(env);
+  if (!mine) builds.set(env, (mine = new Map()));
+  let job = mine.get(key);
+  if (!job) {
+    job = buildFresh(env, { forFriends: !!opts.forFriends });
+    mine.set(key, job);
+    // (Only the latest few, and never one that failed or isn't finished.)
+    job.then((d) => d.inside.partial && mine.delete(key), () => mine.delete(key));
+    while (mine.size > 4) mine.delete(mine.keys().next().value);
+  }
+  const data = await job;
+  const copy = { ...data, posts: [...data.posts] };
+  Object.defineProperty(copy, 'inside', { value: data.inside });
+  return copy;
 }
 
 // Hidden travel stats only show in the back office.
@@ -501,11 +666,17 @@ async function apiAll(request, env, ctx) {
   // (Cloudflare may hand the tag back marked "weak" after compressing the answer; same tag.)
   if ((request.headers.get('If-None-Match') || '').replace(/^W\//, '') === etag) return new Response(null, { status: 304, headers: { ETag: etag, 'Cache-Control': 'no-cache' } });
 
+  // (Kept here as well as in Cloudflare's cache: that one isn't there at a workers.dev address.)
+  const memoKey = `${version}|${slot}`;
+  const kept = lastAll.get(env);
+  if (kept?.key === memoKey) return new Response(kept.text, { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-cache', ETag: etag } });
   const cacheKey = new Request(`https://cache.internal/api/all?v=${encodeURIComponent(version)}&t=${slot}`);
   const cache = caches.default;
   let res = await cache.match(cacheKey);
+  let partial = false;
   if (!res) {
     const data = await buildEverything(env);
+    partial = data.inside.partial;
     // Visitors get the finished HTML; the raw Markdown and file names stay for the back office.
     data.posts = data.posts.map(({ body, files, key, ...p }) => p);
     // Your friends: who they are and how they are, and their latest posts (only if you've chosen
@@ -522,13 +693,14 @@ async function apiAll(request, env, ctx) {
     // (Whether visitors can ask to hear when you post.)
     data.notifyPosts = (await push.settings(env).catch(() => ({}))).visitors === true;
     res = json(data, 200, { 'Cache-Control': 'public, max-age=300' });
-    ctx.waitUntil(cache.put(cacheKey, res.clone()));
+    if (!partial) ctx.waitUntil(cache.put(cacheKey, res.clone()).catch(() => {}));
   }
-  const out = new Response(res.body, res);
-  out.headers.set('Cache-Control', 'no-cache');
-  out.headers.set('ETag', etag);
-  return out;
+  const text = await res.text();
+  if (!partial) lastAll.set(env, { key: memoKey, text });
+  // (Still filling in after an update: no tag, so the browser asks again next time.)
+  return new Response(text, { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-cache', ...(partial ? {} : { ETag: etag }) } });
 }
+const lastAll = new WeakMap();
 
 async function media(request, env, path) {
   let key;
@@ -540,7 +712,7 @@ async function media(request, env, path) {
   // A friends-only post's photos aren't for the public (the back office still sees them).
   const [type, slug] = key.split('/');
   if (type && slug && (await friendsOnlyPost(env, type, slug)) && !(await adminCheck(request, env)).ok) return new Response('Not found', { status: 404 });
-  return mediaFor(env, key, request.method === 'HEAD');
+  return mediaFor(env, key, request.method === 'HEAD', request.headers.get('If-None-Match'));
 }
 async function friendsOnlyPost(env, type, slug) {
   const { posts } = await buildEverything(env, { forFriends: true });
@@ -558,12 +730,16 @@ async function friendMedia(env, key) {
   return mediaFor(env, key);
 }
 
-async function mediaFor(env, key, head = false) {
+async function mediaFor(env, key, head = false, ifNoneMatch = '') {
   const [folder] = key.split('/');
   const ext = (key.split('.').pop() || '').toLowerCase();
   if (!(TYPES.includes(folder) || folder === 'design') || !IMAGE_TYPES[ext] || key.includes('..')) return new Response('Not found', { status: 404 });
-  const obj = await env.CONTENT.get(key);
+  // A browser that has this photo already (and asks whether it's changed) is told it hasn't,
+  // without sending it again.
+  const known = String(ifNoneMatch || '').replace(/^W\//, '');
+  const obj = await (known ? env.CONTENT.get(key, { onlyIf: { etagDoesNotMatch: known.replace(/"/g, '') } }) : env.CONTENT.get(key));
   if (!obj) return new Response('Not found', { status: 404 });
+  if (known && !('body' in obj)) return new Response(null, { status: 304, headers: { ETag: obj.httpEtag, 'Cache-Control': 'private, max-age=10800' } });
   // Every photo is cleaned again on the way out, so nothing hidden ever reaches a visitor,
   // even from a file that was put in the bucket some other way.
   let clean;
@@ -599,7 +775,8 @@ async function visit(request, env) {
     count = JSON.parse(raw || '{}').count || 0;
   } catch {}
   count += 1;
-  await env.CONTENT.put('data/counter.json', JSON.stringify({ count }), { httpMetadata: { contentType: 'application/json' } });
+  // (Lots of visitors in the same second: some aren't counted, rather than anything going wrong.)
+  await env.CONTENT.put('data/counter.json', JSON.stringify({ count }), { httpMetadata: { contentType: 'application/json' } }).catch(() => {});
   return json({ count });
 }
 
@@ -619,7 +796,9 @@ async function nudge(request, env) {
   n.last = now;
   // The times of the last 100, for the back office's notifications.
   n.log = [...(n.log || []), now].slice(-100);
-  await env.CONTENT.put('data/nudges.json', JSON.stringify(n), { httpMetadata: { contentType: 'application/json' } });
+  // (Several in the same second: the one that didn't fit says try again.)
+  const kept = await env.CONTENT.put('data/nudges.json', JSON.stringify(n), { httpMetadata: { contentType: 'application/json' } }).then(() => true, () => false);
+  if (!kept) return json({ ok: false, error: 'Lots of nudges right now. Try again in a moment.' }, 429);
   return json({ ok: true });
 }
 
@@ -646,7 +825,9 @@ function stamp() {
 
 async function readBody(request) {
   const type = request.headers.get('Content-Type') || '';
-  if (type.includes('application/json')) return request.json();
+  // (Anything but a set of fields, "null" say, counts as an empty form.)
+  const fields = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
+  if (type.includes('application/json')) return fields(await request.json());
   const form = await request.formData();
   return Object.fromEntries(form.entries());
 }
@@ -777,9 +958,11 @@ function later(ctx, work) {
 }
 const postHash = (post) => (post.type === 'places' ? `#/journal/${post.slug}` : ['books', 'films', 'podcasts', 'music', 'tv'].includes(post.type) ? `#/${post.type}/${post.slug}` : `#/post/${post.type}/${post.slug}`);
 // Your new posts, announced to visitors who asked (see push.announcePosts).
-async function announce(env, origin = '') {
+// (Then the next round of a message still going out: see push.sendOutbox.)
+async function announce(env, origin = '', round = true) {
   const data = await buildEverything(env);
-  return push.announcePosts(env, data.posts, data.site.name, origin || (await friends.loadFriends(env)).me);
+  await push.announcePosts(env, data.posts, data.site.name, origin || (await friends.loadFriends(env)).me);
+  return round ? push.sendOutbox(env) : 0;
 }
 
 // ---------- back office ----------
@@ -810,7 +993,7 @@ async function adminApi(request, env, url, ctx) {
   // Notifications: your devices, your choices, a test, and visitors' (off unless you say).
   if (p === 'push' && m === 'GET') return json(await push.myDevices(env));
   if (p.startsWith('push/') && m === 'POST') {
-    const body = await request.json().catch(() => ({}));
+    const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
     try {
       if (p === 'push/subscribe') return json(await push.subscribeMine(env, body));
       if (p === 'push/unsubscribe') return json(await push.unsubscribe(env, body.endpoint, 'mine'));
@@ -818,7 +1001,7 @@ async function adminApi(request, env, url, ctx) {
         const out = await push.saveSettings(env, body);
         await bumpVersion(env);
         // (What's on the site already is noted, so only posts from now on are announced.)
-        if (out.visitors) await announce(env, url.origin).catch(() => {});
+        if (out.visitors) await announce(env, url.origin, false).catch(() => {});
         return json(out);
       }
       if (p === 'push/test') return json({ sent: await push.testMine(env, url.origin) });
@@ -830,22 +1013,21 @@ async function adminApi(request, env, url, ctx) {
 
   if (p === 'overview' && m === 'GET') {
     const data = await buildEverything(env, { includeHidden: true });
-    const objects = await listAll(env);
+    const { objects } = data.inside;
     const files = objects
       .filter((o) => !o.key.startsWith('data/_'))
       .map((o) => ({ key: o.key, size: o.size, uploaded: o.uploaded, etag: o.etag }));
     const pendingGb = await Promise.all(
       objects.filter((o) => o.key.startsWith('guestbook-pending/')).map(async (o) => parseGuestbookEntry(o.key, (await readText(env, o.key)) || ''))
     );
-    const approvedGb = await Promise.all(
-      objects.filter((o) => o.key.startsWith('guestbook/') && o.key.endsWith('.md')).map(async (o) => parseGuestbookEntry(o.key, (await readText(env, o.key)) || ''))
-    );
+    // (The ones on the site were read for the site itself, just now.)
+    const approvedGb = [...data.inside.guestbook];
     approvedGb.sort((a, b) => String(b.date).localeCompare(String(a.date)));
     // Comments: the ones waiting for your approval, and the ones on the site (newest first).
     const commentsIn = (folder) => Promise.all(objects.filter((o) => isCommentKey(o.key, folder)).map(async (o) => parseComment(o.key, (await readText(env, o.key)) || '')));
     const newest = (list) => list.sort((a, b) => String(b.date).localeCompare(String(a.date)) || b.id.localeCompare(a.id));
     const pendingComments = newest(await commentsIn('comments-pending'));
-    const approvedComments = newest(await commentsIn('comments'));
+    const approvedComments = newest([...data.inside.comments]);
     const suggestions = await Promise.all(
       objects.filter((o) => o.key.startsWith('suggestions/')).map(async (o) => {
         const { data: d, body } = splitFrontMatter((await readText(env, o.key)) || '');
@@ -960,20 +1142,24 @@ async function adminApi(request, env, url, ctx) {
     const q = url.searchParams.get('q') || '';
     if (q.trim().length < 2) return json([]);
     const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&q=${encodeURIComponent(q)}`, {
-      headers: { 'User-Agent': userAgent(env), 'Accept-Language': 'en' }
-    });
-    if (!r.ok) return json({ error: 'Place search is unavailable right now.' }, 502);
-    return json((await r.json()).map(simplifyPlace));
+      headers: { 'User-Agent': userAgent(env), 'Accept-Language': 'en' },
+      signal: AbortSignal.timeout(8000)
+    }).catch(() => null);
+    const found = r?.ok ? await r.json().catch(() => null) : null;
+    if (!Array.isArray(found)) return json({ error: 'Place search is unavailable right now.' }, 502);
+    return json(found.map(simplifyPlace));
   }
 
   if (p === 'reverse' && m === 'GET') {
     const lat = url.searchParams.get('lat');
     const lon = url.searchParams.get('lon');
     const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`, {
-      headers: { 'User-Agent': userAgent(env), 'Accept-Language': 'en' }
-    });
-    if (!r.ok) return json({ error: 'Location lookup is unavailable right now.' }, 502);
-    return json(simplifyPlace(await r.json()));
+      headers: { 'User-Agent': userAgent(env), 'Accept-Language': 'en' },
+      signal: AbortSignal.timeout(8000)
+    }).catch(() => null);
+    const found = r?.ok ? await r.json().catch(() => null) : null;
+    if (!found || typeof found !== 'object') return json({ error: 'Location lookup is unavailable right now.' }, 502);
+    return json(simplifyPlace(found));
   }
 
   if (p === 'weather' && m === 'GET') {
@@ -987,9 +1173,9 @@ async function adminApi(request, env, url, ctx) {
     if (ageDays <= 0) api = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`;
     else if (ageDays < 60) api = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,weather_code&start_date=${date}&end_date=${date}&timezone=auto`;
     else api = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,weather_code&start_date=${date}&end_date=${date}&timezone=auto`;
-    const r = await fetch(api);
-    if (!r.ok) return json({ error: 'Weather is unavailable for that date.' }, 502);
-    const w = await r.json();
+    const r = await fetch(api, { signal: AbortSignal.timeout(8000) }).catch(() => null);
+    const w = r?.ok ? await r.json().catch(() => null) : null;
+    if (!w) return json({ error: 'Weather is unavailable for that date.' }, 502);
     const temp = w.current ? w.current.temperature_2m : w.daily?.temperature_2m_max?.[0];
     const code = w.current ? w.current.weather_code : w.daily?.weather_code?.[0];
     if (temp == null) return json({ error: 'No weather found for that date.' }, 404);
@@ -1004,7 +1190,7 @@ async function adminApi(request, env, url, ctx) {
     let body = {};
     if (m === 'POST') {
       try {
-        body = await request.json();
+        body = (await request.json()) || {};
       } catch {}
     }
     try {

@@ -1094,7 +1094,8 @@ export function parseComment(key, text) {
     message: String(body || '').trim().slice(0, 2000)
   };
 }
-export const isCommentKey = (k, folder = 'comments') => new RegExp(`^${folder}/[a-z]+/[^/]+/[A-Za-z0-9-]+\\.md$`).test(k);
+const commentKeyPatterns = {};
+export const isCommentKey = (k, folder = 'comments') => (commentKeyPatterns[folder] ||= new RegExp(`^${folder}/[a-z]+/[^/]+/[A-Za-z0-9-]+\\.md$`)).test(k);
 
 export function parseGuestbookEntry(key, text) {
   const { data, body } = splitFrontMatter(text);
