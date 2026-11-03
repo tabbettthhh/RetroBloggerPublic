@@ -44,6 +44,7 @@ If Cloudflare asks you to turn on **R2** (where your posts and photos are kept),
 - **The Control Panel:** **⚙ Control Panel** in your menu, like XP's: pick a category under Writing (posts and drafts, highlights, planner), People (inbox, friends, status), Look (themes, designs) or Your site (site and wishlist, travel stats, export and files). It's a window on a computer and a list of rows on a phone, like a Settings app. Each category opens in the same place, with **‹** to go back. Back or ✕ closes it.
 - **Themes, on your real site:** **Themes** opens beside your site (at the bottom on a phone, where it can be tucked down to look), and the site itself wears each choice as you make it. Closing without saving puts the saved look back, after asking; your choices are kept for next time.
 - **Your friends:** their posts are mixed into your Home by when they were posted, each as it looks on their site with who it's from on top (friends-only ones marked). Only you see them there. **💬 Comment** under one opens its comments, and yours goes straight on at their site, under your name, linking to yours; you can answer other people's comments too. A dot on **Friends** (in the menus, on the desktop and in the dock) counts new posts until you open it. The envelope by your tile is **Mail**: notes from friends (the newest pops up when it arrives). See [Friends](#friends).
+- **Notifications:** **Control Panel › Notifications** turns them on for the device you're on: comments waiting, notes from friends and friends' new posts reach your phone or computer even when the site isn't open. Visitors can be let ask to hear when you post. See [Notifications](#notifications).
 - **Your menu:** **View as a visitor** shows the site exactly as everyone else sees it, and **Sign out** signs you out. Signed in, the Explore menu is yours too: your name and picture at the top (tap the picture to change it).
 
 There's no separate back office: everything is done on the site itself, signed in. Visitors never see any of it, and never even download it: the owner's tools live behind a lock at `/admin` on your site. Until you set it up, it's shut for everyone, including you; once it's set up, only you get past the sign-in, and `/admin` takes you to your site, signed in.
@@ -353,6 +354,24 @@ Your friends get a say too. Untick **Let friends show my posts on their sites** 
 **Your site's address.** Friends know your site by one address: the one you were using the first time you opened Friends (it's under **My site's address**, and it's the address inside your friend code). Signing in at another address doesn't change it. It's also your site's main address: visitors who arrive at your workers.dev address, or at the www version of your domain, are sent there.
 
 When your site moves to a domain of your own, follow [Your own domain](#your-own-domain-optional). Its last step, **Move my site to …** under Friends, tells each friend's site. Each one checks that your site really is at the new address, then switches over. Your old address keeps working for them as well, so nothing breaks. If a friend's site can't be reached just then, Friends says so, and **Tell them again** tries later. Friend codes you'd sent out before still work.
+
+## Notifications
+
+Your site can tell your phone or computer about things even when it isn't open, like any app: a buzz and a message on the lock screen, which opens the right page when you tap it.
+
+**For you.** Signed in, open **Control Panel › Notifications** and tap **Turn on notifications here** (do it on each device you want them on). Then choose what you're told about:
+
+- **Comments waiting for you**, and guestbook signatures, suggestions, and comments from friends;
+- **Notes from friends** (Mail);
+- **Friends' new posts**.
+
+**Send a test** checks it works; **Your devices** lists every device that gets them, and **Remove** stops one. Only a device signed in through Cloudflare Access can sign up for these.
+
+**For visitors, only if you want.** Tick **Let visitors ask to hear when I post** and a **🔔 Notify me** button appears by your name. Only visitors who tap it, and allow it, get anything, and only about your new posts (not drafts, not friends-only posts, and each post once, when it goes on the site, including a scheduled one going live). Nothing about them is kept but the address their browser gives for it, and tapping **Notifying** again stops it. Untick the box and the button goes; nobody is told about new posts.
+
+**On an iPhone or iPad,** notifications only work from the Home Screen: in Safari tap **Share › Add to Home Screen**, open the site from there, then turn them on (or tap **Notify me**). On Android and on computers they work in the browser.
+
+How it works: your site has its own key pair, made the first time it's needed and kept in your storage (out of your files and the export). Each message is encrypted for the one device it's going to and signed with your site's key, then handed to that device's push service (Apple's, Google's or Mozilla's), which can't read it. A device that's gone (the app removed, notifications switched off) is forgotten the next time a message can't reach it.
 
 ## Travel stats (optional)
 

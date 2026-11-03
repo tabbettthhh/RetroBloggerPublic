@@ -22,6 +22,7 @@
 // - Secrets and copies of feeds live under data/_ in your bucket, which the file list, the
 //   export and visitors never see.
 
+import * as push from './push.js';
 import { safeMarkdown, buildPost, TYPES, THEME_OPTIONS, KEEPSAKE_SHAPES, THEMES, THEME_CHARMS } from './content.js';
 import { cleanCards, OWN_CARD, MIX, cleanMix, cleanSeed } from '../public/js/card-parts.js';
 
@@ -527,7 +528,18 @@ export async function refreshFriends(env, only) {
         const res = await signedFetch(env, store, friend, 'GET', '/api/friends/feed');
         if (!res.ok) throw new Error('status ' + res.status);
         const feed = tidyFeed(await res.json(), friend);
+        // (What you'd already seen of theirs, to tell you about anything new.)
+        const before = await readCache(env, friend.key);
         await env.CONTENT.put(`data/_friendcache/${friend.key}.json`, JSON.stringify({ at, ok: true, feed }));
+        if (before?.feed) {
+          const seen = new Set((before.feed.posts || []).map((p) => p.id));
+          const fresh = feed.posts.filter((p) => !seen.has(p.id) && Date.now() - (p.ts || 0) < 2 * 24 * 60 * 60 * 1000);
+          if (fresh.length) {
+            const who = feed.owner || feed.name || friend.name;
+            const p = fresh[0];
+            await push.notifyOwner(env, 'friends', { title: `${who} posted${fresh.length > 1 ? ` ${fresh.length} new things` : ''}`, body: p.title || p.excerpt || 'Have a look', url: '/?owner=1#/friends', tag: `friend-${friend.key}` }, store.me).catch(() => {});
+          }
+        }
         names[friend.key] = { name: feed.name, owner: feed.owner };
         reached++;
       } catch (e) {
@@ -735,7 +747,9 @@ async function receiveNote(env, friend, info) {
   const hour = Date.now() - 60 * 60 * 1000;
   const recent = (await readMail(env, 60)).filter((n) => !n.out && n.friend === friend.key && n.at > hour);
   if (recent.length >= 20) return { error: 'That’s a lot of notes in an hour. Try again later.', status: 429 };
-  await keepNote(env, { id: noteId(), friend: friend.key, name: clean(friend.owner || friend.name, 60) || friend.url, site: friend.url, text, at: Date.now(), read: false, reply_to: /^[0-9a-z]{9}-[\w-]{4,8}$/.test(String(info.reply_to || '')) ? String(info.reply_to) : '' });
+  const name = clean(friend.owner || friend.name, 60) || friend.url;
+  await keepNote(env, { id: noteId(), friend: friend.key, name, site: friend.url, text, at: Date.now(), read: false, reply_to: /^[0-9a-z]{9}-[\w-]{4,8}$/.test(String(info.reply_to || '')) ? String(info.reply_to) : '' });
+  await push.notifyOwner(env, 'notes', { title: `✉ A note from ${name}`, body: text, url: '/?owner=1&open=mail#/', tag: 'mail' }, (await loadFriends(env)).me).catch(() => {});
   return { ok: true };
 }
 async function readMail(env, limit = MAIL_KEEP) {

@@ -4132,6 +4132,14 @@ export const kit = {
   version: (again = false) => api('version' + (again ? '?again=1' : '')),
   highlights: () => allHighlights(),
   saveHighlights: (all) => saveHighlights(all),
+  // Notifications: your devices and choices, signing one up or off, a test.
+  push: {
+    status: () => api('push'),
+    subscribe: (subscription, device) => api('push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription, device }) }),
+    unsubscribe: (endpoint) => api('push/unsubscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint }) }),
+    settings: (body) => api('push/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
+    test: () => api('push/test', { method: 'POST' })
+  },
   // Notes between friends: your mail, sending one, marking them read, deleting one.
   mail: {
     list: () => api('mail'),

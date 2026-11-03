@@ -1,6 +1,7 @@
 // What each section shows. The same renderers fill a phone screen or a desktop window.
 import { pagedSpread } from './journal-pages.js';
 import { pictureHtml, hasPicture } from './pictures.js';
+import { notifyButton } from './push-client.js';
 import { ABOUT } from './floppy-lines.js';
 import { floppySvg } from './helper.js';
 import { statusBlock, nudgeButton, presenceDot } from './statusbar.js';
@@ -227,7 +228,7 @@ function profileTile(data, here = false) {
     h(
       'div',
       { class: 'profile-text' },
-      h('div', { class: 'profile-name' }, h('strong', null, data.site.owner || data.site.name), nudgeButton(data.site)),
+      h('div', { class: 'profile-name' }, h('strong', null, data.site.owner || data.site.name), nudgeButton(data.site), notifyButton(data)),
       h('div', { class: 'profile-sub' }, latest ? h('span', { class: 'small' }, 'Last post · ' + niceDate(latest.date)) : null, decor.stickers),
       statusBlock(data)
     )

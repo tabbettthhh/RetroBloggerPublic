@@ -431,3 +431,16 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 
 :root[data-theme="dark"] .okit-mailpop { color: #eee; background: #3a3a28; border-color: #6a6a4a; }
 :root[data-theme="dark"] .okit-mailpop.balloon::after { background: #3a3a28; border-color: #6a6a4a; }
+
+/* ---------- Notifications (Control Panel) ---------- */
+.nt { display: flex; flex-direction: column; gap: 12px; color: var(--ok-ink, #14254d); font: 13px/1.45 Tahoma, 'Segoe UI', sans-serif; text-align: left; }
+.nt-box { padding: 10px 12px; border: 1px solid var(--ok-line, #c7c3ae); border-radius: 8px; background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--ok-paper, #ece9d8) 35%, #fff)); box-shadow: var(--ok-bevel), 0 1px 3px rgba(0, 0, 0, .1); }
+.nt-box h3 { margin: 0 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--ok-line, #c7c3ae); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in srgb, var(--ok-sel, #316ac5) 70%, var(--ok-ink, #14254d)); }
+.nt-box p { margin: 0 0 8px; }
+.nt-on { font-weight: bold; color: #2a7a2a; }
+.nt-check { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; cursor: pointer; }
+.nt-check input { margin-top: 3px; width: 18px; height: 18px; flex: none; }
+.nt-check span { display: flex; flex-direction: column; }
+.nt-check small, .nt-count, .nt-none, .nt-devices small { opacity: .75; font-size: 12px; }
+.nt-devices { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.nt-devices li { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

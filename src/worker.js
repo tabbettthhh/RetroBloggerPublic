@@ -8,6 +8,7 @@ import { TYPES, buildPost, isVisible, parseWishlist, parseSite, parseStatusLog, 
 import { adminCheck } from './auth.js';
 import { VERSION } from './version.js';
 import * as friends from './friends.js';
+import * as push from './push.js';
 
 const ROBOTS_TAG = 'noindex, nofollow, noarchive, nosnippet, noimageai';
 
@@ -55,7 +56,9 @@ export default {
           .refreshFriends(env)
           .then((r) => r.of && bumpVersion(env))
           .catch((e) => console.error(e)),
-        friends.shareNews(env, buildEverything).catch((e) => console.error(e))
+        friends.shareNews(env, buildEverything).catch((e) => console.error(e)),
+        // (A post scheduled for later that has just gone live: visitors who asked hear about it.)
+        announce(env).catch((e) => console.error(e))
       ])
     );
   }
@@ -115,6 +118,8 @@ async function route(request, env, ctx) {
       // Anything saved might be news for your friends: their sites hear straight away (and
       // nothing is sent when what they see hasn't changed).
       if (method !== 'GET' && res.ok) ctx.waitUntil(friends.shareNews(env, buildEverything).catch((e) => console.error(e)));
+      // (And a post that has just gone on the site is announced to visitors who asked.)
+      if (method !== 'GET' && res.ok) ctx.waitUntil(announce(env, url.origin).catch((e) => console.error(e)));
       return res;
     }
     const res = await env.ASSETS.fetch(request);
@@ -125,9 +130,23 @@ async function route(request, env, ctx) {
 
   if (p === '/api/all' && method === 'GET') return apiAll(request, env, ctx);
   if (p === '/api/visit' && method === 'POST') return visit(request, env);
-  if (p === '/api/guestbook' && method === 'POST') return signGuestbook(request, env);
-  if (p === '/api/comment' && method === 'POST') return leaveComment(request, env);
-  if (p === '/api/suggest' && method === 'POST') return suggest(request, env);
+  if (p === '/api/guestbook' && method === 'POST') return signGuestbook(request, env, ctx);
+  if (p === '/api/comment' && method === 'POST') return leaveComment(request, env, ctx);
+  if (p === '/api/suggest' && method === 'POST') return suggest(request, env, ctx);
+  // Visitors asking to hear when you post (only while you let them), and changing their minds.
+  if (p === '/api/push/key' && method === 'GET') {
+    const on = (await push.settings(env)).visitors;
+    return json({ on, key: on ? await push.publicKey(env) : '' }, 200, { 'Cache-Control': 'no-store' });
+  }
+  if (p === '/api/push/subscribe' && method === 'POST') {
+    if (looksLikeBot(request)) return json({ error: 'Not accepted' }, 400);
+    const out = await push.subscribeVisitor(env, await request.json().catch(() => ({})));
+    return json(out.ok ? { ok: true } : { error: out.error }, out.status || 200);
+  }
+  if (p === '/api/push/unsubscribe' && method === 'POST') {
+    const body = await request.json().catch(() => ({}));
+    return json(await push.unsubscribe(env, body.endpoint, 'visitor'));
+  }
   if (p === '/api/nudge' && method === 'POST') return nudge(request, env);
   if (p.startsWith('/media/') && (method === 'GET' || method === 'HEAD')) return media(request, env, p);
   // Photos in your Friends feed, fetched from your friends' sites by yours.
@@ -144,7 +163,7 @@ async function route(request, env, ctx) {
     return friends.friendPhotoForVisitor(env, parts[0], parts.slice(1).join('/'), mine);
   }
   // Friends' sites talking to yours (every request signed with the secret you share).
-  if (p.startsWith('/api/friends/')) return friends.friendsApi(request, env, p, { buildEverything, mediaForFriend: (key) => friendMedia(env, key), friendComment: (who, info) => friendComment(env, who, info), changed: () => bumpVersion(env), news: () => friends.shareNews(env, buildEverything), waitUntil: (work) => ctx.waitUntil(work) });
+  if (p.startsWith('/api/friends/')) return friends.friendsApi(request, env, p, { buildEverything, mediaForFriend: (key) => friendMedia(env, key), friendComment: (who, info) => friendComment(env, who, info, ctx, url.origin), changed: () => bumpVersion(env), news: () => friends.shareNews(env, buildEverything), waitUntil: (work) => ctx.waitUntil(work) });
   if (p.startsWith('/api/')) return json({ error: 'Not found' }, 404);
 
   return staticFile(request, env, p);
@@ -156,6 +175,12 @@ async function route(request, env, ctx) {
 const LONG_LIVED = /^\/(fonts|vendor|icons|cursors)\//;
 async function staticFile(request, env, path) {
   const res = await env.ASSETS.fetch(request);
+  // (The notifications worker is always checked afresh, so a change to it reaches every device.)
+  if (path === '/sw.js' && res.status === 200) {
+    const sw = new Response(res.body, res);
+    sw.headers.set('Cache-Control', 'no-cache');
+    return sw;
+  }
   if (!LONG_LIVED.test(path) || res.status !== 200) return res;
   const out = new Response(res.body, res);
   out.headers.set('Cache-Control', 'public, max-age=2592000');
@@ -494,6 +519,8 @@ async function apiAll(request, env, ctx) {
     data.friendCategories = pals.categories || [];
     // (No Friends tab when you don't show friends' posts; the friends list, if shown, is on About.)
     data.friendsTab = !!pals.postsShown;
+    // (Whether visitors can ask to hear when you post.)
+    data.notifyPosts = (await push.settings(env).catch(() => ({}))).visitors === true;
     res = json(data, 200, { 'Cache-Control': 'public, max-age=300' });
     ctx.waitUntil(cache.put(cacheKey, res.clone()));
   }
@@ -624,7 +651,7 @@ async function readBody(request) {
   return Object.fromEntries(form.entries());
 }
 
-async function signGuestbook(request, env) {
+async function signGuestbook(request, env, ctx) {
   if (looksLikeBot(request)) return json({ error: 'Not accepted' }, 400);
   let body;
   try {
@@ -641,12 +668,13 @@ async function signGuestbook(request, env) {
   const { iso, file } = stamp();
   const text = `---\nname: ${yamlString(name)}\ndate: ${yamlString(iso.slice(0, 16).replace('T', ' '))}\n---\n${message}\n`;
   await env.CONTENT.put(`guestbook-pending/${file}.md`, text, { httpMetadata: { contentType: 'text/markdown; charset=utf-8' } });
+  later(ctx, push.notifyOwner(env, 'comments', { title: `✍ ${name} signed the guestbook`, body: message, url: '/?owner=1#/guestbook', tag: 'guestbook' }, new URL(request.url).origin));
   return json({ ok: true, pending: true });
 }
 
 // A visitor's comment on a post (or a reply to another comment). Only a name is asked for, and
 // nothing else about them is kept. It waits for the owner's approval in the back office.
-async function leaveComment(request, env) {
+async function leaveComment(request, env, ctx) {
   if (looksLikeBot(request)) return json({ error: 'Not accepted' }, 400);
   let body;
   try {
@@ -674,13 +702,14 @@ async function leaveComment(request, env) {
   const { iso, file } = stamp();
   const text = `---\nname: ${yamlString(name)}\ndate: ${yamlString(iso.slice(0, 16).replace('T', ' '))}\n${answering ? `reply_to: ${yamlString(answering)}\n` : ''}---\n${message}\n`;
   await env.CONTENT.put(`comments-pending/${type}/${slug}/${file}.md`, text, { httpMetadata: { contentType: 'text/markdown; charset=utf-8' } });
+  later(ctx, push.notifyOwner(env, 'comments', { title: `💬 ${name} ${answering ? 'replied' : 'commented'}${post.title ? ` on “${post.title}”` : ''}`, body: message, url: '/?owner=1' + postHash(post), tag: `comment-${type}-${slug}` }, new URL(request.url).origin));
   return json({ ok: true, pending: true });
 }
 
 // A friend's comment on one of your posts, sent by their site (it's checked there and signed):
 // it goes straight on, under their name, linking to their site. Friends see friends-only posts,
 // so they can comment on those too.
-async function friendComment(env, who, { post: id, message, reply_to }) {
+async function friendComment(env, who, { post: id, message, reply_to }, ctx, origin = '') {
   if (message.length < 2) return { error: 'Write a comment first.', status: 400 };
   const [type, slug] = String(id || '').split('/');
   const data = await buildEverything(env, { forFriends: true });
@@ -692,6 +721,7 @@ async function friendComment(env, who, { post: id, message, reply_to }) {
   const { iso, file } = stamp();
   const text = `---\nname: ${yamlString(who.name)}\nsite: ${yamlString(who.site)}\ndate: ${yamlString(iso.slice(0, 16).replace('T', ' '))}\n${answering ? `reply_to: ${yamlString(answering)}\n` : ''}---\n${message}\n`;
   await env.CONTENT.put(`comments/${type}/${slug}/${file}.md`, text, { httpMetadata: { contentType: 'text/markdown; charset=utf-8' } });
+  later(ctx, push.notifyOwner(env, 'comments', { title: `💬 ${who.name} (a friend) commented${post.title ? ` on “${post.title}”` : ''}`, body: message, url: '/?owner=1' + postHash(post), tag: `comment-${type}-${slug}` }, origin));
   return { ok: true };
 }
 
@@ -716,7 +746,7 @@ async function updateCheck(env, again = false) {
   return { mine: VERSION, latest, at, template: TEMPLATE };
 }
 
-async function suggest(request, env) {
+async function suggest(request, env, ctx) {
   if (looksLikeBot(request)) return json({ error: 'Not accepted' }, 400);
   let body;
   try {
@@ -736,7 +766,20 @@ async function suggest(request, env) {
   const { iso, file } = stamp();
   const text = `---\nkind: ${kind}\ntitle: ${yamlString(title)}\nfrom: ${yamlString(from)}\ndate: ${yamlString(iso.slice(0, 16).replace('T', ' '))}\n---\n${note}\n`;
   await env.CONTENT.put(`suggestions/${file}.md`, text, { httpMetadata: { contentType: 'text/markdown; charset=utf-8' } });
+  later(ctx, push.notifyOwner(env, 'comments', { title: `💡 ${from} suggested a ${kind}`, body: title, url: '/?owner=1#/' + (kind === 'place' ? 'wishlist' : { book: 'books', film: 'films', podcast: 'podcasts', music: 'music', tv: 'tv' }[kind]), tag: 'suggestion' }, new URL(request.url).origin));
   return json({ ok: true });
+}
+
+// Notifications go out after the answer (a slow push service never holds anyone up).
+function later(ctx, work) {
+  const p = Promise.resolve(work).catch((e) => console.error('push', e));
+  if (ctx?.waitUntil) ctx.waitUntil(p);
+}
+const postHash = (post) => (post.type === 'places' ? `#/journal/${post.slug}` : ['books', 'films', 'podcasts', 'music', 'tv'].includes(post.type) ? `#/${post.type}/${post.slug}` : `#/post/${post.type}/${post.slug}`);
+// Your new posts, announced to visitors who asked (see push.announcePosts).
+async function announce(env, origin = '') {
+  const data = await buildEverything(env);
+  return push.announcePosts(env, data.posts, data.site.name, origin || (await friends.loadFriends(env)).me);
 }
 
 // ---------- back office ----------
@@ -764,6 +807,26 @@ async function adminApi(request, env, url, ctx) {
   if (p === 'me' && m === 'GET') return json({ owner: true });
   // Whether this copy of the site has the latest version of the template.
   if (p === 'version' && m === 'GET') return json(await updateCheck(env, url.searchParams.get('again') === '1'));
+  // Notifications: your devices, your choices, a test, and visitors' (off unless you say).
+  if (p === 'push' && m === 'GET') return json(await push.myDevices(env));
+  if (p.startsWith('push/') && m === 'POST') {
+    const body = await request.json().catch(() => ({}));
+    try {
+      if (p === 'push/subscribe') return json(await push.subscribeMine(env, body));
+      if (p === 'push/unsubscribe') return json(await push.unsubscribe(env, body.endpoint, 'mine'));
+      if (p === 'push/settings') {
+        const out = await push.saveSettings(env, body);
+        await bumpVersion(env);
+        // (What's on the site already is noted, so only posts from now on are announced.)
+        if (out.visitors) await announce(env, url.origin).catch(() => {});
+        return json(out);
+      }
+      if (p === 'push/test') return json({ sent: await push.testMine(env, url.origin) });
+    } catch (e) {
+      return json({ error: String(e.message || e) }, 400);
+    }
+    return json({ error: 'Not found' }, 404);
+  }
 
   if (p === 'overview' && m === 'GET') {
     const data = await buildEverything(env, { includeHidden: true });

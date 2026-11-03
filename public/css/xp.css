@@ -375,3 +375,9 @@ a.avatar:hover, a.avatar:focus-visible { transform: translateY(-1px); box-shadow
 .card.ff-full > .ff-from { padding: 6px 10px; border-bottom: 1px solid rgba(0, 0, 0, .08); background: rgba(255, 255, 255, .55); }
 .card.ff-full > .ff-open { display: block; margin: 0; padding: 6px 12px 9px; }
 .ff-empty { padding: 16px; text-align: center; }
+
+/* 🔔 Notify me (only when the owner lets visitors ask), beside Nudge, and what it says. */
+.profile-name { flex-wrap: wrap; }
+.notify-btn[aria-pressed="true"] { border-color: #2a7a2a; background: linear-gradient(180deg, #f2fff0, #d8f0d2); }
+.notify-tip { flex-basis: 100%; margin-top: 4px; padding: 4px 8px; border-radius: 4px; color: #1a1a1a; background: #ffffe1; border: 1px solid #b8b080; font-size: 11px; line-height: 1.35; font-weight: normal; text-shadow: none; }
+[data-theme="dark"] .notify-tip { color: #eee; background: #3a3a28; border-color: #6a6a4a; }
