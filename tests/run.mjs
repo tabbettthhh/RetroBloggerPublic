@@ -33,6 +33,8 @@ const GROUPS = {
   push: ['push'],
   // Reactions, series, Start here and the other little extras.
   extras: ['extras'],
+  // Reading with no connection (this one stops the local site part-way, to be offline).
+  offline: ['offline'],
   // The back office lock with the developer bypass off: once with the lock's settings, once without.
   locked: [['locked', { LOCK_MODE: 'set' }]],
   'locked-unset': [['locked', { LOCK_MODE: 'unset' }]],
@@ -85,7 +87,7 @@ for (const name of wanted) {
   } else {
     for (const f of files) {
       const [file, env] = Array.isArray(f) ? f : [f, {}];
-      const code = await run(process.execPath, [path.join(HERE, `${file}.test.mjs`)], { env: { ...process.env, TEST_BASE: BASE, TEST_BASE2: BASE2, ...env } });
+      const code = await run(process.execPath, [path.join(HERE, `${file}.test.mjs`)], { env: { ...process.env, TEST_BASE: BASE, TEST_BASE2: BASE2, TEST_SERVER_PID: String(server.pid), ...env } });
       if (code) failed++;
     }
   }

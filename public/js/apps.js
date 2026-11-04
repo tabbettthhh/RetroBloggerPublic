@@ -796,7 +796,9 @@ const SCENES = {
 };
 // Which painting suits the place, unless you chose one.
 const SCENE_FOR = { food: 'city', coffee: 'city', drinks: 'city', shopping: 'city', culture: 'city', sights: 'city', nature: 'forest', stays: 'countryside' };
-const sceneSvg = (name) => `<svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice" width="100%" height="100%">${(SCENES[name] || SCENES.seaside)()}</svg>`;
+// (Each painting's sky has a name of its own, so several on one page keep their own colours.)
+let sceneN = 0;
+const sceneSvg = (name) => `<svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice" width="100%" height="100%">${(SCENES[name] || SCENES.seaside)().replace(/\bpcs\b/g, `pcs${++sceneN}`)}</svg>`;
 
 // Long names get smaller letters rather than breaking in the middle of a word.
 const greetSize = (name) => (name.length > 16 ? '14px' : name.length > 12 ? '17px' : name.length > 9 ? '20px' : '24px');
@@ -1692,6 +1694,8 @@ function guestbook(ctx) {
     digits.setAttribute('aria-label', `Visitor number ${n ?? 0}`);
   };
   setDigits(Number(session.getItem('visitor-number')) || 0);
+  // (Being counted just now, as the site opened: the number a moment later.)
+  if (session.getItem('visitor-number') === '0') setTimeout(() => setDigits(Number(session.getItem('visitor-number')) || 0), 1500);
   if (!session.getItem('visitor-number')) {
     fetch('/api/visit', { method: 'POST' })
       .then((r) => r.json())
@@ -1705,7 +1709,21 @@ function guestbook(ctx) {
   }
 
   const entries = ctx.data.guestbook.map((g) =>
-    h(
+    g.card
+      ? // A postcard: its painted front, and on the back, the message and who it's from.
+        h(
+          'div',
+          { class: 'gb-postcard', 'data-gb': `${g.date}|${g.name}` },
+          h('div', { class: 'gbp-front', 'aria-hidden': 'true', html: sceneSvg(g.card) }),
+          h(
+            'div',
+            { class: 'gbp-back' },
+            h('p', { class: 'gbp-words' }, g.message),
+            h('p', { class: 'gbp-from' }, '— ', h('strong', null, g.name), h('span', { class: 'gb-date' }, ' · ' + niceDate(g.date))),
+            g.reply ? h('div', { class: 'gb-reply' }, h('strong', null, (ctx.data.site.owner || 'Reply') + ' '), g.reply) : null
+          )
+        )
+      : h(
       'div',
       { class: 'gb-entry', 'data-gb': `${g.date}|${g.name}` },
       h('span', { class: 'gb-avatar', html: ICON.person('#1d4f86') }),
@@ -1728,8 +1746,10 @@ function guestbook(ctx) {
         const f = new FormData(e.target);
         try {
           await postForm('/api/guestbook', Object.fromEntries(f.entries()));
+          const sentCard = !!f.get('card');
           e.target.reset();
-          msg.textContent = 'Thanks for signing! It appears once it has been approved.';
+          e.target.querySelector('.gb-card-peek')?.setAttribute('hidden', '');
+          msg.textContent = sentCard ? 'Your postcard is on its way! It appears once it has been approved.' : 'Thanks for signing! It appears once it has been approved.';
           sound.chime();
         } catch (err) {
           msg.textContent = err.message;
@@ -1739,6 +1759,16 @@ function guestbook(ctx) {
     h('span', { class: 'gb-label' }, 'Sign the guestbook'),
     h('input', { name: 'name', class: 'droid-field', placeholder: 'Your name', 'aria-label': 'Your name', maxlength: 40 }),
     h('div', { class: 'gb-row' }, h('input', { name: 'message', class: 'droid-field', placeholder: 'Write something nice…', 'aria-label': 'Message', required: true, maxlength: 600 }), h('button', { type: 'submit', class: 'droid-btn' }, 'Sign')),
+    // (Or as a postcard, with a painted front.)
+    (() => {
+      const pick = h('select', { name: 'card', class: 'droid-field gb-card-pick', 'aria-label': 'Send it as a postcard' }, h('option', { value: '' }, '📮 Send it as a postcard? (optional)'), ...[['seaside', 'By the sea'], ['city', 'City lights'], ['countryside', 'Countryside'], ['forest', 'Forest'], ['mountains', 'Mountains'], ['lakeside', 'Lakeside']].map(([v, l]) => h('option', { value: v }, `Postcard: ${l}`)));
+      const peek = h('span', { class: 'gb-card-peek', 'aria-hidden': 'true', hidden: true });
+      pick.addEventListener('change', () => {
+        peek.hidden = !pick.value;
+        peek.innerHTML = pick.value ? sceneSvg(pick.value) : '';
+      });
+      return h('div', { class: 'gb-row gb-card-row' }, pick, peek);
+    })(),
     h('input', { name: 'website', class: 'hp', tabindex: '-1', autocomplete: 'off', 'aria-hidden': 'true' }),
     msg
   );

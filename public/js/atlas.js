@@ -93,6 +93,16 @@ export function atlasBoard(ctx, all, toolbar) {
   const kinds = [...Object.keys(CATEGORIES).filter((c) => used.has(c)), ...[...used].filter((c) => !CATEGORIES[c])];
   let lens = 'all';
   let kind = 'all';
+  // Pins, or how often: warm circles where you go most.
+  let heat = false;
+  const heatBtn = h('button', { type: 'button', class: 'board-tab board-heat', 'aria-pressed': 'false', title: 'Show how often you’ve been to each spot' }, '🔥 How often');
+  heatBtn.addEventListener('click', () => {
+    heat = !heat;
+    heatBtn.setAttribute('aria-pressed', String(heat));
+    heatBtn.classList.toggle('on', heat);
+    sound.click?.();
+    draw();
+  });
   // Arriving from a journal entry: the map opens on that place's pin, its trip marked.
   const from = ctx.param ? all.find((p) => p.slug === ctx.param) : null;
   let focusOnce = !!from;
@@ -114,11 +124,12 @@ export function atlasBoard(ctx, all, toolbar) {
       style: 'board',
       tags: shown.length <= 12,
       card: memoryCard,
+      heat,
       strings: trips.map((t) => t.places.filter((p) => keep.has(p) && Number.isFinite(p.lat) && Number.isFinite(p.lon)).map((p) => [p.lat, p.lon])).filter((l) => l.length > 1),
       focus: focusOnce ? shown.indexOf(from) : -1
     });
     const pick = (cur, id, set) => h('button', { type: 'button', role: 'radio', class: 'board-tab' + (cur === id ? ' on' : ''), 'aria-checked': String(cur === id), onclick: () => { set(id); sound.click?.(); draw(); } });
-    tabs.replaceChildren(...lenses.map(([id, label]) => Object.assign(pick(lens, id, (v) => (lens = v)), { textContent: label })));
+    tabs.replaceChildren(...lenses.map(([id, label]) => Object.assign(pick(lens, id, (v) => (lens = v)), { textContent: label })), heatBtn);
     legend.replaceChildren(
       Object.assign(pick(kind, 'all', (v) => (kind = v)), { textContent: 'All kinds' }),
       ...kinds.map((c) => {

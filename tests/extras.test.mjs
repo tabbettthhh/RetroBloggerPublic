@@ -242,6 +242,67 @@ await test('the visitor counter’s styles', async () => {
   });
 });
 
+await test('postcards in the guestbook: a painted front, waiting for your approval like any signature', async () => {
+  const sign = (body) => fetch(`${BASE}/api/guestbook`, { method: 'POST', headers: PERSON, body: JSON.stringify(body) }).then((r) => r.status);
+  eq(await sign({ name: 'Lina', message: 'Wish you were here!', card: 'seaside' }), 200, 'sent');
+  eq(await sign({ name: 'Odd', message: 'A strange front', card: '<svg>' }), 200, 'an odd front is just a signature');
+  const waiting = (await overview()).pendingGuestbook;
+  eq(waiting.map((g) => [g.name, g.card]).sort(), [['Lina', 'seaside'], ['Odd', '']], 'waiting, with its front');
+  for (const g of waiting) await fetch(`${BASE}/admin/api/move?key=${encodeURIComponent(g.key)}&to=${encodeURIComponent(g.key.replace('guestbook-pending/', 'guestbook/'))}`, { method: 'POST' });
+  await site(PHONE, async (p) => {
+    await p.evaluate(() => (location.hash = '#/guestbook'));
+    await p.waitForSelector('.gb-postcard');
+    eq(await p.locator('.gb-postcard .gbp-words').textContent(), 'Wish you were here!', 'on the site, as a postcard');
+    eq(await p.locator('.gb-entry', { hasText: 'A strange front' }).count(), 1, 'the other, as a signature');
+    // Sending one: pick a front, see it, send.
+    await p.locator('.gb-card-pick').selectOption('forest');
+    assert(await p.locator('.gb-card-peek svg').isVisible(), 'a peek at the front');
+    await p.locator('.gb-form input[name="name"]').fill('Jo');
+    await p.locator('.gb-form input[name="message"]').fill('Lovely trees');
+    await p.locator('.gb-form button[type="submit"]').click();
+    await p.waitForFunction(() => /postcard is on its way/.test(document.querySelector('.form-msg')?.textContent || ''));
+  });
+  eq((await overview()).pendingGuestbook.map((g) => g.card), ['forest'], 'sent from the site');
+});
+
+await test('the atlas: pins, or how often you’ve been', async () => {
+  for (const [slug, lat, n] of [['leeds-a', 53.8, 1], ['leeds-b', 53.801, 2], ['york', 53.96, 3]]) await putFile(`places/${slug}.md`, `---\ndate: ${at(10 + n)}\ntitle: ${slug}\ncity: ${slug.split('-')[0]}\nlat: ${lat}\nlon: -1.55\n---\nHere.\n`);
+  await site(DESK, async (p) => {
+    await p.evaluate(() => (location.hash = '#/atlas'));
+    await p.waitForSelector('.board-heat');
+    await p.waitForSelector('.leaflet-marker-icon');
+    await p.locator('.board-heat').click();
+    await p.waitForSelector('.heat-spot');
+    eq(await p.locator('.atlas .leaflet-marker-icon').count(), 0, 'no pins');
+    eq(await p.locator('.atlas .heat-spot').count(), 2, 'one spot for the two close together, one for the other');
+    await p.locator('.board-heat').click();
+    await p.waitForSelector('.leaflet-marker-icon');
+  });
+});
+
+await test('visitors: counted once a visit (never yours), and only how many from each country', async () => {
+  const before = await overview();
+  const n = (o) => Object.values(o.visitorCountries || {}).reduce((a, b) => a + b, 0);
+  await site(PHONE, async (p) => {
+    await p.waitForTimeout(800);
+    await p.reload();
+    await p.waitForTimeout(800);
+  });
+  const after = await overview();
+  eq(after.counter - before.counter, 1, 'once for the visit, not for each page');
+  eq(n(after) - n(before), 1, 'and its country');
+  assert(Object.keys(after.visitorCountries).every((k) => /^[A-Z]{2}$/.test(k)), 'only country codes');
+  await site(PHONE, async (p) => {
+    await p.waitForTimeout(800);
+    await p.locator('.okit-me:visible').first().click();
+    await p.locator('.okit-menu button', { hasText: 'Control Panel' }).click();
+    await p.locator('.cp-item[data-cp="visitors"]').click();
+    await p.waitForSelector('.okit-visit-list li');
+    assert((await p.locator('.okit-visitors').textContent()).includes(`${after.counter.toLocaleString('en-GB')} visits so far`), 'how many');
+  }, '/?owner=1#/');
+  eq((await overview()).counter, after.counter, 'yours not counted');
+});
+
 const failed = report();
 await close();
 process.exit(failed ? 1 : 0);
