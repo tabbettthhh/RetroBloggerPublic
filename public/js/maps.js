@@ -94,9 +94,11 @@ export function mountMap(el, opts = {}) {
       boxZoom: false,
       keyboard: interactive,
       attributionControl: true,
-      worldCopyJump: true
+      worldCopyJump: true,
+      // (Pieces kept from before show at once, without fading in.)
+      fadeAnimation: false
     });
-    L.tileLayer(TILE_URL, { maxZoom: 19, attribution: ATTRIBUTION }).addTo(map);
+    L.tileLayer(TILE_URL, { maxZoom: 19, attribution: ATTRIBUTION, crossOrigin: true }).addTo(map);
     map.attributionControl.setPrefix(false);
     // Red thread from pin to pin, in the order you went (under the pins, with its shadow).
     for (const line of heat ? [] : strings) {

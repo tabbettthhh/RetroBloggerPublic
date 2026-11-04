@@ -102,6 +102,7 @@
 .sm-foot-btn { height: 32px; display: flex; align-items: center; gap: 6px; padding: 0 8px; border: 0; background: transparent; color: #fff; text-decoration: none; font-size: 12px; }
 .sm-foot-btn:hover { background: rgba(255,255,255,.15); }
 .sm-foot-ico { width: 20px; height: 20px; border-radius: 4px; border: 1px solid #fff; }
+.sm-foot-ico.refresh { display: inline-grid; place-items: center; background: linear-gradient(180deg, #7fd36b, #2e8a1c); color: #fff; font: bold 14px/1 Tahoma, sans-serif; }
 .sm-foot-ico.ss { background: linear-gradient(180deg, #ffd36b, #e29a1c); }
 .sm-foot-ico.leave { background: linear-gradient(180deg, #ff8a6a, #d23a12); }
 .sm-foot-ico.theme { background: radial-gradient(circle at 65% 35%, #2b3566 0 5px, transparent 5.5px), radial-gradient(circle at 50% 50%, #f4e7a8 0 7px, transparent 7.5px), linear-gradient(180deg, #2b3566, #12183a); }

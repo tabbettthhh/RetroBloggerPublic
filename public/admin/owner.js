@@ -22,6 +22,7 @@ import { applySkin } from '/js/skins.js';
 import { sound } from '/js/sound.js';
 import { pushState, currentSub, signUp, signOff, deviceName, isIOS } from '/js/push-client.js';
 import { mountMap } from '/js/maps.js';
+import { refreshSite } from '/js/refresh.js';
 import { MIDDLES } from '/admin/countries.js';
 
 const TYPES = [
@@ -571,6 +572,7 @@ function meMenu(anchor) {
       { label: 'Control Panel', icon: '⚙', run: () => controlPanel() },
       '-',
       { label: previewing ? 'Back to owner view' : 'View as a visitor', icon: '👁', run: togglePreview },
+      { label: 'Refresh (everything fresh)', icon: '↻', run: () => refreshSite() },
       { label: 'Sign out', icon: '⎋', run: signOut }
     ],
     'You'
@@ -816,7 +818,7 @@ function decorateGuestbook() {
       { class: 'okit-waitlist', 'aria-label': 'Signatures waiting for you' },
       h('h4', null, `Waiting for you · ${waiting.length}`),
       waiting.map((g) =>
-        waitingCard('Signature', g.name, niceWhen(g.date), g.message, [
+        waitingCard(g.card ? '📮 Postcard' : 'Signature', g.name, niceWhen(g.date), g.message, [
           btn('Delete', 'danger', (e) => busyOn(e.currentTarget, () => kit.act(() => kit.files.delFile(g.key), 'Deleted.'))),
           btn('Approve', 'go', (e) => busyOn(e.currentTarget, () => kit.act(() => kit.files.move(g.key, g.key.replace('guestbook-pending/', 'guestbook/')), 'Approved: it’s on the site now.')))
         ])
@@ -824,13 +826,14 @@ function decorateGuestbook() {
     );
     list.querySelector('.droid-section')?.after(box);
   }
-  for (const el of list.querySelectorAll('.gb-entry[data-gb]')) {
+  // (Signatures, and postcards: each can be answered or taken off.)
+  for (const el of list.querySelectorAll('.gb-entry[data-gb], .gb-postcard[data-gb]')) {
     const [date, name] = el.dataset.gb.split('|');
     const g = (owner.approvedGuestbook || []).find((x) => String(x.date) === date && x.name === name);
     if (!g) continue;
     const box = h('div', { class: 'okit-cm-box' });
-    el.querySelector('.gb-text')?.append(
-      h('div', { class: 'okit-row okit-cm-tools' }, btn(g.reply ? 'Edit your reply' : 'Reply', '', () => box.replaceChildren(box.firstChild ? '' : replyBox(g.reply, 'Your reply', (text) => kit.act(() => kit.files.putFile(g.key, kit.gbText(g, text)), text ? 'Reply saved.' : 'Reply removed.')))), btn('Remove', 'danger', (e) => confirm(`Remove ${g.name}’s signature?`) && busyOn(e.currentTarget, () => kit.act(() => kit.files.delFile(g.key), 'Removed.')))),
+    el.querySelector('.gb-text, .gbp-back')?.append(
+      h('div', { class: 'okit-row okit-cm-tools' }, btn(g.reply ? 'Edit your reply' : 'Reply', '', () => box.replaceChildren(box.firstChild ? '' : replyBox(g.reply, 'Your reply', (text) => kit.act(() => kit.files.putFile(g.key, kit.gbText(g, text)), text ? 'Reply saved.' : 'Reply removed.')))), btn('Remove', 'danger', (e) => confirm(`Remove ${g.name}’s ${g.card ? 'postcard' : 'signature'}?`) && busyOn(e.currentTarget, () => kit.act(() => kit.files.delFile(g.key), 'Removed.')))),
       box
     );
   }

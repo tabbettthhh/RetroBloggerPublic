@@ -5,6 +5,7 @@ import { h, ICON, niceDate } from './util.js';
 import { sound } from './sound.js';
 import { menuOf } from './apps.js';
 import { isDark, setThemeChoice } from './theme.js';
+import { refreshSite } from './refresh.js';
 import { word } from './skins.js';
 import { pictureHtml, hasPicture } from './pictures.js';
 
@@ -76,6 +77,8 @@ export function startMenuParts(data, { onScreensaver } = {}) {
     { class: 'sm-foot' },
     theme,
     onScreensaver ? h('button', { type: 'button', class: 'sm-foot-btn', onclick: onScreensaver }, h('span', { class: 'sm-foot-ico ss' }), 'Screensaver') : null,
+    // (Everything fresh from the site, the kept copy thrown away.)
+    h('button', { type: 'button', class: 'sm-foot-btn sm-refresh', title: 'Load everything fresh from the site', onclick: () => refreshSite() }, h('span', { class: 'sm-foot-ico refresh', 'aria-hidden': 'true' }, '↻'), 'Refresh'),
     h('a', { href: '#/welcome', class: 'sm-foot-btn' }, h('span', { class: 'sm-foot-ico leave' }), word('leave', 'Leave'))
   );
   return [head, h('div', { class: 'sm-rule' }), h('div', { class: 'sm-cols' }, left, right), foot];
