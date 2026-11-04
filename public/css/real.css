@@ -23,13 +23,17 @@
 /* The whole screen: film grain and a gentle vignette, over everything, never in the way. */
 :root[data-sk-realism="extra"] body::after {
   content: ''; position: fixed; inset: 0; z-index: 2147483000; pointer-events: none;
-  background: radial-gradient(ellipse 120% 100% at 50% 40%, transparent 55%, rgba(30, 20, 10, .22)), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='.3 0 0 0 .74 .3 0 0 0 .72 .3 0 0 0 .68 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
-  mix-blend-mode: multiply; opacity: .32;
+  background: radial-gradient(ellipse 120% 100% at 50% 40%, transparent 55%, rgba(30, 20, 10, .22)), url("/img/grain.png") 0 0 / 128px;
+  opacity: .32;
 }
 :root[data-sk-realism="extra"][data-theme="dark"] body::after { opacity: .4; }
 
-/* Paper and card: grain you can almost feel, a lifted edge, a curl of shadow at the corners. */
-:root[data-sk-realism="extra"] :is(.card, .profile-tile, .ff-post, .countdown, .status-pill, .feed-more) { filter: url(#real-grain); }
+/* Paper and card: grain you can almost feel, a lifted edge, a curl of shadow at the corners.
+   (Their own grain only on a computer: on a phone, grain on every card makes scrolling slow, and
+   the whole screen's grain above is there anyway.) */
+@media (hover: hover) and (pointer: fine) {
+  :root[data-sk-realism="extra"] :is(.card, .profile-tile, .ff-post, .countdown, .status-pill, .feed-more) { filter: url(#real-grain); }
+}
 :root[data-sk-realism="extra"] :is(.card, .ff-post) { box-shadow: var(--real-lift), inset 0 1px 0 rgba(255, 255, 255, .5); }
 :root[data-sk-realism="extra"] .card:hover { box-shadow: var(--real-lift-hi), inset 0 1px 0 rgba(255, 255, 255, .5); translate: 0 -1px; transition: box-shadow .25s, translate .25s; }
 :root[data-sk-realism="extra"] .card :is(h2, h3, .card-head strong) { text-shadow: var(--real-letterpress); }
@@ -60,7 +64,10 @@
 :root[data-sk-realism="extra"] :is(.photo-btn img, .polaroid, .pf-photo) { box-shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 12px -4px rgba(0, 0, 0, .35); }
 
 /* Keepsakes sit a little prouder on the page. */
-:root[data-sk-realism="extra"] .ticket-wrap { filter: drop-shadow(0 2px 2px rgba(60, 40, 20, .35)) drop-shadow(0 8px 10px rgba(60, 40, 20, .2)) url(#real-grain); }
+:root[data-sk-realism="extra"] .ticket-wrap { filter: drop-shadow(0 2px 2px rgba(60, 40, 20, .35)) drop-shadow(0 8px 10px rgba(60, 40, 20, .2)); }
+@media (hover: hover) and (pointer: fine) {
+  :root[data-sk-realism="extra"] .ticket-wrap { filter: drop-shadow(0 2px 2px rgba(60, 40, 20, .35)) drop-shadow(0 8px 10px rgba(60, 40, 20, .2)) url(#real-grain); }
+}
 
 @media (prefers-reduced-motion: reduce) { :root[data-sk-realism="extra"] :is(.card, .desk-icon .dock-icon) { transition: none; translate: none; } }
 

@@ -35,6 +35,9 @@
 .okit-state.later { color: #7a4a00; background: #fff1d6; }
 .okit-state.friends { color: #22357a; background: #e6ecff; }
 .okit-has-more > .okit-state { position: absolute; top: 8px; right: 44px; z-index: 5; }
+/* Beside a post's title (a journal page, a review): the title's words flow around it. */
+.okit-more.by-title, .okit-state.by-title { float: right; position: relative; z-index: 5; margin: 4px 0 4px 8px; }
+.okit-state.by-title { margin-top: 8px; }
 .okit-hidden-post { outline: 2px dashed rgba(120, 120, 140, .55); outline-offset: 2px; }
 
 /* Menus: the classic right-click menu. */
