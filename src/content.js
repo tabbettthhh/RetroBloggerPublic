@@ -138,6 +138,17 @@ function mediaUrl(type, slug, p) {
   return `/media/${type}/${slug}/${encodeURIComponent(s)}`;
 }
 
+// How many words a post has, roughly, as it reads (links, code and markup left out).
+export function wordCount(md) {
+  const t = String(md || '')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[#>*_`~|-]+/g, ' ')
+    .trim();
+  return t ? t.split(/\s+/).length : 0;
+}
+
 function plainExcerpt(md, n = 160) {
   const t = md
     .replace(/```[\s\S]*?```/g, ' ')
@@ -153,7 +164,7 @@ function plainExcerpt(md, n = 160) {
 const KNOWN = new Set([
   'date', 'title', 'draft', 'font', 'photos', 'area', 'city', 'country', 'country_code', 'lat', 'lon',
   'category', 'rating', 'would_return', 'weather', 'source', 'caption', 'captions', 'stamp',
-  'author', 'director', 'host', 'episode', 'year', 'status', 'recommend', 'quote', 'rewatch', 'suggested_by', 'artist', 'album', 'format', 'pinned', 'friends_only', 'creator', 'season', 'network', 'episodes', 'pages', 'page', 'reading_log', 'floppy', 'floppy_journal', 'ordered', 'bought', 'tickets', 'rides', 'gallery', 'theatre', 'invite', 'boarding', 'cinema', 'cloakroom', 'wristband', 'postcard', 'fortune', 'luggage', 'matchbook', 'coaster', 'roomkey', 'flower', 'postcard_scene', 'pitch', 'trailmap', 'parkpass', 'patch', 'summit', 'signpost', 'leaf', 'marshmallow', 'tides', 'compass', 'bookmark', 'librarycard', 'bookplate', 'note', 'popcorn', 'glasses3d', 'rental', 'tvguide', 'remote', 'headphones', 'gig', 'pick', 'setlist', 'busticket', 'coffeering', 'signature', 'bookclub', 'dogear', 'stubpair', 'programme', 'picknmix', 'drivein', 'tally', 'takeaway', 'nospoil', 'battery', 'jcard', 'walkmap', 'napkin', 'vinyllabel', 'mixtape', 'backstage', 'lighter', 'sky', 'diary', 'moodring', 'doodle', 'cootie', 'forecast', 'lyric', 'handstamp', 'glowstick', 'racebib', 'ceremony', 'confetti', 'balloon', 'matchday', 'funfair', 'rosette', 'namebadge', 'sparkler', 'flyer', 'tourtee', 'earplugs', 'drumstick', 'buttonbadge', 'seatplan', 'lozenge', 'masks', 'stageprog', 'comedyticket', 'mic', 'interval', 'operaglasses', 'curtain', 'laughmeter', 'joke', 'custom_keepsakes', 'memory', 'negatives', 'oldprint', 'calendar', 'vhstape', 'envelope', 'thennow', 'rewind', 'skysunrise', 'skygolden', 'skyrainbow', 'skystorm', 'skysnow', 'skystars', 'skymoon', 'skyaurora', 'skyclouds', 'skyfog', 'skyplane', 'skypink', 'workout', 'gympass', 'personalbest', 'dumbbell', 'steps', 'shaker', 'heartrate', 'setsheet', 'medal', 'waterbottle', 'alarmclock', 'riseshine', 'firstcoffee', 'lunchbreak', 'teatime', 'nightowl', 'sleepmask', 'ledclock', 'discaward', 'trophy', 'chartno1', 'winnercard', 'goldmic', 'autograph', 'fanclub', 'jukebox', 'radiorequest', 'magreview', 'yearonrepeat', 'sevenninch', 'profile', 'grid_photo', 'flashcard', 'highlighter', 'pagetabs', 'timetable', 'examslip', 'pomodoro', 'desklamp', 'librarypass', 'grade', 'casecard', 'mindmap', 'revisionlist', 'pencil', 'calculator', 'gradcap', 'diploma', 'stopwatch', 'lecturenotes', 'doordnd', 'readinglist', 'idbadge', 'timecard', 'meetinginvite', 'outofoffice', 'businesscard', 'inboxzero', 'laptop', 'briefcase', 'deskplate', 'stapler', 'paperclips', 'memo', 'wfh', 'tgif', 'deadline', 'employeemonth', 'menucard', 'winelabel', 'recipecard', 'sugarpacket', 'teabagtag', 'chopsticks', 'bakerybox', 'tablenumber', 'candle', 'housekey', 'planttag', 'knitsquare', 'hotwaterbottle', 'doormat', 'jamjar', 'fridgenote', 'trainticket', 'ferrypass', 'travelpin', 'passportstamp', 'suitcasesticker', 'platform', 'seatres', 'milesign', 'birthdaycard', 'gifttag', 'cakecandle', 'placecard', 'favour', 'bootie', 'partyhat', 'thankyou', 'card', 'ribbon', 'ribbon_style', 'ribbon_colour']);
+  'author', 'director', 'host', 'episode', 'year', 'status', 'recommend', 'quote', 'rewatch', 'suggested_by', 'artist', 'album', 'format', 'pinned', 'friends_only', 'creator', 'season', 'network', 'episodes', 'pages', 'page', 'reading_log', 'floppy', 'floppy_journal', 'ordered', 'bought', 'tickets', 'rides', 'gallery', 'theatre', 'invite', 'boarding', 'cinema', 'cloakroom', 'wristband', 'postcard', 'fortune', 'luggage', 'matchbook', 'coaster', 'roomkey', 'flower', 'postcard_scene', 'pitch', 'trailmap', 'parkpass', 'patch', 'summit', 'signpost', 'leaf', 'marshmallow', 'tides', 'compass', 'bookmark', 'librarycard', 'bookplate', 'note', 'popcorn', 'glasses3d', 'rental', 'tvguide', 'remote', 'headphones', 'gig', 'pick', 'setlist', 'busticket', 'coffeering', 'signature', 'bookclub', 'dogear', 'stubpair', 'programme', 'picknmix', 'drivein', 'tally', 'takeaway', 'nospoil', 'battery', 'jcard', 'walkmap', 'napkin', 'vinyllabel', 'mixtape', 'backstage', 'lighter', 'sky', 'diary', 'moodring', 'doodle', 'cootie', 'forecast', 'lyric', 'handstamp', 'glowstick', 'racebib', 'ceremony', 'confetti', 'balloon', 'matchday', 'funfair', 'rosette', 'namebadge', 'sparkler', 'flyer', 'tourtee', 'earplugs', 'drumstick', 'buttonbadge', 'seatplan', 'lozenge', 'masks', 'stageprog', 'comedyticket', 'mic', 'interval', 'operaglasses', 'curtain', 'laughmeter', 'joke', 'custom_keepsakes', 'memory', 'negatives', 'oldprint', 'calendar', 'vhstape', 'envelope', 'thennow', 'rewind', 'skysunrise', 'skygolden', 'skyrainbow', 'skystorm', 'skysnow', 'skystars', 'skymoon', 'skyaurora', 'skyclouds', 'skyfog', 'skyplane', 'skypink', 'workout', 'gympass', 'personalbest', 'dumbbell', 'steps', 'shaker', 'heartrate', 'setsheet', 'medal', 'waterbottle', 'alarmclock', 'riseshine', 'firstcoffee', 'lunchbreak', 'teatime', 'nightowl', 'sleepmask', 'ledclock', 'discaward', 'trophy', 'chartno1', 'winnercard', 'goldmic', 'autograph', 'fanclub', 'jukebox', 'radiorequest', 'magreview', 'yearonrepeat', 'sevenninch', 'profile', 'grid_photo', 'flashcard', 'highlighter', 'pagetabs', 'timetable', 'examslip', 'pomodoro', 'desklamp', 'librarypass', 'grade', 'casecard', 'mindmap', 'revisionlist', 'pencil', 'calculator', 'gradcap', 'diploma', 'stopwatch', 'lecturenotes', 'doordnd', 'readinglist', 'idbadge', 'timecard', 'meetinginvite', 'outofoffice', 'businesscard', 'inboxzero', 'laptop', 'briefcase', 'deskplate', 'stapler', 'paperclips', 'memo', 'wfh', 'tgif', 'deadline', 'employeemonth', 'menucard', 'winelabel', 'recipecard', 'sugarpacket', 'teabagtag', 'chopsticks', 'bakerybox', 'tablenumber', 'candle', 'housekey', 'planttag', 'knitsquare', 'hotwaterbottle', 'doormat', 'jamjar', 'fridgenote', 'trainticket', 'ferrypass', 'travelpin', 'passportstamp', 'suitcasesticker', 'platform', 'seatres', 'milesign', 'birthdaycard', 'gifttag', 'cakecandle', 'placecard', 'favour', 'bootie', 'partyhat', 'thankyou', 'card', 'ribbon', 'ribbon_style', 'ribbon_colour', 'series', 'start_here']);
 
 export function buildPost(type, key, text, tz) {
   const { data, body } = splitFrontMatter(text);
@@ -170,6 +181,7 @@ export function buildPost(type, key, text, tz) {
     city = parts[parts.length - 1] || '';
   }
   const num = (v) => (v == null || v === '' || Number.isNaN(+v) ? null : +v);
+  const wc = wordCount(body);
 
   return {
     type,
@@ -181,6 +193,14 @@ export function buildPost(type, key, text, tz) {
     draft: data.draft === true,
     // Pinned posts sit at the top of the feed and their section.
     pinned: data.pinned === true,
+    // The post new visitors see first, above everything else, until they've read it.
+    start_here: data.start_here === true,
+    // One of a series ("Japan trip"): its part number and neighbours are worked out from the
+    // other posts with the same series name, by date.
+    series: data.series != null ? String(data.series).replace(/[\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60) : '',
+    // About how long it takes to read (only said for longer posts: 250 words or more).
+    words: wc,
+    read_mins: wc >= 250 ? Math.max(1, Math.round(wc / 200)) : 0,
     // Only for your friends: never on your own site, and only in your friends' back offices.
     friends_only: data.friends_only === true,
     // How its card is dressed (one of the card designs; empty: the theme's), and a ribbon of its
@@ -588,8 +608,44 @@ export function parseSite(text) {
     tagline: data.tagline ? String(data.tagline) : '',
     // Your picture: one of the site's own (by name), or a photo of yours kept with the designs.
     picture: /^([a-z]{2,20}|design\/[\w.-]{1,80}\.(jpe?g|png|webp|gif))$/i.test(String(data.picture ?? '').trim()) ? String(data.picture).trim() : '',
+    // How you feel: one of the little faces, shown by your status.
+    mood: /^[a-z]{2,16}$/.test(String(data.mood ?? '').trim()) ? String(data.mood).trim() : '',
+    // Visitors can leave a ♥, a ☆ or a smile on posts (only how many is kept), unless switched off.
+    reactions: !(data.reactions === false || /^(false|no|off)$/i.test(String(data.reactions ?? ''))),
+    // While you're away: a status (and how you show) that switches itself on and off on the
+    // days you set. (The dates are only ever seen in the back office.)
+    away: awayOf(data),
     about_html: safeMarkdown(body)
   };
+}
+
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+function awayOf(data) {
+  const from = String(data.away_from ?? '').trim();
+  const to = String(data.away_to ?? '').trim();
+  const status = data.away_status != null ? String(data.away_status).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 140) : '';
+  const presence = PRESENCE.includes(String(data.away_presence ?? '').toLowerCase()) ? String(data.away_presence).toLowerCase() : 'away';
+  if (!DAY.test(from) || !DAY.test(to) || to < from || (!status && presence === 'online')) return null;
+  return { status, presence, from, to };
+}
+// Today's date where you are (your site's time zone), as 2026-11-04.
+export function todayIn(tz, now = new Date()) {
+  try {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+  } catch {
+    return now.toISOString().slice(0, 10);
+  }
+}
+
+// fortunes.md: the lines in your fortune cookie, one per line ("- Today is a good day for cake").
+export function parseFortunes(text) {
+  const out = [];
+  for (const line of String(splitFrontMatter(text || '').body).split(/\r?\n/)) {
+    const m = /^\s*[-*]\s+(.+?)\s*$/.exec(line);
+    if (m) out.push(m[1].replace(/[\u0000-\u001f]/g, ' ').slice(0, 160));
+    if (out.length >= 100) break;
+  }
+  return out;
 }
 
 // status-log.md: one past status per line, newest first: "- 2026-10-23 11:39 · text".
@@ -718,6 +774,7 @@ export const THEME_OPTIONS = {
   bars: ['glossy', 'flat', 'stripes', 'pixel'],
   corners: ['classic', 'square', 'round'],
   realism: ['normal', 'extra'],
+  counter: ['led', 'odometer', 'flip', 'nixie', 'plain'],
   density: ['cosy', 'compact', 'roomy'],
   posts: ['cards', 'lines'],
   scrollbar: ['classic', 'themed', 'thin', 'hidden'],
@@ -739,7 +796,7 @@ export const THEME_OPTIONS = {
   page_strength: ['medium', 'soft', 'strong'],
   wall_time: ['day', 'still']
 };
-export const THEME_HIDEABLE = ['lastpost', 'status', 'playing', 'countdown', 'nudge', 'clock', 'traystatus'];
+export const THEME_HIDEABLE = ['lastpost', 'status', 'playing', 'countdown', 'nudge', 'clock', 'traystatus', 'fortune', 'photoday'];
 export const THEME_SECTIONS = ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'planner', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about'];
 // Each app's own look (these match public/js/skins.js).
 export const THEME_APPS = { 'journal': ['paper', 'hand', 'map', 'font'], 'passport': ['paper', 'hand', 'font'], 'atlas': ['map', 'font'], 'wishlist': ['font'], 'planner': ['paper', 'hand', 'font'], 'guestbook': ['font'], 'books': ['font'], 'films': ['font'], 'podcasts': ['font'], 'music': ['font'], 'tv': ['font'], 'album': ['font'] };

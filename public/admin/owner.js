@@ -548,6 +548,7 @@ function postMenu(anchor, p) {
     [
       { label: 'Edit', icon: '✎', run: () => editPost(p, anchor.closest('[data-post]')) },
       { label: p.pinned ? 'Unpin' : 'Pin to the top', icon: '📌', run: () => kit.togglePin(kit.post(p.key) || p) },
+      p.friends_only ? null : { label: p.start_here ? 'Not “Start here” any more' : 'Start here (new visitors see it first)', icon: '👋', run: () => kit.toggleFlag(kit.post(p.key) || p, 'start_here', p.start_here ? 'Back in its usual place.' : 'New visitors see it first now, until they close it.') },
       shelf ? { label: rank ? `Out of my highlights (№${rank})` : 'Add to my highlights', icon: '★', run: () => (rank ? kit.takeOutHighlight(kit.post(p.key) || p) : kit.addHighlight(kit.post(p.key) || p)) } : null,
       { label: p.friends_only ? 'For everyone' : 'Friends only', icon: '👥', run: () => kit.toggleFlag(kit.post(p.key) || p, 'friends_only', p.friends_only ? 'On the site for everyone.' : 'Friends only now: off the site.') },
       p.photos?.length ? { label: p.profile ? 'Off my profile grid' : 'On my profile grid', icon: '▦', run: () => kit.toggleFlag(kit.post(p.key) || p, 'profile', p.profile ? 'Off the grid.' : 'On your profile grid.') } : null,
@@ -864,6 +865,7 @@ function savePlanner(change, msg) {
     return kit.act(() => kit.files.putFile('planner.md', kit.plannerText(lists)), msg);
   });
 }
+const plannerTyping = {};
 function decoratePlanner() {
   for (const li of document.querySelectorAll('.pln-item[data-pl]:not([data-okit])')) {
     li.dataset.okit = '1';
@@ -891,9 +893,21 @@ function decoratePlanner() {
     const at = Number(page.dataset.plList);
     const text = h('input', { class: 'okit-input', maxlength: 200, placeholder: 'Add to this list…', 'aria-label': 'Add to this list' });
     const due = h('input', { class: 'okit-input okit-date', type: 'date', 'aria-label': 'By when (optional)' });
+    // (What you're typing survives the list being drawn again, after a tick saved a moment ago.)
+    const typed = plannerTyping[at];
+    if (typed) {
+      text.value = typed.text;
+      due.value = typed.due;
+      if (typed.focus) setTimeout(() => text.focus(), 0);
+    }
+    const remember = () => (plannerTyping[at] = { text: text.value, due: due.value, focus: document.activeElement === text });
+    text.addEventListener('input', remember);
+    due.addEventListener('change', remember);
+    text.addEventListener('blur', () => plannerTyping[at] && (plannerTyping[at].focus = false));
     const add = btn('Add', 'go', (e) => {
       const t = text.value.trim();
       if (!t) return text.focus();
+      delete plannerTyping[at];
       busyOn(e.currentTarget, () => savePlanner((ls) => ls[at].items.push({ text: t, done: false, due: due.value, note: '' }), 'Added.'));
     });
     text.addEventListener('keydown', (e) => e.key === 'Enter' && add.click());
@@ -1490,6 +1504,18 @@ export async function startOwner(s) {
   document.documentElement.classList.add('owner-on');
   ownerHooks.holding = () => writing();
   ownerHooks.trying = () => trying;
+  // (An emoji left on one of your posts that you don't want: × takes it off.)
+  ownerHooks.removeReaction = async (p, emoji) => {
+    if (!confirm(`Take ${emoji} off “${p.title || 'this post'}”?`)) return false;
+    try {
+      await kit.removeReaction(p, emoji);
+      toast(`${emoji} taken off.`);
+      return true;
+    } catch (e) {
+      toast(e.message, true);
+      return false;
+    }
+  };
   ownerHooks.fresh = (d) => {
     keepPublic(d);
     merge(d, true);

@@ -390,7 +390,9 @@ function themeControls(ctx, saved, redraw, preview) {
     feed: ['Feed', () => [opt('posts'), opt('density'), opt('page'), t.page !== 'plain' ? opt('page_strength') : null, h('p', { class: 'hint' }, 'Behind the posts: Layered puts the theme’s colours, its pattern (or your emoji or picture) and, when the seasons are on, the season’s or festive day’s drawings behind your posts, softened so they stay easy to read.')]],
     header: ['Profile header', () => [
       opt('header'),
-      h('div', { class: 'design-field wide' }, h('span', null, 'What it shows'), h('div', { class: 'tm-ticks' }, ['lastpost', 'status', 'playing', 'countdown', 'nudge'].map((id) => tick('hide', id, HIDEABLE[id], !t.hide.includes(id)))))
+      h('div', { class: 'design-field wide' }, h('span', null, 'What it shows'), h('div', { class: 'tm-ticks' }, ['lastpost', 'status', 'playing', 'countdown', 'nudge', 'fortune', 'photoday'].map((id) => tick('hide', id, HIDEABLE[id], !t.hide.includes(id))))),
+      opt('counter'),
+      h('p', { class: 'hint' }, 'The visitor counter is in your guestbook.')
     ]],
     menu: ['Menu', () => menuControls(d, t, redraw)],
     bars: ['Taskbar & scrolling', () => [

@@ -1,0 +1,86 @@
+/* ---------- reactions (see reactions.js) ---------- */
+.react-row { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; vertical-align: middle; }
+.card > .react-row { margin: 0 10px 8px; }
+.card > .card-comments { vertical-align: middle; }
+.react-btn { display: inline-flex; align-items: center; gap: 3px; min-height: 26px; padding: 1px 8px 1px 6px; border: 1px solid color-mix(in srgb, var(--sk-line, #c7c3ae) 80%, transparent); border-radius: 13px; background: color-mix(in srgb, var(--sk-soft, #cfe6cf) 30%, transparent); color: inherit; font: 12px/1 inherit; cursor: pointer; }
+.react-btn:hover, .react-btn:focus-visible { border-color: var(--sk-main, #0054e3); }
+.react-btn.on { border-color: var(--sk-main, #0054e3); background: color-mix(in srgb, var(--sk-main, #0054e3) 16%, transparent); font-weight: bold; }
+.react-ico { display: inline-grid; place-items: center; width: 16px; height: 16px; }
+.react-n { min-width: 1ch; }
+.react-btn.pop .react-ico { animation: react-pop .35s ease-out; }
+@keyframes react-pop { 40% { transform: scale(1.45) rotate(-8deg); } }
+@media (prefers-reduced-motion: reduce) { .react-btn.pop .react-ico { animation: none; } }
+[data-theme="dark"] .react-btn { color: #e6e6e6; }
+.card[data-card="neon"] > .react-row .react-btn { color: #fff; }
+.react-row.on-paper .react-btn { background: rgba(255, 250, 235, .7); color: #3a2a1a; }
+.react-row.on-shelf { margin-left: 8px; }
+
+/* ---------- series, read time ---------- */
+.card-read, .series-tag { flex: none; padding: 0 6px; border-radius: 8px; font-size: 11px; line-height: 17px; white-space: nowrap; color: inherit; opacity: .78; background: color-mix(in srgb, currentColor 9%, transparent); }
+.series-tag { max-width: 40%; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 420px) { .card-read { display: none; } }
+.series-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin: 2px 0 12px; padding: 6px 12px; border: 1px dashed var(--sk-line, #c7c3ae); border-radius: 8px; font-size: 13px; color: var(--card-text, inherit); background: color-mix(in srgb, var(--card-paper, #fff) 70%, transparent); }
+.series-where { flex: 1 1 auto; text-align: center; }
+.series-go { color: var(--sk-bar, #0054e3); text-decoration: none; white-space: nowrap; }
+.series-go:hover, .series-go:focus-visible { text-decoration: underline; }
+.series-go.none { visibility: hidden; }
+.series-line.on-paper { margin: 10px 0; border-color: rgba(90, 60, 30, .35); background: rgba(255, 250, 235, .55); color: #3a2a1a; font-family: var(--hand, inherit); }
+.series-line.on-paper .series-go { color: #6b3a14; }
+.series-line.on-shelf { margin: 10px auto; max-width: 640px; }
+[data-theme="dark"] .series-line:not(.on-paper) { color: #ddd; background: rgba(255, 255, 255, .05); }
+[data-theme="dark"] .series-line:not(.on-paper) .series-go { color: #8fb4ff; }
+
+/* ---------- Start here ---------- */
+.start-here { margin: 0 0 12px; padding: 6px; border: 2px solid var(--sk-accent, #3a9a3a); border-radius: 10px; background: color-mix(in srgb, var(--sk-accent, #3a9a3a) 10%, transparent); }
+.start-here-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 2px 6px; }
+.start-here-tag { font: bold 13px/1.2 var(--font-xp-title, inherit); color: var(--sk-accent, #2b7a2b); }
+.start-here-close { min-height: 28px; padding: 2px 10px; border: 1px solid var(--sk-accent, #3a9a3a); border-radius: 14px; background: #fff; color: #222; font: inherit; font-size: 12px; cursor: pointer; }
+.start-here > .card { margin: 0; }
+[data-theme="dark"] .start-here-tag { color: #9fdc9f; }
+[data-theme="dark"] .start-here-close { background: #2a2a2a; color: #eee; }
+
+/* ---------- the fortune cookie ---------- */
+.fortune { position: relative; display: inline-flex; align-items: center; }
+.fortune-btn { display: inline-grid; place-items: center; width: 30px; height: 26px; padding: 0; border: 1px solid rgba(255, 255, 255, .45); border-radius: 13px; background: rgba(255, 255, 255, .18); cursor: pointer; }
+.fortune-btn:hover, .fortune-btn:focus-visible { background: rgba(255, 255, 255, .32); }
+.fortune-btn.crack svg { animation: cookie-crack .45s ease-out; }
+@keyframes cookie-crack { 30% { transform: rotate(-14deg) scale(1.15); } 60% { transform: rotate(10deg); } }
+@media (prefers-reduced-motion: reduce) { .fortune-btn.crack svg { animation: none; } }
+.fortune-slip { position: absolute; z-index: 30; top: calc(100% + 6px); left: 50%; translate: -50% 0; width: max-content; max-width: min(260px, 70vw); padding: 6px 10px; border: 1px solid #d8c9a0; border-radius: 2px; color: #3a2a1a; background: #fffdf3; box-shadow: 0 3px 8px rgba(0, 0, 0, .25); font: 13px/1.35 var(--card-hand, 'Caveat', cursive); white-space: normal; text-align: center; }
+.fortune-slip::before { content: '✦ '; color: #c0392b; }
+
+/* ---------- photo of the day ---------- */
+.profile-tile .photo-day { position: relative; flex: none; align-self: center; width: 72px; margin-left: auto; padding: 4px 4px 14px; border-radius: 2px; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .35); rotate: 3deg; text-decoration: none; }
+.profile-tile .photo-day img { display: block; width: 64px; height: 64px; object-fit: cover; }
+.photo-day-label { position: absolute; left: 0; right: 0; bottom: 1px; font: 8px/1.2 Tahoma, sans-serif; color: #555; text-align: center; white-space: nowrap; }
+.profile-tile .photo-day:hover, .profile-tile .photo-day:focus-visible { rotate: 0deg; }
+@media (max-width: 360px) { .profile-tile .photo-day { display: none; } }
+
+/* ---------- mood ---------- */
+.status-mood { display: inline-grid; place-items: center; width: 16px; height: 16px; flex: none; }
+
+/* ---------- the visitor counter's styles (Themes › Profile header) ---------- */
+:root[data-sk-counter="odometer"] .led span { border: 1px solid #2a2a2a; border-radius: 2px; background: linear-gradient(180deg, #1a1a1a, #3a3a3a 18%, #f4f1e8 22%, #ffffff 50%, #f4f1e8 78%, #3a3a3a 82%, #1a1a1a); color: #1a1a1a; text-shadow: none; font-family: 'Oswald', 'DejaVu Sans', sans-serif; font-weight: 600; }
+:root[data-sk-counter="flip"] .led span { position: relative; border: 0; border-radius: 6px; background: linear-gradient(180deg, #2b2b2b 0 49%, #111 49% 51%, #1e1e1e 51%); color: #f2f2f2; text-shadow: none; font-family: 'Oswald', 'DejaVu Sans', sans-serif; box-shadow: 0 2px 3px rgba(0, 0, 0, .4); }
+:root[data-sk-counter="nixie"] .led span { border: 1px solid #5a4a3a; border-radius: 14px 14px 6px 6px; background: radial-gradient(ellipse at 50% 60%, rgba(255, 120, 30, .18), transparent 70%), linear-gradient(180deg, #2a1d14, #120c08); color: #ff9a3c; text-shadow: 0 0 4px #ff7a1a, 0 0 12px rgba(255, 110, 20, .8); font-family: 'DejaVu Sans', sans-serif; font-weight: 300; }
+:root[data-sk-counter="plain"] .led { gap: 0; }
+:root[data-sk-counter="plain"] .led span { width: auto; height: auto; padding: 0 1px; border: 0; background: none; color: inherit; text-shadow: none; font: bold 28px/1.2 'Share Tech Mono', monospace; }
+
+/* Visitors' own emoji, and ＋ to add one. */
+.react-emoji { font-size: 15px; line-height: 1; font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; }
+.react-add { position: relative; gap: 0; padding: 1px 7px; font-weight: bold; opacity: .85; }
+.react-add-face { margin-left: 1px; font-size: 13px; }
+.react-row { position: relative; }
+.react-pick { position: fixed; z-index: 9000; display: grid; gap: 6px; width: min(290px, 86vw); padding: 8px; border: 1px solid #a5acb5; border-radius: 10px; background: #fff; color: #222; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); }
+.react-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; }
+.react-pick-btn { display: grid; place-items: center; aspect-ratio: 1; padding: 0; border: 0; border-radius: 6px; background: none; font-size: 20px; line-height: 1; cursor: pointer; font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; }
+.react-pick-btn:hover, .react-pick-btn:focus-visible { background: #eef3fb; }
+.react-typed { display: flex; gap: 6px; }
+.react-type { flex: 1; min-width: 0; padding: 6px 8px; border: 1px solid #a5acb5; border-radius: 6px; font: inherit; font-size: 15px; background: #fff; color: #222; }
+.react-pick-go { padding: 0 12px; border: 1px solid #3a6fd8; border-radius: 6px; background: #3a6fd8; color: #fff; font: inherit; font-size: 13px; cursor: pointer; }
+.react-note { color: #b03030; font-size: 11px; }
+.react-note:empty { display: none; }
+.react-own { display: inline-flex; align-items: center; }
+.react-x { display: grid; place-items: center; width: 18px; height: 18px; margin-left: -6px; padding: 0; border: 1px solid #b03030; border-radius: 50%; background: #fff; color: #b03030; font: bold 12px/1 Tahoma, sans-serif; cursor: pointer; z-index: 1; }
+[data-theme="dark"] .react-pick { background: #2a2a2e; color: #eee; border-color: #555; }
+[data-theme="dark"] .react-type { background: #1e1e22; color: #eee; border-color: #555; }

@@ -659,3 +659,16 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .pic-pick[aria-checked="true"] { border-color: #316ac5; background: #e3ecfb; }
 .pic-pick:focus-visible { outline: 2px solid #316ac5; outline-offset: 1px; }
 [data-theme="dark"] .pic-pick[aria-checked="true"] { background: #2b3446; }
+
+/* The series box in a post's options: one input, suggestions under it. */
+.series-box { position: relative; }
+.series-pick { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 2px); display: grid; padding: 4px; border: 1px solid #a5acb5; border-radius: 6px; background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, .2); }
+.series-opt { display: block; width: 100%; min-height: 34px; padding: 6px 8px; border: 0; border-radius: 4px; background: none; color: #222; font: inherit; text-align: left; cursor: pointer; }
+.series-opt:hover, .series-opt:focus-visible { background: #e8eefc; }
+.series-opt small { color: #777; }
+.series-opt.new { color: #0b5a1e; }
+.series-chosen { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.series-chosen:empty { display: none; }
+.emo-btn.mood-none { width: auto; padding: 0 8px; font-size: 12px; }
+.emo-btn[aria-pressed="true"] { outline: 2px solid #3a6fd8; outline-offset: -2px; border-radius: 4px; background: #e8eefc; }
+.series-chosen .chip { padding: 4px 10px; border-radius: 12px; background: #eef3fb; font-size: 12px; }

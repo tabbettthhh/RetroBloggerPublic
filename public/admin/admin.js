@@ -301,7 +301,7 @@ const stampNow = () => {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 };
 // The fields site.md can hold, kept as they are when only the status changes.
-const SITE_KEYS = ['name', 'owner', 'picture', 'status', 'presence', 'status_updated', 'now_playing', 'countdown', 'countdown_date', 'countdown_icon', 'tagline', 'comments', 'top_room'];
+const SITE_KEYS = ['name', 'owner', 'picture', 'status', 'presence', 'status_updated', 'mood', 'now_playing', 'countdown', 'countdown_date', 'countdown_icon', 'away_status', 'away_presence', 'away_from', 'away_to', 'tagline', 'comments', 'reactions', 'top_room'];
 // Changes one setting in site.md, keeping everything else as it is.
 async function setSiteField(key, value) {
   const siteRaw = await readFile('site.md');
@@ -1002,7 +1002,7 @@ function draftBanner(inEditor = false) {
 }
 
 function newEditor(type) {
-  return { key: null, type, date: nowLocal(), title: '', body: '', draft: false, pinned: false, photos: [], removed: [], area: '', city: '', country: '', country_code: '', lat: null, lon: null, category: '', rating: null, would_return: false, weather: '', source: '', stamp: '', creator: '', year: '', episode: '', format: 'album', album: '', season: '', network: '', episodes: [], pages: '', page: '', reading_log: [], status: SHELF[type] ? SHELF[type].states[0][0] : '', recommend: false, rewatch: false, quote: '', suggested_by: '', font: '', card: '', ribbon: '', ribbon_style: 'banner', ribbon_colour: '', floppy: [], floppy_journal: [], ordered: [], bought: [], tickets: [], rides: [], keep: {}, memory: '', extra: {}, raw: null };
+  return { key: null, type, date: nowLocal(), title: '', body: '', draft: false, pinned: false, photos: [], removed: [], area: '', city: '', country: '', country_code: '', lat: null, lon: null, category: '', rating: null, would_return: false, weather: '', source: '', stamp: '', creator: '', year: '', episode: '', format: 'album', album: '', season: '', network: '', episodes: [], pages: '', page: '', reading_log: [], status: SHELF[type] ? SHELF[type].states[0][0] : '', recommend: false, rewatch: false, quote: '', suggested_by: '', font: '', card: '', ribbon: '', ribbon_style: 'banner', ribbon_colour: '', series: '', start_here: false, floppy: [], floppy_journal: [], ordered: [], bought: [], tickets: [], rides: [], keep: {}, memory: '', extra: {}, raw: null };
 }
 
 async function edit(p) {
@@ -1040,6 +1040,8 @@ async function edit(p) {
     ribbon: p.ribbon || '',
     ribbon_style: p.ribbon_style || 'banner',
     ribbon_colour: p.ribbon_colour || '',
+    series: p.series || '',
+    start_here: !!p.start_here,
     photos: p.files.map((name, i) => ({ name, url: p.photos[i], caption: p.captions[i] || '', cover: i > 0 && i === p.grid_cover })),
     removed: [],
     area: p.area,
@@ -1190,6 +1192,8 @@ function buildText(s) {
   fm.ribbon_style = fm.ribbon && s.ribbon_style && s.ribbon_style !== 'banner' ? s.ribbon_style : null;
   fm.ribbon_colour = fm.ribbon && s.ribbon_colour ? s.ribbon_colour : null;
   fm.profile = s.profile && s.photos.length ? true : null;
+  fm.series = s.series?.trim() || null;
+  fm.start_here = s.start_here || null;
   // The grid's thumbnail, when it isn't the first photo (it stays chosen even off the grid).
   const cover = kept.find((ph) => ph.cover);
   fm.grid_photo = cover && kept.indexOf(cover) > 0 ? cover.name || cover.pendingName : null;
@@ -2169,6 +2173,76 @@ function starPicker(s, rerender) {
 
 // "Suggested by" field. For a place, a matching wishlist entry that a reader suggested
 // offers to fill it in.
+// Series: one small box. Type and it offers the series you already have (the closest first), or
+// a new one by that name; one tap either way. No list to scroll through.
+function seriesPicker(s) {
+  const names = () => {
+    const seen = new Map();
+    // (Spelt as in the series' first post, as the site shows it.)
+    for (const p of [...(data.posts || [])].sort((a, b) => (a.ts || 0) - (b.ts || 0))) if (p.series && !seen.has(p.series.toLowerCase())) seen.set(p.series.toLowerCase(), { name: p.series, n: 0, last: 0 });
+    for (const p of data.posts || []) if (p.series) {
+      const e = seen.get(p.series.toLowerCase());
+      e.n++;
+      e.last = Math.max(e.last, p.ts || 0);
+    }
+    return [...seen.values()].sort((a, b) => b.last - a.last);
+  };
+  const input = h('input', { class: 'input', value: s.series || '', maxlength: 60, placeholder: 'Find a series, or name a new one', autocomplete: 'off', 'aria-label': 'Series', role: 'combobox', 'aria-expanded': 'false', 'aria-autocomplete': 'list' });
+  const list = h('div', { class: 'series-pick', role: 'listbox', hidden: true });
+  const chosen = h('div', { class: 'series-chosen' });
+  const choose = (name) => {
+    s.series = name;
+    input.value = name;
+    close();
+    paint();
+  };
+  const close = () => {
+    list.hidden = true;
+    input.setAttribute('aria-expanded', 'false');
+  };
+  const paint = () =>
+    chosen.replaceChildren(
+      ...(s.series?.trim()
+        ? [h('span', { class: 'chip' }, '📚 ', h('b', null, s.series.trim()), (() => {
+            const e = names().find((x) => x.name.toLowerCase() === s.series.trim().toLowerCase());
+            const others = e ? e.n - (e && data.posts.some((p) => p.key === s.key && p.series?.toLowerCase() === s.series.trim().toLowerCase()) ? 1 : 0) : 0;
+            return others ? ` · with ${others} other post${others === 1 ? '' : 's'}` : ' · a new series';
+          })()), h('button', { type: 'button', class: 'btn small', onclick: () => choose('') }, 'Not in a series')]
+        : [])
+    );
+  const show = () => {
+    const q = input.value.trim().toLowerCase();
+    const all = names();
+    const hits = (q ? all.filter((x) => x.name.toLowerCase().includes(q)).sort((a, b) => a.name.toLowerCase().indexOf(q) - b.name.toLowerCase().indexOf(q)) : all).slice(0, 6);
+    const exact = all.some((x) => x.name.toLowerCase() === q);
+    list.replaceChildren(
+      ...hits.map((x) => h('button', { type: 'button', role: 'option', class: 'series-opt', onmousedown: (e) => e.preventDefault(), onclick: () => choose(x.name) }, '📚 ', x.name, h('small', null, ` · ${x.n} post${x.n === 1 ? '' : 's'}`))),
+      q && !exact ? h('button', { type: 'button', role: 'option', class: 'series-opt new', onmousedown: (e) => e.preventDefault(), onclick: () => choose(input.value.trim().replace(/\s+/g, ' ').slice(0, 60)) }, '＋ New series: ', h('b', null, input.value.trim())) : null
+    );
+    list.hidden = !list.children.length;
+    input.setAttribute('aria-expanded', String(!list.hidden));
+  };
+  input.addEventListener('focus', show);
+  input.addEventListener('input', show);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const first = list.querySelector('.series-opt');
+      if (first) first.click();
+      else choose(input.value.trim());
+    } else if (e.key === 'Escape') close();
+  });
+  input.addEventListener('blur', () => setTimeout(() => {
+    close();
+    // (Left with a name typed: one you have by that name, or a new one; nothing: none.)
+    const typed = input.value.trim().replace(/\s+/g, ' ').slice(0, 60);
+    const same = names().find((x) => x.name.toLowerCase() === typed.toLowerCase());
+    if ((same?.name || typed) !== (s.series || '')) choose(same?.name || typed);
+  }, 150));
+  paint();
+  return h('div', { class: 'field series-field' }, h('span', { class: 'label' }, 'Series (optional)'), h('div', { class: 'series-box' }, input, list), chosen, h('span', { class: 'hint' }, 'Posts in a series show “Part 3 of 7” with the parts either side. Nothing else changes on the site.'));
+}
+
 function suggestedField(s, rerender) {
   const input = h('input', { class: 'input', value: s.suggested_by, maxlength: 40, placeholder: 'Leave empty if nobody suggested it' });
   input.addEventListener('input', () => (s.suggested_by = input.value));
@@ -2336,13 +2410,19 @@ function viewEditor() {
     fold(
       'options',
       'Options',
-      [s.draft ? 'a draft' : later ? 'scheduled' : 'goes live now', s.friends_only ? 'friends only' : '', s.pinned ? 'pinned' : '', s.profile ? 'on the grid' : '', hlWanted(s) ? 'in the highlights' : ''].filter(Boolean).join(' · '),
+      [s.draft ? 'a draft' : later ? 'scheduled' : 'goes live now', s.friends_only ? 'friends only' : '', s.pinned ? 'pinned' : '', s.start_here ? 'start here' : '', s.profile ? 'on the grid' : '', hlWanted(s) ? 'in the highlights' : '', s.series?.trim() ? `part of ${s.series.trim()}` : ''].filter(Boolean).join(' · '),
       [
         field('Date and time', date, SHELF[s.type] ? 'When you finished it, started it or added it. A time in the future publishes it later.' : 'Pick a time in the future to publish it later.'),
-        h('label', { class: 'row' }, draft, 'Keep as a draft (only you can see it)'),
-        h('label', { class: 'row' }, only, '👥 Friends only (not on your site for visitors: only your friends see it, signed in on theirs)'),
-        h('label', { class: 'row' }, pin, '📌 Pin it to the top of the feed and its section'),
-        h('label', { class: 'row' + (s.photos.length ? '' : ' muted') }, grid, s.photos.length ? '▦ Show it on my profile grid (the About page)' : '▦ Show it on my profile grid (add a photo first)'),
+        seriesPicker(s),
+        h('label', { class: 'row check' }, draft, 'Keep as a draft (only you can see it)'),
+        h('label', { class: 'row check' }, only, '👥 Friends only (not on your site for visitors: only your friends see it, signed in on theirs)'),
+        h('label', { class: 'row check' }, pin, '📌 Pin it to the top of the feed and its section'),
+        (() => {
+          const start = h('input', { type: 'checkbox', checked: !!s.start_here });
+          start.addEventListener('change', () => (s.start_here = start.checked));
+          return h('label', { class: 'row check' }, start, '👋 Start here: new visitors see it first, above everything, until they close it');
+        })(),
+        h('label', { class: 'row check' + (s.photos.length ? '' : ' muted') }, grid, s.photos.length ? '▦ Show it on my profile grid (the About page)' : '▦ Show it on my profile grid (add a photo first)'),
         coverPick,
         HL_SHELVES[s.type] ? highlightOption(s) : null,
         statusToggle(s)
@@ -2782,6 +2862,11 @@ function viewComments() {
     h('h2', { class: 'section-title' }, 'Comments'),
     h('p', { class: 'hint' }, 'Visitors can comment on any post, or reply to a comment, with just a name (any name: nothing else about them is asked for or kept). Each one waits here until you approve it. Your replies show under the comment they answer.'),
     h('label', { class: 'row check' }, toggle, h('span', null, h('b', null, 'Let visitors comment on posts'), h('small', { class: 'hint' }, ' (switch off to hide them all; nothing is deleted)'))),
+    (() => {
+      const r = h('input', { type: 'checkbox', checked: data.site?.reactions !== false });
+      r.addEventListener('change', () => act(() => setSiteField('reactions', r.checked ? '' : 'off'), r.checked ? 'Reactions are on: a ♥, a ☆ or a smile under each post.' : 'Reactions are off (the counts are kept).'));
+      return h('label', { class: 'row check' }, r, h('span', null, h('b', null, 'Let visitors react to posts'), h('small', { class: 'hint' }, ' (a ♥, a ☆ or a smile, in one tap; only how many is kept)')));
+    })(),
     h('h3', null, `Waiting for you (${pending.length})`),
     pending.length ? pending : h('p', { class: 'hint' }, 'Nothing waiting.'),
     h('h3', null, `On the site (${approved.length})`),
@@ -3079,7 +3164,9 @@ function viewSite(part = 'site') {
       now_playing: !/^(false|no|off)$/i.test(raw('now_playing')),
       countdown: raw('countdown'),
       countdown_date: raw('countdown_date'),
-      countdown_icon: raw('countdown_icon') || 'plane'
+      countdown_icon: raw('countdown_icon') || 'plane',
+      mood: raw('mood'),
+      away_presence: raw('away_presence') || 'away'
     };
     const inputs = {
       name: h('input', { class: 'input', value: raw('name') || site.name }),
@@ -3122,6 +3209,59 @@ function viewSite(part = 'site') {
     const cdDate = h('input', { class: 'input', type: 'date', value: /^\d{4}-\d{2}-\d{2}$/.test(st.countdown_date) ? st.countdown_date : '' });
     const cdIcon = h('select', { class: 'input' }, h('option', { value: '' }, 'No picture'), EMOTICONS.map(([id, label]) => h('option', { value: id, selected: st.countdown_icon === id }, label)));
     const cdClear = h('button', { type: 'button', class: 'btn small', onclick: () => { cdLabel.value = ''; cdDate.value = ''; } }, 'Clear countdown');
+    // Your countdown, from something with a date in your planner.
+    const today = new Date().toISOString().slice(0, 10);
+    const dated = (data.planner || []).flatMap((l) => l.items.filter((it) => !it.done && it.due && it.due >= today).map((it) => ({ ...it, list: l.name }))).sort((a, b) => a.due.localeCompare(b.due)).slice(0, 40);
+    const fromPlanner = dated.length
+      ? h('select', { class: 'input', 'aria-label': 'From your planner', onchange: (e) => {
+          const it = dated[Number(e.target.value)];
+          if (it) {
+            cdLabel.value = it.text.slice(0, 60);
+            cdDate.value = it.due;
+          }
+          e.target.value = '';
+        } }, h('option', { value: '' }, '📋 From your planner…'), dated.map((it, i) => h('option', { value: String(i) }, `${it.text} · ${new Date(it.due + 'T12:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}${it.list ? ` (${it.list})` : ''}`)))
+      : null;
+    // How you feel: one of the faces, beside your status.
+    const moodRow = h('div', { class: 'emo-picker', role: 'radiogroup', 'aria-label': 'Mood' });
+    const MOOD_FACES = ['smile', 'grin', 'wink', 'cool', 'love', 'blush', 'tongue', 'meh', 'confused', 'sleepy', 'dizzy', 'sad', 'cry', 'angry', 'wow'];
+    const drawMood = () =>
+      moodRow.replaceChildren(
+        h('button', { type: 'button', class: 'emo-btn mood-none', role: 'radio', 'aria-checked': String(!st.mood), 'aria-pressed': String(!st.mood), onclick: () => ((st.mood = ''), drawMood()) }, 'None'),
+        ...MOOD_FACES.map((id) => {
+          const label = EMOTICONS.find((e) => e[0] === id)?.[1] || id;
+          return h('button', { type: 'button', class: 'emo-btn', role: 'radio', 'aria-checked': String(st.mood === id), 'aria-pressed': String(st.mood === id), title: label, 'aria-label': label, html: emoticonSvg(id, 22), onclick: () => ((st.mood = id), drawMood()) });
+        })
+      );
+    drawMood();
+    // While you're away: a status that switches itself on and off.
+    const awayText = h('input', { class: 'input', value: raw('away_status'), maxlength: 140, placeholder: 'e.g. On holiday (plane) back soon!' });
+    const awayFrom = h('input', { class: 'input', type: 'date', value: raw('away_from'), 'aria-label': 'Away from' });
+    const awayTo = h('input', { class: 'input', type: 'date', value: raw('away_to'), 'aria-label': 'Away until' });
+    const awayOn = () => /^\d{4}-\d{2}-\d{2}$/.test(awayFrom.value) && /^\d{4}-\d{2}-\d{2}$/.test(awayTo.value) && awayTo.value >= awayFrom.value;
+    const awayPresence = h('div', { class: 'chip-row' });
+    const drawAwayPresence = () =>
+      awayPresence.replaceChildren(
+        ...PRESENCES.filter(([v]) => v !== 'online').map(([v, label, colour]) => h('button', { type: 'button', class: 'chip-btn', 'aria-pressed': String(st.away_presence === v), onclick: () => { st.away_presence = v; drawAwayPresence(); } }, h('span', { class: `pres-dot ${colour}` }), label))
+      );
+    drawAwayPresence();
+    const awayClear = h('button', { type: 'button', class: 'btn small', onclick: () => { awayText.value = ''; awayFrom.value = ''; awayTo.value = ''; } }, 'Clear');
+    // The fortune cookie's lines.
+    const fortunes = h('textarea', { class: 'textarea short', placeholder: 'Today is a good day for cake.\nSay yes to the next adventure.' });
+    readFile('fortunes.md').then((t) => (fortunes.value = (t || '').split(/\r?\n/).map((l) => (/^\s*[-*]\s+(.+)$/.exec(l) || [])[1]).filter(Boolean).join('\n')), () => {});
+    const saveFortunes = h('button', { type: 'button', class: 'btn go', onclick: async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      try {
+        const lines = fortunes.value.split(/\r?\n/).map((l) => l.replace(/^\s*[-*]\s+/, '').trim()).filter(Boolean).slice(0, 100);
+        await putFile('fortunes.md', lines.length ? lines.map((l) => `- ${l.slice(0, 160)}`).join('\n') + '\n' : '');
+        toast(lines.length ? `Saved: ${lines.length} fortune${lines.length === 1 ? '' : 's'} in the cookie.` : 'The cookie is empty, so it’s hidden.');
+        await refresh();
+      } catch (err) {
+        toast(err.message, true);
+      }
+      btn.disabled = false;
+    } }, 'Save fortunes');
     const nudges = data.nudges || { count: 0 };
     const logBox = h('textarea', { class: 'textarea mono short', spellcheck: 'false', placeholder: '- 2026-10-23 11:39 · Why is there a storm (storm)' });
     logBox.value = logRaw.trim();
@@ -3132,10 +3272,17 @@ function viewSite(part = 'site') {
         const newStatus = statusIn.value.trim();
         const changed = newStatus !== (st.status || '').trim();
         const fm = {
+          // (Everything in the file is kept, then what's on this page is put in.)
+          ...Object.fromEntries(SITE_KEYS.map((k) => [k, raw(k)])),
           name: inputs.name.value.trim(),
           owner: inputs.owner.value.trim(),
           // (Kept as it is: changed under Your picture, saved straight away.)
           picture: data.site?.picture || '',
+          mood: st.mood || '',
+          away_status: awayOn() ? awayText.value.trim() : '',
+          away_presence: awayOn() && st.away_presence !== 'away' ? st.away_presence : '',
+          away_from: awayOn() ? awayFrom.value : '',
+          away_to: awayOn() ? awayTo.value : '',
           status: newStatus,
           presence: st.presence === 'online' ? '' : st.presence,
           status_updated: changed ? new Date().toISOString() : st.status_updated,
@@ -3144,8 +3291,9 @@ function viewSite(part = 'site') {
           countdown_date: cdLabel.value.trim() && cdDate.value ? cdDate.value : '',
           countdown_icon: cdLabel.value.trim() && cdDate.value ? cdIcon.value : '',
           tagline: inputs.tagline.value.trim(),
-          // (Kept as it is: switched in the Comments tab.)
+          // (Kept as they are: switched in the Comments tab.)
           comments: data.site?.comments === false ? 'off' : '',
+          reactions: data.site?.reactions === false ? 'off' : '',
           top_room: data.site?.top_room || ''
         };
         await putFile('site.md', frontMatter(fm) + about.value.trim() + '\n');
@@ -3197,15 +3345,27 @@ function viewSite(part = 'site') {
         field('Personal message', statusIn, 'Shown as "Currently: …". [book], [film], [tv], [music] or [podcast] fill in what you have marked as "now" on that shelf.'),
         picker,
         preview,
+        h('div', { class: 'field' }, h('span', { class: 'label' }, 'Mood (optional)'), moodRow, h('span', { class: 'hint' }, 'A little face beside your status.')),
         h('label', { class: 'row check' }, nowBox, h('span', null, 'Also show what I’m listening to, watching and reading (from the shelves)')),
         h(
           'div',
           { class: 'field' },
           h('span', { class: 'label' }, 'Countdown (optional)'),
           h('div', { class: 'grid-2' }, cdLabel, cdDate),
-          h('div', { class: 'row' }, cdIcon, cdClear),
-          h('span', { class: 'hint' }, 'Shows "12 days until …" under your status, and disappears once the day has passed.')
+          h('div', { class: 'row' }, cdIcon, fromPlanner, cdClear),
+          h('span', { class: 'hint' }, 'Shows "12 days until …" under your status, and disappears once the day has passed. Pick something with a date in your planner to fill it in.')
         ),
+        h(
+          'div',
+          { class: 'field' },
+          h('span', { class: 'label' }, 'While I’m away (optional)'),
+          awayText,
+          awayPresence,
+          h('div', { class: 'grid-2' }, h('label', { class: 'field' }, h('small', null, 'From'), awayFrom), h('label', { class: 'field' }, h('small', null, 'Until (the last day)'), awayTo)),
+          h('div', { class: 'row' }, awayClear),
+          h('span', { class: 'hint' }, 'On those days this shows instead of your status, then yours comes back by itself. Visitors never see the dates, so nobody can tell in advance when you’ll be away.')
+        ),
+        h('div', { class: 'field' }, h('span', { class: 'label' }, 'Fortune cookie (optional)'), fortunes, h('span', { class: 'hint' }, 'One line each. Visitors tap the cookie by your name for one at random. Empty: no cookie.'), h('div', { class: 'row end' }, saveFortunes)),
         h('p', { class: 'nudge-count' }, nudges.count ? `You've been nudged ${nudges.count} time${nudges.count === 1 ? '' : 's'}${nudges.last ? ` · last on ${new Date(nudges.last).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : ''}.` : 'Nobody has nudged you yet.'),
         h('div', { class: 'row end' }, saveStatus)
       ),
@@ -4098,6 +4258,8 @@ export const kit = {
   post: (key) => data?.posts.find((x) => x.key === key) || null,
   togglePin: (p) => togglePin(p),
   toggleFlag: (p, flag, msg) => toggleFlag(p, flag, msg),
+  // An emoji a visitor left that you don't want: taken off the post.
+  removeReaction: (p, emoji) => api('reactions/remove', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ post: `${p.type}/${p.slug}`, emoji }) }),
   addHighlight: (p) => addHighlight(p),
   takeOutHighlight: (p) => takeOutHighlight(p),
   highlightRank: (p) => hlRank(p),
