@@ -263,6 +263,15 @@ await test('postcards in the guestbook: a painted front, waiting for your approv
     await p.waitForFunction(() => /postcard is on its way/.test(document.querySelector('.form-msg')?.textContent || ''));
   });
   eq((await overview()).pendingGuestbook.map((g) => g.card), ['forest'], 'sent from the site');
+  // Signed in: a postcard on the site can be answered, or taken off.
+  await site(PHONE, async (p) => {
+    p.on('dialog', (d) => d.accept());
+    await p.evaluate(() => (location.hash = '#/guestbook'));
+    await p.waitForSelector('.gb-postcard .okit-cm-tools');
+    await p.locator('.gb-postcard .okit-cm-tools button', { hasText: 'Remove' }).click();
+    await p.waitForFunction(() => !document.querySelector('.gb-postcard'));
+  }, '/?owner=1#/');
+  eq((await publicData()).guestbook.some((g) => g.card), false, 'taken off');
 });
 
 await test('the atlas: pins, or how often you’ve been', async () => {

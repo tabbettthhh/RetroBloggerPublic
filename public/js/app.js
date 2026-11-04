@@ -26,6 +26,8 @@ async function load() {
       if (!res.ok) throw new Error('Could not load');
       const data = await res.json();
       offline(res.headers.get('X-Offline'));
+      // (The copy kept for opening quickly: the site's own is asked for straight away.)
+      if (res.headers.get('X-Copy')) postsChanged = true;
       return data;
     } catch (e) {
       if (tries >= 2) throw e;
@@ -72,6 +74,13 @@ function keepFresh(data, redraw) {
   };
   document.addEventListener('visibilitychange', check);
   window.addEventListener('pageshow', check);
+  // (Shown from the kept copy: the site's own, straight away.)
+  onPostsChanged = () => {
+    postsChanged = false;
+    last = 0;
+    check();
+  };
+  if (postsChanged) onPostsChanged();
   window.addEventListener('focus', check);
   setInterval(check, 5 * 60 * 1000);
 }
@@ -139,6 +148,10 @@ function offline(since) {
   if (!bar) bar = document.body.appendChild(h('div', { class: 'offline-bar', role: 'status' }));
   bar.textContent = '📴 ' + words;
 }
+// Opened from the copy the service worker keeps: the site's own posts are fetched as soon as
+// the page is up, and drawn if anything changed.
+let postsChanged = false;
+let onPostsChanged = null;
 // The service worker that keeps that copy (and shows notifications). (Not while the site is being
 // tested by a program, unless the test asks: it would get in the way of a test's own requests.)
 function keepForOffline() {
