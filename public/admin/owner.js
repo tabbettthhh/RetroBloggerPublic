@@ -676,12 +676,23 @@ function decoratePosts() {
       postMenu(more, p);
     });
     const head = el.querySelector(':scope > .card-head');
-    (head || el).append(more);
-    if (!head) el.classList.add('okit-has-more');
+    // (No header strip, as on a journal page or a review: the ⋯ sits beside the title, which
+    // wraps around it, so a long title is never hidden under it. Failing that, in the corner.)
+    const title = head ? null : el.querySelector(':scope > :is(h1, h2, h3)');
     const st = stateOf(p);
-    if (st) {
-      el.classList.add('okit-hidden-post');
-      (head || el).prepend(h('span', { class: `okit-state ${st[0]}` }, st[1]));
+    const badge = st ? h('span', { class: `okit-state ${st[0]}` }, st[1]) : null;
+    if (st) el.classList.add('okit-hidden-post');
+    if (head) {
+      head.append(more);
+      if (badge) head.prepend(badge);
+    } else if (title) {
+      more.classList.add('by-title');
+      badge?.classList.add('by-title');
+      title.before(...[more, badge].filter(Boolean));
+    } else {
+      el.classList.add('okit-has-more');
+      el.append(more);
+      if (badge) el.prepend(badge);
     }
   }
 }

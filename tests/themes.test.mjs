@@ -243,7 +243,8 @@ await test('every level: fonts, feed, header, menu, taskbar, icons and sounds', 
   await site(async (p) => {
     const r = await p.evaluate(() => ({ ...document.documentElement.dataset, font: getComputedStyle(document.querySelector('.card-body')).fontFamily }));
     eq([r.skFont, r.skPosts, r.skHeader, r.skHide, r.skRealism], ['pixel', 'lines', 'card', 'nudge clock', 'extra'], 'marks on the page');
-    assert(await p.evaluate(() => !!document.getElementById('real-grain') && getComputedStyle(document.querySelector('.card')).filter.includes('real-grain')), 'extra real: the cards have grain');
+    // (On a phone, the screen's grain only: grain on every card made scrolling slow.)
+    assert(await p.evaluate(() => getComputedStyle(document.body, '::after').backgroundImage.includes('grain.png') && !getComputedStyle(document.querySelector('.card')).filter.includes('real-grain')), 'extra real on a phone: grain over the screen, none drawn card by card');
     assert(r.font.includes('Pixelify'), 'pixel font: ' + r.font);
     eq((await p.locator('.xp-links a').allInnerTexts()).filter(Boolean), ['Home', 'Music', 'Places', 'Map'], 'the main bar');
     eq(await p.locator('.profile-tile .nudge-btn').isVisible(), false, 'no nudge button');
@@ -258,6 +259,8 @@ await test('every level: fonts, feed, header, menu, taskbar, icons and sounds', 
     eq(bar.y, 0, 'taskbar at the top');
     eq(await p.locator('.taskbar .clock').isVisible(), false, 'no clock');
     eq(await p.locator('.desk-icon', { hasText: 'Wishlist' }).count(), 0, 'no wishlist icon');
+    assert(await p.evaluate(() => !!document.getElementById('real-grain') && getComputedStyle(document.querySelector('.card')).filter.includes('real-grain')), 'extra real on a computer: the cards have grain');
+    eq((await fetch(BASE + '/img/grain.png')).status, 200, 'the grain itself');
   }, { desktop: true });
 });
 
