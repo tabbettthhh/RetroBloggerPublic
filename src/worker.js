@@ -4,7 +4,7 @@
 import { Zip, ZipDeflate, ZipPassThrough } from 'fflate';
 import { stripImage, UnsupportedImage, CLEAN_TYPES } from './strip.js';
 import { parseVisited } from './content.js';
-import { TYPES, buildPost, isVisible, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parsePlanner, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
+import { TYPES, buildPost, isVisible, todayIn, parseFortunes, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parsePlanner, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
 import { adminCheck } from './auth.js';
 import { VERSION } from './version.js';
 import * as friends from './friends.js';
@@ -154,6 +154,7 @@ async function route(request, env, ctx) {
     return json(await push.unsubscribe(env, body?.endpoint, 'visitor'));
   }
   if (p === '/api/nudge' && method === 'POST') return nudge(request, env);
+  if (p === '/api/react' && method === 'POST') return react(request, env);
   if (p.startsWith('/media/') && (method === 'GET' || method === 'HEAD')) return media(request, env, p);
   // Photos in your Friends feed, fetched from your friends' sites by yours.
   if (p.startsWith('/friends-media/') && method === 'GET') {
@@ -447,7 +448,7 @@ async function readParsed(env) {
     return {};
   }
 }
-const PARSED_VERSION = 32; // bump when buildPost changes shape
+const PARSED_VERSION = 33; // bump when buildPost changes shape
 
 // "reading [book]" (or [film], [podcast], [music]) becomes "reading The Remains of the Day" while a book is marked as reading.
 function fillStatus(status, posts) {
@@ -519,14 +520,16 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
   });
   const gbKeys = mdKeys.filter((k) => k.startsWith('guestbook/'));
   const commentKeys = mdKeys.filter((k) => isCommentKey(k));
-  const extraKeys = [...gbKeys, ...commentKeys];
+  // (Visitors' ♥, ☆ and smiles: one small file for each post that has any.)
+  const reactionKeys = objects.map((o) => o.key).filter((k) => REACTION_FILE.test(k));
+  const extraKeys = [...gbKeys, ...commentKeys, ...reactionKeys];
   const extraStale = extraKeys.filter((k) => extras[k]?.etag !== etags.get(k));
   const extraTodo = extraStale.slice(0, Math.max(0, READS_PER_BUILD - todo.length));
   const extraTexts = await Promise.all(extraTodo.map((k) => readText(env, k)));
   extraTodo.forEach((k, i) => {
     if (extraTexts[i] == null) return;
     try {
-      extras[k] = { etag: etags.get(k), value: k.startsWith('guestbook/') ? parseGuestbookEntry(k, extraTexts[i]) : parseComment(k, extraTexts[i]) };
+      extras[k] = { etag: etags.get(k), value: k.startsWith('guestbook/') ? parseGuestbookEntry(k, extraTexts[i]) : k.startsWith('reactions/') ? reactionCounts(extraTexts[i]) : parseComment(k, extraTexts[i]) };
     } catch (e) {
       console.error(k, e);
     }
@@ -557,7 +560,7 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
   const parsedComments = commentKeys.map((k) => extras[k]?.value).filter(Boolean);
   const guestbook = parsedGuestbook.map(({ key, ...rest }) => rest).sort((a, b) => String(b.date).localeCompare(String(a.date)));
 
-  const [siteText, wishText, travelText, logText, catText, passportText, keepText, themeText, highlightsText, plannerText] = await Promise.all([
+  const [siteText, wishText, travelText, logText, catText, passportText, keepText, themeText, highlightsText, plannerText, fortuneText] = await Promise.all([
     readText(env, 'site.md'),
     readText(env, 'wishlist.md'),
     readText(env, 'travel.md'),
@@ -567,7 +570,8 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
     readText(env, 'keepsakes.md'),
     readText(env, 'theme.md'),
     readText(env, 'highlights.md'),
-    readText(env, 'planner.md')
+    readText(env, 'planner.md'),
+    readText(env, 'fortunes.md')
   ]);
   // The highlights cabinet: only posts that are on the site (the back office sees them all), and
   // each of them marked with its place on its shelf, for the rosette on its card.
@@ -592,6 +596,34 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
     const list = (byPost[`${posts[i].type}/${posts[i].slug}`] || []).sort((a, b) => String(a.date).localeCompare(String(b.date)) || a.id.localeCompare(b.id));
     posts[i] = { ...posts[i], comments: list.slice(0, 300) };
   }
+  // Reactions on each post (only the ones that have any; none at all while they're off).
+  if (site.reactions)
+    for (let i = 0; i < posts.length; i++) {
+      const r = extras[`reactions/${posts[i].type}/${posts[i].slug}.json`]?.value;
+      if (r && (r.heart || r.star || r.grin || r.custom)) posts[i] = { ...posts[i], reactions: r };
+    }
+  // Series: each post's part, out of how many, and the ones either side (by date).
+  const series = new Map();
+  for (const p of posts) if (p.series) (series.get(p.series.toLowerCase()) || series.set(p.series.toLowerCase(), []).get(p.series.toLowerCase())).push(p);
+  if (series.size) {
+    const info = new Map();
+    const brief = (p) => (p ? { type: p.type, slug: p.slug, title: p.title || '' } : null);
+    for (const list of series.values()) {
+      list.sort((a, b) => a.ts - b.ts || a.slug.localeCompare(b.slug));
+      list.forEach((p, i) => info.set(p, { name: list[0].series, part: i + 1, of: list.length, prev: brief(list[i - 1]), next: brief(list[i + 1]) }));
+    }
+    for (let i = 0; i < posts.length; i++) if (info.has(posts[i])) posts[i] = { ...posts[i], series_info: info.get(posts[i]) };
+  }
+  // While you're away: on the days you set, that status shows (and how you show), then yours
+  // comes back by itself. Visitors never see the dates.
+  const away = site.away;
+  if (away && away.from <= todayIn(tz) && todayIn(tz) <= away.to) {
+    if (away.status) site.status = away.status;
+    site.presence = away.presence;
+    site.status_updated = Date.parse(away.from) || site.status_updated;
+    site.away_on = true;
+  }
+  if (!includeHidden) delete site.away;
   site.status = fillStatus(site.status, posts);
   // Past statuses, newest first, without the one that's showing now.
   site.history = parseStatusLog(logText)
@@ -616,12 +648,86 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
     // The planner's lists (private ones only in the back office).
     planner: parsePlanner(plannerText).filter((l) => includeHidden || !l.private),
     guestbook,
+    // The lines in your fortune cookie.
+    fortunes: parseFortunes(fortuneText),
     generated: now
   };
   // (Not sent anywhere: for the back office, which lists every file and comment, and to know
   // whether the big refresh above is still under way.)
   Object.defineProperty(out, 'inside', { value: { objects, comments: parsedComments, guestbook: parsedGuestbook, partial } });
   return out;
+}
+
+// ---------- reactions ----------
+// A ♥, a ☆ or a smile on a post, from anyone: only how many of each is kept, with the times of
+// the last few (to slow down anyone tapping away), and nothing about who.
+const REACTIONS = ['heart', 'star', 'grin'];
+const REACTION_FILE = /^reactions\/[a-z]+\/[^/]+\.json$/;
+// Visitors' own emoji too: any one emoji (not words, not flags), up to a dozen different ones on a post.
+const MAX_CUSTOM = 12;
+const ONE_EMOJI = /^(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})(?:\uFE0F|\p{Emoji_Modifier}|\u200D(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})\uFE0F?)*$/u;
+export function oneEmoji(s) {
+  const t = String(s ?? '').trim();
+  if (!t || t.length > 16 || !ONE_EMOJI.test(t) || /[\u{1F1E6}-\u{1F1FF}]/u.test(t) || /^[\d#*]/.test(t)) return '';
+  try {
+    if ([...new Intl.Segmenter('en', { granularity: 'grapheme' }).segment(t)].length !== 1) return '';
+  } catch {}
+  return t;
+}
+function reactionCounts(text) {
+  let r = {};
+  try {
+    r = JSON.parse(text) || {};
+  } catch {}
+  const out = Object.fromEntries(REACTIONS.map((k) => [k, Math.max(0, Math.floor(Number(r[k]) || 0))]));
+  const custom = Object.entries(r.custom && typeof r.custom === 'object' ? r.custom : {})
+    .map(([e, n]) => [oneEmoji(e), Math.max(0, Math.floor(Number(n) || 0))])
+    .filter(([e, n]) => e && n)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, MAX_CUSTOM);
+  if (custom.length) out.custom = Object.fromEntries(custom);
+  return out;
+}
+async function react(request, env) {
+  if (looksLikeBot(request)) return json({ error: 'Not accepted' }, 400);
+  let body;
+  try {
+    body = await readBody(request);
+  } catch {
+    return json({ error: 'Could not read that.' }, 400);
+  }
+  const emoji = body.kind === 'custom' ? oneEmoji(body.emoji) : '';
+  const kind = REACTIONS.includes(body.kind) || emoji ? body.kind : '';
+  if (!kind) return json({ error: body.kind === 'custom' ? 'That isn’t one emoji.' : 'Pick a ♥, a ☆ or a smile.' }, 400);
+  const [type, slug] = String(body.post || '').split('/');
+  const data = await buildEverything(env);
+  if (!data.site.reactions) return json({ error: 'Reactions are switched off here.' }, 403);
+  if (!data.posts.some((p) => p.type === type && p.slug === slug)) return json({ error: 'That post isn’t here any more.' }, 404);
+  const key = `reactions/${type}/${slug}.json`;
+  let r = {};
+  try {
+    r = JSON.parse((await readText(env, key)) || '{}') || {};
+  } catch {}
+  const now = Date.now();
+  const recent = (Array.isArray(r.recent) ? r.recent : []).filter((t) => now - t < 10 * 60 * 1000);
+  const undo = body.undo === true || body.undo === 'true';
+  if (!undo && recent.length >= 60) return json({ error: 'Lots of reactions just now. Try again in a few minutes.' }, 429);
+  const counts = reactionCounts(JSON.stringify(r));
+  if (emoji) {
+    const custom = { ...(counts.custom || {}) };
+    if (!(emoji in custom) && !undo && Object.keys(custom).length >= MAX_CUSTOM) return json({ error: 'That post has lots of emoji already: tap one of those.' }, 409);
+    custom[emoji] = Math.max(0, (custom[emoji] || 0) + (undo ? -1 : 1));
+    if (!custom[emoji]) delete custom[emoji];
+    if (Object.keys(custom).length) counts.custom = custom;
+    else delete counts.custom;
+  } else counts[kind] = Math.max(0, counts[kind] + (undo ? -1 : 1));
+  if (!undo) recent.push(now);
+  // (Several in the same second: the one that didn't fit says try again.)
+  const kept = await env.CONTENT.put(key, JSON.stringify({ ...counts, recent }), { httpMetadata: { contentType: 'application/json' } }).then(() => true, () => false);
+  if (!kept) return json({ error: 'Lots of reactions just now. Try again in a moment.' }, 429);
+  // (So everyone sees it next time they look, not a few minutes later.)
+  await bumpVersion(env);
+  return json({ ok: true, counts });
 }
 
 // The site, worked out once and shared by the requests that arrive together (a page's photos all
@@ -1011,6 +1117,21 @@ async function adminApi(request, env, url, ctx) {
     return json({ error: 'Not found' }, 404);
   }
 
+  // An emoji you don't want on a post, taken off it.
+  if (p === 'reactions/remove' && m === 'POST') {
+    const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
+    const [type, slug] = String(body.post || '').split('/');
+    if (!TYPES.includes(type) || !slug || slug.includes('..')) return json({ error: 'No such post.' }, 400);
+    const key = `reactions/${type}/${slug}.json`;
+    let r = {};
+    try {
+      r = JSON.parse((await readText(env, key)) || '{}') || {};
+    } catch {}
+    if (r.custom && typeof r.custom === 'object') delete r.custom[String(body.emoji || '')];
+    await env.CONTENT.put(key, JSON.stringify(r), { httpMetadata: { contentType: 'application/json' } });
+    await bumpVersion(env);
+    return json({ ok: true });
+  }
   if (p === 'overview' && m === 'GET') {
     const data = await buildEverything(env, { includeHidden: true });
     const { objects } = data.inside;
@@ -1101,7 +1222,7 @@ async function adminApi(request, env, url, ctx) {
       if (TYPES.includes(folder) && file && !more && file.endsWith('.md')) {
         const mediaPrefix = `${folder}/${file.replace(/\.md$/, '')}/`;
         // (Its photos go with it, and its comments, on the site or waiting.)
-        const extra = [...(await listAll(env, mediaPrefix)), ...(await listAll(env, 'comments/' + mediaPrefix)), ...(await listAll(env, 'comments-pending/' + mediaPrefix))];
+        const extra = [...(await listAll(env, mediaPrefix)), ...(await listAll(env, 'comments/' + mediaPrefix)), ...(await listAll(env, 'comments-pending/' + mediaPrefix)), ...(await listAll(env, `reactions/${folder}/${file.replace(/\.md$/, '')}.json`))];
         if (extra.length) await env.CONTENT.delete(extra.map((o) => o.key));
       }
       await bumpVersion(env);

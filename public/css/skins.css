@@ -87,6 +87,8 @@
 [data-sk-hide~="nudge"] .profile-tile .nudge-btn { display: none; }
 [data-sk-hide~="clock"] .taskbar .clock { display: none; }
 [data-sk-hide~="traystatus"] .taskbar .tray-status { display: none; }
+[data-sk-hide~="fortune"] .profile-tile .fortune { display: none; }
+[data-sk-hide~="photoday"] .profile-tile .photo-day { display: none; }
 
 /* ---------- your name (on the welcome screen and the profile header), like an old homepage ---------- */
 :where([data-sk-name-style]:not([data-sk-name-style="plain"])) :is(.profile-name strong, .welcome-name) { text-shadow: none; }

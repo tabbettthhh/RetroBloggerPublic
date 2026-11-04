@@ -1,10 +1,13 @@
 // The Messenger-style status: presence dot, personal message with emoticons, when it was
 // updated, what's playing (from the shelves), a countdown, past statuses and a nudge.
 import { h, storage } from './util.js';
-import { withEmoticons, emoticonSvg } from './emoticons.js';
+import { withEmoticons, emoticonSvg, EMOTICONS } from './emoticons.js';
 import { SHELF_ICON } from './shelves.js';
 import { sound } from './sound.js';
 import { word } from './skins.js';
+
+// How you feel: one of the faces (shown by your status).
+const MOODS = Object.fromEntries(EMOTICONS.map(([id, label]) => [id, label.toLowerCase()]));
 
 export const PRESENCE = {
   online: ['Online', 'green'],
@@ -152,8 +155,10 @@ export function statusBlock(data) {
         )
       )
     : null;
+  const mood = site.mood && emoticonSvg(site.mood, 16) ? h('span', { class: 'status-mood', role: 'img', 'aria-label': `Mood: ${MOODS[site.mood] || site.mood}`, title: `Mood: ${MOODS[site.mood] || site.mood}`, html: emoticonSvg(site.mood, 16) }) : null;
   const pillInner = [
     presenceDot(site),
+    mood,
     site.presence !== 'online' ? h('b', { class: `presence-word p-${colour}` }, label + (site.status ? ' · ' : '')) : null,
     site.status ? h('span', { class: 'status-text' }, h('span', { class: 'status-cur' }, 'Currently: '), withEmoticons(site.status, 16)) : null,
     site.status_updated ? h('small', { class: 'status-ago' }, ago(site.status_updated)) : null,

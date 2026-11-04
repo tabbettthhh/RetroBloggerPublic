@@ -715,6 +715,7 @@ export const OPTIONS = {
   bars: { name: 'Title bars', choices: { glossy: 'Glossy', flat: 'Flat', stripes: 'Striped', pixel: 'Pixel steps' } },
   corners: { name: 'Corners', choices: { classic: 'Classic', square: 'Square', round: 'Round' } },
   realism: { name: 'Realism', choices: { normal: 'As it is', extra: 'Extra real: textures, depth, nothing flat' } },
+  counter: { name: 'Visitor counter', choices: { led: 'LED digits', odometer: 'Odometer', flip: 'Flip clock', nixie: 'Glowing tubes', plain: 'Plain numbers' } },
   density: { name: 'Spacing', choices: { cosy: 'Cosy', compact: 'Compact', roomy: 'Roomy' } },
   posts: { name: 'Posts in the feed', choices: { cards: 'Cards', lines: 'A list with lines' } },
   scrollbar: { name: 'Scroll bars', choices: { classic: 'Usual', themed: 'In the theme’s colours', thin: 'Thin', hidden: 'Hidden' } },
@@ -1002,7 +1003,7 @@ export function lookOf(id, t) {
 }
 const dayNumber = (date) => Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
 // Parts that can be left out: of the profile header, and of the taskbar's tray.
-export const HIDEABLE = { lastpost: 'Last post date', status: 'Status', playing: 'Now playing', countdown: 'Countdown', nudge: 'Nudge button', clock: 'Clock (taskbar)', traystatus: 'Status (taskbar, computers)' };
+export const HIDEABLE = { lastpost: 'Last post date', status: 'Status', playing: 'Now playing', countdown: 'Countdown', nudge: 'Nudge button', clock: 'Clock (taskbar)', traystatus: 'Status (taskbar, computers)', fortune: 'Fortune cookie', photoday: 'Photo of the day' };
 // The sections, for the main menu's order and for hiding ones you don't use.
 export const SECTIONS = { home: 'Home', thoughts: 'Thoughts', journal: 'Places', atlas: 'Map', friends: 'Friends', album: 'Photos', more: 'Dumps & lists', passport: 'Passport', wishlist: 'Trips wishlist', planner: 'Planner', guestbook: 'Guestbook', books: 'Books', films: 'Films', podcasts: 'Podcasts', music: 'Music', tv: 'TV', stats: 'Travel stats', about: 'About' };
 export const DEFAULT_MENU = ['home', 'thoughts', 'journal', 'atlas', 'friends'];

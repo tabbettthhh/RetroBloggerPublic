@@ -31,6 +31,8 @@ const GROUPS = {
   friends: ['friends'],
   // Notifications, with a friend's site and a pretend push service.
   push: ['push'],
+  // Reactions, series, Start here and the other little extras.
+  extras: ['extras'],
   // The back office lock with the developer bypass off: once with the lock's settings, once without.
   locked: [['locked', { LOCK_MODE: 'set' }]],
   'locked-unset': [['locked', { LOCK_MODE: 'unset' }]],
