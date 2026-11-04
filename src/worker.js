@@ -4,7 +4,7 @@
 import { Zip, ZipDeflate, ZipPassThrough } from 'fflate';
 import { stripImage, UnsupportedImage, CLEAN_TYPES } from './strip.js';
 import { parseVisited } from './content.js';
-import { TYPES, buildPost, isVisible, todayIn, parseFortunes, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parsePlanner, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
+import { TYPES, buildPost, isVisible, todayIn, parseFortunes, POSTCARD_FRONTS, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parsePlanner, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
 import { adminCheck } from './auth.js';
 import { VERSION } from './version.js';
 import * as friends from './friends.js';
@@ -876,13 +876,18 @@ function looksLikeBot(request) {
 async function visit(request, env) {
   if (looksLikeBot(request)) return json({ count: null });
   const raw = await readText(env, 'data/counter.json');
-  let count = 0;
+  let kept = {};
   try {
-    count = JSON.parse(raw || '{}').count || 0;
+    kept = JSON.parse(raw || '{}') || {};
   } catch {}
-  count += 1;
+  const count = (Number(kept.count) || 0) + 1;
+  // Which country the visit came from, as Cloudflare reckons it (from the connection, not from
+  // anything the visitor's browser says): only a count for each country is kept, nothing else.
+  const countries = kept.countries && typeof kept.countries === 'object' ? kept.countries : {};
+  const where = String(request.cf?.country || '').toUpperCase();
+  if (/^[A-Z]{2}$/.test(where) && where !== 'XX' && where !== 'T1') countries[where] = (Number(countries[where]) || 0) + 1;
   // (Lots of visitors in the same second: some aren't counted, rather than anything going wrong.)
-  await env.CONTENT.put('data/counter.json', JSON.stringify({ count }), { httpMetadata: { contentType: 'application/json' } }).catch(() => {});
+  await env.CONTENT.put('data/counter.json', JSON.stringify({ count, countries }), { httpMetadata: { contentType: 'application/json' } }).catch(() => {});
   return json({ count });
 }
 
@@ -953,9 +958,11 @@ async function signGuestbook(request, env, ctx) {
   const pending = await env.CONTENT.list({ prefix: 'guestbook-pending/', limit: 300 });
   if (pending.objects.length >= 300) return json({ error: 'The guestbook is full for now. Try again later.' }, 429);
   const { iso, file } = stamp();
-  const text = `---\nname: ${yamlString(name)}\ndate: ${yamlString(iso.slice(0, 16).replace('T', ' '))}\n---\n${message}\n`;
+  // (Sent as a postcard, with one of the painted fronts.)
+  const card = POSTCARD_FRONTS.includes(String(body.card || '')) ? String(body.card) : '';
+  const text = `---\nname: ${yamlString(name)}\ndate: ${yamlString(iso.slice(0, 16).replace('T', ' '))}\n${card ? `card: ${card}\n` : ''}---\n${message}\n`;
   await env.CONTENT.put(`guestbook-pending/${file}.md`, text, { httpMetadata: { contentType: 'text/markdown; charset=utf-8' } });
-  later(ctx, push.notifyOwner(env, 'comments', { title: `✍ ${name} signed the guestbook`, body: message, url: '/?owner=1#/guestbook', tag: 'guestbook' }, new URL(request.url).origin));
+  later(ctx, push.notifyOwner(env, 'comments', { title: card ? `📮 ${name} sent you a postcard` : `✍ ${name} signed the guestbook`, body: message, url: '/?owner=1#/guestbook', tag: 'guestbook' }, new URL(request.url).origin));
   return json({ ok: true, pending: true });
 }
 
@@ -1156,8 +1163,11 @@ async function adminApi(request, env, url, ctx) {
       })
     );
     let counter = 0;
+    let visitorCountries = {};
     try {
-      counter = JSON.parse((await readText(env, 'data/counter.json')) || '{}').count || 0;
+      const c = JSON.parse((await readText(env, 'data/counter.json')) || '{}');
+      counter = c.count || 0;
+      visitorCountries = c.countries && typeof c.countries === 'object' ? c.countries : {};
     } catch {}
     let nudges = { count: 0, last: null, log: [] };
     try {
@@ -1173,7 +1183,7 @@ async function adminApi(request, env, url, ctx) {
     const friendNotes = await friends.friendNotes(env).catch(() => ({ count: 0, posts: [] }));
     // And everything of theirs, for you, signed in, on the site: friends-only posts and comments too.
     const friendsMine = await friends.publicFriends(env, { mine: true }).catch(() => ({ buddies: [], posts: [] }));
-    return json({ ...data, files, pendingGuestbook: pendingGb, approvedGuestbook: approvedGb, pendingComments, approvedComments, suggestions, counter, nudges, notifySeen, friendNotes, friendsMine, now: Date.now() });
+    return json({ ...data, files, pendingGuestbook: pendingGb, approvedGuestbook: approvedGb, pendingComments, approvedComments, suggestions, counter, visitorCountries, nudges, notifySeen, friendNotes, friendsMine, now: Date.now() });
   }
 
   // Many Markdown files at once (used by the Goodreads and Letterboxd imports).

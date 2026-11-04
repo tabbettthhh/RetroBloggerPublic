@@ -447,3 +447,10 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 .nt-check small, .nt-count, .nt-none, .nt-devices small { opacity: .75; font-size: 12px; }
 .nt-devices { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
 .nt-devices li { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+/* Control Panel › Visitors. */
+.okit-visitors .okit-lead { margin: 0 0 10px; font-weight: bold; }
+.okit-visit-map { height: 240px; margin: 0 0 12px; border-radius: 8px; overflow: hidden; }
+.okit-visit-list { display: grid; gap: 4px; margin: 0 0 12px; padding: 0; list-style: none; }
+.okit-visit-list li { display: grid; grid-template-columns: minmax(90px, 40%) 1fr auto; align-items: center; gap: 8px; font-size: 13px; }
+.okit-visit-bar { height: 10px; width: var(--w); border-radius: 5px; background: linear-gradient(90deg, #f5be46, #c8281e); }

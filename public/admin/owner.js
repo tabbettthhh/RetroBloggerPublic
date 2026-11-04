@@ -21,6 +21,8 @@ import { rebuildRoom } from '/js/cabinet.js';
 import { applySkin } from '/js/skins.js';
 import { sound } from '/js/sound.js';
 import { pushState, currentSub, signUp, signOff, deviceName, isIOS } from '/js/push-client.js';
+import { mountMap } from '/js/maps.js';
+import { MIDDLES } from '/admin/countries.js';
 
 const TYPES = [
   ['thoughts', 'Thought', '💭'],
@@ -384,7 +386,7 @@ const CP = [
   ['Writing', [['posts', 'Posts & drafts', 'Every post, drafts and scheduled ones included: find, pin, edit', '🗂'], ['highlights', 'Highlights', 'The cabinet’s shelves, in order, with why', '★'], ['planner', 'Planner', 'Your lists, private ones too', '📒']]],
   ['People', [['notifications', 'Inbox', 'Comments, signatures, suggestions, nudges, friends’ news', '✉'], ['friends', 'Friends', 'Your buddies, and who sees what', '👥'], ['mail', 'Mail', 'Notes from friends, and ones you’ve sent', '📨'], ['notify', 'Notifications', 'On your phone or computer, even with the site closed', '🔔'], ['status', 'Status', 'How you are, your message, a countdown', '💬']]],
   ['Look', [['themes', 'Themes', 'Colours, wallpaper, fonts and the rest, on your real site as you choose', '🎨'], ['designs', 'Designs', 'The visa in your passport, and keepsakes of your own', '🎟']]],
-  ['Your site', [['picture', 'Your picture', 'A photo of you, or one of the site’s own pictures', '🖼'], ['site', 'Site & wishlist', 'Its name, about you, place categories, the trips wishlist', '🏠'], ['travel', 'Travel stats', 'The flight log in your passport', '✈'], ['files', 'Export & files', 'Download everything, import, all your files', '💾']]]
+  ['Your site', [['picture', 'Your picture', 'A photo of you, or one of the site’s own pictures', '🖼'], ['site', 'Site & wishlist', 'Its name, about you, place categories, the trips wishlist', '🏠'], ['travel', 'Travel stats', 'The flight log in your passport', '✈'], ['visitors', 'Visitors', 'How many, and which countries they come from', '🌍'], ['files', 'Export & files', 'Download everything, import, all your files', '💾']]]
 ];
 const CP_NAME = Object.fromEntries(CP.flatMap(([, items]) => items.map(([id, name]) => [id, name])));
 CP_NAME.comments = 'Comments';
@@ -471,9 +473,43 @@ function openPage(id) {
     if (host) host.mail = false;
     return drawNotify(host.body);
   }
+  if (id === 'visitors') {
+    setPage(id);
+    if (host) host.mail = false;
+    return drawVisitors(host.body);
+  }
   if (host) host.mail = false;
   setPage(id);
   kit.show(id);
+}
+// Visitors: how many have come, and from which countries (only a count for each: Cloudflare's own
+// reckoning of where a connection comes from, never anything about anyone).
+function drawVisitors(body) {
+  const by = Object.entries(owner?.visitorCountries || {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+  let names = null;
+  try {
+    names = new Intl.DisplayNames(['en'], { type: 'region' });
+  } catch {}
+  const name = (cc) => names?.of(cc) || cc;
+  const total = by.reduce((n, [, x]) => n + x, 0);
+  const map = h('div', { class: 'okit-visit-map' });
+  body.replaceChildren(
+    h(
+      'div',
+      { class: 'nt okit-visitors' },
+      h('p', { class: 'okit-lead' }, `${(owner?.counter || 0).toLocaleString('en-GB')} visits so far${by.length ? `, from ${by.length} ${by.length === 1 ? 'country' : 'countries'}` : ''}.`),
+      by.length ? map : h('p', { class: 'okit-note' }, 'Countries show here as visits come in.'),
+      by.length
+        ? h(
+            'ol',
+            { class: 'okit-visit-list' },
+            by.slice(0, 40).map(([cc, n]) => h('li', null, h('span', null, name(cc)), h('span', { class: 'okit-visit-bar', style: { '--w': `${Math.max(4, Math.round((n / by[0][1]) * 100))}%` } }), h('b', null, n.toLocaleString('en-GB'))))
+          )
+        : null,
+      h('p', { class: 'okit-note' }, `Only a count for each country is kept: Cloudflare’s own reckoning of where a visit’s connection comes from, never anything about anyone. Each visit counts once, and your own visits never count.${total < (owner?.counter || 0) ? ' (Visits from before this was added aren’t on the map.)' : ''}`)
+    )
+  );
+  if (by.length) mountMap(map, { places: by.filter(([cc]) => MIDDLES[cc]).map(([cc, n]) => ({ lat: MIDDLES[cc][0], lon: MIDDLES[cc][1], title: name(cc), count: n, unit: n === 1 ? 'visit' : 'visits' })), heat: true, style: 'mac', zoom: 2 });
 }
 function controlPanel(page = '') {
   closeMenus();

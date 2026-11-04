@@ -67,7 +67,9 @@ function pinIcon(style, color, label = '') {
 // its label showing (-1 for none).
 export function mountMap(el, opts = {}) {
   // strings: lists of [lat, lon] joined by a thread (a trip); card: the popup's HTML for a place.
-  const { places = [], style = 'mac', interactive = true, zoom = 15, focus = -1, strings = [], card = null, tags = false } = opts;
+  // heat: instead of pins, a warm circle where you've been, bigger and hotter the more often
+  // (each place counts once, or `count` times).
+  const { places = [], style = 'mac', interactive = true, zoom = 15, focus = -1, strings = [], card = null, tags = false, heat = false } = opts;
   el.classList.add('map', 'map-' + style);
   if (!window.L) {
     const wait = Object.assign(document.createElement('div'), { className: 'map-fallback', textContent: 'Unfolding the map…' });
@@ -97,18 +99,24 @@ export function mountMap(el, opts = {}) {
     L.tileLayer(TILE_URL, { maxZoom: 19, attribution: ATTRIBUTION }).addTo(map);
     map.attributionControl.setPrefix(false);
     // Red thread from pin to pin, in the order you went (under the pins, with its shadow).
-    for (const line of strings) {
+    for (const line of heat ? [] : strings) {
       if (line.length < 2) continue;
       L.polyline(line, { color: 'rgba(0,0,0,.28)', weight: 3, interactive: false, className: 'thread-shadow', smoothFactor: 1.5 }).addTo(map);
       L.polyline(line, { color: '#c0392b', weight: 2, interactive: false, className: 'thread', smoothFactor: 1.5 }).addTo(map);
     }
-    const markers = pts.map((p) => {
+    if (heat) {
+      heatSpots(pts).forEach((s) => {
+        const c = L.circleMarker([s.lat, s.lon], { radius: 7 + 17 * Math.sqrt(s.n / s.max), stroke: true, weight: 1.5, color: heatColour(s.n / s.max, 0.95), fillColor: heatColour(s.n / s.max, 0.9), fillOpacity: 0.55, className: 'heat-spot' }).addTo(map);
+        c.bindTooltip(`${esc(s.name)} · ${s.n} ${s.unit || (s.n === 1 ? 'visit' : 'visits')}`, { direction: 'top', className: 'heat-tip' });
+      });
+    }
+    const markers = (heat ? [] : pts).map((p) => {
       const m = L.marker([p.lat, p.lon], { icon: pinIcon(style, catColor(p.category), tags ? p.title : ''), title: p.title || '', riseOnHover: true }).addTo(map);
       if (card) m.bindPopup(card(p), { className: 'memory-pop', maxWidth: 240, minWidth: 200 });
       else if (p.href) m.bindPopup(`<a class="map-pop" href="${esc(p.href)}">${esc(p.title || 'Open')}</a>${p.sub ? `<br><span>${esc(p.sub)}</span>` : ''}`);
       return m;
     });
-    const at = pts.indexOf(places[focus]);
+    const at = heat ? -1 : pts.indexOf(places[focus]);
     if (at >= 0) {
       map.setView([pts[at].lat, pts[at].lon], Math.min(zoom, 13));
       markers[at].openPopup();
@@ -121,6 +129,30 @@ export function mountMap(el, opts = {}) {
     resized?.observe(el);
     keepTrack({ el, map, resized });
   });
+}
+
+// The places grouped where they're close together (about a kilometre), with how many each.
+function heatSpots(pts) {
+  const spots = new Map();
+  for (const p of pts) {
+    const k = `${Math.round(p.lat * 80)}:${Math.round(p.lon * 80)}`;
+    const s = spots.get(k) || spots.set(k, { lat: 0, lon: 0, n: 0, w: 0, names: new Map(), unit: p.unit }).get(k);
+    const n = Number(p.count) > 0 ? Number(p.count) : 1;
+    s.lat = (s.lat * s.w + p.lat * n) / (s.w + n);
+    s.lon = (s.lon * s.w + p.lon * n) / (s.w + n);
+    s.w += n;
+    s.n += n;
+    const name = p.city || p.title || '';
+    s.names.set(name, (s.names.get(name) || 0) + n);
+  }
+  const list = [...spots.values()];
+  const max = Math.max(1, ...list.map((s) => s.n));
+  return list.map((s) => ({ ...s, max, name: [...s.names.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || '' })).sort((a, b) => a.n - b.n);
+}
+// From a soft gold (once) to a deep red (most often).
+function heatColour(t, a = 1) {
+  const mix = (x, y) => Math.round(x + (y - x) * Math.max(0, Math.min(1, t)));
+  return `rgba(${mix(245, 200)}, ${mix(190, 40)}, ${mix(70, 30)}, ${a})`;
 }
 
 // A map whose page has gone (you went somewhere else) is taken down, a couple of seconds later:

@@ -1161,9 +1161,13 @@ export function parseGuestbookEntry(key, text) {
     name: String(data.name || 'Visitor').slice(0, 60),
     date: data.date ? String(data.date) : '',
     reply: data.reply ? String(data.reply).slice(0, 2000) : '',
+    // Sent as a postcard: which painted front it has.
+    card: POSTCARD_FRONTS.includes(String(data.card ?? '')) ? String(data.card) : '',
     message: String(body || '').trim().slice(0, 2000)
   };
 }
+// The painted fronts a visitor's postcard can have (these match SCENES in public/js/apps.js).
+export const POSTCARD_FRONTS = ['seaside', 'city', 'countryside', 'forest', 'mountains', 'lakeside'];
 
 // ---------- the highlights cabinet (highlights.md) ----------
 // Up to five posts on each shelf (places, music, films, TV, podcasts), best first, each with an

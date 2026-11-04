@@ -24,7 +24,9 @@ async function load() {
     try {
       const res = await fetch('/api/all', tries ? { cache: 'no-cache' } : {});
       if (!res.ok) throw new Error('Could not load');
-      return await res.json();
+      const data = await res.json();
+      offline(res.headers.get('X-Offline'));
+      return data;
     } catch (e) {
       if (tries >= 2) throw e;
       await new Promise((r) => setTimeout(r, 1500 * (tries + 1)));
@@ -49,6 +51,7 @@ function keepFresh(data, redraw) {
     try {
       const res = await fetch('/api/all', { cache: 'no-cache' });
       if (!res.ok) return;
+      offline(res.headers.get('X-Offline'));
       const fresh = await res.json();
       const now = plain(fresh);
       if (now === seen) return;
@@ -125,6 +128,26 @@ if (window.parent !== window) {
     setSoundPack(applySkin(e.data.theme || {}).sounds);
   });
 }
+
+// No connection: the site as it was last seen here (kept by the service worker, sw.js), with a
+// quiet line saying so, gone as soon as the connection is back.
+function offline(since) {
+  let bar = document.querySelector('.offline-bar');
+  if (!since) return bar?.remove();
+  const when = since.length > 8 ? Date.parse(since) : NaN;
+  const words = `No connection: showing what was saved${Number.isNaN(when) ? '' : ' ' + new Date(when).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`;
+  if (!bar) bar = document.body.appendChild(h('div', { class: 'offline-bar', role: 'status' }));
+  bar.textContent = '📴 ' + words;
+}
+// The service worker that keeps that copy (and shows notifications). (Not while the site is being
+// tested by a program, unless the test asks: it would get in the way of a test's own requests.)
+function keepForOffline() {
+  if (!('serviceWorker' in navigator) || (navigator.webdriver && !sessionStorage.getItem('sw-test'))) return;
+  const go = () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+  if (document.readyState === 'complete') setTimeout(go, 3000);
+  else addEventListener('load', () => setTimeout(go, 3000), { once: true });
+}
+addEventListener('online', () => document.querySelector('.offline-bar') && window.dispatchEvent(new Event('focus')));
 
 // A photo that can't be shown (deleted since the page loaded, or a friend's site not answering)
 // leaves a quiet gap instead of a broken-picture icon.
@@ -258,4 +281,20 @@ async function main() {
   desktopQuery.addEventListener('change', () => location.reload());
 }
 
+// A visit counted (once a visit, never yours): the visitor counter, and where visits come from.
+function countVisit() {
+  try {
+    if (sessionStorage.getItem('visitor-number') || localStorage.getItem('owner') === '1' || window.parent !== window) return;
+    sessionStorage.setItem('visitor-number', '0');
+  } catch {
+    return;
+  }
+  fetch('/api/visit', { method: 'POST' })
+    .then((r) => r.json())
+    .then((d) => d.count && sessionStorage.setItem('visitor-number', d.count))
+    .catch(() => {});
+}
+
 main();
+keepForOffline();
+countVisit();
