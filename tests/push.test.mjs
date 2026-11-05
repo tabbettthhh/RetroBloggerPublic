@@ -90,7 +90,7 @@ await test('two sites, friends; your phone signs up for notifications', async ()
   await post_(api, 'friends/add', { code });
   const st = await api('push');
   eq(Buffer.from(st.publicKey, 'base64url').length, 65, 'the site’s own key');
-  eq([st.devices, st.kinds, st.visitors], [[], { comments: true, notes: true, friends: true }, false], 'nothing yet; all kinds on; visitors off');
+  eq([st.devices, st.kinds, st.visitors], [[], { comments: true, notes: true, friends: true, email: true }, false], 'nothing yet; all kinds on; visitors off');
   // Not just any address: a push service's (or, testing, this computer).
   let refused = '';
   await post_(api, 'push/subscribe', { subscription: { ...phone.sub, endpoint: 'https://evil.example/collect' } }).catch((e) => (refused = e.message));

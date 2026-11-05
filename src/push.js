@@ -20,7 +20,7 @@ const MINE = DIR + 'mine/';
 const VISITORS = DIR + 'visitors/';
 const ANNOUNCED = DIR + 'announced.json';
 const OUTBOX = DIR + 'outbox.json';
-export const KINDS = ['comments', 'notes', 'friends'];
+export const KINDS = ['comments', 'notes', 'friends', 'email'];
 const MAX_MINE = 20;
 const MAX_VISITORS = 2000;
 

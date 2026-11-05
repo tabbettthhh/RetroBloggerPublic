@@ -385,7 +385,7 @@ async function editPost(p, el) {
 // Like XP's: pick a category. A window on a computer, a sheet on a phone (in the theme's colours);
 // each category opens in the same place, with ‹ back to the categories.
 const CP = [
-  ['Writing', [['posts', 'Posts & drafts', 'Every post, drafts and scheduled ones included: find, pin, edit', '🗂'], ['highlights', 'Highlights', 'The cabinet’s shelves, in order, with why', '★'], ['planner', 'Planner', 'Your lists, private ones too', '📒']]],
+  ['Writing', [['posts', 'Posts & drafts', 'Every post, drafts and scheduled ones included: find, pin, edit', '🗂'], ['highlights', 'Highlights', 'The cabinet’s shelves, in order, with why', '★'], ['planner', 'Planner', 'Your lists, private ones too', '📒'], ['email', 'Post by email', 'Email your site, and it’s a post (photos too)', '📧']]],
   ['People', [['notifications', 'Inbox', 'Comments, signatures, suggestions, nudges, friends’ news', '✉'], ['friends', 'Friends', 'Your buddies, and who sees what', '👥'], ['mail', 'Mail', 'Notes from friends, and ones you’ve sent', '📨'], ['notify', 'Notifications', 'On your phone or computer, even with the site closed', '🔔'], ['status', 'Status', 'How you are, your message, a countdown', '💬']]],
   ['Look', [['themes', 'Themes', 'Colours, wallpaper, fonts and the rest, on your real site as you choose', '🎨'], ['designs', 'Designs', 'The visa in your passport, and keepsakes of your own', '🎟']]],
   ['Your site', [['picture', 'Your picture', 'A photo of you, or one of the site’s own pictures', '🖼'], ['site', 'Site & wishlist', 'Its name, about you, place categories, the trips wishlist', '🏠'], ['travel', 'Travel stats', 'The flight log in your passport', '✈'], ['visitors', 'Visitors', 'How many, and which countries they come from', '🌍'], ['files', 'Export & files', 'Download everything, import, all your files', '💾']]]
@@ -479,6 +479,11 @@ function openPage(id) {
     setPage(id);
     if (host) host.mail = false;
     return drawVisitors(host.body);
+  }
+  if (id === 'email') {
+    setPage(id);
+    if (host) host.mail = false;
+    return drawEmail(host.body);
   }
   if (host) host.mail = false;
   setPage(id);
@@ -1488,7 +1493,8 @@ async function drawNotify(body) {
   const kinds = [
     ['comments', 'Comments waiting for you', 'And guestbook signatures, suggestions, and comments from friends'],
     ['notes', 'Notes from friends', 'When a friend sends you a note (Mail)'],
-    ['friends', 'Friends’ new posts', 'When a friend posts something new']
+    ['friends', 'Friends’ new posts', 'When a friend posts something new'],
+    ['email', 'Posts sent by email', 'When an email you sent becomes a post (or a draft)']
   ];
   const choose = (k) => (e) => kit.push.settings({ kinds: { [k]: e.target.checked } }).then(() => toast('Saved.'), (err) => toast(err.message, true));
   const what = h('section', { class: 'nt-box' }, h('h3', null, 'Tell me about'), kinds.map(([k, label, sub]) => h('label', { class: 'nt-check' }, h('input', { type: 'checkbox', checked: st.kinds[k], onchange: choose(k) }), h('span', null, h('b', null, label), h('small', null, sub)))));
@@ -1517,6 +1523,79 @@ async function drawNotify(body) {
     h('p', { class: 'nt-count' }, st.visitorCount ? `${st.visitorCount} ${st.visitorCount === 1 ? 'visitor gets' : 'visitors get'} notified when you post.` : 'Nobody has asked yet.')
   );
   body.replaceChildren(h('div', { class: 'nt' }, thisDevice, what, devices, visitors));
+}
+// ---------- posting by email ----------
+// Control Panel › Post by email: on or off, your secret address (and how to set it up on
+// Cloudflare), the addresses you send from, drafts or straight on, and the last few emails.
+async function drawEmail(body) {
+  body.replaceChildren(h('p', { class: 'okit-note' }, 'Loading…'));
+  let st;
+  try {
+    st = await kit.email.get();
+  } catch (e) {
+    body.replaceChildren(h('p', { class: 'okit-note' }, e.message));
+    return;
+  }
+  const again = () => drawEmail(body);
+  const act = (fn, msg) => async (e) => {
+    const b = e?.currentTarget;
+    if (b) b.disabled = true;
+    try {
+      await fn();
+      if (msg) toast(msg);
+      await again();
+    } catch (err) {
+      toast(err.message, true);
+      if (b) b.disabled = false;
+    }
+  };
+  const senders = h('textarea', { class: 'em-senders', rows: 2, 'aria-label': 'Your email addresses, one a line', placeholder: 'you@example.com' }, st.senders.join('\n'));
+  const list = () => senders.value.split(/[\s,;]+/).filter(Boolean);
+  const from = h('section', { class: 'nt-box' }, h('h3', null, 'Sent from'), h('p', null, 'Only emails from these addresses of yours become posts (one a line). Anyone else’s are dropped.'), senders, h('div', { class: 'okit-row' }, btn('Save addresses', '', act(() => kit.email.set({ senders: list() }), 'Saved.'))));
+  if (!st.on) {
+    body.replaceChildren(
+      h(
+        'div',
+        { class: 'nt em' },
+        h('section', { class: 'nt-box' }, h('h3', null, '📧 Post by email'), h('p', null, 'Write an email, attach some photos, send it to your site’s own secret address: it’s a post. The subject is its title. With photos it’s a photo dump; without, a thought.'), h('p', { class: 'em-small' }, 'It needs a domain of your own on Cloudflare (for its free Email Routing). Turn it on to see the steps.')),
+        from,
+        h('div', { class: 'okit-row' }, btn('Turn on', 'go', act(() => kit.email.set({ on: true, senders: list() }), 'On. Now the steps below.')))
+      )
+    );
+    return;
+  }
+  const word = `post-${st.word}`;
+  const copy = btn('Copy', '', () => navigator.clipboard?.writeText(word).then(() => toast('Copied.'), () => toast(word)));
+  const steps = h(
+    'section',
+    { class: 'nt-box' },
+    h('h3', null, 'Your secret address'),
+    h('p', { class: 'em-address' }, h('code', null, word), h('span', null, '@your-domain'), copy),
+    h(
+      'ol',
+      { class: 'em-steps' },
+      h('li', null, 'In Cloudflare, open your domain (it needs to be on Cloudflare), then ', h('b', null, 'Email › Email Routing'), ', and switch it on if it isn’t.'),
+      h('li', null, 'Under ', h('b', null, 'Routing rules'), ', ', h('b', null, 'Create address'), ': type ', h('code', null, word), ', choose the action ', h('b', null, 'Send to a Worker'), ', and pick your site.'),
+      h('li', null, 'Send an email to ', h('code', null, word + '@your-domain'), ' from one of your addresses below. Keep the address to yourself, like a password.')
+    ),
+    h('div', { class: 'okit-row' }, btn('New secret address', '', (e) => confirm('Make a new secret address? The old one stops working straight away (change it in Cloudflare too).') && act(() => kit.email.set({ newWord: true }), 'A new address. Change it in Cloudflare too.')(e)))
+  );
+  const draft = h('input', { type: 'checkbox', checked: st.draft, onchange: (e) => kit.email.set({ draft: e.target.checked }).then(() => toast(e.target.checked ? 'Emailed posts wait as drafts for you.' : 'Emailed posts go straight on the site.'), (err) => toast(err.message, true)) });
+  const how = h('section', { class: 'nt-box' }, h('h3', null, 'When one arrives'), h('label', { class: 'nt-check' }, draft, h('span', null, h('b', null, 'Keep it as a draft for me to check first'), h('small', null, 'Untick it to put emailed posts straight on the site. Either way, [draft] or [now] in a subject decides for that email.'))));
+  const when = (t) => new Date(t).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const log = h(
+    'section',
+    { class: 'nt-box' },
+    h('h3', null, 'Lately'),
+    st.log.length
+      ? h(
+          'ul',
+          { class: 'em-log' },
+          st.log.map((e) => h('li', { class: e.ok ? 'ok' : 'no' }, h('b', null, e.ok ? (e.draft ? '📝 A draft' : '✅ Posted') : '✋ Not posted'), h('small', null, ` · ${when(e.at)}${e.from ? ' · ' + e.from : ''}`), e.title ? h('span', null, ' “', e.title, '”') : null, e.why ? h('small', { class: 'em-why' }, e.why) : null))
+        )
+      : h('p', { class: 'nt-none' }, 'Nothing yet.')
+  );
+  body.replaceChildren(h('div', { class: 'nt em' }, steps, from, how, log, h('div', { class: 'okit-row' }, btn('Turn off', 'danger', act(() => kit.email.set({ on: false }), 'Off: emails to your address are dropped.')))));
 }
 // Opened from a notification: straight to what it's about.
 function openFromNotice() {
