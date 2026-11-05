@@ -2,7 +2,7 @@
 // friend code, follow each other's posts, send each other notes, and refuse anyone else.
 import crypto from 'node:crypto';
 import fs from 'node:fs';
-import { test, report, assert, eq, launch, close, adminPage, api, putFile, publicData, overview, PHOTOS, BASE, chromium, openTab } from './lib.mjs';
+import { test, report, assert, eq, launch, close, adminPage, editPost, unfold, clickSave, api, putFile, getFile, publicData, overview, PHOTOS, BASE, chromium, openTab } from './lib.mjs';
 
 const BASE2 = process.env.TEST_BASE2 || 'http://localhost:8801';
 async function api2(p, opts = {}) {
@@ -586,6 +586,104 @@ await test('a post in full from a friend\'s site is made safe before anyone sees
   eq(feed.keepsakes.map((k) => [k.id, k.shape, k.paper, k.picture]), [['pal.example~ferry', 'ticket', '', '']], 'designs checked, no picture from elsewhere');
   eq(feed.categories.map((c) => [c.key, c.color]), [['brunch', '']], 'categories checked');
   assert(!text.includes('javascript:'), 'nothing that runs');
+});
+
+await test('tagging a friend, a shared album they add photos to, and the webring', async () => {
+  const at = (d) => new Date(Date.now() - d * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
+  await fetch(`${BASE2}/admin/api/upload?key=photos/beach/own.jpg`, { method: 'PUT', body: fs.readFileSync(PHOTOS[2]) });
+  await fetch(`${BASE2}/admin/api/file?key=photos/beach.md`, { method: 'PUT', body: `---\ndate: ${at(1)}\ntitle: Beach day\nphotos: [own.jpg]\nwith: ["${BASE}"]\nalbum_with: ["${BASE}/"]\n---\nSand everywhere.\n` });
+  await post_(api, 'friends/refresh');
+  const mine = (await api('overview')).friendsMine.posts.find((x) => x.id === 'photos/beach');
+  eq([mine.tagged, mine.album_open], [true, true], 'you’re tagged, and may add photos');
+  // Someone it isn't shared with can't add to it.
+  const png = fs.readFileSync(PHOTOS[0]).toString('base64');
+  const no = await signed(BASE2, 'POST', '/api/friends/album', FAKE, secret, { body: JSON.stringify({ post: 'photos/beach', photo: png }) });
+  eq(no.status, 403, 'not shared with the pretend site');
+  // You add one, from your own site, signed in.
+  const browser = await chromium.launch();
+  const p = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  p.errors = [];
+  p.on('pageerror', (e) => p.errors.push(e.message));
+  p.on('dialog', (dl) => dl.accept());
+  await p.addInitScript(() => sessionStorage.setItem('entered', '1'));
+  try {
+    await p.goto(BASE + '/?owner=1#/');
+    const beach = p.locator('.ff-in-home[data-friend-post$="|photos/beach"]');
+    await beach.locator('.okit-album-add').waitFor();
+    assert((await beach.locator('.ff-from').innerText()).includes('with you'), 'tagged, said on top');
+    await beach.locator('.okit-album-add + input[type=file]').setInputFiles(PHOTOS[1]);
+    await p.waitForFunction(() => /Your photo is in/.test(document.querySelector('.okit-toast')?.textContent || ''), null, { timeout: 20000 });
+    // A ♥ and an emoji on their post, from yours: they go to their site.
+    const heart = beach.locator('.ff-react .react-btn[data-k="heart"]');
+    await heart.click();
+    await p.waitForFunction(() => document.querySelector('.ff-in-home[data-friend-post$="|photos/beach"] .ff-react .react-btn[data-k="heart"]')?.getAttribute('aria-pressed') === 'true' && !document.querySelector('.ff-react')?.title);
+    await until(async () => (await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json()).posts.find((x) => x.slug === 'beach').reactions?.heart === 1, 'your ♥ on their site');
+    await beach.locator('.ff-react .react-add').click();
+    await p.locator('.react-pick .react-pick-btn', { hasText: '🔥' }).click();
+    await until(async () => (await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json()).posts.find((x) => x.slug === 'beach').reactions?.custom?.['🔥'] === 1, 'and your emoji');
+    eq(await beach.locator('.ff-react .react-x').count(), 0, 'their emoji aren’t yours to take off');
+    await beach.locator('.ff-react .react-btn[data-k="heart"]').click();
+    await until(async () => !(await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json()).posts.find((x) => x.slug === 'beach').reactions?.heart, 'taken back');
+    eq((await api('overview')).friendsMine.posts.find((x) => x.id === 'photos/beach').reactions, { heart: 0, star: 0, grin: 0, custom: { '🔥': 1 } }, 'your copy of their feed has the new counts');
+    assert(!p.errors.length, p.errors.join('; '));
+  } finally {
+    await browser.close();
+  }
+  const theirs = async () => (await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json()).posts.find((x) => x.slug === 'beach');
+  const b = await theirs();
+  eq(b.photos.length, 2, 'in their album, after theirs');
+  eq(b.captions[1], '📷 Sam', 'with your name');
+  eq(b.album_with, undefined, 'who may add isn’t shown to visitors');
+  eq((await fetch(BASE2 + b.photos[1])).status, 200, 'the photo is there');
+  // Their back office lists who gave which, and they can take one out.
+  const album = (await api2('overview')).posts.find((x) => x.slug === 'beach').album;
+  eq(album.map((e) => [e.name, e.site]), [['Sam', BASE]], 'listed with who gave it');
+  eq((await api2('overview')).posts.find((x) => x.slug === 'beach').photos.length, 1, 'kept apart from their own photos in the editor');
+  await post_(api2, 'albums/remove', { post: 'photos/beach', file: album[0].file });
+  eq((await theirs()).photos.length, 1, 'taken out');
+  eq((await fetch(BASE2 + b.photos[1])).status, 404, 'and deleted');
+  // Who it's with shows to their visitors only while they can see who their friends are; the
+  // webring too.
+  await post_(api2, 'friends/settings', { visibility: 'list', webring: true });
+  let pub = await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json();
+  eq(pub.posts.find((x) => x.slug === 'beach').with, [BASE], 'with you, on their site');
+  eq(pub.webring, [BASE2, BASE, FAKE].sort(), 'the ring: them and their friends');
+  const v = await chromium.launch();
+  const vp = await v.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  vp.errors = [];
+  vp.on('pageerror', (e) => vp.errors.push(e.message));
+  await vp.addInitScript(() => sessionStorage.setItem('entered', '1'));
+  try {
+    await vp.goto(BASE2 + '/#/post/photos/beach');
+    await vp.waitForSelector('.with-line');
+    eq((await vp.locator('.with-line').innerText()).trim(), '👥 with Sam', 'on the post, linking to your site');
+    eq(await vp.locator('.with-line a').getAttribute('href'), BASE, 'your site');
+    await vp.evaluate(() => (location.hash = '#/about'));
+    await vp.waitForSelector('.webring');
+    const ring = [BASE2, BASE, FAKE].sort();
+    const i = ring.indexOf(BASE2);
+    eq(await vp.locator('.webring a', { hasText: 'Next' }).getAttribute('href'), ring[(i + 1) % 3], 'next in the ring');
+    eq(await vp.locator('.webring a', { hasText: 'Previous' }).getAttribute('href'), ring[(i + 2) % 3], 'the one before');
+    assert(!vp.errors.length, vp.errors.join('; '));
+  } finally {
+    await v.close();
+  }
+  await post_(api2, 'friends/settings', { webring: false });
+  eq((await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json()).webring, [], 'the ring, switched off');
+  await post_(api2, 'friends/settings', { visibility: 'off', webring: true });
+  pub = await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json();
+  eq([pub.posts.find((x) => x.slug === 'beach').with, pub.webring], [[], []], 'friends private: no names, no ring');
+  // Tagging from the editor: your friends as chips.
+  await putFile('thoughts/walk.md', `---\ndate: ${at(2)}\ntitle: A walk\n---\nOut and about.\n`);
+  const page = await adminPage();
+  await editPost(page, 'A walk');
+  await unfold(page);
+  await page.locator('.friends-field .friend-chip', { hasText: 'Lina' }).click();
+  eq(await page.locator('.friends-field .friend-chip.on').count(), 1, 'chosen');
+  await clickSave(page);
+  await until(async () => (await getFile('thoughts/walk.md')).includes(BASE2), 'saved in the post');
+  assert(!page.errors.length, page.errors.join('; '));
+  await page.close();
 });
 
 await test('your site keeps its address, and friends follow when it moves', async () => {

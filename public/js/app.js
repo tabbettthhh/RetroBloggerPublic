@@ -12,6 +12,7 @@ import { startBarDecor } from './bar-decor.js';
 import { syncRoom } from './cabinet.js';
 import { ownerArrival, openOwnerDoor, ownerHooks } from './owner-door.js';
 import { reactionsSetting } from './reactions.js';
+import { knowFriends } from './extras.js';
 
 const root = document.getElementById('app');
 const desktopQuery = window.matchMedia('(min-width: 900px) and (pointer: fine)');
@@ -92,6 +93,7 @@ const nearTop = (el) => [el, ...el.querySelectorAll('*')].every((x) => x.scrollT
 // their own sites; yours come first, so a name you both use keeps yours).
 function registerDesigns(data) {
   reactionsSetting(data);
+  knowFriends(data);
   registerCategories(data.categories);
   registerCategories(data.friendCategories || []);
   registerKeepsakes([...(data.keepsakes?.custom || []), ...(data.friendKeepsakes || [])]);

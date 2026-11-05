@@ -170,7 +170,7 @@ async function route(request, env, ctx) {
     return friends.friendPhotoForVisitor(env, parts[0], parts.slice(1).join('/'), mine);
   }
   // Friends' sites talking to yours (every request signed with the secret you share).
-  if (p.startsWith('/api/friends/')) return friends.friendsApi(request, env, p, { buildEverything, mediaForFriend: (key) => friendMedia(env, key), friendComment: (who, info) => friendComment(env, who, info, ctx, url.origin), changed: () => bumpVersion(env), news: () => friends.shareNews(env, buildEverything), waitUntil: (work) => ctx.waitUntil(work) });
+  if (p.startsWith('/api/friends/')) return friends.friendsApi(request, env, p, { buildEverything, mediaForFriend: (key) => friendMedia(env, key), friendComment: (who, info) => friendComment(env, who, info, ctx, url.origin), albumPhoto: (who, info) => albumPhoto(env, who, info), react: (info) => giveReaction(env, info, { forFriends: true }), changed: () => bumpVersion(env), news: () => friends.shareNews(env, buildEverything), waitUntil: (work) => ctx.waitUntil(work) });
   if (p.startsWith('/api/')) return json({ error: 'Not found' }, 404);
 
   return staticFile(request, env, p);
@@ -448,7 +448,7 @@ async function readParsed(env) {
     return {};
   }
 }
-const PARSED_VERSION = 33; // bump when buildPost changes shape
+const PARSED_VERSION = 34; // bump when buildPost changes shape
 
 // "reading [book]" (or [film], [podcast], [music]) becomes "reading The Remains of the Day" while a book is marked as reading.
 function fillStatus(status, posts) {
@@ -522,14 +522,16 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
   const commentKeys = mdKeys.filter((k) => isCommentKey(k));
   // (Visitors' ♥, ☆ and smiles: one small file for each post that has any.)
   const reactionKeys = objects.map((o) => o.key).filter((k) => REACTION_FILE.test(k));
-  const extraKeys = [...gbKeys, ...commentKeys, ...reactionKeys];
+  // (Shared albums: the photos friends have added to a post, one small file for each post.)
+  const albumKeys = objects.map((o) => o.key).filter((k) => ALBUM_FILE.test(k));
+  const extraKeys = [...gbKeys, ...commentKeys, ...reactionKeys, ...albumKeys];
   const extraStale = extraKeys.filter((k) => extras[k]?.etag !== etags.get(k));
   const extraTodo = extraStale.slice(0, Math.max(0, READS_PER_BUILD - todo.length));
   const extraTexts = await Promise.all(extraTodo.map((k) => readText(env, k)));
   extraTodo.forEach((k, i) => {
     if (extraTexts[i] == null) return;
     try {
-      extras[k] = { etag: etags.get(k), value: k.startsWith('guestbook/') ? parseGuestbookEntry(k, extraTexts[i]) : k.startsWith('reactions/') ? reactionCounts(extraTexts[i]) : parseComment(k, extraTexts[i]) };
+      extras[k] = { etag: etags.get(k), value: k.startsWith('guestbook/') ? parseGuestbookEntry(k, extraTexts[i]) : k.startsWith('reactions/') ? reactionCounts(extraTexts[i]) : k.startsWith('albums/') ? albumEntries(extraTexts[i]) : parseComment(k, extraTexts[i]) };
     } catch (e) {
       console.error(k, e);
     }
@@ -602,6 +604,26 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
       const r = extras[`reactions/${posts[i].type}/${posts[i].slug}.json`]?.value;
       if (r && (r.heart || r.star || r.grin || r.custom)) posts[i] = { ...posts[i], reactions: r };
     }
+  // Shared albums: friends' photos go after the post's own, each with who it's from. (Who gave
+  // which is listed for the back office only.)
+  for (let i = 0; i < posts.length; i++) {
+    const list = posts[i].type === 'photos' ? extras[`albums/photos/${posts[i].slug}.json`]?.value : null;
+    if (!list?.length) continue;
+    const p = posts[i];
+    // (The back office keeps a post's own photos apart from friends' ones, so saving it never
+    // makes theirs part of it.)
+    if (includeHidden) {
+      posts[i] = { ...p, album: list };
+      continue;
+    }
+    const pad = [...p.captions, ...Array(Math.max(0, p.photos.length - p.captions.length)).fill('')];
+    posts[i] = {
+      ...p,
+      photos: [...p.photos, ...list.map((e) => `/media/photos/${p.slug}/${encodeURIComponent(e.file)}`)],
+      captions: [...pad, ...list.map((e) => (e.caption ? `${e.caption} · 📷 ${e.name}` : `📷 ${e.name}`))],
+      files: [...p.files, ...list.map((e) => e.file)]
+    };
+  }
   // Series: each post's part, out of how many, and the ones either side (by date).
   const series = new Map();
   for (const p of posts) if (p.series) (series.get(p.series.toLowerCase()) || series.set(p.series.toLowerCase(), []).get(p.series.toLowerCase())).push(p);
@@ -658,6 +680,81 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
   return out;
 }
 
+// ---------- shared albums ----------
+// A photos post can let some friends add their own photos to it, from their sites. Their photos
+// are kept with the post's (photos/<post>/from-<friend>-<time>.jpg), and who gave which in
+// albums/photos/<post>.json.
+const ALBUM_FILE = /^albums\/photos\/[^/]+\.json$/;
+const ALBUM_PER_FRIEND = 30;
+const ALBUM_PHOTO = /^from-[a-z0-9._-]{1,80}-[0-9a-z]{6,12}\.(jpg|png|webp)$/;
+function albumEntries(text) {
+  let a = [];
+  try {
+    a = JSON.parse(text)?.entries || [];
+  } catch {}
+  return (Array.isArray(a) ? a : [])
+    .filter((e) => e && ALBUM_PHOTO.test(String(e.file || '')))
+    .slice(0, 300)
+    .map((e) => ({ file: String(e.file), friend: String(e.friend || '').slice(0, 80), name: String(e.name || 'A friend').replace(/[\u0000-\u001f]/g, ' ').slice(0, 60), site: String(e.site || '').slice(0, 200), caption: String(e.caption || '').replace(/[\u0000-\u001f]/g, ' ').slice(0, 200), at: Number(e.at) || 0 }));
+}
+async function writeAlbum(env, slug, change) {
+  const key = `albums/photos/${slug}.json`;
+  // (Two photos arriving in the same second: the second waits a moment and tries again.)
+  for (let i = 0; i < 3; i++) {
+    const entries = change(albumEntries((await readText(env, key)) || '{}'));
+    const ok = await (entries.length ? env.CONTENT.put(key, JSON.stringify({ entries }), { httpMetadata: { contentType: 'application/json' } }) : env.CONTENT.delete(key)).then(() => true, () => false);
+    if (ok) return entries;
+    await new Promise((r) => setTimeout(r, 1100));
+  }
+  throw new Error('Busy just now: try again in a moment.');
+}
+// A friend adding a photo to one of your posts (they must be one of the friends it's shared with).
+async function albumPhoto(env, friend, info) {
+  const slug = String(info.post || '').replace(/^photos\//, '');
+  const { posts } = await buildEverything(env, { forFriends: true });
+  const post = posts.find((p) => p.type === 'photos' && p.slug === slug);
+  const urls = [friend.url, ...(friend.aliases || [])];
+  if (!post || !(post.album_with || []).some((u) => urls.includes(u))) return { error: 'That album isn’t shared with you (any more).', status: 403 };
+  const had = albumEntries((await readText(env, `albums/photos/${slug}.json`)) || '{}');
+  if (had.filter((e) => e.friend === friend.key).length >= ALBUM_PER_FRIEND) return { error: `That’s ${ALBUM_PER_FRIEND} photos from you in this album already.`, status: 409 };
+  let bytes;
+  try {
+    bytes = Uint8Array.from(atob(String(info.photo || '')), (c) => c.charCodeAt(0));
+  } catch {
+    return { error: 'That photo didn’t come through.', status: 400 };
+  }
+  if (bytes.length < 100 || bytes.length > 4 * 1024 * 1024) return { error: 'Photos need to be under 4 MB.', status: 413 };
+  let clean;
+  try {
+    clean = stripImage(bytes);
+  } catch (e) {
+    return { error: e instanceof UnsupportedImage ? e.message : 'That photo could not be read.', status: 415 };
+  }
+  const ext = { jpeg: 'jpg', png: 'png', webp: 'webp' }[clean.kind];
+  if (!ext) return { error: 'Photos need to be jpg, png or webp.', status: 415 };
+  const file = `from-${friend.key.toLowerCase().replace(/[^a-z0-9.-]+/g, '-').slice(0, 60)}-${Date.now().toString(36)}.${ext}`;
+  await env.CONTENT.put(`photos/${slug}/${file}`, clean.bytes, { httpMetadata: { contentType: CLEAN_TYPES[clean.kind] } });
+  const name = String(friend.owner || friend.name || friend.url).slice(0, 60);
+  const caption = String(info.caption ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
+  try {
+    await writeAlbum(env, slug, (list) => [...list, { file, friend: friend.key, name, site: friend.url, caption, at: Date.now() }]);
+  } catch (e) {
+    await env.CONTENT.delete(`photos/${slug}/${file}`).catch(() => {});
+    return { error: e.message, status: 429 };
+  }
+  await bumpVersion(env);
+  await push.notifyOwner(env, 'friends', { title: `📷 ${name} added a photo`, body: post.title ? `to “${post.title}”` : 'to your album', url: `/?owner=1#/post/photos/${slug}`, tag: `album-${slug}` }, friend.me || '').catch(() => {});
+  return { ok: true };
+}
+// You taking a friend's photo out of your album.
+async function albumRemove(env, slug, file) {
+  if (!ALBUM_PHOTO.test(file) || !/^[^/]+$/.test(slug)) throw new Error('No such photo.');
+  await writeAlbum(env, slug, (list) => list.filter((e) => e.file !== file));
+  await env.CONTENT.delete(`photos/${slug}/${file}`);
+  await bumpVersion(env);
+  return { ok: true };
+}
+
 // ---------- reactions ----------
 // A ♥, a ☆ or a smile on a post, from anyone: only how many of each is kept, with the times of
 // the last few (to slow down anyone tapping away), and nothing about who.
@@ -696,11 +793,18 @@ async function react(request, env) {
   } catch {
     return json({ error: 'Could not read that.' }, 400);
   }
+  const out = await giveReaction(env, body);
+  return json(out.body, out.status || 200);
+}
+// A reaction given (or taken back): from a visitor, or (`forFriends`) a friend on their own site,
+// who can react to posts just for friends too.
+async function giveReaction(env, body, { forFriends = false } = {}) {
+  const json = (b, status = 200) => ({ body: b, status });
   const emoji = body.kind === 'custom' ? oneEmoji(body.emoji) : '';
   const kind = REACTIONS.includes(body.kind) || emoji ? body.kind : '';
   if (!kind) return json({ error: body.kind === 'custom' ? 'That isn’t one emoji.' : 'Pick a ♥, a ☆ or a smile.' }, 400);
   const [type, slug] = String(body.post || '').split('/');
-  const data = await buildEverything(env);
+  const data = await buildEverything(env, forFriends ? { forFriends: true } : undefined);
   if (!data.site.reactions) return json({ error: 'Reactions are switched off here.' }, 403);
   if (!data.posts.some((p) => p.type === type && p.slug === slug)) return json({ error: 'That post isn’t here any more.' }, 404);
   const key = `reactions/${type}/${slug}.json`;
@@ -784,10 +888,15 @@ async function apiAll(request, env, ctx) {
     const data = await buildEverything(env);
     partial = data.inside.partial;
     // Visitors get the finished HTML; the raw Markdown and file names stay for the back office.
-    data.posts = data.posts.map(({ body, files, key, ...p }) => p);
     // Your friends: who they are and how they are, and their latest posts (only if you've chosen
     // to show them to everyone: otherwise they're just for you, signed in).
     const pals = await friends.publicFriends(env).catch(() => ({ buddies: [], posts: [] }));
+    // (Who a post is with shows only while visitors can see who your friends are; who may add to
+    // an album never does.)
+    const shown = new Set(pals.buddies.map((b) => b.url));
+    data.posts = data.posts.map(({ body, files, key, album_with, ...p }) => ({ ...p, with: (p.with || []).filter((u) => shown.has(u)) }));
+    // (The webring: you and your friends, if you have it on.)
+    data.webring = pals.ring?.length > 1 ? pals.ring : [];
     data.buddies = pals.buddies;
     data.friendPosts = pals.posts;
     data.friendLooks = pals.looks || {};
@@ -1125,6 +1234,17 @@ async function adminApi(request, env, url, ctx) {
   }
 
   // An emoji you don't want on a post, taken off it.
+  // A friend's photo taken out of one of your shared albums.
+  if (p === 'albums/remove' && m === 'POST') {
+    const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
+    try {
+      const out = await albumRemove(env, String(body.post || '').replace(/^photos\//, ''), String(body.file || ''));
+      ctx.waitUntil(friends.shareNews(env, buildEverything).catch(() => {}));
+      return json(out);
+    } catch (e) {
+      return json({ error: String(e.message || e) }, 400);
+    }
+  }
   if (p === 'reactions/remove' && m === 'POST') {
     const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
     const [type, slug] = String(body.post || '').split('/');
@@ -1232,7 +1352,7 @@ async function adminApi(request, env, url, ctx) {
       if (TYPES.includes(folder) && file && !more && file.endsWith('.md')) {
         const mediaPrefix = `${folder}/${file.replace(/\.md$/, '')}/`;
         // (Its photos go with it, and its comments, on the site or waiting.)
-        const extra = [...(await listAll(env, mediaPrefix)), ...(await listAll(env, 'comments/' + mediaPrefix)), ...(await listAll(env, 'comments-pending/' + mediaPrefix)), ...(await listAll(env, `reactions/${folder}/${file.replace(/\.md$/, '')}.json`))];
+        const extra = [...(await listAll(env, mediaPrefix)), ...(await listAll(env, 'comments/' + mediaPrefix)), ...(await listAll(env, 'comments-pending/' + mediaPrefix)), ...(await listAll(env, `reactions/${folder}/${file.replace(/\.md$/, '')}.json`)), ...(await listAll(env, `albums/${folder}/${file.replace(/\.md$/, '')}.json`))];
         if (extra.length) await env.CONTENT.delete(extra.map((o) => o.key));
       }
       await bumpVersion(env);
@@ -1356,6 +1476,14 @@ async function adminApi(request, env, url, ctx) {
         const out = await friends.setFriendSettings(env, body);
         await bumpVersion(env);
         return json({ ok: true, ...out });
+      }
+      // A photo of yours for a friend's shared album (sent to their site), or one of your
+      // friends' photos taken out of an album of yours.
+      // A ♥, a ☆, a smile or an emoji on a friend's post (sent to their site).
+      if (p === 'friends/react' && m === 'POST') return json(await friends.reactTo(env, fkey || String(body.friend || ''), body));
+      if (p === 'friends/album' && m === 'POST') {
+        const out = await friends.addToAlbum(env, fkey || String(body.friend || ''), body);
+        return json(out);
       }
       if (p === 'friends/photo' && m === 'GET') return friends.friendPhoto(env, fkey, url.searchParams.get('p') || '');
       // Notes between friends: your mail, sending one, marking them read, deleting one.

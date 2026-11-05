@@ -306,7 +306,8 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 /* Comments on a friend's post: a glossy button at the foot of their card, opening the
    conversation underneath, in your theme's paper (their card keeps their look). */
 .okit-talk-wrap { margin: 8px 10px 10px; text-align: left; font: 13px/1.4 Tahoma, 'Segoe UI', sans-serif; color: var(--ok-ink, #14254d); }
-.okit-talk-btn, .okit-talk-note { min-height: 28px; }
+.okit-talk-btn, .okit-talk-note, .okit-album-add { min-height: 28px; }
+.ff-tagged { font-weight: bold; }
 .okit-talk-btn[aria-expanded="true"] { color: var(--ok-sel-text, #fff); border-color: color-mix(in srgb, var(--ok-sel, #316ac5) 70%, #000); background: var(--ok-gloss), var(--ok-sel, #316ac5); box-shadow: var(--ok-press); }
 .okit-talk { margin-top: 8px; padding: 8px 10px; border: 1px solid var(--ok-line, #c7c3ae); border-left: 4px solid var(--ok-sel, #316ac5); border-radius: 8px; background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--ok-paper, #ece9d8) 40%, #fff)); box-shadow: var(--ok-bevel), 0 1px 4px rgba(0, 0, 0, .12); }
 .okit-talk[hidden] { display: none; }
