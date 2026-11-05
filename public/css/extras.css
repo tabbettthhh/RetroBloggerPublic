@@ -14,6 +14,7 @@
 .card[data-card="neon"] > .react-row .react-btn { color: #fff; }
 .react-row.on-paper .react-btn { background: rgba(255, 250, 235, .7); color: #3a2a1a; }
 .react-row.on-shelf { margin-left: 8px; }
+.react-row.ff-react { display: flex; margin: 8px 12px 0; }
 
 /* ---------- series, read time ---------- */
 .card-read, .series-tag { flex: none; padding: 0 6px; border-radius: 8px; font-size: 11px; line-height: 17px; white-space: nowrap; color: inherit; opacity: .78; background: color-mix(in srgb, currentColor 9%, transparent); }
@@ -106,3 +107,18 @@
 .gb-card-peek { flex: none; width: 54px; height: 36px; border: 2px solid #fff; border-radius: 2px; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); overflow: hidden; }
 .gb-card-peek svg { display: block; width: 100%; height: 100%; }
 @media (prefers-reduced-motion: reduce) { .gb-postcard { rotate: none; } }
+
+/* Who a post is with: a quiet line under it, names linking to their sites. */
+.with-line { margin: 6px 12px 2px; font-size: 12.5px; color: var(--card-text, inherit); opacity: .85; }
+.with-line a { color: inherit; font-weight: bold; text-decoration: underline dotted; text-underline-offset: 2px; }
+.with-line.on-paper { margin: 6px 0; color: #3a2a1a; font-family: var(--hand, inherit); font-size: 15px; opacity: 1; }
+.with-line.on-shelf { margin: 8px 0 0; }
+
+/* The webring on the About page: an old-web ‹ Previous · Random · Next › bar. */
+.webring { display: grid; justify-items: center; gap: 6px; padding: 10px 12px; text-align: center; }
+.ring-title { font-weight: bold; font-size: 13px; letter-spacing: .04em; }
+.ring-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.ring-go { display: inline-block; min-width: 72px; padding: 4px 10px; border: 2px outset #d8d4c8; border-radius: 3px; background: #ece9d8; color: #1a1a1a; font: bold 12px/1.4 Tahoma, Verdana, sans-serif; text-decoration: none; }
+.ring-go:active { border-style: inset; }
+.ring-go:focus-visible { outline: 2px dotted currentColor; outline-offset: 2px; }
+.ring-count { opacity: .7; font-size: 11px; }

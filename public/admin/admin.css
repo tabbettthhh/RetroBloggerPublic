@@ -672,3 +672,10 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .emo-btn.mood-none { width: auto; padding: 0 8px; font-size: 12px; }
 .emo-btn[aria-pressed="true"] { outline: 2px solid #3a6fd8; outline-offset: -2px; border-radius: 4px; background: #e8eefc; }
 .series-chosen .chip { padding: 4px 10px; border-radius: 12px; background: #eef3fb; font-size: 12px; }
+/* Friends on a post (who it's with, a shared album): chips to tap on and off. */
+.friend-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.friend-chip { min-height: 30px; padding: 4px 10px; border: 1px solid #a5acb5; border-radius: 14px; background: #fff; color: #222; font: inherit; font-size: 12px; cursor: pointer; }
+.friend-chip.on { border-color: #3a6fd8; background: #e8eefc; color: #12357a; font-weight: bold; }
+.album-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+.album-item { display: grid; gap: 4px; margin: 0; font-size: 11px; }
+.album-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; background: #eee; }

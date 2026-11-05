@@ -117,6 +117,9 @@ export async function loadFriends(env) {
     // themselves, signed in on their own site).
     letShare: s.letShare !== false,
     friends: Array.isArray(s.friends) ? s.friends : [],
+    // A webring on your About page (‹ previous · random · next ›, around you and your friends):
+    // only while visitors can see who your friends are.
+    webring: s.webring !== false,
     // Your friend code's secret (none while it's switched off).
     code: s.code && typeof s.code.secret === 'string' ? s.code : null,
     codeOff: !!s.codeOff,
@@ -141,7 +144,7 @@ export async function rememberMe(env, origin) {
 
 // ---------- talking to a friend's site ----------
 
-async function signedFetch(env, store, friend, method, path, payload) {
+async function signedFetch(env, store, friend, method, path, payload, wait = 8000) {
   const body = payload == null ? '' : JSON.stringify(payload);
   const time = String(Date.now());
   const sig = await signature(friend.secret, method, path, time, body);
@@ -151,7 +154,7 @@ async function signedFetch(env, store, friend, method, path, payload) {
     headers: { 'User-Agent': FRIEND_UA, 'X-Friend-From': friend.as || store.me, 'X-Friend-Time': time, 'X-Friend-Sig': sig, ...(body ? { 'Content-Type': 'application/json' } : {}) },
     body: body || undefined,
     redirect: 'manual',
-    signal: AbortSignal.timeout(8000)
+    signal: AbortSignal.timeout(wait)
   });
   return res;
 }
@@ -179,7 +182,8 @@ const reply = (data, status = 200) => new Response(JSON.stringify(data), { statu
 export async function friendsApi(request, env, path, deps) {
   const method = request.method;
   const body = method === 'POST' ? await request.text() : '';
-  if (body.length > 20000) return reply({ error: 'Too big.' }, 413);
+  // (A photo for a shared album is bigger than anything else a friend's site sends.)
+  if (body.length > (path === '/api/friends/album' ? 6_000_000 : 20000)) return reply({ error: 'Too big.' }, 413);
   const store = await loadFriends(env);
 
   // A friend pasted your code: their site says hello, signed with the secret in it.
@@ -210,7 +214,7 @@ export async function friendsApi(request, env, path, deps) {
   // Your friend feed: who you are, how you are, and your recent posts.
   if (path === '/api/friends/feed' && method === 'GET') {
     const data = await deps.buildEverything(env, { forFriends: true });
-    return reply({ ...friendFeed(data, store.me || new URL(request.url).origin), share: store.letShare });
+    return reply({ ...friendFeed(data, store.me || new URL(request.url).origin, friend), share: store.letShare });
   }
 
   // They've moved: check they really are at the new address (their site there must answer,
@@ -278,6 +282,28 @@ export async function friendsApi(request, env, path, deps) {
     return reply(out.ok ? { ok: true } : { error: out.error }, out.status || 200);
   }
 
+  // A ♥, a ☆, a smile or an emoji on one of your posts, from a friend on their own site.
+  if (path === '/api/friends/react' && method === 'POST' && deps.react) {
+    let info = {};
+    try {
+      info = JSON.parse(body);
+    } catch {}
+    const out = await deps.react({ post: info.post, kind: info.kind, emoji: info.emoji, undo: info.undo === true });
+    return reply(out.body, out.status || 200);
+  }
+
+  // A photo for one of your shared albums, from a friend it's shared with.
+  if (path === '/api/friends/album' && method === 'POST' && deps.albumPhoto) {
+    let info = {};
+    try {
+      info = JSON.parse(body);
+    } catch {}
+    const f = store.friends.find((x) => x.key === friend.key) || friend;
+    const out = await deps.albumPhoto({ ...f, me: store.me }, info);
+    if (out.ok && deps.waitUntil) deps.waitUntil(Promise.resolve(deps.news?.()).catch(() => {}));
+    return reply(out.ok ? { ok: true } : { error: out.error }, out.status || 200);
+  }
+
   // A photo from one of your published posts, for a friend's site to show.
   if (path === '/api/friends/media' && method === 'GET') {
     const key = new URL(request.url).searchParams.get('key') || '';
@@ -290,7 +316,7 @@ export async function friendsApi(request, env, path, deps) {
 // What a friend's site gets: your name and status, and your latest posts (newest first).
 // The parts of a post a friend's site can show it with, as it looks on yours: everything but
 // what's already sent on its own (or never leaves your site), and nothing left at its default.
-const NOT_SENT = new Set(['body', 'files', 'key', 'error', 'extra', 'html', 'excerpt', 'draft', 'photos', 'captions', 'comments']);
+const NOT_SENT = new Set(['body', 'files', 'key', 'error', 'extra', 'html', 'excerpt', 'draft', 'photos', 'captions', 'comments', 'with', 'album_with', 'album']);
 function fullPost(p) {
   const base = TYPES.includes(p.type) ? blank(p.type) : {};
   const out = {};
@@ -300,7 +326,10 @@ function fullPost(p) {
   }
   return out;
 }
-export function friendFeed(data, origin) {
+// `to`: the friend it's for (whether they may add photos to an album depends on who's asking;
+// none: every friend's, to tell when anything's changed).
+export function friendFeed(data, origin, to = null) {
+  const mayAdd = (p) => (to ? (p.album_with || []).some((u) => u === to.url || u === to.from || (to.aliases || []).includes(u)) : (p.album_with || []).join(' '));
   const site = data.site;
   const link = (p) => origin + (p.type === 'places' ? `/#/journal/${p.slug}` : ['books', 'films', 'podcasts', 'music', 'tv'].includes(p.type) ? `/#/${p.type}/${p.slug}` : `/#/post/${p.type}/${p.slug}`);
   return {
@@ -324,6 +353,12 @@ export function friendFeed(data, origin) {
       creator: p.creator || '',
       rating: p.rating ?? null,
       friends_only: !!p.friends_only,
+      // Who it's with (friends' sites), and whether this friend may add photos to it.
+      with: p.with || [],
+      album_open: mayAdd(p),
+      // Its ♥, ☆, smiles and emoji, so a friend can add theirs. (Left out of what tells your
+      // friends something's changed: a reaction alone isn't news.)
+      ...(to ? { reactions: site.reactions === false ? null : p.reactions || {} } : {}),
       // The comments on it that are on your site, so a friend can see the conversation (and join in).
       comments: (p.comments || []).slice(-MAX_COMMENTS).map((c) => ({ id: c.id, name: c.name, date: c.date, message: c.message, reply: c.reply || '', reply_to: c.reply_to || '', site: c.site || '' })),
       // Your own photos only (as "type/post/file"), fetched through the friend's own site.
@@ -473,6 +508,19 @@ function linkOrigin(v) {
   }
 }
 
+// A post's reaction counts, from a friend's site (null: they have reactions off).
+function tidyReactions(r) {
+  if (!r || typeof r !== 'object') return null;
+  const n = (v) => Math.max(0, Math.min(1e6, Math.floor(Number(v) || 0)));
+  const custom = Object.fromEntries(
+    Object.entries(r.custom && typeof r.custom === 'object' ? r.custom : {})
+      .filter(([e, v]) => typeof e === 'string' && e.length <= 16 && /\p{Extended_Pictographic}/u.test(e) && !/[\s<>&"']/.test(e) && n(v) > 0)
+      .slice(0, 30)
+      .map(([e, v]) => [e, n(v)])
+  );
+  return { heart: n(r.heart), star: n(r.star), grin: n(r.grin), ...(Object.keys(custom).length ? { custom } : {}) };
+}
+
 // Tidies a feed from a friend's site before keeping it: plain values only, sizes capped.
 export function tidyFeed(f, friend) {
   const posts = (Array.isArray(f?.posts) ? f.posts : []).slice(0, 30).map((p) => ({
@@ -490,6 +538,9 @@ export function tidyFeed(f, friend) {
     creator: clean(p.creator, 80),
     rating: Number.isFinite(+p.rating) && p.rating !== null ? Math.max(0, Math.min(10, +p.rating)) : null,
     friends_only: !!p.friends_only,
+    with: (Array.isArray(p.with) ? p.with : []).slice(0, 12).map(linkOrigin).filter(Boolean),
+    album_open: p.album_open === true && p.type === 'photos',
+    reactions: tidyReactions(p.reactions),
     comments: (Array.isArray(p.comments) ? p.comments : []).slice(-MAX_COMMENTS).map(tidyComment).filter((c) => c.id && c.message),
     photos: (Array.isArray(p.photos) ? p.photos : []).map((k) => clean(k, 200)).filter(photoKeyOk).slice(0, MAX_PHOTOS),
     captions: (Array.isArray(p.captions) ? p.captions : []).slice(0, MAX_PHOTOS).map((c) => words(clean(c, 200))),
@@ -534,10 +585,19 @@ export async function refreshFriends(env, only) {
         if (before?.feed) {
           const seen = new Set((before.feed.posts || []).map((p) => p.id));
           const fresh = feed.posts.filter((p) => !seen.has(p.id) && Date.now() - (p.ts || 0) < 2 * 24 * 60 * 60 * 1000);
+          const who = feed.owner || feed.name || friend.name;
           if (fresh.length) {
-            const who = feed.owner || feed.name || friend.name;
             const p = fresh[0];
             await push.notifyOwner(env, 'friends', { title: `${who} posted${fresh.length > 1 ? ` ${fresh.length} new things` : ''}`, body: p.title || p.excerpt || 'Have a look', url: '/?owner=1#/friends', tag: `friend-${friend.key}` }, store.me).catch(() => {});
+          }
+          // Tagged in one of theirs (or asked to add photos to their album) since last time.
+          const was = new Map((before.feed.posts || []).map((p) => [p.id, p]));
+          const me = [store.me, friend.as].filter(Boolean);
+          const tagged = feed.posts.find((p) => p.with.some((u) => me.includes(u)) && !(was.get(p.id)?.with || []).some((u) => me.includes(u)));
+          const album = feed.posts.find((p) => p.album_open && !was.get(p.id)?.album_open);
+          if (tagged || album) {
+            const p = tagged || album;
+            await push.notifyOwner(env, 'friends', { title: tagged ? `🏷 ${who} tagged you` : `📷 ${who} shared an album with you`, body: (p.title || p.excerpt || 'Have a look') + (album && !tagged ? ': add your photos' : ''), url: '/?owner=1#/friends', tag: `friend-tag-${friend.key}` }, store.me).catch(() => {});
           }
         }
         names[friend.key] = { name: feed.name, owner: feed.owner };
@@ -597,7 +657,7 @@ export async function friendsOverview(env, here = '') {
   );
   // Friends who still know you by an old address (they couldn't be told you moved).
   const behind = store.friends.filter((f) => f.as && f.as !== store.me).map((f) => f.name);
-  return { me: store.me, here, behind, visibility: store.visibility, letShare: store.letShare, inHome: store.inHome, friends, code: codeText(store), codeOff: store.codeOff };
+  return { me: store.me, here, behind, visibility: store.visibility, letShare: store.letShare, inHome: store.inHome, webring: store.webring, friends, code: codeText(store), codeOff: store.codeOff };
 }
 
 const codeText = (store) => (store.code && store.me ? 'MYCORNER-' + b64url(enc.encode(JSON.stringify({ u: store.me, s: store.code.secret }))) : null);
@@ -716,6 +776,54 @@ export async function commentOnFriend(env, key, body) {
   if (res.status === 404 && !out.error) throw new Error('Their site needs updating before it can take comments from friends.');
   if (!res.ok) throw new Error(out.error === 'Not found' ? 'Their site needs updating before it can take comments from friends.' : out.error || 'Their site didn’t take that comment.');
   await refreshFriends(env, key);
+  return { ok: true };
+}
+
+// You, reacting to a friend's post: sent to their site, and their new counts kept in your copy
+// of their feed (so it shows straight away).
+export async function reactTo(env, key, body) {
+  const store = await loadFriends(env);
+  const friend = store.friends.find((f) => f.key === key);
+  if (!friend) throw new Error('That friend isn’t on your list any more.');
+  const post = String(body.post || '').slice(0, 160);
+  let res;
+  try {
+    res = await signedFetch(env, store, friend, 'POST', '/api/friends/react', { post, kind: String(body.kind || '').slice(0, 10), emoji: String(body.emoji || '').slice(0, 16), undo: body.undo === true });
+  } catch {
+    throw new Error('Couldn’t reach their site just now. Try again in a moment.');
+  }
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(out.error === 'Not found' ? 'Their site needs updating before it can take reactions from friends.' : out.error || 'Their site didn’t take that.');
+  const counts = tidyReactions(out.counts) || {};
+  const at = `data/_friendcache/${friend.key}.json`;
+  try {
+    const cache = JSON.parse((await env.CONTENT.get(at).then((o) => o?.text())) || 'null');
+    const p = cache?.feed?.posts?.find((x) => x.id === post);
+    if (p) {
+      p.reactions = counts;
+      await env.CONTENT.put(at, JSON.stringify(cache), { httpMetadata: { contentType: 'application/json' } });
+    }
+  } catch {}
+  return { ok: true, counts };
+}
+
+// You, adding a photo to a friend's shared album: sent to their site (it's cleaned and kept
+// there), then their feed is read again so you see it.
+export async function addToAlbum(env, key, body) {
+  const store = await loadFriends(env);
+  const friend = store.friends.find((f) => f.key === key);
+  if (!friend) throw new Error('That friend isn’t on your list any more.');
+  const photo = String(body.photo || '');
+  if (!photo || photo.length > 5_600_000 || !/^[A-Za-z0-9+/=]+$/.test(photo)) throw new Error('Photos need to be under 4 MB.');
+  let res;
+  try {
+    res = await signedFetch(env, store, friend, 'POST', '/api/friends/album', { post: String(body.post || '').slice(0, 160), photo, caption: String(body.caption ?? '').slice(0, 200) }, 25000);
+  } catch {
+    throw new Error('Couldn’t reach their site just now. Try again in a moment.');
+  }
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(out.error === 'Not found' ? 'Their site needs updating before it can take photos from friends.' : out.error || 'Their site didn’t take that photo.');
+  if (body.last) await refreshFriends(env, key).catch(() => {});
   return { ok: true };
 }
 
@@ -838,10 +946,11 @@ export async function setFriendSettings(env, body) {
   else if (typeof body.showOnSite === 'boolean') store.visibility = body.showOnSite ? 'all' : 'off';
   if (typeof body.letShare === 'boolean') store.letShare = body.letShare;
   if (typeof body.inHome === 'boolean') store.inHome = body.inHome;
+  if (typeof body.webring === 'boolean') store.webring = body.webring;
   delete store.showOnSite;
   await saveFriends(env, store);
   // (Friends' sites hear about a change to letShare at once: see shareNews.)
-  return { visibility: store.visibility, letShare: store.letShare, inHome: store.inHome };
+  return { visibility: store.visibility, letShare: store.letShare, inHome: store.inHome, webring: store.webring };
 }
 // A friend's posts can go on your site only if you show posts and they've said yes.
 const postsShown = (store, feed) => store.visibility === 'all' && feed?.share !== false;
@@ -867,7 +976,11 @@ export async function friendPhoto(env, key, photoKey) {
 // comments on each post (and whether you can add one).
 export async function publicFriends(env, { mine = false } = {}) {
   const store = await loadFriends(env);
-  if ((store.visibility === 'off' && !mine) || !store.friends.length) return { buddies: [], posts: [], looks: {}, postsShown: store.visibility === 'all', inHome: store.inHome, ...(mine ? { me: store.me } : {}) };
+  if ((store.visibility === 'off' && !mine) || !store.friends.length) return { buddies: [], posts: [], looks: {}, ring: [], postsShown: store.visibility === 'all', inHome: store.inHome, ...(mine ? { me: store.me } : {}) };
+  // The webring: you and your friends, in order of address (the same order on every site in it
+  // that's yours and your friends').
+  const ring = store.webring && store.visibility !== 'off' ? [...new Set([store.me, ...store.friends.map((f) => f.url)].filter(Boolean))].sort() : [];
+  const meToo = [store.me, ...store.friends.map((f) => f.as)].filter(Boolean);
   const caches = await Promise.all(store.friends.map((f) => readCache(env, f.key)));
   const buddies = [];
   const posts = [];
@@ -896,11 +1009,13 @@ export async function publicFriends(env, { mine = false } = {}) {
       // (A card of their own making, from a site that didn't send its cards: the theme's here.)
       if (full && !look && OWN_CARD.test(full.card || '')) full.card = '';
       const { comments, ...rest } = p;
-      posts.push({ ...rest, ...(mine ? { comments: comments || [] } : {}), friend: from, photos, full });
+      const { with: withWho, album_open, ...shown } = rest;
+      // (Signed in: whether you're tagged in it, and whether you may add photos to it.)
+      posts.push({ ...shown, ...(mine ? { comments: comments || [], tagged: (withWho || []).some((u) => meToo.includes(u)), album_open: !!album_open } : {}), friend: from, photos, full });
     }
   });
   posts.sort((a, b) => b.ts - a.ts);
-  return { buddies, posts: posts.slice(0, 60), keepsakes, categories, looks, postsShown: store.visibility === 'all', inHome: store.inHome, ...(mine ? { me: store.me } : {}) };
+  return { buddies, posts: posts.slice(0, 60), keepsakes, categories, looks, ring, postsShown: store.visibility === 'all', inHome: store.inHome, ...(mine ? { me: store.me } : {}) };
 }
 
 async function readCache(env, key) {

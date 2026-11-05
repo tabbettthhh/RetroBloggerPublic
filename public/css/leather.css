@@ -131,6 +131,10 @@
 .ticket-wrap::before { content: ''; position: absolute; z-index: 1; top: -7px; left: 14px; width: 50px; height: 16px; rotate: -8deg; }
 /* An entry ticket: a coloured edge, the place in print, and a stub to tear off */
 .ticket-wrap { position: relative; width: 100%; max-width: 250px; justify-self: center; rotate: 1.5deg; filter: drop-shadow(0 3px 4px rgba(60,40,20,.3)); }
+/* On phones and tablets, no shadow filter around a keepsake: Safari there can paint a stray
+   second copy of what's inside it (its picture somewhere else on the card, its tape gone black)
+   when a tilted keepsake with masked tape sits under a filter. Each one's own shadows still show. */
+@media (hover: none) { .ticket-wrap, .receipt-wrap { filter: none; } }
 .entry-ticket { display: flex; min-height: 104px; border-left: 8px solid var(--band); border-radius: 4px; color: #2b1d12; background: #fbf4e2;
   -webkit-mask: radial-gradient(circle at calc(100% - 58px) 0, transparent 6px, #000 6.5px) top / 100% 51% no-repeat, radial-gradient(circle at calc(100% - 58px) 100%, transparent 6px, #000 6.5px) bottom / 100% 51% no-repeat;
   mask: radial-gradient(circle at calc(100% - 58px) 0, transparent 6px, #000 6.5px) top / 100% 51% no-repeat, radial-gradient(circle at calc(100% - 58px) 100%, transparent 6px, #000 6.5px) bottom / 100% 51% no-repeat; }

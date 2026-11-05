@@ -26,7 +26,7 @@ import { cabinetEntrance } from './cabinet.js';
 import { plannerApp } from './planner.js';
 import { commentLink, commentsBlock, commentsButton } from './comments.js';
 import { reactionRow } from './reactions.js';
-import { seriesLine, seriesTag, startHerePost, startHereWrap, fortuneCookie, photoOfTheDay } from './extras.js';
+import { seriesLine, seriesTag, startHerePost, startHereWrap, fortuneCookie, photoOfTheDay, withLine, webring } from './extras.js';
 import { activeSkin, resolveSkin, word, postFontAttrs } from './skins.js';
 
 const session = storage('session');
@@ -150,6 +150,9 @@ export function card(post, open = false) {
     const link = commentLink(post);
     if (link && el) el.append(link);
   }
+  // (Who it's with.)
+  const pals = el ? withLine(post) : null;
+  if (pals) el.append(pals);
   // (A ♥, a ☆ or a smile, in one tap.)
   const reacts = el ? reactionRow(post) : null;
   if (reacts) el.append(reacts);
@@ -435,7 +438,7 @@ function journal(ctx) {
     commentsButton(post, ctx.data),
     reactionRow(post, ctx.data, 'on-paper')
   );
-  const inSeries = seriesLine(post, 'on-paper');
+  const inSeries = [seriesLine(post, 'on-paper'), withLine(post, 'on-paper')].filter(Boolean);
   // Photos and keepsakes, in the order they're stuck in; then Floppy and the "Also in" note.
   const scraps = [...scrapOrder(post), () => floppyMargin(post), () => alsoIn(post, all)];
   if (ctx.desktop || ctx.tablet) {
@@ -444,11 +447,11 @@ function journal(ctx) {
     // still left over fill scrapbook pages after the writing, so nothing needs scrolling.
     // How far through the journal this entry is (0 = the oldest), for the thickness of the page stacks.
     const through = list.length > 1 ? i / (list.length - 1) : 0.5;
-    return pagedSpread({ through, extras: pageExtras(post), scraps, left: h('div', { class: 'left-stick' }, mapWrap), head: [journalHead, chips, rating].filter(Boolean), body: withFont(prose(post.html, 'ruled'), post), foot: [inSeries, nav, links].filter(Boolean), title: post.title || 'This place' });
+    return pagedSpread({ through, extras: pageExtras(post), scraps, left: h('div', { class: 'left-stick' }, mapWrap), head: [journalHead, chips, rating].filter(Boolean), body: withFont(prose(post.html, 'ruled'), post), foot: [...inSeries, nav, links].filter(Boolean), title: post.title || 'This place' });
   }
   // A phone: one page. The first photos lead, then the writing with the rest woven in between
   // paragraphs, and whatever's left at the end.
-  return h('div', { class: 'page single' }, mapWrap, journalHead, chips, rating, ...weave(withFont(prose(post.html, 'ruled'), post), scraps, post), inSeries, nav, links);
+  return h('div', { class: 'page single' }, mapWrap, journalHead, chips, rating, ...weave(withFont(prose(post.html, 'ruled'), post), scraps, post), ...inSeries, nav, links);
 }
 
 // ---------- the shelf of journals, one per year ----------
@@ -1894,6 +1897,7 @@ function about(ctx) {
     cabinetEntrance(ctx.data),
     profileGrid(ctx.data),
     buddiesCard(ctx.data),
+    webring(ctx.data),
     h('p', { class: 'muted small' }, 'No trackers, no ads, no cookies. Your sound and wallpaper choices stay in your own browser.')
   );
 }

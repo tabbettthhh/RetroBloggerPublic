@@ -12,18 +12,18 @@ export const REACTIONS = [
   ['grin', 'Made me smile']
 ];
 const store = storage('local');
-const keyOf = (post) => `react:${post.type}/${post.slug}`;
-function mine(post) {
+const keyOf = (post, key) => key || `react:${post.type}/${post.slug}`;
+function mine(post, key) {
   try {
-    const v = JSON.parse(store?.getItem(keyOf(post)) || 'null');
+    const v = JSON.parse(store?.getItem(keyOf(post, key)) || 'null');
     return v && typeof v === 'object' ? v : { gave: [], counts: {}, at: 0 };
   } catch {
     return { gave: [], counts: {}, at: 0 };
   }
 }
-function keep(post, v) {
+function keep(post, v, key) {
   try {
-    store?.setItem(keyOf(post), JSON.stringify(v));
+    store?.setItem(keyOf(post, key), JSON.stringify(v));
   } catch {}
 }
 
@@ -46,10 +46,13 @@ export function oneEmoji(s) {
 }
 
 // The row: the three, any emoji visitors have added, and ＋ to add one. `data`: the site's, if to
-// hand (reactions can be switched off); `cls`: where it sits.
-export function reactionRow(post, data = null, cls = '') {
-  if (!post || post.friend || post.fromFriend || post.friend_look || !(data ? data.site?.reactions !== false : siteOn)) return null;
-  const me = mine(post);
+// hand (reactions can be switched off); `cls`: where it sits. `via`: a friend's post, signed in
+// ({ key: where your taps are remembered, send(reaction): sends it through your site to theirs,
+// answering with their new counts}); shown only while their site has reactions on.
+export function reactionRow(post, data = null, cls = '', via = null) {
+  if (!post) return null;
+  if (via ? !post.reactions : post.friend || post.fromFriend || post.friend_look || !(data ? data.site?.reactions !== false : siteOn)) return null;
+  const me = mine(post, via?.key);
   // (The site's numbers are refreshed every few minutes: just after you've reacted, your own
   // tap still counts in what you see.)
   const fresh = Date.now() - (me.at || 0) < 10 * 60 * 1000;
@@ -66,7 +69,7 @@ export function reactionRow(post, data = null, cls = '') {
   };
   const draw = () => {
     const own = Object.keys(counts).filter((k) => k.startsWith('c:') && counts[k] > 0).sort((a, b) => counts[b] - counts[a]);
-    const remove = ownerHooks.removeReaction;
+    const remove = via ? null : ownerHooks.removeReaction;
     row.replaceChildren(
       ...REACTIONS.map(([k, label]) => button(k, label, h('span', { class: 'react-ico', 'aria-hidden': 'true', html: emoticonSvg(k, 16) }))),
       ...own.map((k) => {
@@ -162,13 +165,18 @@ export function reactionRow(post, data = null, cls = '') {
     }
     try {
       const custom = k.startsWith('c:');
-      const r = await fetch('/api/react', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ post: `${post.type}/${post.slug}`, kind: custom ? 'custom' : k, emoji: custom ? k.slice(2) : undefined, undo }) });
-      const out = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(out.error || 'That didn’t go through.');
+      const ask = { kind: custom ? 'custom' : k, emoji: custom ? k.slice(2) : undefined, undo };
+      let out;
+      if (via) out = await via.send(ask);
+      else {
+        const r = await fetch('/api/react', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ post: `${post.type}/${post.slug}`, ...ask }) });
+        out = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(out.error || 'That didn’t go through.');
+      }
       for (const [x] of REACTIONS) counts[x] = out.counts?.[x] ?? counts[x];
       for (const x of Object.keys(counts)) if (x.startsWith('c:')) delete counts[x];
       for (const [em, n] of Object.entries(out.counts?.custom || {})) counts['c:' + em] = n;
-      keep(post, { gave: me.gave, counts, at: Date.now() });
+      keep(post, { gave: me.gave, counts, at: Date.now() }, via?.key);
     } catch (err) {
       me.gave = before.gave;
       for (const x of Object.keys(counts)) delete counts[x];

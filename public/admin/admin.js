@@ -1002,7 +1002,7 @@ function draftBanner(inEditor = false) {
 }
 
 function newEditor(type) {
-  return { key: null, type, date: nowLocal(), title: '', body: '', draft: false, pinned: false, photos: [], removed: [], area: '', city: '', country: '', country_code: '', lat: null, lon: null, category: '', rating: null, would_return: false, weather: '', source: '', stamp: '', creator: '', year: '', episode: '', format: 'album', album: '', season: '', network: '', episodes: [], pages: '', page: '', reading_log: [], status: SHELF[type] ? SHELF[type].states[0][0] : '', recommend: false, rewatch: false, quote: '', suggested_by: '', font: '', card: '', ribbon: '', ribbon_style: 'banner', ribbon_colour: '', series: '', start_here: false, floppy: [], floppy_journal: [], ordered: [], bought: [], tickets: [], rides: [], keep: {}, memory: '', extra: {}, raw: null };
+  return { key: null, type, date: nowLocal(), title: '', body: '', draft: false, pinned: false, photos: [], removed: [], area: '', city: '', country: '', country_code: '', lat: null, lon: null, category: '', rating: null, would_return: false, weather: '', source: '', stamp: '', creator: '', year: '', episode: '', format: 'album', album: '', season: '', network: '', episodes: [], pages: '', page: '', reading_log: [], status: SHELF[type] ? SHELF[type].states[0][0] : '', recommend: false, rewatch: false, quote: '', suggested_by: '', font: '', card: '', ribbon: '', ribbon_style: 'banner', ribbon_colour: '', series: '', start_here: false, with: [], album_with: [], album: [], floppy: [], floppy_journal: [], ordered: [], bought: [], tickets: [], rides: [], keep: {}, memory: '', extra: {}, raw: null };
 }
 
 async function edit(p) {
@@ -1042,6 +1042,9 @@ async function edit(p) {
     ribbon_colour: p.ribbon_colour || '',
     series: p.series || '',
     start_here: !!p.start_here,
+    with: [...(p.with || [])],
+    album_with: [...(p.album_with || [])],
+    album: p.album || [],
     photos: p.files.map((name, i) => ({ name, url: p.photos[i], caption: p.captions[i] || '', cover: i > 0 && i === p.grid_cover })),
     removed: [],
     area: p.area,
@@ -1194,6 +1197,9 @@ function buildText(s) {
   fm.profile = s.profile && s.photos.length ? true : null;
   fm.series = s.series?.trim() || null;
   fm.start_here = s.start_here || null;
+  // Friends it's with, and (photos) the friends who may add theirs, by their sites' addresses.
+  fm.with = s.with?.length ? s.with : null;
+  fm.album_with = s.type === 'photos' && s.album_with?.length ? s.album_with : null;
   // The grid's thumbnail, when it isn't the first photo (it stays chosen even off the grid).
   const cover = kept.find((ph) => ph.cover);
   fm.grid_photo = cover && kept.indexOf(cover) > 0 ? cover.name || cover.pendingName : null;
@@ -2173,6 +2179,57 @@ function starPicker(s, rerender) {
 
 // "Suggested by" field. For a place, a matching wishlist entry that a reader suggested
 // offers to fill it in.
+// Friends for a post (who it's with, or who may add photos to its album): your friends as chips
+// to tap on and off. Nothing at all shows until you have friends.
+function friendsPicker(s, field, label, hint) {
+  const buddies = data.friendsMine?.buddies || [];
+  if (!buddies.length && !s[field]?.length) return null;
+  const known = new Map(buddies.map((b) => [b.url, b.owner || b.name]));
+  const box = h('div', { class: 'friend-chips', role: 'group', 'aria-label': label });
+  const draw = () =>
+    box.replaceChildren(
+      ...[...new Set([...buddies.map((b) => b.url), ...s[field]])].map((u) => {
+        const on = s[field].includes(u);
+        return h('button', { type: 'button', class: 'chip friend-chip' + (on ? ' on' : ''), 'aria-pressed': String(on), title: u, onclick: () => ((s[field] = on ? s[field].filter((x) => x !== u) : [...s[field], u]), draw()) }, on ? '✓ ' : '', known.get(u) || u.replace(/^https?:\/\//, ''));
+      })
+    );
+  draw();
+  return h('div', { class: 'field friends-field' }, h('span', { class: 'label' }, label), box, h('span', { class: 'hint' }, hint));
+}
+// Friends' photos in this album, each with who gave it, to take out.
+function albumList(s) {
+  const list = h('div', { class: 'album-list' });
+  const draw = () =>
+    list.replaceChildren(
+      ...s.album.map((e) =>
+        h(
+          'figure',
+          { class: 'album-item' },
+          h('img', { src: `/media/photos/${s.key.split('/')[1].replace(/\.md$/, '')}/${encodeURIComponent(e.file)}`, alt: e.caption || `From ${e.name}`, loading: 'lazy' }),
+          h('figcaption', null, h('b', null, '📷 ', e.name), e.caption ? ` · ${e.caption}` : ''),
+          h('button', {
+            type: 'button',
+            class: 'btn small danger',
+            onclick: async (ev) => {
+              if (!confirm(`Take ${e.name}’s photo out of this album? It’s deleted from your site.`)) return;
+              ev.currentTarget.disabled = true;
+              try {
+                await api('albums/remove', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ post: s.key.replace(/\.md$/, ''), file: e.file }) });
+                s.album = s.album.filter((x) => x.file !== e.file);
+                draw();
+                toast('Taken out.');
+              } catch (err) {
+                toast(err.message, true);
+              }
+            }
+          }, 'Remove')
+        )
+      )
+    );
+  draw();
+  return h('div', { class: 'field' }, h('span', { class: 'label' }, `Friends’ photos in it (${s.album.length})`), list);
+}
+
 // Series: one small box. Type and it offers the series you already have (the closest first), or
 // a new one by that name; one tap either way. No list to scroll through.
 function seriesPicker(s) {
@@ -2414,6 +2471,9 @@ function viewEditor() {
       [
         field('Date and time', date, SHELF[s.type] ? 'When you finished it, started it or added it. A time in the future publishes it later.' : 'Pick a time in the future to publish it later.'),
         seriesPicker(s),
+        friendsPicker(s, 'with', '👥 Who it’s with (optional)', 'Their names show on the post (while visitors can see who your friends are), and their sites tell them they were tagged.'),
+        s.type === 'photos' ? friendsPicker(s, 'album_with', '📷 A shared album (optional)', 'These friends can add their own photos to it, from their sites. Their photos go after yours, with their names.') : null,
+        s.type === 'photos' && s.album?.length ? albumList(s) : null,
         h('label', { class: 'row check' }, draft, 'Keep as a draft (only you can see it)'),
         h('label', { class: 'row check' }, only, '👥 Friends only (not on your site for visitors: only your friends see it, signed in on theirs)'),
         h('label', { class: 'row check' }, pin, '📌 Pin it to the top of the feed and its section'),
@@ -4258,6 +4318,28 @@ export const kit = {
   post: (key) => data?.posts.find((x) => x.key === key) || null,
   togglePin: (p) => togglePin(p),
   toggleFlag: (p, flag, msg) => toggleFlag(p, flag, msg),
+  // A reaction on a friend's post (or taken back): their site's new counts come back.
+  reactToFriend: (friend, post, ask) => api('friends/react', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friend, post, ...ask }) }),
+  // A photo of yours for a friend's shared album: made small (and plain: nothing hidden in it),
+  // then sent through your site to theirs. `last`: the last of a few, so their feed is read again.
+  async addToAlbum(friend, post, file, caption = '', last = true) {
+    const blob = await compact(await (async () => {
+      const bmp = await decode(file);
+      const scale = Math.min(1, PHOTO_MAX / Math.max(bmp.width, bmp.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(bmp.width * scale);
+      c.height = Math.round(bmp.height * scale);
+      const g = c.getContext('2d');
+      g.imageSmoothingQuality = 'high';
+      g.drawImage(bmp, 0, 0, c.width, c.height);
+      bmp.close?.();
+      return c;
+    })());
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return api('friends/album', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friend, post, photo: btoa(bin), caption, last }) });
+  },
   // An emoji a visitor left that you don't want: taken off the post.
   removeReaction: (p, emoji) => api('reactions/remove', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ post: `${p.type}/${p.slug}`, emoji }) }),
   addHighlight: (p) => addHighlight(p),

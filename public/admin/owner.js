@@ -23,6 +23,7 @@ import { sound } from '/js/sound.js';
 import { pushState, currentSub, signUp, signOff, deviceName, isIOS } from '/js/push-client.js';
 import { mountMap } from '/js/maps.js';
 import { refreshSite } from '/js/refresh.js';
+import { reactionRow } from '/js/reactions.js';
 import { MIDDLES } from '/admin/countries.js';
 
 const TYPES = [
@@ -1108,8 +1109,40 @@ function decorateFriendPosts() {
     }
     // (And a note, just to them.)
     const note = btn('✉ Note', 'okit-talk-note', () => sendTo(key), { 'aria-label': `Send ${f?.owner || f?.name || 'them'} a note`, title: `Send ${f?.owner || f?.name || 'them'} a note` });
-    el.append(h('div', { class: 'okit-talk-wrap' }, h('div', { class: 'okit-row' }, toggle, note), panel));
+    // Tagged in it: said on top. A shared album: your photos can go in it too.
+    if (p.tagged) el.querySelector('.ff-who small')?.append(h('span', { class: 'ff-tagged' }, ' · 🏷 with you'));
+    const add = p.album_open ? albumButton(key, id, f) : null;
+    // A ♥, a ☆, a smile or any emoji, as on your own posts: it goes to their site.
+    const reacts = reactionRow(p, null, 'ff-react', { key: `react:friend:${key}|${id}`, send: (ask) => kit.reactToFriend(key, id, ask) });
+    if (reacts) el.append(reacts);
+    el.append(h('div', { class: 'okit-talk-wrap' }, h('div', { class: 'okit-row' }, toggle, note, add), panel));
   }
+}
+// "📷 Add photos" on a friend's shared album: pick a few, and each goes to their site in turn.
+function albumButton(key, id, f) {
+  const who = f?.owner || f?.name || 'their';
+  const pick = h('input', { type: 'file', accept: 'image/*', multiple: true, hidden: true });
+  const b = btn('📷 Add photos', 'okit-album-add', () => pick.click(), { title: `Add your photos to ${who === 'their' ? 'their' : who + '’s'} album` });
+  pick.addEventListener('change', async () => {
+    const files = [...pick.files].slice(0, 10);
+    pick.value = '';
+    if (!files.length) return;
+    b.disabled = true;
+    let done = 0;
+    try {
+      for (const file of files) {
+        b.textContent = `📷 Sending ${done + 1} of ${files.length}…`;
+        await kit.addToAlbum(key, id, file, '', done === files.length - 1);
+        done++;
+      }
+      toast(`${done === 1 ? 'Your photo is' : `Your ${done} photos are`} in ${who === 'their' ? 'their' : who + '’s'} album.`);
+    } catch (e) {
+      toast(done ? `${done} sent, then: ${e.message}` : e.message, true);
+    }
+    b.disabled = false;
+    b.textContent = '📷 Add photos';
+  });
+  return h('span', null, b, pick);
 }
 // On the Friends tab: who else sees it, and where to change that.
 function decorateFriendsTab() {

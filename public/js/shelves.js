@@ -5,7 +5,7 @@ import { sound } from './sound.js';
 import { word, postFontAttrs } from './skins.js';
 import { commentsButton } from './comments.js';
 import { reactionRow } from './reactions.js';
-import { seriesLine } from './extras.js';
+import { seriesLine, withLine } from './extras.js';
 import { lightbox, suggestForm, suggestedStamp, keepsakeMakers } from './apps.js';
 
 export const SHELF_TYPES = ['books', 'films', 'podcasts', 'music', 'tv'];
@@ -425,6 +425,7 @@ function detailView(type, ctx) {
     readingLog(post),
     // (Its comments open in a little window.)
     seriesLine(post, 'on-shelf'),
+    withLine(post, 'on-shelf'),
     (() => {
       const bits = [commentsButton(post, ctx.data), reactionRow(post, ctx.data, 'on-shelf')].filter(Boolean);
       return bits.length ? h('div', { class: 'shelf-comments' }, ...bits) : null;

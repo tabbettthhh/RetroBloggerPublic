@@ -1406,7 +1406,9 @@ await test('seasons and festive days settle on every card design, your own too',
   // (The earlier tests' posts go, so all of these fit on the first page. This is the group's last test.)
   for (const f of (await overview()).files) if (/^(thoughts|photos|lists|quotes)\/[^/]+\.md$/.test(f.key)) await delFile(f.key);
   const designs = ['classic', 'polaroid', 'scrapbook', 'notebook', 'postcard', 'sticky', 'ticket', 'torn', 'comic', 'neon', 'letter', 'film', 'pixel', 'chrome', 'c1'];
-  for (const [i, d] of designs.entries()) await putFile(`thoughts/season-${String(i).padStart(2, '0')}.md`, `---\ndate: ${new Date(Date.now() - i * 60e3).toISOString().slice(0, 16).replace('T', ' ')}\ntitle: Season ${d}\ncard: ${d}\n---\nHi.\n`);
+  // (One starting time for all of them, so a minute ticking over part-way can't give two the same time.)
+  const t0 = Date.now();
+  for (const [i, d] of designs.entries()) await putFile(`thoughts/season-${String(i).padStart(2, '0')}.md`, `---\ndate: ${new Date(t0 - i * 60e3).toISOString().slice(0, 16).replace('T', ' ')}\ntitle: Season ${d}\ncard: ${d}\n---\nHi.\n`);
   const look = (pg) => pg.evaluate(() => [...document.querySelectorAll('.feed > .card')].filter((c) => c.offsetParent && c.querySelector('.card-title')?.textContent.startsWith('Season')).map((c) => {
     const snow = c.querySelector(':scope > .card-snow');
     const s = snow && getComputedStyle(snow);
