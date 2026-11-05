@@ -9,6 +9,7 @@ import { adminCheck } from './auth.js';
 import { VERSION } from './version.js';
 import * as friends from './friends.js';
 import * as push from './push.js';
+import { receiveEmail, emailSettings } from './email.js';
 
 const ROBOTS_TAG = 'noindex, nofollow, noarchive, nosnippet, noimageai';
 
@@ -66,6 +67,22 @@ export default {
         announce(env).catch((e) => console.error(e))
       ])
     );
+  },
+  // An email to your site's secret address (Email Routing › Send to a Worker): a new post. See
+  // src/email.js.
+  async email(message, env, ctx) {
+    await receiveEmail(message, env, {
+      saved: async (post) => {
+        await bumpVersion(env);
+        const me = (await friends.loadFriends(env)).me;
+        const url = post.draft ? '/?owner=1#/' : `/?owner=1#/post/${post.type}/${post.slug}`;
+        await push.notifyOwner(env, 'email', { title: post.draft ? '📧 Your email is a draft' : '📧 Your email is on the site', body: post.title || 'Have a look', url, tag: 'email' }, me).catch(() => {});
+        if (!post.draft) ctx.waitUntil(Promise.all([friends.shareNews(env, buildEverything), announce(env, me)]).catch((e) => console.error(e)));
+      }
+    }).catch((e) => {
+      console.error('email', e);
+      message.setReject?.('Something went wrong on the site: try again in a while.');
+    });
   }
 };
 
@@ -1241,6 +1258,15 @@ async function adminApi(request, env, url, ctx) {
       const out = await albumRemove(env, String(body.post || '').replace(/^photos\//, ''), String(body.file || ''));
       ctx.waitUntil(friends.shareNews(env, buildEverything).catch(() => {}));
       return json(out);
+    } catch (e) {
+      return json({ error: String(e.message || e) }, 400);
+    }
+  }
+  // Posting by email: its settings (and what happened to the last few emails).
+  if (p === 'email' && (m === 'GET' || m === 'POST')) {
+    const body = m === 'POST' ? await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({})) : null;
+    try {
+      return json(await emailSettings(env, body));
     } catch (e) {
       return json({ error: String(e.message || e) }, 400);
     }

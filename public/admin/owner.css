@@ -455,3 +455,16 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 .okit-visit-list { display: grid; gap: 4px; margin: 0 0 12px; padding: 0; list-style: none; }
 .okit-visit-list li { display: grid; grid-template-columns: minmax(90px, 40%) 1fr auto; align-items: center; gap: 8px; font-size: 13px; }
 .okit-visit-bar { height: 10px; width: var(--w); border-radius: 5px; background: linear-gradient(90deg, #f5be46, #c8281e); }
+/* Post by email. */
+.em-senders { box-sizing: border-box; width: 100%; min-height: 48px; padding: 6px 8px; border: 1px solid var(--ok-line, #a5acb5); border-radius: 4px; font: 13px/1.4 inherit; resize: vertical; }
+.em-small { font-size: 12px; opacity: .85; }
+.em-address { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 15px; }
+.em-address code { padding: 2px 6px; border-radius: 4px; background: color-mix(in srgb, var(--ok-sel, #316ac5) 12%, #fff); font-weight: bold; user-select: all; }
+.em-address span { opacity: .7; }
+.em-steps { margin: 8px 0; padding-left: 20px; font-size: 13px; line-height: 1.45; }
+.em-steps li + li { margin-top: 4px; }
+.em-steps code { padding: 0 4px; border-radius: 3px; background: rgba(0, 0, 0, .06); }
+.em-log { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.em-log li { padding: 6px 8px; border-left: 3px solid #3a8a3a; border-radius: 3px; background: rgba(0, 0, 0, .03); }
+.em-log li.no { border-left-color: #b4462e; }
+.em-why { display: block; margin-top: 2px; opacity: .8; }

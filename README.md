@@ -278,6 +278,20 @@ Every photo from every post also lands in the **Photo album** (`#/album`): an ol
 - **Header mistakes:** the part between the `---` lines has to be read by the site. If something there can't be read (most often a colon inside a value, like `title: Rome: day one`; put such text in "double quotes"), the editor won't save it and says which line is wrong, so a post can never vanish from the site by accident. A file with a mistake that got into the bucket some other way opens as text with the problem shown.
 - **Time zone:** post times are read as UK time, summer time included. Change `TIMEZONE` in `wrangler.jsonc` if you live elsewhere.
 
+## Posting by email
+
+Write an email, attach some photos, send it to your site's own secret address, and it's a post. The subject is its title and the email's words are the post. With photos attached it's a photo dump (up to a dozen, each cleaned of hidden data like any other photo); without, a thought. A signature (from a line that's just `-- `), "Sent from my iPhone" and the email you're replying to are left off.
+
+It needs a domain of your own on Cloudflare (see [Your own domain](#your-own-domain-optional)), because it uses Cloudflare's free Email Routing. Then:
+
+1. Signed in, open **Control Panel › Post by email**, check the address you'll send from (you can list up to ten, one a line) and tap **Turn on**. You get a secret address like `post-k3x9q2m7a8bz`.
+2. In Cloudflare, open your domain, then **Email › Email Routing** (switch it on if it asks). Under **Routing rules**, **Create address**: type the `post-…` part, choose the action **Send to a Worker**, and pick your site.
+3. Send an email to `post-…@your-domain` from your own address.
+
+**Drafts or straight on.** To start with, an emailed post waits as a draft for you to look over; untick **Keep it as a draft for me to check first** to put them straight on the site. `[draft]` or `[now]` in a subject decides for that one email. You're told when one arrives (turn it on under Control Panel › Notifications), and **Lately** lists the last few emails and what happened to each.
+
+**Safe.** An email only becomes a post when it's sent to your secret address, from one of your addresses, and the email's own checks don't say it's forged. Anything else is dropped without a reply, so a stranger never learns the address exists. Treat the address like a password; **New secret address** swaps it (change it in Cloudflare too). Your own emails that can't be used (an empty one, or one over 25 MB) bounce back to you saying why.
+
 ## Books, films, TV, podcasts and music
 
 Five shelves, each in its own style: a wooden **Bookshelf**, a **Cinema** of ticket stubs, **TV** shows as video tapes in front of an old set, **Podcasts** on cassette tapes, and a **Record crate** of album sleeves and 7-inch singles. Covers are drawn by the site with the title only.
@@ -369,7 +383,8 @@ Your site can tell your phone or computer about things even when it isn't open, 
 
 - **Comments waiting for you**, and guestbook signatures, suggestions, and comments from friends;
 - **Notes from friends** (Mail);
-- **Friends' new posts**.
+- **Friends' new posts**;
+- **Posts sent by email**, when one arrives (see [Posting by email](#posting-by-email)).
 
 **Send a test** checks it works; **Your devices** lists every device that gets them, and **Remove** stops one. Only a device signed in through Cloudflare Access can sign up for these.
 

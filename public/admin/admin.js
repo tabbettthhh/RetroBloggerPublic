@@ -4384,6 +4384,11 @@ export const kit = {
     settings: (body) => api('push/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
     test: () => api('push/test', { method: 'POST' })
   },
+  // Posting by email: its settings, and what happened to the last few emails.
+  email: {
+    get: () => api('email'),
+    set: (body) => api('email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  },
   // Notes between friends: your mail, sending one, marking them read, deleting one.
   mail: {
     list: () => api('mail'),
