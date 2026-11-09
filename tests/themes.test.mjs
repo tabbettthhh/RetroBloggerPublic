@@ -259,7 +259,9 @@ await test('every level: fonts, feed, header, menu, taskbar, icons and sounds', 
     eq(bar.y, 0, 'taskbar at the top');
     eq(await p.locator('.taskbar .clock').isVisible(), false, 'no clock');
     eq(await p.locator('.desk-icon', { hasText: 'Wishlist' }).count(), 0, 'no wishlist icon');
-    assert(await p.evaluate(() => !!document.getElementById('real-grain') && getComputedStyle(document.querySelector('.card')).filter.includes('real-grain')), 'extra real on a computer: the cards have grain');
+    // (No card drawn through a filter: some browsers skipped drawing them now and then, leaving gaps.)
+    assert(await p.evaluate(() => getComputedStyle(document.body, '::after').backgroundImage.includes('grain.png') && !document.getElementById('real-grain') && [...document.querySelectorAll('.card, .profile-tile, .ticket-wrap')].every((c) => !getComputedStyle(c).filter.includes('url('))), 'extra real on a computer: grain over the screen, none drawn card by card');
+    assert(await p.evaluate(() => getComputedStyle(document.querySelector('.card')).boxShadow !== 'none'), 'the cards still stand off the page');
     eq((await fetch(BASE + '/img/grain.png')).status, 200, 'the grain itself');
   }, { desktop: true });
 });
