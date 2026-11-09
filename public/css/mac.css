@@ -119,7 +119,7 @@ a.dock-slot:hover { transform: translateY(-4px) scale(1.08); }
 .board-folds { position: absolute; inset: 0; z-index: 450; pointer-events: none;
   background: linear-gradient(90deg, transparent calc(33.3% - 1px), rgba(0, 0, 0, .09) calc(33.3% - 1px), rgba(255, 255, 255, .25) 33.3%, transparent calc(33.3% + 2px)), linear-gradient(90deg, transparent calc(66.6% - 1px), rgba(0, 0, 0, .09) calc(66.6% - 1px), rgba(255, 255, 255, .25) 66.6%, transparent calc(66.6% + 2px)), linear-gradient(180deg, transparent calc(50% - 1px), rgba(0, 0, 0, .08) calc(50% - 1px), rgba(255, 255, 255, .25) 50%, transparent calc(50% + 2px)),
     radial-gradient(ellipse at center, transparent 60%, rgba(120, 80, 30, .18)),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .35 0 0 0 0 .2 0 0 0 .18 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); mix-blend-mode: multiply; }
+    url("/img/tex/mac-grain.webp"); mix-blend-mode: multiply; }
 
 /* Pushpins, and their tags. */
 .pin-board { overflow: visible; }

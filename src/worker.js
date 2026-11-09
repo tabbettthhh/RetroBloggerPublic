@@ -201,7 +201,7 @@ async function route(request, env, ctx) {
 
 // Fonts, the map and photo libraries, icons and cursors hardly ever change, so browsers keep
 // them for a month instead of asking again on every visit. (Change one? Give it a new name.)
-const LONG_LIVED = /^\/(fonts|vendor|icons|cursors)\//;
+const LONG_LIVED = /^\/(fonts|vendor|icons|cursors|img\/tex)\//;
 async function staticFile(request, env, path) {
   const page = path === '/' || path.endsWith('.html');
   const res = await env.ASSETS.fetch(page ? unconditional(request) : request);

@@ -262,7 +262,13 @@ await test('every level: fonts, feed, header, menu, taskbar, icons and sounds', 
     // (No card drawn through a filter: some browsers skipped drawing them now and then, leaving gaps.)
     assert(await p.evaluate(() => getComputedStyle(document.body, '::after').backgroundImage.includes('grain.png') && !document.getElementById('real-grain') && [...document.querySelectorAll('.card, .profile-tile, .ticket-wrap')].every((c) => !getComputedStyle(c).filter.includes('url('))), 'extra real on a computer: grain over the screen, none drawn card by card');
     assert(await p.evaluate(() => getComputedStyle(document.querySelector('.card')).boxShadow !== 'none'), 'the cards still stand off the page');
+    // (The flight log's pass is laid out as its own, not as the journal's boarding-pass keepsake.)
+    eq(await p.evaluate(async () => { await Promise.all([...document.querySelectorAll('link[rel="stylesheet"]')].map((l) => l.sheet || new Promise((r) => l.addEventListener('load', r)))); const d = document.createElement('div'); d.className = 'boarding-pass'; document.body.append(d); const v = getComputedStyle(d).display; d.remove(); return v; }), 'block', 'the flight log keeps its own layout on a computer');
     eq((await fetch(BASE + '/img/grain.png')).status, 200, 'the grain itself');
+    // (Paper and leather are ready-made pictures, not noise worked out by the browser at each drawing.)
+    const paper = await fetch(BASE + '/img/tex/paper-grain.webp');
+    eq([paper.status, paper.headers.get('Content-Type'), /max-age=\d{6,}/.test(paper.headers.get('Cache-Control') || '')], [200, 'image/webp', true], 'the paper’s grain, kept by the browser');
+    assert(!/feTurbulence/.test(await (await fetch(BASE + '/css/leather.css')).text()), 'no noise filters in the journal’s styles');
   }, { desktop: true });
 });
 

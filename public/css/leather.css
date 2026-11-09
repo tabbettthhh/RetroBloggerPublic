@@ -191,7 +191,7 @@
 
 /* A boarding pass to the place: airline blue, the destination big, a code on the stub */
 .ticket-wrap.boarding { max-width: 250px; rotate: 1.5deg; }
-.boarding-pass { position: relative; display: grid; grid-template-columns: 1fr 46px; overflow: hidden; border-radius: 8px; color: #13233f; background: #fdfdfb; }
+.ticket-wrap.boarding .boarding-pass { position: relative; display: grid; grid-template-columns: 1fr 46px; overflow: hidden; border-radius: 8px; color: #13233f; background: #fdfdfb; }
 .bp-head { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; padding: 6px 10px; color: #fff; background: linear-gradient(90deg, #1d4f9c, #3a76c9); font: 600 11px Oswald, sans-serif; letter-spacing: 3px; }
 .bp-plane { display: flex; rotate: 90deg; }
 .bp-body { display: flex; flex-direction: column; gap: 1px; padding: 8px 10px 10px; border-right: 2px dashed #b9c6db; }
@@ -328,13 +328,13 @@
 :root {
   --paper-base: #f3e8cf;
   /* fine fibre grain */
-  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .22 0 0 0 0 .1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.38'/%3E%3C/svg%3E");
+  --paper-grain: url("/img/tex/paper-grain.webp");
   /* soft age blotches and foxing */
-  --paper-mottle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='700'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .38 0 0 0 0 .16 1.1 0 0 0 -.52'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)' opacity='.5'/%3E%3C/svg%3E");
+  --paper-mottle: url("/img/tex/paper-mottle.webp");
   /* pebbled leather */
-  --leather-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='turbulence' baseFrequency='.55' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -.9 .62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23l)' opacity='.55'/%3E%3C/svg%3E");
+  --leather-grain: url("/img/tex/leather-grain.webp");
   /* patchy ink for rubber stamps */
-  --ink-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='60'%3E%3Cfilter id='k'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.08 .3' numOctaves='3' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.2 2.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23k)'/%3E%3C/svg%3E");
+  --ink-mask: url("/img/tex/ink-mask.webp");
 }
 [data-theme="dark"] { --paper-base: #d6c8a6; }
 /* Low-powered phones: skip the blotchy ageing (it's costly to draw) and keep the visa still. */
@@ -463,7 +463,7 @@
 .spread.paged { touch-action: pan-y pinch-zoom; }
 .spread.paged > .leaf, .spread.paged > .under, .spread.paged > .turn-cast { position: absolute; pointer-events: none; }
 .spread.paged > .under { z-index: 2; }
-.spread.paged > .turn-cast { z-index: 3; opacity: 0; }
+.spread.paged > .turn-cast { z-index: 3; opacity: 0; will-change: opacity; }
 .spread.paged > .turn-cast.spine-left { background: linear-gradient(90deg, rgba(40,24,8,.55), rgba(40,24,8,.18) 35%, transparent 70%); }
 .spread.paged > .turn-cast.spine-right { background: linear-gradient(270deg, rgba(40,24,8,.55), rgba(40,24,8,.18) 35%, transparent 70%); }
 .spread.paged > .leaf { z-index: 4; perspective: 2400px; transform-style: preserve-3d; }
@@ -473,7 +473,7 @@
 .leaf .face.back { transform: rotateY(180deg); }
 .leaf .face > .page.slice { position: absolute; top: 0; overflow: hidden; padding: 22px 24px 30px; box-shadow: none; }
 /* light and shade on the curve of the paper */
-.turn-shade { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0; background: rgba(60,36,10,.9); }
+.turn-shade { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0; will-change: opacity; background: rgba(60,36,10,.9); }
 @media (prefers-reduced-motion: reduce) { .spread.paged, .spread.paged::before, .spread.paged::after { transition: none; } }
 
 /* On a phone: the single page gets page edges along the right and bottom, like a thick notebook */
