@@ -8,7 +8,7 @@ const code = '```\n' + Array.from({ length: 90 }, (_, i) => `line ${i}`).join('\
 const para = (i) => `Paragraph ${i}. ` + 'Some words about the visit. '.repeat(25);
 const BODY = [para(1), '## A heading right before a table', '| col | val |\n|---|---|\n' + rows, para(2), '### Another heading', items, para(3), code, '![a big photo](/media/places/2026-05-01-book-test/1.jpg)', para(4), '## Heading at the very end'].join('\n\n');
 const KEY = 'places/2026-05-01-book-test.md';
-const TEXT = `---\ndate: 2026-05-01 12:00\ntitle: Book Test Place\nlat: 52.48\nlon: -1.89\ncity: Birmingham\ncountry_code: GB\nweather: "11°C, drizzle"\nrating: 4\ncategory: food\nphotos: [1.jpg, 2.jpg]\nordered: ["Tea — £2", "Cake — £3"]\nfloppy_journal: ["Margin line one", "Margin line two"]\n---\n${BODY}\n`;
+const TEXT = `---\ndate: 2026-05-01 12:00\ntitle: Book Test Place\nlat: 51.45\nlon: -2.59\ncity: Bristol\ncountry_code: GB\nweather: "11°C, drizzle"\nrating: 4\ncategory: food\nphotos: [1.jpg, 2.jpg]\nordered: ["Tea — £2", "Cake — £3"]\nfloppy_journal: ["Margin line one", "Margin line two"]\n---\n${BODY}\n`;
 
 await test('seed a very long review', async () => {
   await upload('places/2026-05-01-book-test/1.jpg', PHOTOS[1]);

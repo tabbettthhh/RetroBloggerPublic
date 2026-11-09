@@ -12,7 +12,7 @@ await test('trips are places one after another; the board shows them, with their
   eq(t.map((x) => [x.name, x.places.length]), [['C', 1], ['A, B', 2]], 'newest trip first; three days apart at most');
   await place('ab-1', 'Harbour Kitchen', 'Whitby', 54.486, -0.615, '2026-08-03 12:00', 'weather: "14°C, light rain"\nrating: 4.5\nwould_return: true\n');
   await place('ab-2', 'Old Town Café', 'Scarborough', 54.283, -0.398, '2026-08-05 10:00', 'weather: "19°C, sunny"\nrating: 5\n');
-  await place('ab-3', 'Corner Bookshop', 'Birmingham', 52.478, -1.899, '2025-11-02 13:00');
+  await place('ab-3', 'Corner Bookshop', 'Bristol', 51.454, -2.588, '2025-11-02 13:00');
   for (const opts of [{ viewport: { width: 1280, height: 900 } }, { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }]) {
     const browser = await chromium.launch();
     const p = await browser.newPage(opts);
@@ -22,7 +22,7 @@ await test('trips are places one after another; the board shows them, with their
     await p.goto(BASE + '/#/atlas');
     await p.waitForSelector('.board-trip');
     const trips = await p.locator('.board-trip header b').allInnerTexts();
-    assert(trips.indexOf('Whitby, Scarborough') >= 0 && trips.indexOf('Whitby, Scarborough') < trips.indexOf('Birmingham'), 'trips, newest first: ' + trips);
+    assert(trips.indexOf('Whitby, Scarborough') >= 0 && trips.indexOf('Whitby, Scarborough') < trips.indexOf('Bristol'), 'trips, newest first: ' + trips);
     const lenses = await p.locator('.board-lenses .board-tab').allInnerTexts();
     for (const l of ['Everywhere', 'First visits', 'I’d go back', 'My best', 'Rainy days', 'Sunny days', '2026', '2025']) assert(lenses.includes(l), `a way to look back: ${l} (${lenses})`);
     assert(/\d+ places/.test(await p.locator('.board-notes').innerText()), 'notes tucked into the frame');

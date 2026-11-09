@@ -1,12 +1,12 @@
 ---
 date: 2026-10-21 11:30
 title: Example Café
-area: Colmore Row, Birmingham
-city: Birmingham
+area: Stokes Croft, Bristol
+city: Bristol
 country: United Kingdom
 country_code: GB
-lat: 52.48132
-lon: -1.89977
+lat: 51.46270
+lon: -2.58930
 category: coffee
 rating: 4
 would_return: true

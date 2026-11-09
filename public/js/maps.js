@@ -124,7 +124,7 @@ export function mountMap(el, opts = {}) {
       markers[at].openPopup();
     } else if (pts.length === 1) map.setView([pts[0].lat, pts[0].lon], zoom);
     else if (pts.length > 1) map.fitBounds(L.latLngBounds(pts.map((p) => [p.lat, p.lon])), { padding: [30, 30], maxZoom: 14 });
-    else map.setView([52.48, -1.9], 5);
+    else map.setView([54, -2.5], 5);
     el._map = map;
     el._markers = markers;
     const resized = 'ResizeObserver' in window ? new ResizeObserver(() => map.invalidateSize()) : null;

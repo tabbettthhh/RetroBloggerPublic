@@ -232,12 +232,12 @@ A place:
 ---
 date: 2026-10-21 11:30
 title: Example Café
-area: Digbeth, Birmingham
-city: Birmingham
+area: Stokes Croft, Bristol
+city: Bristol
 country: United Kingdom
 country_code: GB
-lat: 52.4751
-lon: -1.8840
+lat: 51.4627
+lon: -2.5893
 category: coffee        # food, coffee, sights or nature
 rating: 4
 would_return: true
