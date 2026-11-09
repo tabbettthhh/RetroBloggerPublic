@@ -529,18 +529,18 @@ await test('the small print on the About page: the usual words, your own, or non
     }
     return getFile('site.md');
   };
-  await note.fill('Made with tea, in Birmingham.');
+  await note.fill('Made with tea, at home.');
   await save.click();
   let site = await savedAs((s) => s.includes('about_note: Made with tea'));
   assert(site.includes('status: kept') && site.includes('About me.'), 'the rest kept:\n' + site);
-  eq((await publicData()).site.about_note, 'Made with tea, in Birmingham.', 'your own words');
+  eq((await publicData()).site.about_note, 'Made with tea, at home.', 'your own words');
   // On the About page.
   const b = await chromium.launch();
   const v = await b.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await v.addInitScript(() => sessionStorage.setItem('entered', '1'));
   await v.goto(BASE + '/#/about');
   await v.waitForSelector('.about-note');
-  eq((await v.locator('.about-note').innerText()).trim(), 'Made with tea, in Birmingham.', 'on the About page');
+  eq((await v.locator('.about-note').innerText()).trim(), 'Made with tea, at home.', 'on the About page');
   // None at all.
   await note.fill('');
   await save.click();

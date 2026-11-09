@@ -19,7 +19,7 @@ await test(`all ${KEYS.length} keepsakes, plus receipts, on every kind of post`,
   assert(KEYS.length > 150, 'only found ' + KEYS.length);
   const lines = KEYS.map((k) => `${k}: [Line one 12, "Line two 9:30"]`).join('\n');
   for (const [type, slug] of Object.entries(FILES)) {
-    await putFile(`${type}/${slug}.md`, `---\ndate: 2026-03-0${Object.keys(FILES).indexOf(type) + 1} 12:00\ntitle: Every keepsake\ncity: Birmingham\ncountry_code: GB\nlat: 52.48\nlon: -1.9\nstatus: ${type === 'books' ? 'read' : 'watched'}\nordered: [Flat white — £3.40]\nbought: [Mug — £8]\npostcard_scene: forest\n${lines}\n---\nEverything at once.\n`);
+    await putFile(`${type}/${slug}.md`, `---\ndate: 2026-03-0${Object.keys(FILES).indexOf(type) + 1} 12:00\ntitle: Every keepsake\ncity: Bristol\ncountry_code: GB\nlat: 51.45\nlon: -2.59\nstatus: ${type === 'books' ? 'read' : 'watched'}\nordered: [Flat white — £3.40]\nbought: [Mug — £8]\npostcard_scene: forest\n${lines}\n---\nEverything at once.\n`);
   }
   const d = await publicData();
   for (const [type, slug] of Object.entries(FILES)) {

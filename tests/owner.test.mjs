@@ -407,7 +407,7 @@ await test('the welcome screen’s owner tile signs you in, back to the site', a
 });
 
 await test('a long title is never hidden under a post’s ⋯ (journal pages, reviews)', async () => {
-  await putFile('places/long-name.md', `---\ndate: ${at(2)}\ntitle: Birmingham Museum & Art Gallery and its very long name indeed\ncity: Birmingham\nlat: 52.48\nlon: -1.9\n---\nPaintings.\n`);
+  await putFile('places/long-name.md', `---\ndate: ${at(2)}\ntitle: The City Museum & Art Gallery and its very long name indeed\ncity: Bristol\nlat: 51.45\nlon: -2.59\n---\nPaintings.\n`);
   await putFile('books/long-book.md', `---\ndate: ${at(2)}\ntitle: A Very Long Book Title That Goes On and On Across the Page\nstatus: read\nrating: 4\n---\nGood.\n`);
   const covered = (p) =>
     p.evaluate(() => {
