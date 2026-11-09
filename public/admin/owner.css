@@ -480,8 +480,13 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 .pv-level:focus-visible { outline: 2px dotted currentColor; outline-offset: 2px; }
 .pv-busy { min-height: 1.2em; margin: 6px 0 0; font-size: 12px; font-weight: bold; }
 .pv-list { display: grid; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
-.pv-list li { display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: auto auto; column-gap: 8px; align-items: center; padding: 6px 8px; border-radius: 4px; background: rgba(0, 0, 0, .03); font-size: 13px; }
+.pv-list li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 4px; background: rgba(0, 0, 0, .03); font-size: 13px; }
+.pv-list li:has(.pv-pick:checked) { background: color-mix(in srgb, var(--ok-sel, #316ac5) 12%, #fff); }
+.pv-row { display: grid; flex: 1; min-width: 0; grid-template-columns: auto auto 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; cursor: pointer; }
+.pv-row .pv-pick { grid-row: span 2; width: 18px; height: 18px; margin: 0; }
 .pv-list .pv-badge { grid-row: span 2; font-size: 11px; white-space: nowrap; }
 .pv-list .pv-title { overflow: hidden; font-weight: bold; text-overflow: ellipsis; white-space: nowrap; }
-.pv-list small { grid-column: 2; opacity: .7; }
-.pv-list .pv-open { grid-column: 3; grid-row: 1 / span 2; }
+.pv-list small { grid-column: 3; opacity: .7; }
+.pv-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 2px; }
+.pv-all-label { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 10px 0 8px; font-size: 13px; font-weight: bold; cursor: pointer; }
+.pv-all-label input { width: 18px; height: 18px; margin: 0; }

@@ -1599,22 +1599,57 @@ function drawPrivacy(body) {
   );
   const word = (p) => (p.only_me ? '🔒 Only me' : '👥 Friends only');
   const when = (p) => (p.ts ? new Date(p.ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
+  // A few at once: tick them (or all of them), then open up just those.
+  const picked = new Set();
+  const to = site === 1 ? 'friends only' : 'for everyone';
+  const shown = still.slice(0, 200);
+  const all = h('input', { type: 'checkbox', class: 'pv-all', 'aria-label': 'Choose them all' });
+  const openPicked = btn('Open up the ones ticked', 'pv-open-picked', () => {
+    const keys = [...picked];
+    if (keys.length && confirm(`Make ${keys.length === 1 ? 'this one' : `these ${keys.length}`} ${to}?`)) reopen(keys, keys.length === 1 ? '1 post' : `${keys.length} posts`);
+  });
+  const sync = () => {
+    openPicked.disabled = !picked.size;
+    openPicked.textContent = picked.size ? `Open up ${picked.size} ticked` : 'Open up the ones ticked';
+    all.checked = picked.size === shown.length;
+    all.indeterminate = picked.size > 0 && picked.size < shown.length;
+  };
+  const boxes = [];
+  all.addEventListener('change', () => {
+    for (const [key, box] of boxes) {
+      box.checked = all.checked;
+      all.checked ? picked.add(key) : picked.delete(key);
+    }
+    sync();
+  });
+  const row = (p) => {
+    const box = h('input', { type: 'checkbox', class: 'pv-pick', 'aria-label': `Choose “${p.title || p.excerpt || p.slug}”` });
+    box.addEventListener('change', () => {
+      box.checked ? picked.add(p.key) : picked.delete(p.key);
+      sync();
+    });
+    boxes.push([p.key, box]);
+    return h(
+      'li',
+      { 'data-key': p.key },
+      // (The whole row ticks its box, apart from its own button.)
+      h('label', { class: 'pv-row' }, box, h('span', { class: 'pv-badge' }, word(p)), h('span', { class: 'pv-title' }, p.title || p.excerpt || p.slug), h('small', null, [TYPE_WORD[p.type] || '', when(p)].filter(Boolean).join(' · '))),
+      btn('Open up', 'pv-open', () => reopen([p.key], p.title ? `“${p.title}”` : 'That post'))
+    );
+  };
   const list = still.length
     ? h(
         'section',
         { class: 'nt-box pv-still' },
         h('h3', null, `Still more private than that (${still.length})`),
-        h('p', null, site === 2 ? '' : `These stay as they are until you open them up. “Open up” makes one ${site === 1 ? 'friends only' : 'for everyone'}, like the rest.`),
-        h('div', { class: 'okit-row' }, btn(`Open up all ${still.length}`, '', () => confirm(`Make all ${still.length} ${site === 1 ? 'friends only' : 'for everyone'}?`) && reopen(null, `All ${still.length}`))),
-        h(
-          'ul',
-          { class: 'pv-list' },
-          still.slice(0, 200).map((p) => h('li', null, h('span', { class: 'pv-badge' }, word(p)), h('span', { class: 'pv-title' }, p.title || p.excerpt || p.slug), h('small', null, [TYPE_WORD[p.type] || '', when(p)].filter(Boolean).join(' · ')), btn('Open up', 'pv-open', () => reopen([p.key], p.title ? `“${p.title}”` : 'That post'))))
-        )
+        h('p', null, `These stay as they are until you open them up: one at a time, the ones you tick, or all of them. Opening one up makes it ${to}, like the rest.`),
+        h('div', { class: 'pv-bar' }, h('label', { class: 'pv-all-label' }, all, h('span', null, 'All')), openPicked, btn(`Open up all ${still.length}`, '', () => confirm(`Make all ${still.length} ${to}?`) && reopen(null, `All ${still.length}`))),
+        h('ul', { class: 'pv-list' }, shown.map(row))
       )
     : site < 2
       ? h('section', { class: 'nt-box' }, h('p', { class: 'nt-none' }, `Every post is as open as your site: ${site === 1 ? 'friends only' : 'for everyone'}.`))
       : null;
+  sync();
   body.replaceChildren(
     h(
       'div',

@@ -1,7 +1,8 @@
-// While the owner keeps their posts to friends or to themselves (Control Panel › Privacy),
-// visitors still get the site, and in place of the posts, a little something from the old days:
-// a tumbleweed rolling through an empty town, an error box, an old computer's crash, or Floppy
-// wondering if he's been forgotten. A different one each time the page is loaded.
+// A site with no posts for visitors (none yet, or all of them kept to friends or to the owner:
+// visitors are never told which) gets, in place of the posts, a little something from the old
+// days: a tumbleweed rolling through an empty town, an error box, an old computer's crash, or
+// Floppy wondering if he's been forgotten. A different one each time the page is loaded. Nothing
+// in them says or hints that anything is hidden: to a visitor, the site is just quiet.
 import { h } from './util.js';
 import { sound } from './sound.js';
 import { floppySvg } from './helper.js';
@@ -9,15 +10,14 @@ import { floppySvg } from './helper.js';
 const SCENES = ['west', 'error', 'crash', 'floppy'];
 let turn = Math.floor(Math.random() * SCENES.length);
 
-// Whether visitors are kept out of the posts just now (never for the owner, signed in).
-export function isPrivateNow(data) {
-  return !data?.ownerView && (data?.site?.privacy === 'friends' || data?.site?.privacy === 'me');
+// Whether there's nothing on the site for this visitor (never for the owner, signed in).
+export function quietSite(data) {
+  return !data?.ownerView && !(data?.posts || []).length;
 }
 
 const reduce = () => matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-const who = (data) => (data?.site?.owner || '').trim().split(/\s+/)[0] || 'The owner';
-// What's going on, in a few words (friends: they're sharing, just not with everyone).
-const why = (data) => (data?.site?.privacy === 'friends' ? `${who(data)}’s sharing with friends only right now.` : `${who(data)}’s a private person right now.`);
+// (In a few plain words: nothing to read here just now. Never why.)
+const why = () => 'There’s nothing to read here just now.';
 
 export function privateScene(data) {
   const box = h('div', { class: 'ps-wrap' });
@@ -43,13 +43,13 @@ function west(data, next) {
     weed
   );
   if (reduce()) weed.classList.add('still');
-  return h('div', { class: 'card ps-card' }, scene, h('p', { class: 'ps-say' }, h('b', null, 'Nothin’ to see here, partner.')), h('p', { class: 'ps-small' }, `${why(data)} The posts have ridden out of town for now. Check back another day.`), again(next, '🤠 Another look'));
+  return h('div', { class: 'card ps-card' }, scene, h('p', { class: 'ps-say' }, h('b', null, 'Nothin’ to see here, partner.')), h('p', { class: 'ps-small' }, 'Just tumbleweed in town today. Mosey on back another day.'), again(next, '🤠 Another look'));
 }
 
 // ---------- an error box ----------
-const ERRS = ['0x0FF1CE', '0xC0FFEE', '0x000BED', '0x5ECRE7'];
+const ERRS = ['0x0FF1CE', '0xC0FFEE', '0x000BED', '0x00F00D'];
 function error(data, next) {
-  const details = h('p', { class: 'ps-err-more', hidden: true }, `Error ${ERRS[Math.floor(Math.random() * ERRS.length)]}: posts_hidden_by_owner. Nothing is broken. They’re just not out for visitors at the moment.`);
+  const details = h('p', { class: 'ps-err-more', hidden: true }, `Error ${ERRS[Math.floor(Math.random() * ERRS.length)]}: posts_folder_empty. Nothing is broken: there’s just nothing here yet.`);
   const win = h(
     'div',
     { class: 'ps-err', role: 'alertdialog', 'aria-label': 'Posts.exe' },
@@ -58,7 +58,7 @@ function error(data, next) {
       'div',
       { class: 'ps-err-body' },
       h('span', { class: 'ps-err-ico', 'aria-hidden': 'true', html: '<svg viewBox="0 0 32 32" width="34" height="34"><circle cx="16" cy="16" r="14" fill="#d8352a" stroke="#8e1b13" stroke-width="1.5"/><path d="M10.5 10.5l11 11M21.5 10.5l-11 11" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/></svg>' }),
-      h('div', null, h('p', null, h('b', null, 'Posts.exe can’t show the posts.')), h('p', null, `${why(data)} Sorry, visitor!`), details)
+      h('div', null, h('p', null, h('b', null, 'Posts.exe found no posts.')), h('p', null, `${why()} Sorry, visitor!`), details)
     ),
     h(
       'div',
@@ -89,7 +89,7 @@ function crash(data, next) {
       'div',
       { class: 'ps-bomb', role: 'alertdialog', 'aria-label': 'A system error' },
       h('span', { class: 'ps-bomb-ico', 'aria-hidden': 'true', html: '<svg viewBox="0 0 40 40" width="40" height="40"><circle cx="17" cy="24" r="12" fill="#1d1d1d"/><circle cx="13" cy="20" r="3" fill="#fff" opacity=".55"/><rect x="22" y="9" width="7" height="6" rx="1" transform="rotate(40 25 12)" fill="#555"/><path d="M28 9q3-5 8-4" fill="none" stroke="#8a6a3a" stroke-width="1.6"/><path d="M35 2l1.2 2.6L39 5l-2.4 1.4L37 9l-2-1.8L33 9l.4-2.6L31 5l2.8-.4z" fill="#f4b400"/></svg>' }),
-      h('div', null, h('p', null, h('b', null, 'Sorry, a privacy error occurred.')), h('p', { class: 'ps-mono' }, 'Error type 7: posts are hiding'), h('p', { class: 'ps-small' }, why(data))),
+      h('div', null, h('p', null, h('b', null, 'Sorry, a system error occurred.')), h('p', { class: 'ps-mono' }, 'Error type 0: nothing to show'), h('p', { class: 'ps-small' }, why())),
       h('div', { class: 'ps-err-btns' }, h('button', { type: 'button', class: 'ps-btn ps-btn-mac', onclick: () => (sound.click?.(), next()) }, 'Restart'))
     )
   );
@@ -100,7 +100,7 @@ const PATS = ['Aw, thank you. That helps.', 'I’ll tell them you stopped by.', 
 function floppy(data, next) {
   let n = 0;
   const said = h('p', { class: 'ps-bubble-line' }, 'Have we been neglected? 🥺');
-  const more = h('p', { class: 'ps-small' }, `Hey visitor, I’m sorry. ${why(data)} It’s just me and the dust bunnies in here.`);
+  const more = h('p', { class: 'ps-small' }, 'Hey visitor! It’s very quiet in here today. Just me and the dust bunnies.');
   const pal = h('span', { class: 'ps-floppy', html: floppySvg() });
   return h(
     'div',
