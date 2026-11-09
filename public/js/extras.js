@@ -106,12 +106,17 @@ export function fortuneCookie(data) {
 
 // ---------- photo of the day ----------
 // One of your photos, a different one each day (the same for everyone that day), opening its post.
+// (Picked by the site, by its own calendar, so your friends' reels show the very same one. Signed
+// in with nothing on the site for visitors, it's picked here from what you see.)
 export function photoOfTheDay(data) {
-  const all = data.posts.flatMap((p) => (p.photos || []).filter((src) => String(src).startsWith('/media/')).map((src, i) => ({ p, src, cap: p.captions?.[i] || p.title || '' })));
-  if (all.length < 2) return null;
-  const day = Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
-  // (Spread through the year, so neighbours on the list aren't neighbours in time.)
-  const pick = all[(day * 7919) % all.length];
+  const chosen = data.photoOfDay;
+  const byPost = chosen && data.posts.find((p) => `${p.type}/${p.slug}` === chosen.post);
+  let pick = byPost ? { p: byPost, src: chosen.src, cap: chosen.cap } : null;
+  if (!pick && data.ownerView) {
+    const all = data.posts.filter((p) => !p.draft).flatMap((p) => (p.photos || []).filter((src) => String(src).startsWith('/media/')).map((src, i) => ({ p, src, cap: p.captions?.[i] || p.title || '' })));
+    if (all.length >= 2) pick = all[(Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000) * 7919) % all.length];
+  }
+  if (!pick) return null;
   return h(
     'a',
     { class: 'photo-day', href: postHref(pick.p), title: `Photo of the day${pick.cap ? ': ' + pick.cap : ''}` },

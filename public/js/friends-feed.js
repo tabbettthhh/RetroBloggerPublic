@@ -7,6 +7,9 @@ import { withEmoticons } from './emoticons.js';
 import { friendHtml } from './friend-html.js';
 import { card, foldLong } from './apps.js';
 import { friendSkin } from './card-dress.js';
+import { ownerHooks } from './owner-door.js';
+import { sound } from './sound.js';
+import { activeSkin, lookOf, drawingUrl, festiveScenery } from './skins.js';
 
 // Each friend's post cards (from their site), by the name their posts use.
 let looks = {};
@@ -22,6 +25,73 @@ let only = null;
 // A square user picture, like the ones on the XP welcome screen.
 function avatar(who, size = 'small') {
   return h('span', { class: `ff-avatar ${size}`, style: { '--av': colourFor(who.url || who.name) }, 'aria-hidden': 'true' }, initial(who.owner || who.name));
+}
+
+// Your friends' photos of the day, as polaroids pegged along a washing line at the top of
+// Friends: scroll along it. Each is the very one their own site shows today. Tapping one opens
+// its post (signed in: here, if it's in your feed, or on their site as their friend).
+// The line dresses for the season or festive day, as the rest of the site does (and not at all
+// when they're switched off): the day's drawings hang between the photos, a festive day strings
+// its garland along the wire, and in winter snow settles on it.
+function lineDress() {
+  const on = document.documentElement.dataset;
+  const t = activeSkin();
+  const id = on.festival ? t?.today?.festival : on.season;
+  const look = id && t ? lookOf(id, t) : null;
+  if (!look?.charms?.length) return null;
+  let garland = '';
+  try {
+    garland = on.festival ? festiveScenery(look, id, t).garland : '';
+  } catch {}
+  return { charm: (i) => drawingUrl(look.charms[i % look.charms.length], t, 26), garland };
+}
+function photoLine(buddies) {
+  const today = buddies.filter((b) => b.photo_day?.src);
+  if (!today.length) return null;
+  const dress = lineDress();
+  const pin = (b, i) => {
+    const d = b.photo_day;
+    const name = (b.owner || b.name || '').split(/\s+/)[0];
+    const a = h(
+      'a',
+      { class: 'pl-pin', href: d.url, target: '_blank', rel: 'noopener noreferrer', title: `${name}’s photo of the day${d.cap ? ': ' + d.cap : ''}`, style: `--tilt:${[-3, 2.5, -1.5, 3.5, -2.5, 1.5][i % 6]}deg; --sway:${(i % 3) * 0.6}s` },
+      h('span', { class: 'pl-peg', 'aria-hidden': 'true' }),
+      h('span', { class: 'pl-photo' }, h('img', { src: d.src, alt: d.cap || `${name}’s photo of the day`, loading: 'lazy' }), h('span', { class: 'pl-name' }, name)),
+      // (The season's or day's drawing, hanging on the wire after it.)
+      dress ? h('span', { class: 'pl-charm', 'aria-hidden': 'true', style: `background-image:${dress.charm(i)}; --tilt:${i % 2 ? 6 : -6}deg; --sway:${(i % 3) * 0.5}s` }) : null
+    );
+    a.addEventListener('click', (e) => {
+      sound.click?.();
+      // (Signed in: their post in your feed, if it's there, or their site as their friend.)
+      if (!b.key) return;
+      const card = document.querySelector(`[data-friend-post="${CSS.escape(`${b.key}|${d.id}`)}"]`);
+      if (card) {
+        e.preventDefault();
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        card.classList.remove('pl-found');
+        void card.offsetWidth;
+        card.classList.add('pl-found');
+      } else if (ownerHooks.visitFriend) {
+        e.preventDefault();
+        ownerHooks.visitFriend(b.key, d.url);
+      }
+    });
+    return a;
+  };
+  return h(
+    'section',
+    { class: 'pl', 'aria-label': 'Friends’ photos of the day' },
+    h('div', { class: 'pl-title' }, '📷 Friends’ photos of the day'),
+    h(
+      'div',
+      { class: 'pl-scroll' },
+      h(
+        'div',
+        { class: 'pl-line' + (dress ? ' dressed' : '') + (dress?.garland ? ' festive' : ''), style: dress?.garland ? `--pl-garland:${dress.garland}` : null },
+        today.map(pin)
+      )
+    )
+  );
 }
 
 function buddyList(buddies, redraw) {
@@ -161,6 +231,8 @@ export function friendsApp(ctx) {
     const posts = only ? all.filter((p) => p.friend?.url === only) : all;
     const pick = buddies.find((b) => b.url === only);
     const parts = [
+      // (First of all: today's photos, on the line.)
+      only ? null : photoLine(buddies),
       buddies.length ? buddyList(buddies, redraw) : null,
       pick
         ? h(

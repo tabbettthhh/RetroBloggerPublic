@@ -748,6 +748,47 @@ await test('visiting a friend’s site as their friend: what’s for friends, wi
   await fetch(`${BASE2}/admin/api/file?key=thoughts/pals-only.md`, { method: 'DELETE' });
 });
 
+await test('friends’ photos of the day: polaroids on a line at the top of Friends, the very ones their sites show', async () => {
+  const at = (h) => new Date(Date.now() - h * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
+  for (const [n, f] of [[1, 0], [2, 1], [3, 2]]) await fetch(`${BASE2}/admin/api/upload?key=photos/day-${n}/a.jpg`, { method: 'PUT', body: fs.readFileSync(PHOTOS[f]) });
+  for (const n of [1, 2, 3]) await fetch(`${BASE2}/admin/api/file?key=photos/day-${n}.md`, { method: 'PUT', body: `---\ndate: ${at(n + 2)}\ntitle: Day ${n}\nphotos: [a.jpg]\n---\n` });
+  // Their site: today's photo, picked by the site itself.
+  const theirs = (await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json()).photoOfDay;
+  assert(theirs?.src?.startsWith('/media/') && theirs.post, 'their site has one: ' + JSON.stringify(theirs));
+  // What their feed tells friends is the one their site shows friends today.
+  const feed = await (await signed(BASE2, 'GET', '/api/friends/feed', FAKE, secret)).json();
+  assert(feed.photo_day?.photo && `/media/${feed.photo_day.photo}` .length > 7, 'in their feed');
+  await post_(api, 'friends/refresh');
+  const lina = (await api('overview')).friendsMine.buddies.find((b) => b.url === BASE2);
+  eq(lina.photo_day.id, feed.photo_day.id, 'yours shows the same one');
+  eq((await fetch(BASE + lina.photo_day.src)).status, 200, 'and it loads, through your site');
+  // On your Friends tab, first of all: a polaroid pegged to the line.
+  const theme = await getFile('theme.md').catch(() => '');
+  const browser = await chromium.launch();
+  try {
+    const p = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    p.errors = [];
+    p.on('pageerror', (e) => p.errors.push(e.message));
+    await p.addInitScript(() => sessionStorage.setItem('entered', '1'));
+    await p.goto(BASE + '/?owner=1#/friends');
+    await p.waitForSelector('.pl .pl-pin');
+    eq(await p.evaluate(() => document.querySelector('.feed.ff').firstElementChild.className), 'pl', 'the very first thing');
+    eq((await p.locator('.pl-pin .pl-name').first().innerText()).trim(), 'Lina', 'with their name');
+    await p.waitForFunction(() => document.querySelector('.pl-pin img')?.naturalWidth > 0);
+    eq(await p.locator('.pl-charm').count(), 0, 'no drawings with the seasons off');
+    // The seasons on: the line dresses for winter.
+    await putFile('theme.md', '---\ntheme: classic\nseasons: winter\n---\n');
+    await p.reload();
+    await p.waitForSelector('.pl .pl-line.dressed');
+    eq(await p.locator('.pl-charm').count(), await p.locator('.pl-pin').count(), 'a winter drawing by each photo');
+    assert(!p.errors.length, p.errors.join('; '));
+  } finally {
+    await browser.close();
+    await putFile('theme.md', theme || '---\ntheme: classic\n---\n');
+  }
+  for (const n of [1, 2, 3]) await fetch(`${BASE2}/admin/api/file?key=photos/day-${n}.md`, { method: 'DELETE' });
+});
+
 await test('your site keeps its address, and friends follow when it moves', async () => {
   const NEW = BASE.replace('localhost', '127.0.0.1');
   // Opening the back office at another address doesn't change who you are to friends.

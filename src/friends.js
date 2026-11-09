@@ -23,7 +23,7 @@
 //   export and visitors never see.
 
 import * as push from './push.js';
-import { safeMarkdown, buildPost, TYPES, THEME_OPTIONS, KEEPSAKE_SHAPES, THEMES, THEME_CHARMS } from './content.js';
+import { safeMarkdown, buildPost, photoOfDay, TYPES, THEME_OPTIONS, KEEPSAKE_SHAPES, THEMES, THEME_CHARMS } from './content.js';
 import { cleanCards, OWN_CARD, MIX, cleanMix, cleanSeed } from '../public/js/card-parts.js';
 
 const STORE = 'data/_friends.json';
@@ -211,7 +211,13 @@ export async function friendsApi(request, env, path, deps) {
   // Your friend feed: who you are, how you are, and your recent posts.
   if (path === '/api/friends/feed' && method === 'GET') {
     const data = await deps.buildEverything(env, { forFriends: true });
-    return reply({ ...friendFeed(data, store.me || new URL(request.url).origin, friend), share: store.letShare });
+    // (And today's photo of the day, for their reel: the very one your own site shows friends today.)
+    const day = photoOfDay(data.posts, env.TIMEZONE || 'Europe/London');
+    let photo = '';
+    try {
+      photo = day ? decodeURIComponent(day.src.slice('/media/'.length)) : '';
+    } catch {}
+    return reply({ ...friendFeed(data, store.me || new URL(request.url).origin, friend), share: store.letShare, photo_day: photo ? { id: day.post, photo, cap: day.cap, friends_only: day.friends_only } : null });
   }
 
   // A friend about to visit your site in their browser: a one-time pass for it (see acceptPass).
@@ -525,6 +531,17 @@ function tidyReactions(r) {
   return { heart: n(r.heart), star: n(r.star), grin: n(r.grin), ...(Object.keys(custom).length ? { custom } : {}) };
 }
 
+// Where a post of theirs is on their site, from its name ("places/x" → "/#/journal/x").
+function postPath(id) {
+  const [type, slug] = String(id).split('/');
+  return type === 'places' ? `/#/journal/${slug}` : ['books', 'films', 'podcasts', 'music', 'tv'].includes(type) ? `/#/${type}/${slug}` : `/#/post/${type}/${slug}`;
+}
+// Their photo of the day (a photo of one of their posts, by its name, and its caption).
+function tidyDay(d) {
+  if (!d || typeof d !== 'object' || !photoKeyOk(d.photo) || !/^[a-z]+\/[^/\\]{1,100}$/.test(String(d.id || ''))) return null;
+  return { id: clean(d.id, 120), photo: d.photo, cap: clean(d.cap, 200), friends_only: d.friends_only === true };
+}
+
 // Tidies a feed from a friend's site before keeping it: plain values only, sizes capped.
 export function tidyFeed(f, friend) {
   const posts = (Array.isArray(f?.posts) ? f.posts : []).slice(0, 30).map((p) => ({
@@ -559,6 +576,8 @@ export function tidyFeed(f, friend) {
     status_updated: Number(f?.status_updated) || null,
     // (Whether they let you show their posts to your visitors.)
     share: f?.share !== false,
+    // (Their photo of the day, for your Friends reel.)
+    photo_day: tidyDay(f?.photo_day),
     // (Whether you can comment on their posts: a site new enough, with comments on.)
     comments_on: f?.comments_on === true,
     posts,
@@ -1068,7 +1087,11 @@ export async function publicFriends(env, { mine = false } = {}) {
     const feed = c?.feed;
     const fresh = c && c.ok !== false && Date.now() - (c.at || 0) < 3 * 60 * 60 * 1000;
     const who = { name: feed?.name || f.name, owner: feed?.owner || f.owner, url: f.url, ...(mine ? { key: f.key, comments_on: !!feed?.comments_on } : {}) };
-    buddies.push({ ...who, presence: fresh ? feed?.presence || 'online' : 'offline', status: feed?.status || '' });
+    // Their photo of the day, for the reel at the top of Friends (only where their posts are shown;
+    // a friends-only one just for you).
+    const pd = feed?.photo_day;
+    const day = pd && (mine || (postsShown(store, feed) && !pd.friends_only)) ? { src: `/friends-media/${encodeURIComponent(f.key)}/${pd.photo.split('/').map(encodeURIComponent).join('/')}`, cap: pd.cap, id: pd.id, url: f.url + postPath(pd.id), friends_only: pd.friends_only } : null;
+    buddies.push({ ...who, presence: fresh ? feed?.presence || 'online' : 'offline', status: feed?.status || '', ...(day ? { photo_day: day } : {}) });
     if (!mine && !postsShown(store, feed)) return;
     keepsakes.push(...(feed?.keepsakes || []));
     categories.push(...(feed?.categories || []));
@@ -1111,7 +1134,9 @@ export async function friendPhotoForVisitor(env, key, photoKey, mine = false) {
   const cached = friend ? (await readCache(env, key))?.feed : null;
   const feed = mine || postsShown(store, cached) ? cached : null;
   // (Not a friends-only post's: those are for you, signed in.)
-  if (!feed || !(feed.posts || []).some((p) => p.photos.includes(photoKey) && (mine || !p.friends_only))) return new Response('Not found', { status: 404 });
+  // (Their photo of the day too, which may be from an older post than the feed carries.)
+  const today = feed?.photo_day?.photo === photoKey && (mine || !feed.photo_day.friends_only);
+  if (!feed || !(today || (feed.posts || []).some((p) => p.photos.includes(photoKey) && (mine || !p.friends_only)))) return new Response('Not found', { status: 404 });
   return friendPhoto(env, key, photoKey);
 }
 

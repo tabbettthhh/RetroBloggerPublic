@@ -1148,7 +1148,8 @@ function decorateFriendPosts() {
     // Their own site, as their friend: everything that's for friends, not just what visitors see.
     // (In place of the plain link, which only shows what any visitor sees.)
     el.querySelector(':scope > .ff-open, .ff-open')?.remove();
-    const visit = btn(`👥 Visit ${f?.owner ? f.owner.split(/\s+/)[0] + '’s site' : 'their site'} as a friend ↗`, 'okit-visit', () => visitFriend(key, p.url));
+    const whose = f?.owner ? f.owner.split(/\s+/)[0] + '’s site' : 'their site';
+    const visit = btn('Visit ↗', 'okit-visit', () => visitFriend(key, p.url), { title: `Visit ${whose} as a friend`, 'aria-label': `Visit ${whose} as a friend` });
     el.append(h('div', { class: 'okit-visit-row' }, visit));
     el.append(h('div', { class: 'okit-talk-wrap' }, h('div', { class: 'okit-row' }, toggle, note, add), panel));
   }
@@ -1205,7 +1206,9 @@ function decorateFriendsTab() {
   if (!feed) return;
   feed.dataset.okit = '1';
   const everyone = owner.friendsMine?.postsShown;
-  feed.prepend(h('div', { class: 'okit-note' }, h('span', null, everyone ? '👁 Everyone can see this tab and your friends’ posts on it.' : '🔒 Only you can see this tab: your visitors don’t see your friends’ posts.'), btn('Change', '', () => controlPanel('friends'))));
+  // (After the photos-of-the-day line, which always comes first.)
+  const line = feed.querySelector(':scope > .pl');
+  (line ? (n) => line.after(n) : (n) => feed.prepend(n))(h('div', { class: 'okit-note' }, h('span', null, everyone ? '👁 Everyone can see this tab and your friends’ posts on it.' : '🔒 Only you can see this tab: your visitors don’t see your friends’ posts.'), btn('Change', '', () => controlPanel('friends'))));
 }
 // A dot on Friends, wherever it's shown (the menus, the desktop, the dock), while there are
 // posts you haven't seen yet. Opening Friends clears it.
@@ -1815,6 +1818,8 @@ export async function startOwner(s) {
   }
   document.documentElement.classList.add('owner-on');
   ownerHooks.holding = () => writing();
+  // (A friend's site as their friend, from anywhere on yours: the photos-of-the-day line, say.)
+  ownerHooks.visitFriend = visitFriend;
   ownerHooks.trying = () => trying;
   // (An emoji left on one of your posts that you don't want: × takes it off.)
   ownerHooks.removeReaction = async (p, emoji) => {

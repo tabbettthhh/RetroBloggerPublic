@@ -4,7 +4,7 @@
 import { Zip, ZipDeflate, ZipPassThrough } from 'fflate';
 import { stripImage, UnsupportedImage, CLEAN_TYPES } from './strip.js';
 import { parseVisited } from './content.js';
-import { TYPES, buildPost, isVisible, postLevel, siteLevel, privacyOf, PRIVACY, todayIn, parseFortunes, POSTCARD_FRONTS, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parsePlanner, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
+import { TYPES, buildPost, isVisible, photoOfDay, postLevel, siteLevel, privacyOf, PRIVACY, todayIn, parseFortunes, POSTCARD_FRONTS, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parsePlanner, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
 import { adminCheck } from './auth.js';
 import { VERSION } from './version.js';
 import * as friends from './friends.js';
@@ -981,6 +981,9 @@ async function dressForVisitors(env, data) {
   data.friendsTab = !!pals.postsShown;
   // (Whether visitors can ask to hear when you post.)
   data.notifyPosts = (await push.settings(env).catch(() => ({}))).visitors === true;
+  // (Today's photo of the day, from what this browser may see.)
+  const day = photoOfDay(data.posts, tzOffset(env));
+  data.photoOfDay = day ? { post: day.post, src: day.src, cap: day.cap } : null;
   return data;
 }
 

@@ -525,6 +525,19 @@ export function privacyOf(v) {
   return t === 'friends' || t === 'friends only' ? 'friends' : t === 'me' || t === 'only me' || t === 'private' ? 'me' : 'public';
 }
 
+// The photo of the day: one of the photos in these posts (newest first), a different one each
+// day by the site's own calendar, and the same for everyone who sees these posts that day, on
+// your site and in your friends' reels alike.
+export function photoOfDay(posts, tz, now = new Date()) {
+  const all = [];
+  for (const p of posts || []) (p.photos || []).forEach((src, i) => String(src).startsWith('/media/') && all.push({ p, src: String(src), cap: p.captions?.[i] || p.title || '' }));
+  if (all.length < 2) return null;
+  const day = Math.floor(Date.parse(`${todayIn(tz, now)}T00:00:00Z`) / 86400000);
+  // (Spread through the year, so neighbours on the list aren't neighbours in time.)
+  const pick = all[(day * 7919) % all.length];
+  return { post: `${pick.p.type}/${pick.p.slug}`, src: pick.src, cap: String(pick.cap).slice(0, 200), friends_only: !!pick.p.friends_only };
+}
+
 export function isVisible(post, now = Date.now()) {
   return !post.draft && !post.error && post.ts > 0 && post.ts <= now;
 }

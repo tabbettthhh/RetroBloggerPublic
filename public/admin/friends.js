@@ -299,7 +299,7 @@ function friendWindow(ctx, f, act, redraw) {
           tab?.close();
           ctx.toast(e.message, true);
         }
-      } }, '👥 Visit as a friend ↗')),
+      }, title: `Visit ${f.owner || f.name}’s site as a friend`, 'aria-label': `Visit ${f.owner || f.name}’s site as a friend` }, 'Visit ↗')),
       feed?.status ? h('div', { class: 'pal-theirstatus' }, withEmoticons(feed.status, 15), feed.status_updated ? h('small', null, ` · ${ago(feed.status_updated)}`) : null) : null,
       f.cache && f.cache.ok === false ? h('div', { class: 'hint warn' }, `Couldn’t reach their site ${ago(f.cache.tried)}. Showing what it said ${ago(f.cache.at) || 'before'}.`) : null,
       !f.cache ? h('div', { class: 'hint' }, 'Not checked yet: tap Check now.') : null
