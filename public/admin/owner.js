@@ -103,7 +103,7 @@ function merge(d, fromSite = false) {
   // not to) their posts in your Home.
   const fm = owner.friendsMine;
   if (fm) {
-    Object.assign(d, { buddies: fm.buddies || [], friendPosts: fm.posts || [], friendLooks: fm.looks || {}, friendKeepsakes: fm.keepsakes || [], friendCategories: fm.categories || [], friendsTab: true, friendsInHome: fm.inHome === false ? [] : fm.posts || [] });
+    Object.assign(d, { buddies: fm.buddies || [], friendDays: fm.days || [], friendPosts: fm.posts || [], friendLooks: fm.looks || {}, friendKeepsakes: fm.keepsakes || [], friendCategories: fm.categories || [], friendsTab: true, friendsInHome: fm.inHome === false ? [] : fm.posts || [] });
     registerCategories(d.friendCategories);
     registerKeepsakes([...(d.keepsakes?.custom || []), ...d.friendKeepsakes]);
   }
@@ -1205,10 +1205,11 @@ function decorateFriendsTab() {
   const feed = document.querySelector('.feed.ff:not([data-okit])');
   if (!feed) return;
   feed.dataset.okit = '1';
-  const everyone = owner.friendsMine?.postsShown;
+  const seen = owner.friendsMine?.postsSeen || 'me';
+  const say = { everyone: '👁 Everyone can see this tab and your friends’ posts on it.', friends: '👥 Your friends can see this tab when they visit your site. Other visitors don’t see your friends’ posts.', me: '🔒 Only you can see this tab: your visitors don’t see your friends’ posts.' };
   // (After the photos-of-the-day line, which always comes first.)
   const line = feed.querySelector(':scope > .pl');
-  (line ? (n) => line.after(n) : (n) => feed.prepend(n))(h('div', { class: 'okit-note' }, h('span', null, everyone ? '👁 Everyone can see this tab and your friends’ posts on it.' : '🔒 Only you can see this tab: your visitors don’t see your friends’ posts.'), btn('Change', '', () => controlPanel('friends'))));
+  (line ? (n) => line.after(n) : (n) => feed.prepend(n))(h('div', { class: 'okit-note' }, h('span', null, say[seen] || say.me), btn('Change', '', () => controlPanel('friends'))));
 }
 // A dot on Friends, wherever it's shown (the menus, the desktop, the dock), while there are
 // posts you haven't seen yet. Opening Friends clears it.

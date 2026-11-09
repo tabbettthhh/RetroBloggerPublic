@@ -1,10 +1,9 @@
 // Friends, in the back office: a chat-style friends list of people who run their own copy
-// of this site, and their latest posts. (And notes between friends: see Mail, signed in.)
+// of this site, and who sees them. (Their posts are on the site, signed in: the Friends tab, and
+// your Home. And notes between friends: see Mail, signed in.)
 import { h } from '/js/util.js';
 import { withEmoticons } from '/js/emoticons.js';
-import { friendHtml as cleanHtml } from '/js/friend-html.js';
 
-const TYPE_WORD = { thoughts: 'Thought', places: 'Place', photos: 'Photos', lists: 'List', quotes: 'Quote', books: 'Book', films: 'Film', podcasts: 'Podcast', music: 'Music', tv: 'TV' };
 const PRES = { online: ['Online', 'green'], away: ['Away', 'amber'], brb: 'Be right back', lunch: 'Out to lunch', busy: ['Busy', 'red'], offline: ['Offline', 'grey'] };
 const presOf = (p) => {
   const v = PRES[p] || PRES.online;
@@ -23,7 +22,6 @@ const ago = (ts) => {
   const d = Math.round(m / 60 / 24);
   return d < 8 ? `${d} day${d === 1 ? '' : 's'} ago` : new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 };
-const photoUrl = (friend, key) => `/admin/api/friends/photo?friend=${encodeURIComponent(friend)}&p=${encodeURIComponent(key)}`;
 // Reachable lately, and not set to offline: they go in "Online".
 const isOn = (f) => f.cache?.feed && f.cache.ok !== false && f.cache.feed.presence !== 'offline' && Date.now() - (f.cache.at || 0) < 3 * HOUR;
 
@@ -76,7 +74,6 @@ function page(ctx, redraw) {
     addressNotice(ctx, d, act),
     h('div', { class: 'pal-wrap' + (open ? ' has-convo' : '') }, buddyWindow(ctx, d, act, redraw), open ? friendWindow(ctx, open, act, redraw) : null),
     privacyBox(ctx, d, act),
-    feedSection(d),
     addressBox(ctx, d, act, redraw),
     howItWorks()
   ];
@@ -84,25 +81,43 @@ function page(ctx, redraw) {
 
 // ---------- who sees what ----------
 
-const VIS = [
-  ['off', 'Only me', 'Your Friends tab and their posts show only while you’re signed in. Visitors see nothing about your friends.'],
-  ['list', 'Only me, and my friends list', 'Their posts are still just for you; visitors see your friends’ names on your About page, linking to their sites.'],
-  ['all', 'Everyone', 'A Friends tab on your site with their posts for everyone, and your friends list on your About page. (Their posts never go in your Home for visitors.)']
+// Two choices, each Everyone, My friends (visiting your site with Visit ↗ from theirs) or Only me:
+// who sees your friends list, and who sees their posts.
+const WHO = [
+  ['everyone', 'Everyone', '👁'],
+  ['friends', 'My friends', '👥'],
+  ['me', 'Only me', '🔒']
+];
+const SEEN_BY = [
+  ['listSeen', 'Your friends list', 'Your buddies’ names and how they are, on your About page and at the top of Friends, linking to their sites.', { everyone: 'Everyone sees your friends list now.', friends: 'Your friends list is for your friends now (when they visit).', me: 'Your friends list is just for you now.' }],
+  ['postsSeen', 'Their posts', 'The Friends tab, with your friends’ posts and their photos of the day. (Their posts only go in your Home for you.)', { everyone: 'Everyone sees your friends’ posts now.', friends: 'Your friends’ posts are for your friends now (when they visit).', me: 'Your friends’ posts are just for you now.' }]
 ];
 function privacyBox(ctx, d, act) {
   const post = (body, msg) => act(() => ctx.api('friends/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }), msg);
   return h(
     'fieldset',
     { class: 'fr-privacy' },
-    h('legend', null, 'Who sees your friends’ posts on your site?'),
-    VIS.map(([id, label, hint]) =>
+    h('legend', null, 'Who sees your friends on your site?'),
+    SEEN_BY.map(([field, label, hint, said]) =>
       h(
-        'label',
-        { class: 'fr-vis' + (d.visibility === id ? ' on' : '') },
-        h('input', { type: 'radio', name: 'fr-vis', value: id, checked: d.visibility === id, onchange: () => post({ visibility: id }, id === 'all' ? 'Your friends’ posts now show on your site.' : id === 'list' ? 'Only your friends list shows on your site now.' : 'Your friends are private now: only you see them.') }),
-        h('span', null, h('b', null, label), h('small', null, hint))
+        'div',
+        { class: 'fr-seen', role: 'radiogroup', 'aria-label': `Who sees ${label.toLowerCase()}` },
+        h('div', { class: 'fr-seen-what' }, h('b', null, label), h('small', null, hint)),
+        h(
+          'div',
+          { class: 'fr-seen-who' },
+          WHO.map(([id, word, icon]) =>
+            h(
+              'label',
+              { class: 'fr-vis' + (d[field] === id ? ' on' : '') },
+              h('input', { type: 'radio', name: `fr-${field}`, value: id, checked: d[field] === id, onchange: () => post({ [field]: id }, said[id]) }),
+              h('span', null, h('b', null, `${icon} ${word}`))
+            )
+          )
+        )
       )
     ),
+    h('p', { class: 'hint fr-seen-note' }, '“My friends” means your friends when they visit your site with Visit ↗ on theirs. Everyone else sees only what’s for everyone.'),
     h(
       'label',
       { class: 'row check fr-share' },
@@ -278,7 +293,6 @@ function addBox(ctx, act, redraw) {
 function friendWindow(ctx, f, act, redraw) {
   const feed = f.cache?.feed;
   const [word, dot] = isOn(f) ? presOf(feed.presence) : ['Offline', 'grey'];
-  const posts = feed?.posts || [];
   return h(
     'section',
     { class: 'pal-win pal-convo', 'aria-label': f.name },
@@ -304,7 +318,6 @@ function friendWindow(ctx, f, act, redraw) {
       f.cache && f.cache.ok === false ? h('div', { class: 'hint warn' }, `Couldn’t reach their site ${ago(f.cache.tried)}. Showing what it said ${ago(f.cache.at) || 'before'}.`) : null,
       !f.cache ? h('div', { class: 'hint' }, 'Not checked yet: tap Check now.') : null
     ),
-    h('div', { class: 'pal-posts' }, posts.length ? posts.slice(0, 10).map((p) => postCard(f, p, feed)) : h('p', { class: 'hint' }, 'No posts yet.')),
     h(
       'div',
       { class: 'row end pal-foot' },
@@ -319,34 +332,6 @@ function friendWindow(ctx, f, act, redraw) {
   );
 }
 
-// ---------- their posts ----------
-
-function postCard(f, p, feed) {
-  return h(
-    'article',
-    { class: 'fr-post' },
-    h('div', { class: 'fr-post-top' }, h('b', null, feed?.name || f.name), ` · ${TYPE_WORD[p.type] || 'Post'} · ${ago(p.ts)}`, p.friends_only ? h('span', { class: 'badge fr-only', title: 'Shared only with their friends: it isn’t on their site or yours' }, '👥 Friends only') : null),
-    p.title ? h('h3', null, p.title) : null,
-    p.creator || p.city || p.rating != null ? h('div', { class: 'fr-post-meta' }, [p.creator, p.city, p.rating != null ? '★'.repeat(Math.max(0, Math.min(5, Math.round(p.rating)))) || '' : ''].filter(Boolean).join(' · ')) : null,
-    p.photos.length ? h('div', { class: 'fr-photos' }, p.photos.map((k) => h('img', { src: photoUrl(f.key, k), alt: '', loading: 'lazy' }))) : null,
-    cleanHtml(p.html),
-    p.friends_only ? null : h('a', { class: 'fr-open', href: p.url, target: '_blank', rel: 'noopener noreferrer' }, 'Open on their site ↗')
-  );
-}
-
-function feedSection(d) {
-  const all = [];
-  for (const f of d.friends) for (const p of f.cache?.feed?.posts || []) all.push([f, p]);
-  all.sort((a, b) => b[1].ts - a[1].ts);
-  if (!d.friends.length) return null;
-  return h(
-    'section',
-    { class: 'fr-feed' },
-    h('h2', { class: 'section-title' }, 'Your friends’ posts'),
-    all.length ? all.slice(0, 20).map(([f, p]) => postCard(f, p, f.cache.feed)) : h('p', { class: 'hint' }, 'Nothing yet. Their newest posts show up here (they arrive moments after your friends post; your site also checks every 20 minutes, or tap Check now).')
-  );
-}
-
 function howItWorks() {
   return h(
     'details',
@@ -354,7 +339,7 @@ function howItWorks() {
     h('summary', null, 'How friends work'),
     h('p', null, 'You and a friend each run your own copy of this site. Copy your friend code, send it to them, and they paste it into Add a friend on theirs (or the other way round). From then on your two sites trust each other. Your code stays the same for everyone; switch it off or make a new one whenever you like.'),
     h('p', null, 'Your friends’ sites tell yours the moment they post or change their status, and your site checks theirs every 20 minutes as well. Their photos come through your own site, so your browser never connects to theirs. Drafts and scheduled posts are never shared.'),
-    h('p', null, 'Signed in, you see their posts in your Home and on a Friends tab, with your friends listed at the top. A dot on Friends tells you when there’s something new. Whether visitors see the tab too is up to you (above).'),
+    h('p', null, 'Signed in, you see their posts in your Home and on a Friends tab, with your friends listed at the top. A dot on Friends tells you when there’s something new. Whether visitors (or your friends, when they visit) see the tab and your friends list is up to you (above).'),
     h('p', null, 'You can comment on their posts right there: your comment goes straight on at their site, under your name, linking to yours. (Their visitors’ comments still wait for them to approve, and so do yours on your own site.)'),
     h('p', null, 'You can send each other short notes, too: they arrive in Mail, and only the friend a note is to can read it. Remove a buddy and both sites stop following each other.')
   );
