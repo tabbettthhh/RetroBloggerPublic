@@ -33,7 +33,8 @@
 .dw { position: absolute; display: flex; flex-direction: column; pointer-events: auto; min-width: 300px; min-height: 220px; resize: both; overflow: hidden; box-shadow: 0 10px 28px rgba(0,0,0,.4); }
 .dw.maxed { left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; resize: none; border-radius: 0 !important; }
 .dw[hidden] { display: none; }
-.dw.dragging { opacity: .92; user-select: none; }
+/* (will-change: the window is moved as one picture while you drag it, not redrawn at every step.) */
+.dw.dragging { opacity: .92; user-select: none; will-change: transform; }
 .wbar { flex: none; user-select: none; touch-action: none; }
 .wbody { flex: 1; min-height: 0; overflow: auto; }
 
