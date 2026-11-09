@@ -381,7 +381,7 @@ function themeControls(ctx, saved, redraw, preview) {
       h('p', { class: 'hint' }, 'Like the classic sky: a warm morning, the day as it is, a golden evening and a starry night, by each visitor’s clock. In dark mode it’s always night.')
     ]],
     words: ['Fonts', () => [opt('font', { font: true }), opt('title_font', { font: true }), opt('text_size')]],
-    shapes: ['Bars, corners & depth', () => [opt('bars'), opt('corners'), h('p', { class: 'hint' }, 'Bar styles show in light mode; dark mode keeps its own dark bars.'), opt('realism'), h('p', { class: 'hint' }, 'Extra real gives everything a material and lets the light fall on it: grain in the paper and cards, glazed bars that catch the light, buttons that stand up and press in, windows with weight and soft shadows, a little film grain over the screen. It works with any theme, festive day or dark mode, in their own colours.')]],
+    shapes: ['Bars, corners & depth', () => [opt('bars'), opt('corners'), h('p', { class: 'hint' }, 'Bar styles show in light mode; dark mode keeps its own dark bars.'), opt('realism'), h('p', { class: 'hint' }, 'Extra real gives everything a material and lets the light fall on it: cards that lift off the page, glazed bars that catch the light, buttons that stand up and press in, windows with weight and soft shadows, a little film grain over the screen. It works with any theme, festive day or dark mode, in their own colours.')]],
     cards: ['Post cards', () => [
       cardChoice(d, t, redraw),
       cardMaker(d, t, redraw),
