@@ -6,7 +6,7 @@
 import { h } from '/js/util.js';
 import { CARD_STYLES, miniCard, mixMini, isOwnCard, ensureOwnCardsCss } from '/js/card-dress.js';
 import { CARD_PARTS, CARD_COLOURS, MAX_CARDS, cleanCards, nextCardId, MIX, MAX_SEED, cleanMix, cleanSeed } from '/js/card-parts.js';
-import { SKINS, SKIN_GROUPS, WALLPAPERS, CHARMS, CHARM_NAMES, resolveSkin, wallpaperCss, charmUrl, pointerSvgs, themeColour, TITLE_STOPS, inks, mix, emojiList, EMOJI_LAYOUTS, STICKER_SPOTS, STICKER_SIZES, OPTIONS, HIDEABLE, SECTIONS, DEFAULT_MENU, FONT_FAMILIES, APPS, APP_LOOKS, APP_EXTRAS, cleanApps, hexHsl, hslHex, SEASONS, FESTIVALS, FALLING_CHOICES, cleanMyDays, MAX_MY_DAYS, cleanFestivalDates, nextFestival, LABELS, LABEL_GROUPS, cleanLabels, GLASS_PLACES, SCENERY_PLACES, lookOf, cleanLooks, MAX_LOOK_CHARMS, seasonOf, BAR_APPS, BAR_DECOR, MAX_BAR_STICKERS, cleanBarDecor } from '/js/skins.js';
+import { SKINS, SKIN_GROUPS, WALLPAPERS, CHARMS, CHARM_NAMES, resolveSkin, wallpaperCss, charmUrl, pointerSvgs, themeColour, TITLE_STOPS, inks, mix, emojiList, EMOJI_LAYOUTS, STICKER_SPOTS, STICKER_SIZES, OPTIONS, HIDEABLE, SECTIONS, DEFAULT_MENU, FONT_FAMILIES, APPS, APP_LOOKS, APP_EXTRAS, cleanApps, hexHsl, hslHex, SEASONS, FESTIVALS, FALLING_CHOICES, cleanMyDays, MAX_MY_DAYS, cleanFestivalDates, nextFestival, LABELS, LABEL_GROUPS, cleanLabels, GLASS_PLACES, SCENERY_PLACES, lookOf, cleanLooks, MAX_LOOK_CHARMS, seasonOf, BAR_APPS, BAR_DECOR, MAX_BAR_STICKERS, cleanBarDecor, isNight } from '/js/skins.js';
 import { FLOPPY_PIECES, FLOPPY_DRESS, outfitFor, dressFloppy, cleanFloppy } from '/js/floppy-look.js';
 import { FLOPPY } from '/js/helper.js';
 
@@ -128,7 +128,9 @@ export function viewThemes(ctx) {
   const saved = ctx.saved() || { theme: 'classic' };
   if (!draft) {
     history = [];
-    nightPreview = false;
+    // (With an after-dark theme, the preview starts as the site looks right now: at night, the
+    // night theme, so closing Themes never brings a surprise.)
+    nightPreview = !!saved.night_theme && isNight();
     seasonPreview = '';
     pictureSets = null;
   }
@@ -437,6 +439,19 @@ function themeControls(ctx, saved, redraw, preview) {
         ? h('button', { type: 'button', class: 'btn small', onclick: () => { for (const k of PARTS) d[k] = ''; Object.assign(d, { hide: [], menu: null, sections_hidden: [], apps: {} }); redraw(); } }, `Back to ${SKINS[d.theme].name} as it comes`)
         : null
     ),
+    // (An after-dark theme, said plainly beside Save, with a way to see it and to switch it off:
+    // otherwise the site changing at 7pm looks like your theme didn't save.)
+    d.night_theme && SKINS[d.night_theme]
+      ? h(
+          'p',
+          { class: 'tm-night-note', role: 'note' },
+          h('span', null, '🌙 After dark (7pm to 7am) your site changes into ', h('b', null, SKINS[d.night_theme].name), '. ', nightPreview ? 'This is that look.' : 'This is the daytime look.'),
+          h('span', { class: 'tm-night-btns' },
+            h('button', { type: 'button', class: 'btn small', onclick: () => { nightPreview = !nightPreview; redraw(); } }, nightPreview ? '☀️ See daytime' : '🌙 See after dark'),
+            h('button', { type: 'button', class: 'btn small', onclick: () => { d.night_theme = ''; nightPreview = false; redraw(); } }, 'No night theme')
+          )
+        )
+      : null,
     // (While there are changes, this row stays in view and says they aren't on the site yet:
     // picking a theme only changes the preview until it's saved.)
     h(
@@ -1023,7 +1038,8 @@ function surprise(d) {
     falling: choose('falling', ['none', 'none', 'none', ...Object.keys(OPTIONS.falling.choices)]),
     seasons,
     tab_icon: chance(0.6) ? drawingOrEmoji() : '',
-    night_theme: chance(0.35) ? anyOf(Object.keys(SKINS).filter((id) => id !== theme)) : '',
+    // (Never a night theme by surprise: whatever you had stays, and no new one appears.)
+    night_theme: d.night_theme && d.night_theme !== theme ? d.night_theme : '',
     glass: chance(0.5) ? some(Object.keys(GLASS_PLACES), 1, 6) : [],
     glass_style: choose('glass_style'),
     glass_strength: choose('glass_strength'),

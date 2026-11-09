@@ -685,3 +685,6 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .who-opt { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 12px; border: 1px solid #a5acb5; border-radius: 16px; background: #fff; color: #222; font: inherit; font-size: 13px; cursor: pointer; }
 .who-opt.on { border-color: #3a6fd8; background: #e8eefc; color: #12357a; }
 .who-opt:disabled { opacity: .45; cursor: not-allowed; }
+/* Themes: an after-dark theme, said plainly beside Save. */
+.tm-night-note { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 8px 0 0; padding: 8px 10px; border: 1px solid #c9c2e8; border-radius: 6px; background: #f3f0ff; color: #2b2257; font-size: 13px; line-height: 1.35; }
+.tm-night-btns { display: inline-flex; flex-wrap: wrap; gap: 6px; }
