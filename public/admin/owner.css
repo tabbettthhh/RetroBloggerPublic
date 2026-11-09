@@ -34,6 +34,7 @@
 .okit-state { display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 9px; font: bold 11px/1.6 Tahoma, sans-serif; color: #444; background: #eee; white-space: nowrap; }
 .okit-state.later { color: #7a4a00; background: #fff1d6; }
 .okit-state.friends { color: #22357a; background: #e6ecff; }
+.okit-state.me { color: #4a2470; background: #f3e6ff; }
 .okit-has-more > .okit-state { position: absolute; top: 8px; right: 44px; z-index: 5; }
 /* Beside a post's title (a journal page, a review): the title's words flow around it. */
 .okit-more.by-title, .okit-state.by-title { float: right; position: relative; z-index: 5; margin: 4px 0 4px 8px; }
@@ -144,6 +145,7 @@ html.owner-preview .okit-hidden-post { outline: 0; }
 :root .okit-state { color: var(--ok-ink); background: var(--ok-gloss), color-mix(in srgb, var(--ok-line) 70%, #fff); box-shadow: var(--ok-bevel); }
 :root .okit-state.later { background: var(--ok-gloss), color-mix(in srgb, var(--ok-accent) 30%, #fff); }
 :root .okit-state.friends { background: var(--ok-gloss), color-mix(in srgb, var(--ok-sel) 25%, #fff); }
+:root .okit-state.me { background: var(--ok-gloss), color-mix(in srgb, #8a4fc8 25%, #fff); }
 :root .okit-hidden-post { outline-color: color-mix(in srgb, var(--ok-sel) 55%, transparent); }
 
 /* Menus: like the theme's Start menu, a coloured strip down the side. */
@@ -468,3 +470,18 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 .em-log li { padding: 6px 8px; border-left: 3px solid #3a8a3a; border-radius: 3px; background: rgba(0, 0, 0, .03); }
 .em-log li.no { border-left-color: #b4462e; }
 .em-why { display: block; margin-top: 2px; opacity: .8; }
+/* Privacy: who sees your posts, all at once. */
+.pv-levels { display: grid; gap: 8px; margin: 10px 0 4px; }
+.pv-level { display: grid; grid-template-columns: 34px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; padding: 10px 12px; border: 2px solid var(--ok-line, #b9c0c9); border-radius: 8px; background: #fff; color: #1a1a1a; font: inherit; text-align: left; cursor: pointer; }
+.pv-level .pv-ico { grid-row: span 2; font-size: 24px; text-align: center; }
+.pv-level b { font-size: 14px; }
+.pv-level small { font-size: 12px; line-height: 1.35; opacity: .8; }
+.pv-level.on { border-color: var(--ok-sel, #316ac5); background: color-mix(in srgb, var(--ok-sel, #316ac5) 10%, #fff); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ok-sel, #316ac5) 25%, transparent); }
+.pv-level:focus-visible { outline: 2px dotted currentColor; outline-offset: 2px; }
+.pv-busy { min-height: 1.2em; margin: 6px 0 0; font-size: 12px; font-weight: bold; }
+.pv-list { display: grid; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+.pv-list li { display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: auto auto; column-gap: 8px; align-items: center; padding: 6px 8px; border-radius: 4px; background: rgba(0, 0, 0, .03); font-size: 13px; }
+.pv-list .pv-badge { grid-row: span 2; font-size: 11px; white-space: nowrap; }
+.pv-list .pv-title { overflow: hidden; font-weight: bold; text-overflow: ellipsis; white-space: nowrap; }
+.pv-list small { grid-column: 2; opacity: .7; }
+.pv-list .pv-open { grid-column: 3; grid-row: 1 / span 2; }

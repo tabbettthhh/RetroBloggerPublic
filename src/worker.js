@@ -4,7 +4,7 @@
 import { Zip, ZipDeflate, ZipPassThrough } from 'fflate';
 import { stripImage, UnsupportedImage, CLEAN_TYPES } from './strip.js';
 import { parseVisited } from './content.js';
-import { TYPES, buildPost, isVisible, todayIn, parseFortunes, POSTCARD_FRONTS, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parsePlanner, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
+import { TYPES, buildPost, isVisible, postLevel, siteLevel, privacyOf, PRIVACY, todayIn, parseFortunes, POSTCARD_FRONTS, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parsePlanner, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
 import { adminCheck } from './auth.js';
 import { VERSION } from './version.js';
 import * as friends from './friends.js';
@@ -465,7 +465,7 @@ async function readParsed(env) {
     return {};
   }
 }
-const PARSED_VERSION = 34; // bump when buildPost changes shape
+const PARSED_VERSION = 35; // bump when buildPost changes shape
 
 // "reading [book]" (or [film], [podcast], [music]) becomes "reading The Remains of the Day" while a book is marked as reading.
 function fillStatus(status, posts) {
@@ -568,10 +568,20 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
   }
   const partial = stale.length > todo.length || extraStale.length > extraTodo.length;
   const now = Date.now();
+  const siteText = await readText(env, 'site.md');
+  // Who sees what: the more private of the post's own setting and the whole site's (see PRIVACY).
+  // Visitors get posts for everyone; friends, those for friends too (each marked friends only if
+  // that's what it is now); you, everything.
+  const level = siteLevel(parseSite(siteText));
   const posts = [];
   for (const k of postKeys) {
     const post = cache[k]?.post;
-    if (post && (includeHidden || (isVisible(post, now) && (forFriends || !post.friends_only)))) posts.push(post);
+    if (!post) continue;
+    if (includeHidden) posts.push(post);
+    else if (isVisible(post, now)) {
+      const seen = Math.max(level, postLevel(post));
+      if (seen <= (forFriends ? 1 : 0)) posts.push(forFriends && seen && !post.friends_only ? { ...post, friends_only: true } : post);
+    }
   }
   posts.sort((a, b) => b.ts - a.ts || b.slug.localeCompare(a.slug));
 
@@ -579,8 +589,7 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
   const parsedComments = commentKeys.map((k) => extras[k]?.value).filter(Boolean);
   const guestbook = parsedGuestbook.map(({ key, ...rest }) => rest).sort((a, b) => String(b.date).localeCompare(String(a.date)));
 
-  const [siteText, wishText, travelText, logText, catText, passportText, keepText, themeText, highlightsText, plannerText, fortuneText] = await Promise.all([
-    readText(env, 'site.md'),
+  const [wishText, travelText, logText, catText, passportText, keepText, themeText, highlightsText, plannerText, fortuneText] = await Promise.all([
     readText(env, 'wishlist.md'),
     readText(env, 'travel.md'),
     readText(env, 'status-log.md'),
@@ -695,6 +704,66 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
   // whether the big refresh above is still under way.)
   Object.defineProperty(out, 'inside', { value: { objects, comments: parsedComments, guestbook: parsedGuestbook, partial } });
   return out;
+}
+
+// ---------- privacy, all at once ----------
+// One line of a file's header set (or taken out, with null), everything else kept as it is.
+function setHeader(text, key, value) {
+  const m = /^(\uFEFF?---[ \t]*\r?\n)(?:([\s\S]*?)\r?\n)?(---[ \t]*)(\r?\n[\s\S]*|)$/.exec(text || '');
+  const lines = (m?.[2] ? m[2].split(/\r?\n/) : []).filter((l) => !new RegExp(`^${key}\\s*:`).test(l));
+  while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+  if (value !== null) lines.push(`${key}: ${value}`);
+  const head = lines.length ? lines.join('\n') + '\n' : '';
+  return m ? `${m[1]}${head}${m[3]}${m[4]}` : `---\n${head}---\n${text || ''}`;
+}
+// A post's header set to a level: 0 for everyone, 1 friends only, 2 only you.
+const withLevel = (text, level) => setHeader(setHeader(text, 'only_me', level === 2 ? 'true' : null), 'friends_only', level === 1 ? 'true' : null);
+// (How many posts one go changes: each is a read and a write, well inside what one visit may do.)
+const PRIVACY_BATCH = 120;
+async function relevel(env, posts, level) {
+  let done = 0;
+  let left = 0;
+  const todo = posts.slice(0, PRIVACY_BATCH);
+  left = posts.length - todo.length;
+  for (let i = 0; i < todo.length; i += 6) {
+    const results = await Promise.all(
+      todo.slice(i, i + 6).map(async (p) => {
+        const obj = await env.CONTENT.get(p.key);
+        if (!obj) return 0;
+        const text = await obj.text();
+        const next = withLevel(text, level);
+        if (next === text) return 1;
+        // (Only if nobody changed it meanwhile: otherwise it's left for the next go.)
+        const ok = await env.CONTENT.put(p.key, next, { onlyIf: { etagMatches: obj.etag }, httpMetadata: { contentType: 'text/markdown; charset=utf-8' } }).catch(() => null);
+        return ok ? 1 : -1;
+      })
+    );
+    done += results.filter((r) => r === 1).length;
+    left += results.filter((r) => r === -1).length;
+  }
+  return { done, left };
+}
+async function setPrivacy(env, level) {
+  const siteText = (await readText(env, 'site.md')) || '';
+  if (String(splitFrontMatter(siteText).data?.privacy ?? '') !== level) await env.CONTENT.put('site.md', setHeader(siteText, 'privacy', level), { httpMetadata: { contentType: 'text/markdown; charset=utf-8' } });
+  const want = PRIVACY.indexOf(level);
+  const { posts } = await buildEverything(env, { includeHidden: true });
+  // Every post more open than this, made this private (drafts and ones for later too).
+  const open = posts.filter((p) => p.key && !p.error && postLevel(p) < want);
+  const out = await relevel(env, open, want);
+  await bumpVersion(env);
+  return { level, changed: out.done, left: out.left };
+}
+async function reopenPosts(env, keys, to) {
+  const site = parseSite(await readText(env, 'site.md'));
+  // (Never more open than the whole site: a post for everyone on a friends-only site would only
+  // be for friends anyway, and would open up by itself if the site did.)
+  const level = Math.max(siteLevel(site), Math.max(0, PRIVACY.indexOf(to)));
+  const { posts } = await buildEverything(env, { includeHidden: true });
+  const pick = posts.filter((p) => p.key && !p.error && postLevel(p) > level && (!keys || keys.includes(p.key)));
+  const out = await relevel(env, pick, level);
+  await bumpVersion(env);
+  return { to: PRIVACY[level], changed: out.done, left: out.left };
 }
 
 // ---------- shared albums ----------
@@ -941,14 +1010,18 @@ async function media(request, env, path) {
   } catch {
     return new Response('Bad path', { status: 400 });
   }
-  // A friends-only post's photos aren't for the public (the back office still sees them).
+  // A post's photos are only for whoever can see the post: one that isn't on the site (friends
+  // only, only you, a draft, not out yet) keeps its photos to you, signed in. (Your friends'
+  // sites get theirs another way: see friendMedia.)
   const [type, slug] = key.split('/');
-  if (type && slug && (await friendsOnlyPost(env, type, slug)) && !(await adminCheck(request, env)).ok) return new Response('Not found', { status: 404 });
+  if (type && slug && (await hiddenPost(env, type, slug)) && !(await adminCheck(request, env)).ok) return new Response('Not found', { status: 404 });
   return mediaFor(env, key, request.method === 'HEAD', request.headers.get('If-None-Match'));
 }
-async function friendsOnlyPost(env, type, slug) {
-  const { posts } = await buildEverything(env, { forFriends: true });
-  return posts.some((p) => p.type === type && p.slug === slug && p.friends_only);
+async function hiddenPost(env, type, slug) {
+  if (!TYPES.includes(type)) return false;
+  const { posts } = await buildEverything(env);
+  if (posts.some((p) => p.type === type && p.slug === slug)) return false;
+  return !!(await env.CONTENT.head(`${type}/${slug}.md`).catch(() => null));
 }
 
 // For a friend's site: a photo only if it belongs to a post that's published (not a draft, not
@@ -1256,6 +1329,32 @@ async function adminApi(request, env, url, ctx) {
     const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
     try {
       const out = await albumRemove(env, String(body.post || '').replace(/^photos\//, ''), String(body.file || ''));
+      ctx.waitUntil(friends.shareNews(env, buildEverything).catch(() => {}));
+      return json(out);
+    } catch (e) {
+      return json({ error: String(e.message || e) }, 400);
+    }
+  }
+  // Who sees your posts, all at once (Control Panel › Privacy). Making it more private changes
+  // every post that's more open than that, there and then; making it more open changes none of
+  // them (they're reopened by hand, see privacy/reopen). Many posts: a share at a time, and the
+  // Control Panel asks again until none are left.
+  if (p === 'privacy' && m === 'POST') {
+    const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
+    if (!PRIVACY.includes(body.level)) return json({ error: 'Everyone, friends or only you.' }, 400);
+    try {
+      const out = await setPrivacy(env, body.level);
+      ctx.waitUntil(friends.shareNews(env, buildEverything).catch(() => {}));
+      return json(out);
+    } catch (e) {
+      return json({ error: String(e.message || e) }, 500);
+    }
+  }
+  // Posts made more open again (each to `to`, never more open than the whole site).
+  if (p === 'privacy/reopen' && m === 'POST') {
+    const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
+    try {
+      const out = await reopenPosts(env, Array.isArray(body.keys) ? body.keys.map(String).slice(0, 500) : null, body.to);
       ctx.waitUntil(friends.shareNews(env, buildEverything).catch(() => {}));
       return json(out);
     } catch (e) {

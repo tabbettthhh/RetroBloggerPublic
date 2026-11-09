@@ -16,7 +16,7 @@
 // needs your own domain on Cloudflare. See the Control Panel page for the steps.
 import PostalMime from 'postal-mime';
 import { stripImage, UnsupportedImage } from './strip.js';
-import { todayIn } from './content.js';
+import { todayIn, parseSite, siteLevel } from './content.js';
 
 const STORE = 'data/_email.json';
 const MAX_PHOTOS = 12;
@@ -208,7 +208,9 @@ export async function receiveEmail(message, env, deps = {}) {
   const ext = { jpeg: 'jpg', png: 'png', webp: 'webp', gif: 'gif' };
   const files = photos.map((p, i) => `email-${i + 1}.${ext[p.kind]}`);
   await Promise.all(photos.map((p, i) => env.CONTENT.put(`${type}/${slug}/${files[i]}`, p.bytes, { httpMetadata: { contentType: `image/${p.kind}` } })));
-  const head = [`date: ${yamlString(date)}`, subject ? `title: ${yamlString(subject)}` : null, draft ? 'draft: true' : null, files.length ? `photos: [${files.map(yamlString).join(', ')}]` : null].filter(Boolean);
+  // (Written as private as the whole site is just now, so it stays that way if the site opens up.)
+  const level = siteLevel(parseSite(await env.CONTENT.get('site.md').then((o) => (o ? o.text() : ''), () => '')));
+  const head = [`date: ${yamlString(date)}`, subject ? `title: ${yamlString(subject)}` : null, draft ? 'draft: true' : null, level === 2 ? 'only_me: true' : level === 1 ? 'friends_only: true' : null, files.length ? `photos: [${files.map(yamlString).join(', ')}]` : null].filter(Boolean);
   await env.CONTENT.put(key, `---\n${head.join('\n')}\n---\n${text}\n`, { httpMetadata: { contentType: 'text/markdown; charset=utf-8' } });
   await note(env, { ok: true, from, post: key, title: subject, draft, why: left.length ? `Left out: ${left.join(', ')}.` : '' });
   await deps.saved?.({ type, slug, key, draft, title: subject });

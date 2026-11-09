@@ -6,6 +6,7 @@ import { word, postFontAttrs } from './skins.js';
 import { commentsButton } from './comments.js';
 import { reactionRow } from './reactions.js';
 import { seriesLine, withLine } from './extras.js';
+import { isPrivateNow, privateScene } from './private-scene.js';
 import { lightbox, suggestForm, suggestedStamp, keepsakeMakers } from './apps.js';
 
 export const SHELF_TYPES = ['books', 'films', 'podcasts', 'music', 'tv'];
@@ -256,7 +257,7 @@ function shelfView(type, ctx) {
   const kind = KIND_OF[type];
   const suggest = h('div', { class: 'shelf-suggest' }, suggestForm(kind, ctx.data, { cls: 'suggest-' + type, field: 'shelf-field', button: 'shelf-btn' }));
   if (!list.length) {
-    wrap.append(h('div', { class: 'shelf-empty' }, h('p', null, `Nothing on the ${(w.lower || w.home.toLowerCase())} yet.`), h('p', { class: 'hand' }, 'The first review goes here.')), suggest);
+    wrap.append(isPrivateNow(ctx.data) ? privateScene(ctx.data) : h('div', { class: 'shelf-empty' }, h('p', null, `Nothing on the ${(w.lower || w.home.toLowerCase())} yet.`), h('p', { class: 'hand' }, 'The first review goes here.')), suggest);
     return wrap;
   }
   for (const state of ORDER) {

@@ -176,7 +176,7 @@ function plainExcerpt(md, n = 160) {
 const KNOWN = new Set([
   'date', 'title', 'draft', 'font', 'photos', 'area', 'city', 'country', 'country_code', 'lat', 'lon',
   'category', 'rating', 'would_return', 'weather', 'source', 'caption', 'captions', 'stamp',
-  'author', 'director', 'host', 'episode', 'year', 'status', 'recommend', 'quote', 'rewatch', 'suggested_by', 'artist', 'album', 'format', 'pinned', 'friends_only', 'creator', 'season', 'network', 'episodes', 'pages', 'page', 'reading_log', 'floppy', 'floppy_journal', 'ordered', 'bought', 'tickets', 'rides', 'gallery', 'theatre', 'invite', 'boarding', 'cinema', 'cloakroom', 'wristband', 'postcard', 'fortune', 'luggage', 'matchbook', 'coaster', 'roomkey', 'flower', 'postcard_scene', 'pitch', 'trailmap', 'parkpass', 'patch', 'summit', 'signpost', 'leaf', 'marshmallow', 'tides', 'compass', 'bookmark', 'librarycard', 'bookplate', 'note', 'popcorn', 'glasses3d', 'rental', 'tvguide', 'remote', 'headphones', 'gig', 'pick', 'setlist', 'busticket', 'coffeering', 'signature', 'bookclub', 'dogear', 'stubpair', 'programme', 'picknmix', 'drivein', 'tally', 'takeaway', 'nospoil', 'battery', 'jcard', 'walkmap', 'napkin', 'vinyllabel', 'mixtape', 'backstage', 'lighter', 'sky', 'diary', 'moodring', 'doodle', 'cootie', 'forecast', 'lyric', 'handstamp', 'glowstick', 'racebib', 'ceremony', 'confetti', 'balloon', 'matchday', 'funfair', 'rosette', 'namebadge', 'sparkler', 'flyer', 'tourtee', 'earplugs', 'drumstick', 'buttonbadge', 'seatplan', 'lozenge', 'masks', 'stageprog', 'comedyticket', 'mic', 'interval', 'operaglasses', 'curtain', 'laughmeter', 'joke', 'custom_keepsakes', 'memory', 'negatives', 'oldprint', 'calendar', 'vhstape', 'envelope', 'thennow', 'rewind', 'skysunrise', 'skygolden', 'skyrainbow', 'skystorm', 'skysnow', 'skystars', 'skymoon', 'skyaurora', 'skyclouds', 'skyfog', 'skyplane', 'skypink', 'workout', 'gympass', 'personalbest', 'dumbbell', 'steps', 'shaker', 'heartrate', 'setsheet', 'medal', 'waterbottle', 'alarmclock', 'riseshine', 'firstcoffee', 'lunchbreak', 'teatime', 'nightowl', 'sleepmask', 'ledclock', 'discaward', 'trophy', 'chartno1', 'winnercard', 'goldmic', 'autograph', 'fanclub', 'jukebox', 'radiorequest', 'magreview', 'yearonrepeat', 'sevenninch', 'profile', 'grid_photo', 'flashcard', 'highlighter', 'pagetabs', 'timetable', 'examslip', 'pomodoro', 'desklamp', 'librarypass', 'grade', 'casecard', 'mindmap', 'revisionlist', 'pencil', 'calculator', 'gradcap', 'diploma', 'stopwatch', 'lecturenotes', 'doordnd', 'readinglist', 'idbadge', 'timecard', 'meetinginvite', 'outofoffice', 'businesscard', 'inboxzero', 'laptop', 'briefcase', 'deskplate', 'stapler', 'paperclips', 'memo', 'wfh', 'tgif', 'deadline', 'employeemonth', 'menucard', 'winelabel', 'recipecard', 'sugarpacket', 'teabagtag', 'chopsticks', 'bakerybox', 'tablenumber', 'candle', 'housekey', 'planttag', 'knitsquare', 'hotwaterbottle', 'doormat', 'jamjar', 'fridgenote', 'trainticket', 'ferrypass', 'travelpin', 'passportstamp', 'suitcasesticker', 'platform', 'seatres', 'milesign', 'birthdaycard', 'gifttag', 'cakecandle', 'placecard', 'favour', 'bootie', 'partyhat', 'thankyou', 'card', 'ribbon', 'ribbon_style', 'ribbon_colour', 'series', 'start_here', 'with', 'album_with']);
+  'author', 'director', 'host', 'episode', 'year', 'status', 'recommend', 'quote', 'rewatch', 'suggested_by', 'artist', 'album', 'format', 'pinned', 'friends_only', 'creator', 'season', 'network', 'episodes', 'pages', 'page', 'reading_log', 'floppy', 'floppy_journal', 'ordered', 'bought', 'tickets', 'rides', 'gallery', 'theatre', 'invite', 'boarding', 'cinema', 'cloakroom', 'wristband', 'postcard', 'fortune', 'luggage', 'matchbook', 'coaster', 'roomkey', 'flower', 'postcard_scene', 'pitch', 'trailmap', 'parkpass', 'patch', 'summit', 'signpost', 'leaf', 'marshmallow', 'tides', 'compass', 'bookmark', 'librarycard', 'bookplate', 'note', 'popcorn', 'glasses3d', 'rental', 'tvguide', 'remote', 'headphones', 'gig', 'pick', 'setlist', 'busticket', 'coffeering', 'signature', 'bookclub', 'dogear', 'stubpair', 'programme', 'picknmix', 'drivein', 'tally', 'takeaway', 'nospoil', 'battery', 'jcard', 'walkmap', 'napkin', 'vinyllabel', 'mixtape', 'backstage', 'lighter', 'sky', 'diary', 'moodring', 'doodle', 'cootie', 'forecast', 'lyric', 'handstamp', 'glowstick', 'racebib', 'ceremony', 'confetti', 'balloon', 'matchday', 'funfair', 'rosette', 'namebadge', 'sparkler', 'flyer', 'tourtee', 'earplugs', 'drumstick', 'buttonbadge', 'seatplan', 'lozenge', 'masks', 'stageprog', 'comedyticket', 'mic', 'interval', 'operaglasses', 'curtain', 'laughmeter', 'joke', 'custom_keepsakes', 'memory', 'negatives', 'oldprint', 'calendar', 'vhstape', 'envelope', 'thennow', 'rewind', 'skysunrise', 'skygolden', 'skyrainbow', 'skystorm', 'skysnow', 'skystars', 'skymoon', 'skyaurora', 'skyclouds', 'skyfog', 'skyplane', 'skypink', 'workout', 'gympass', 'personalbest', 'dumbbell', 'steps', 'shaker', 'heartrate', 'setsheet', 'medal', 'waterbottle', 'alarmclock', 'riseshine', 'firstcoffee', 'lunchbreak', 'teatime', 'nightowl', 'sleepmask', 'ledclock', 'discaward', 'trophy', 'chartno1', 'winnercard', 'goldmic', 'autograph', 'fanclub', 'jukebox', 'radiorequest', 'magreview', 'yearonrepeat', 'sevenninch', 'profile', 'grid_photo', 'flashcard', 'highlighter', 'pagetabs', 'timetable', 'examslip', 'pomodoro', 'desklamp', 'librarypass', 'grade', 'casecard', 'mindmap', 'revisionlist', 'pencil', 'calculator', 'gradcap', 'diploma', 'stopwatch', 'lecturenotes', 'doordnd', 'readinglist', 'idbadge', 'timecard', 'meetinginvite', 'outofoffice', 'businesscard', 'inboxzero', 'laptop', 'briefcase', 'deskplate', 'stapler', 'paperclips', 'memo', 'wfh', 'tgif', 'deadline', 'employeemonth', 'menucard', 'winelabel', 'recipecard', 'sugarpacket', 'teabagtag', 'chopsticks', 'bakerybox', 'tablenumber', 'candle', 'housekey', 'planttag', 'knitsquare', 'hotwaterbottle', 'doormat', 'jamjar', 'fridgenote', 'trainticket', 'ferrypass', 'travelpin', 'passportstamp', 'suitcasesticker', 'platform', 'seatres', 'milesign', 'birthdaycard', 'gifttag', 'cakecandle', 'placecard', 'favour', 'bootie', 'partyhat', 'thankyou', 'card', 'ribbon', 'ribbon_style', 'ribbon_colour', 'series', 'start_here', 'with', 'album_with', 'only_me']);
 
 export function buildPost(type, key, text, tz) {
   const { data, body } = splitFrontMatter(text);
@@ -220,6 +220,8 @@ export function buildPost(type, key, text, tz) {
     read_mins: wc >= 250 ? Math.max(1, Math.round(wc / 200)) : 0,
     // Only for your friends: never on your own site, and only in your friends' back offices.
     friends_only: data.friends_only === true,
+    // Only for you: published, but seen by no one else (not visitors, not friends).
+    only_me: data.only_me === true,
     // How its card is dressed (one of the card designs; empty: the theme's), and a ribbon of its
     // own: a few words, in one of the ribbon styles, in a colour of its own (or the theme's).
     card: THEME_OPTIONS.card_style.includes(String(data.card ?? '').trim().toLowerCase()) || OWN_CARD.test(String(data.card ?? '').trim()) ? String(data.card).trim().toLowerCase() : '',
@@ -512,6 +514,17 @@ export function buildPost(type, key, text, tz) {
   };
 }
 
+// Who sees what. A post can be for everyone, friends only or only you; so can the whole site
+// (site.md's privacy). What counts is the more private of the two: a site set to "friends" shows
+// visitors no posts at all, and a post that's only for you stays that way whatever the site says.
+export const PRIVACY = ['public', 'friends', 'me'];
+export const postLevel = (p) => (p?.only_me ? 2 : p?.friends_only ? 1 : 0);
+export const siteLevel = (site) => Math.max(0, PRIVACY.indexOf(site?.privacy));
+export function privacyOf(v) {
+  const t = String(v ?? '').trim().toLowerCase().replace(/[\s_-]+/g, ' ');
+  return t === 'friends' || t === 'friends only' ? 'friends' : t === 'me' || t === 'only me' || t === 'private' ? 'me' : 'public';
+}
+
 export function isVisible(post, now = Date.now()) {
   return !post.draft && !post.error && post.ts > 0 && post.ts <= now;
 }
@@ -629,6 +642,8 @@ export function parseSite(text) {
     mood: /^[a-z]{2,16}$/.test(String(data.mood ?? '').trim()) ? String(data.mood).trim() : '',
     // Visitors can leave a ♥, a ☆ or a smile on posts (only how many is kept), unless switched off.
     reactions: !(data.reactions === false || /^(false|no|off)$/i.test(String(data.reactions ?? ''))),
+    // Who sees your posts, all of them at once: public (everyone), friends, or me (only you).
+    privacy: privacyOf(data.privacy),
     // While you're away: a status (and how you show) that switches itself on and off on the
     // days you set. (The dates are only ever seen in the back office.)
     away: awayOf(data),

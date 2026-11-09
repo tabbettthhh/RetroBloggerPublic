@@ -686,6 +686,16 @@ await test('tagging a friend, a shared album they add photos to, and the webring
   await page.close();
 });
 
+await test('a post just for them never reaches a friend’s site', async () => {
+  const at = new Date(Date.now() - 30 * 60e3).toISOString().slice(0, 16).replace('T', ' ');
+  await fetch(`${BASE2}/admin/api/file?key=thoughts/hush.md`, { method: 'PUT', body: `---\ndate: ${at}\ntitle: Hush\nonly_me: true\n---\nNobody else.\n` });
+  await post_(api, 'friends/refresh');
+  const theirs = (await api('overview')).friendsMine.posts;
+  assert(theirs.some((x) => x.id === 'photos/beach'), 'their other posts arrive');
+  assert(!theirs.some((x) => x.id === 'thoughts/hush'), 'not the one only for them');
+  await fetch(`${BASE2}/admin/api/file?key=thoughts/hush.md`, { method: 'DELETE' });
+});
+
 await test('your site keeps its address, and friends follow when it moves', async () => {
   const NEW = BASE.replace('localhost', '127.0.0.1');
   // Opening the back office at another address doesn't change who you are to friends.

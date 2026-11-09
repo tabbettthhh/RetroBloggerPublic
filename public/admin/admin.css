@@ -85,6 +85,7 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .pill.draft { background: #eee; color: #444; }
 .pill.later { background: #fff1d6; color: #7a4a00; }
 .pill.friends { background: #e6ecff; color: #22357a; }
+.pill.me { background: #f3e6ff; color: #4a2470; }
 .pill.error { background: #fde3df; color: #8c1f12; }
 .section-title { margin: 6px 0 0; font-size: 14px; color: #0d3a9a; }
 .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 9999; max-width: calc(100% - 32px); padding: 10px 14px; border: 1px solid #000; border-radius: 8px; background: #ffffe1; box-shadow: 2px 3px 6px rgba(0,0,0,.35); font-size: 13px; }
@@ -679,3 +680,8 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .album-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
 .album-item { display: grid; gap: 4px; margin: 0; font-size: 11px; }
 .album-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; background: #eee; }
+/* Who sees a post: three to choose from. */
+.who-sees { display: flex; flex-wrap: wrap; gap: 6px; }
+.who-opt { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 12px; border: 1px solid #a5acb5; border-radius: 16px; background: #fff; color: #222; font: inherit; font-size: 13px; cursor: pointer; }
+.who-opt.on { border-color: #3a6fd8; background: #e8eefc; color: #12357a; }
+.who-opt:disabled { opacity: .45; cursor: not-allowed; }
