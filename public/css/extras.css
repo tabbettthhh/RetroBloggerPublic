@@ -175,3 +175,34 @@
 .visit-bar .visit-ico { font-size: 16px; }
 .visit-stop { min-height: 28px; padding: 2px 12px; border: 1px solid #1d4fb8; border-radius: 14px; background: #fff; color: #0d2a6b; font: inherit; font-weight: bold; cursor: pointer; }
 .mode-desktop .visit-bar { bottom: 48px; }
+
+/* Friends' photos of the day: polaroids pegged along a washing line, at the top of Friends.
+   Scroll along it; each sways a little. (See photoLine in friends-feed.js.) */
+.pl { margin: 0 0 12px; }
+.pl-title { margin: 0 4px 2px; font: bold 13px/1.3 Tahoma, Verdana, sans-serif; letter-spacing: .02em; opacity: .85; }
+.pl-scroll { overflow-x: auto; overflow-y: hidden; padding: 0 4px 10px; scroll-snap-type: x proximity; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+.pl-line { --pl-gap: 18px; position: relative; display: flex; align-items: flex-start; gap: var(--pl-gap); width: max-content; min-width: 100%; padding: 14px 22px 4px; }
+/* The wire: a thin line that sags a little between each peg, end to end. */
+.pl-line::before { content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 26px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='142' height='26' viewBox='0 0 142 26' preserveAspectRatio='none'%3E%3Cpath d='M0 7Q71 22 142 7' fill='none' stroke='%23555' stroke-width='1.6' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") repeat-x 84px 0 / calc(124px + var(--pl-gap)) 26px; pointer-events: none; }
+/* (Dressed for the season or a festive day: room between the photos for the day's drawings.) */
+.pl-line.dressed { --pl-gap: 40px; }
+.pl-line.festive::after { content: ""; position: absolute; left: 0; right: 0; top: 7px; height: 15px; background: var(--pl-garland) repeat-x 0 0 / 72px 15px; opacity: .95; pointer-events: none; }
+/* Winter: snow settled along the top of the wire. */
+:root[data-season="winter"] .pl-line.dressed:not(.festive)::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='142' height='26' viewBox='0 0 142 26' preserveAspectRatio='none'%3E%3Cpath d='M0 5.2Q71 20.2 142 5.2' fill='none' stroke='%23fff' stroke-width='4.5' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M0 7Q71 22 142 7' fill='none' stroke='%23555' stroke-width='1.6' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E"); filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .15)); }
+.pl-pin { position: relative; z-index: 1; flex: none; display: grid; justify-items: center; width: 124px; scroll-snap-align: center; color: inherit; text-decoration: none; transform-origin: 50% 0; rotate: var(--tilt, 0deg); animation: pl-sway 5s ease-in-out var(--sway, 0s) infinite alternate; }
+/* A wooden peg, with its spring. */
+.pl-peg { position: relative; z-index: 2; width: 10px; height: 24px; margin-bottom: -8px; border-radius: 2px; background: linear-gradient(90deg, #b88a55, #e1bd8a 45%, #b88a55); box-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+.pl-peg::after { content: ""; position: absolute; left: -2px; right: -2px; top: 9px; height: 3px; border-radius: 2px; background: #9aa1aa; }
+:root[data-season="winter"] .pl-line.dressed .pl-peg::before { content: ""; position: absolute; left: -2px; right: -2px; top: -3px; height: 5px; border-radius: 4px 4px 2px 2px; background: #fff; box-shadow: 0 1px 1px rgba(0, 0, 0, .12); }
+.pl-photo { display: grid; gap: 4px; padding: 6px 6px 8px; border-radius: 2px; background: #fdfdf9; box-shadow: 0 3px 8px rgba(0, 0, 0, .3); }
+.pl-photo img { display: block; width: 112px; height: 112px; object-fit: cover; background: #e6e2d6; }
+.pl-name { font: 15px/1.1 "Caveat", "Segoe Print", "Bradley Hand", cursive; color: #333; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pl-pin:hover, .pl-pin:focus-visible { animation-play-state: paused; rotate: 0deg; }
+.pl-pin:focus-visible .pl-photo { outline: 2px dotted currentColor; outline-offset: 3px; }
+/* The day's drawings, hanging between the photos. */
+.pl-charm { position: absolute; z-index: 1; top: 0; right: calc(var(--pl-gap) / -2 - 13px); width: 26px; height: 26px; background: no-repeat center / contain; transform-origin: 50% 0; rotate: var(--tilt, 0deg); animation: pl-sway 4s ease-in-out var(--sway, 0s) infinite alternate; }
+@keyframes pl-sway { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
+/* Found in the feed from the line: a moment's glow. */
+.pl-found { animation: pl-found 1.6s ease-out; }
+@keyframes pl-found { 0%, 30% { box-shadow: 0 0 0 3px #f6c431, 0 0 18px #f6c431; } 100% { box-shadow: none; } }
+@media (prefers-reduced-motion: reduce) { .pl-pin, .pl-charm, .pl-found { animation: none !important; } }
