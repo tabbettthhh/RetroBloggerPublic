@@ -302,7 +302,7 @@ const stampNow = () => {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 };
 // The fields site.md can hold, kept as they are when only the status changes.
-const SITE_KEYS = ['name', 'owner', 'picture', 'status', 'presence', 'status_updated', 'mood', 'now_playing', 'countdown', 'countdown_date', 'countdown_icon', 'away_status', 'away_presence', 'away_from', 'away_to', 'tagline', 'comments', 'reactions', 'top_room', 'privacy'];
+const SITE_KEYS = ['name', 'owner', 'picture', 'status', 'presence', 'status_updated', 'mood', 'now_playing', 'countdown', 'countdown_date', 'countdown_icon', 'away_status', 'away_presence', 'away_from', 'away_to', 'tagline', 'comments', 'reactions', 'top_room', 'privacy', 'about_note'];
 // Changes one setting in site.md, keeping everything else as it is.
 async function setSiteField(key, value) {
   const siteRaw = await readFile('site.md');
@@ -3292,6 +3292,12 @@ function viewSite(part = 'site') {
     };
     const about = h('textarea', { class: 'textarea' });
     about.value = splitFM(siteRaw).body.trim();
+    // The small print at the foot of the About page: the usual words, your own, or none.
+    const USUAL_NOTE = 'No trackers, no ads, no cookies. Your sound and wallpaper choices stay in your own browser.';
+    const noteRaw = raw('about_note');
+    const note = h('textarea', { class: 'textarea short about-note-in', maxlength: 300, placeholder: 'Empty: no small print at all' });
+    note.value = /^(off|none|no|false)$/i.test(noteRaw) ? '' : noteRaw || USUAL_NOTE;
+    const noteUsual = h('button', { type: 'button', class: 'btn small', onclick: () => (note.value = USUAL_NOTE) }, 'Use the usual words');
 
     // ----- status -----
     const statusIn = h('input', { class: 'input', value: st.status, maxlength: 140, placeholder: 'What are you up to? (book) and :) work here' });
@@ -3408,6 +3414,8 @@ function viewSite(part = 'site') {
           countdown_date: cdLabel.value.trim() && cdDate.value ? cdDate.value : '',
           countdown_icon: cdLabel.value.trim() && cdDate.value ? cdIcon.value : '',
           tagline: inputs.tagline.value.trim(),
+          // (Empty: none at all; the usual words: nothing saved, so they stay the usual ones.)
+          about_note: !note.value.trim() ? 'off' : note.value.trim().replace(/\s+/g, ' ') === USUAL_NOTE ? '' : note.value.trim().replace(/\s+/g, ' '),
           // (Kept as they are: switched in the Comments tab.)
           comments: data.site?.comments === false ? 'off' : '',
           reactions: data.site?.reactions === false ? 'off' : '',
@@ -3495,7 +3503,7 @@ function viewSite(part = 'site') {
         h('div', { class: 'row end' }, h('button', { type: 'button', class: 'btn go', onclick: async (e) => { try { await putFile('status-log.md', logBox.value.trim() + '\n'); logRaw = logBox.value.trim(); toast('Past statuses saved.'); await refresh(); } catch (err) { toast(err.message, true); } } }, 'Save past statuses'))
       ),
       pictureChooser(),
-      h('fieldset', { class: 'group' }, h('legend', null, 'About the site'), field('Site name', inputs.name, 'Shown on the welcome screen, every title bar, the tab and the home-screen app.'), field('Your name', inputs.owner), field('Tagline', inputs.tagline, 'Shown on the welcome screen.'), field('About you', about, 'Markdown works here too.'), h('div', { class: 'row end' }, saveSite)),
+      h('fieldset', { class: 'group' }, h('legend', null, 'About the site'), field('Site name', inputs.name, 'Shown on the welcome screen, every title bar, the tab and the home-screen app.'), field('Your name', inputs.owner), field('Tagline', inputs.tagline, 'Shown on the welcome screen.'), field('About you', about, 'Markdown works here too.'), field('Small print', h('div', null, note, h('div', { class: 'row' }, noteUsual)), 'The line at the foot of your About page. Leave it empty for none at all.'), h('div', { class: 'row end' }, saveSite)),
       categoryManager(),
       topRoomControls(),
       h('fieldset', { class: 'group' }, h('legend', null, 'Wishlist'), h('p', { class: 'hint' }, 'One place per line: "- [ ] Name, City (food) — note". Change [ ] to [x] once you have been.'), wish, h('div', { class: 'row end' }, saveWish))

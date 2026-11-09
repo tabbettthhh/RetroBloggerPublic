@@ -616,6 +616,14 @@ export function parseWishlist(text) {
 
 const PRESENCE = ['online', 'away', 'brb', 'lunch', 'busy', 'offline'];
 
+// The small print at the foot of the About page (yours to change, or to switch off).
+export const ABOUT_NOTE = 'No trackers, no ads, no cookies. Your sound and wallpaper choices stay in your own browser.';
+function aboutNote(v) {
+  if (v == null || v === true) return ABOUT_NOTE;
+  const t = String(v).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+  return v === false || /^(off|none|no|false)$/i.test(t) ? '' : t.slice(0, 300) || ABOUT_NOTE;
+}
+
 export function parseSite(text) {
   const { data, body } = splitFrontMatter(text || '');
   const day = /^\d{4}-\d{2}-\d{2}$/.exec(String(data.countdown_date ?? '').trim());
@@ -642,6 +650,8 @@ export function parseSite(text) {
     mood: /^[a-z]{2,16}$/.test(String(data.mood ?? '').trim()) ? String(data.mood).trim() : '',
     // Visitors can leave a ♥, a ☆ or a smile on posts (only how many is kept), unless switched off.
     reactions: !(data.reactions === false || /^(false|no|off)$/i.test(String(data.reactions ?? ''))),
+    // The small print at the foot of the About page ('' when switched off).
+    about_note: aboutNote(data.about_note),
     // Who sees your posts, all of them at once: public (everyone), friends, or me (only you).
     privacy: privacyOf(data.privacy),
     // While you're away: a status (and how you show) that switches itself on and off on the
