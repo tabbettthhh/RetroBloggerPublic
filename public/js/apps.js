@@ -26,7 +26,7 @@ import { cabinetEntrance } from './cabinet.js';
 import { plannerApp } from './planner.js';
 import { commentLink, commentsBlock, commentsButton } from './comments.js';
 import { reactionRow } from './reactions.js';
-import { isPrivateNow, privateScene } from './private-scene.js';
+import { quietSite, privateScene } from './private-scene.js';
 import { seriesLine, seriesTag, startHerePost, startHereWrap, fortuneCookie, photoOfTheDay, withLine, webring } from './extras.js';
 import { activeSkin, resolveSkin, word, postFontAttrs } from './skins.js';
 
@@ -263,8 +263,8 @@ function feed(filter, withProfile) {
     const posts = [...list.filter((p) => p.pinned), ...mixed].filter((p) => p !== first);
     const wrap = h('div', { class: 'feed' }, withProfile ? profileTile(ctx.data) : null, first ? startHereWrap(first, card(first)) : null);
     if (!posts.length) {
-      // (Posts kept to friends or to the owner just now: a little something instead.)
-      wrap.append(isPrivateNow(ctx.data) ? privateScene(ctx.data) : h('p', { class: 'empty' }, 'Nothing here yet.'));
+      // (A site with nothing on it yet, for visitors: a little something instead.)
+      wrap.append(quietSite(ctx.data) ? privateScene(ctx.data) : h('p', { class: 'empty' }, 'Nothing here yet.'));
       return wrap;
     }
     let shown = 0;
@@ -355,7 +355,7 @@ function pinnedCard(post) {
 function single(ctx) {
   const [type, slug] = String(ctx.param || '').split('/');
   const post = ctx.data.posts.find((p) => p.type === type && p.slug === slug);
-  if (!post) return h('div', { class: 'feed' }, isPrivateNow(ctx.data) ? privateScene(ctx.data) : h('p', { class: 'empty' }, 'That post is not here any more.'), h('a', { class: 'xp-btn', href: '#/' }, '‹ Back home'));
+  if (!post) return h('div', { class: 'feed' }, h('p', { class: 'empty' }, 'That post is not here any more.'), h('a', { class: 'xp-btn', href: '#/' }, '‹ Back home'));
   return h('div', { class: 'feed' }, card(post, true), seriesLine(post), commentsBlock(post, ctx.data), h('a', { class: 'xp-btn', href: '#/' }, '‹ Back home'));
 }
 
@@ -370,7 +370,7 @@ const yearOf = (p) => String(p.date || '').slice(0, 4);
 
 function journal(ctx) {
   const all = places(ctx.data);
-  if (!all.length) return isPrivateNow(ctx.data) ? h('div', { class: 'feed' }, privateScene(ctx.data)) : h('div', { class: 'journal-empty' }, h('p', null, 'No places reviewed yet.'), h('p', { class: 'hand' }, 'The first one starts the journal.'));
+  if (!all.length) return h('div', { class: 'journal-empty' }, h('p', null, 'No places reviewed yet.'), h('p', { class: 'hand' }, 'The first one starts the journal.'));
   // One notebook per year: the shelf of them, a year's contents page, or one entry.
   if (ctx.param === 'shelf') return journalShelf(ctx, all);
   const ym = /^year\/(\d{4})$/.exec(ctx.param || '');

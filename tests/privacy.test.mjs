@@ -27,7 +27,7 @@ await test('a post just for you: on no one else’s screen, and nor are its phot
   await putFile('thoughts/pals.md', `---\ndate: ${at(4)}\ntitle: Pals\nfriends_only: true\n---\nFor friends.\n`);
   await putFile('thoughts/diary.md', `---\ndate: ${at(3)}\ntitle: Diary\nonly_me: true\nphotos: [a.jpg]\n---\nJust me.\n`);
   eq(await titles(), ['Open'], 'visitors: only the open one');
-  eq((await publicData()).site.privacy, 'public', 'the site is open');
+  eq((await publicData()).site.privacy, undefined, 'visitors are never told the setting');
   const mine = (await api('overview')).posts.find((p) => p.slug === 'diary');
   eq([mine.only_me, mine.friends_only], [true, false], 'yours to see');
   eq(await asVisitor('/media/thoughts/diary/a.jpg'), 404, 'its photo isn’t for visitors');
@@ -41,7 +41,7 @@ await test('the whole site to friends: every open post becomes friends only, the
   eq(levelOf(await getFile('thoughts/open.md')), 'friends', 'written into the post itself');
   eq(levelOf(await getFile('thoughts/diary.md')), 'me', 'only-you stays only you');
   eq(await titles(), [], 'visitors: no posts');
-  eq((await publicData()).site.privacy, 'friends', 'and the site says so');
+  eq((await publicData()).site.privacy, undefined, 'nor told that anything’s hidden');
   eq(await asVisitor('/media/thoughts/open/b.jpg'), 404, 'nor its photos');
   assert((await getFile('site.md')).includes('privacy: friends'), 'kept in site.md');
 });
@@ -117,6 +117,18 @@ await test('Control Panel › Privacy, and a visitor’s view of a private site'
     await p.locator('.pv-list li', { has: p.locator('.pv-title', { hasText: /^Open$/ }) }).locator('.pv-open').click();
     await p.waitForFunction((n) => document.querySelectorAll('.pv-list li').length === n - 1, n, { timeout: 20000 });
     eq(await titles(), ['Open'], 'that one’s open again');
+    // A few at once: tick them, then open up just those.
+    eq(await p.locator('.pv-open-picked').isDisabled(), true, 'nothing ticked yet');
+    await p.locator('.pv-all').check();
+    eq(await p.locator('.pv-pick:checked').count(), n - 1, '“All” ticks every one');
+    await p.locator('.pv-all').uncheck();
+    eq(await p.locator('.pv-pick:checked').count(), 0, 'and unticks them');
+    const pick = ['Pals', 'Stray'];
+    for (const t of pick) await p.locator('.pv-list li', { has: p.locator('.pv-title', { hasText: new RegExp(`^${t}$`) }) }).locator('.pv-row').click();
+    eq((await p.locator('.pv-open-picked').innerText()).trim(), 'Open up 2 ticked', 'says how many');
+    await p.locator('.pv-open-picked').click();
+    await p.waitForFunction((n) => document.querySelectorAll('.pv-list li').length === n - 3, n, { timeout: 20000 });
+    eq(await titles(), ['Open', 'Pals', 'Stray'], 'just the two ticked open up too');
     // A post's own ⋯ menu: who sees it.
     await p.keyboard.press('Escape');
     await p.waitForSelector('.okit-host', { state: 'detached' }).catch(() => {});
@@ -155,11 +167,18 @@ await test('Control Panel › Privacy, and a visitor’s view of a private site'
       await v.locator('.ps-wrap button', { hasText: /Another look|Try again|Restart|Something else/ }).first().click();
     }
     eq(seen.size, 4, 'four different scenes: ' + [...seen].join(' / '));
-    assert((await v.locator('.ps-wrap').innerText()).includes('a private person'), 'saying why');
+    // (Nothing says or hints that anything is hidden: to a visitor, it's just a quiet site.)
+    for (let i = 0; i < 4; i++) {
+      const words = await v.locator('.ps-wrap').innerText();
+      assert(!/privat|hidden|hiding|friends only|only me|secret/i.test(words), 'no hint of hiding: ' + words);
+      await v.locator('.ps-wrap button', { hasText: /Another look|Try again|Restart|Something else/ }).first().click();
+    }
+    assert(!/privat|hidden|hiding/i.test(await v.evaluate(() => document.body.innerText)), 'nor anywhere on the page');
     eq(await v.locator('.card[data-post]').count(), 0, 'no posts');
+    // A link to a post that's hidden: just as if it had been deleted.
     await v.goto(BASE + '/#/post/thoughts/open');
-    await v.waitForSelector('.ps-wrap');
-    assert((await v.locator('.ps-wrap').innerText()).length > 20, 'a link to a post: a scene too');
+    await v.waitForSelector('.feed .empty');
+    eq((await v.locator('.feed .empty').innerText()).trim(), 'That post is not here any more.', 'as if it had gone');
     assert(!v.errors.length, v.errors.join('; '));
   } finally {
     await b.close();

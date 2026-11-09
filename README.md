@@ -286,11 +286,11 @@ Every photo from every post also lands in the **Photo album** (`#/album`): an ol
 It's made to keep things private:
 
 - **More private changes every post, there and then.** Switch to Friends and every post that was for everyone becomes friends only, in the post itself (`friends_only: true`); switch to Only me and every post becomes only yours (`only_me: true`). It asks first, saying how many.
-- **More open changes none of them.** Switch back to Everyone and nothing opens up by itself: the page lists the posts that are still more private than the site, to **Open up** one by one, or all of them at once.
+- **More open changes none of them.** Switch back to Everyone and nothing opens up by itself: the page lists the posts that are still more private than the site, to **Open up** one by one, a few at once (tick them, or **All**, then **Open up … ticked**), or all of them at once.
 - **New posts start as private as the site**, and while the site is Friends or Only me, nothing can be more open than that. Posts sent [by email](#posting-by-email) are written that way too.
 - **Photos follow their post:** a post visitors can't see keeps its photos to you as well.
 
-Visitors still get your site while it's private (About, the guestbook, its look), with a little something from the old days where the posts would be, a different one each time they visit: a tumbleweed rolling through an empty town, an error box, an old computer's crash, or Floppy wondering if he's been neglected. Your friends see what's for friends, on their own sites; while the site is Only me, they see nothing either.
+Visitors still get your site while it's private (About, the guestbook, its look), and are **never told or shown that anything is hidden**: the setting isn't sent to them, a link to a hidden post says it's not there (just like a deleted one), and its photos aren't found. To them it's simply a quiet site. A site with no posts for visitors gets a little something from the old days where the posts would be, a different one each time they visit: a tumbleweed rolling through an empty town, an error box, an old computer's crash, or Floppy wondering if he's been neglected. Your friends see what's for friends, on their own sites; while the site is Only me, they see nothing either.
 
 ## Posting by email
 

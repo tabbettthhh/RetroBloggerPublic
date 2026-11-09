@@ -981,6 +981,9 @@ async function apiAll(request, env, ctx) {
     // an album never does.)
     const shown = new Set(pals.buddies.map((b) => b.url));
     data.posts = data.posts.map(({ body, files, key, album_with, ...p }) => ({ ...p, with: (p.with || []).filter((u) => shown.has(u)) }));
+    // (Whether posts are kept from visitors is never said: to them, a private site is just one
+    // with nothing posted yet.)
+    data.site = (({ privacy, ...rest }) => rest)(data.site);
     // (The webring: you and your friends, if you have it on.)
     data.webring = pals.ring?.length > 1 ? pals.ring : [];
     data.buddies = pals.buddies;
