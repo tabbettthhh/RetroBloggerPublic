@@ -180,6 +180,7 @@ function splitFM(text) {
 function status(p) {
   if (p.error) return ['error', 'Problem'];
   if (p.draft) return ['draft', 'Draft'];
+  if (p.only_me && !(p.ts > data.now)) return ['me', 'Only me'];
   if (p.friends_only && !(p.ts > data.now)) return ['friends', 'Friends only'];
   if (p.ts > data.now) return ['later', 'Scheduled'];
   return ['', 'Live'];
@@ -301,7 +302,7 @@ const stampNow = () => {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 };
 // The fields site.md can hold, kept as they are when only the status changes.
-const SITE_KEYS = ['name', 'owner', 'picture', 'status', 'presence', 'status_updated', 'mood', 'now_playing', 'countdown', 'countdown_date', 'countdown_icon', 'away_status', 'away_presence', 'away_from', 'away_to', 'tagline', 'comments', 'reactions', 'top_room'];
+const SITE_KEYS = ['name', 'owner', 'picture', 'status', 'presence', 'status_updated', 'mood', 'now_playing', 'countdown', 'countdown_date', 'countdown_icon', 'away_status', 'away_presence', 'away_from', 'away_to', 'tagline', 'comments', 'reactions', 'top_room', 'privacy'];
 // Changes one setting in site.md, keeping everything else as it is.
 async function setSiteField(key, value) {
   const siteRaw = await readFile('site.md');
@@ -1002,7 +1003,7 @@ function draftBanner(inEditor = false) {
 }
 
 function newEditor(type) {
-  return { key: null, type, date: nowLocal(), title: '', body: '', draft: false, pinned: false, photos: [], removed: [], area: '', city: '', country: '', country_code: '', lat: null, lon: null, category: '', rating: null, would_return: false, weather: '', source: '', stamp: '', creator: '', year: '', episode: '', format: 'album', album: '', season: '', network: '', episodes: [], pages: '', page: '', reading_log: [], status: SHELF[type] ? SHELF[type].states[0][0] : '', recommend: false, rewatch: false, quote: '', suggested_by: '', font: '', card: '', ribbon: '', ribbon_style: 'banner', ribbon_colour: '', series: '', start_here: false, with: [], album_with: [], album: [], floppy: [], floppy_journal: [], ordered: [], bought: [], tickets: [], rides: [], keep: {}, memory: '', extra: {}, raw: null };
+  return { key: null, type, date: nowLocal(), title: '', body: '', draft: false, pinned: false, photos: [], removed: [], area: '', city: '', country: '', country_code: '', lat: null, lon: null, category: '', rating: null, would_return: false, weather: '', source: '', stamp: '', creator: '', year: '', episode: '', format: 'album', album: '', season: '', network: '', episodes: [], pages: '', page: '', reading_log: [], status: SHELF[type] ? SHELF[type].states[0][0] : '', recommend: false, rewatch: false, quote: '', suggested_by: '', font: '', card: '', ribbon: '', ribbon_style: 'banner', ribbon_colour: '', series: '', start_here: false, friends_only: false, only_me: false, with: [], album_with: [], album: [], floppy: [], floppy_journal: [], ordered: [], bought: [], tickets: [], rides: [], keep: {}, memory: '', extra: {}, raw: null };
 }
 
 async function edit(p) {
@@ -1034,6 +1035,7 @@ async function edit(p) {
     draft: p.draft,
     pinned: !!p.pinned,
     friends_only: !!p.friends_only,
+    only_me: !!p.only_me,
     profile: !!p.profile,
     font: p.font || '',
     card: p.card || '',
@@ -1187,7 +1189,9 @@ function buildText(s) {
   if (s.type === 'places') fm.floppy_journal = one(clean(s.floppy_journal));
   fm.draft = s.draft;
   fm.pinned = s.pinned;
-  fm.friends_only = s.friends_only || null;
+  // Who sees it: friends only, or only you (neither: everyone).
+  fm.only_me = s.only_me || null;
+  fm.friends_only = (!s.only_me && s.friends_only) || null;
   fm.font = s.font || null;
   // How its card is dressed, and a ribbon of its own (only what's been chosen is written).
   fm.card = s.card || null;
@@ -2179,6 +2183,54 @@ function starPicker(s, rerender) {
 
 // "Suggested by" field. For a place, a matching wishlist entry that a reader suggested
 // offers to fill it in.
+// ---------- who sees a post ----------
+const LEVELS = [
+  ['everyone', '🌍', 'Everyone', 'On your site for visitors, and your friends see it too'],
+  ['friends', '👥', 'Friends', 'Not on your site for visitors: only your friends see it, signed in on theirs'],
+  ['me', '🔒', 'Only me', 'Nobody else: not visitors, not friends']
+];
+const PRIVACY_WORDS = ['everyone', 'friends', 'only me'];
+// The whole site's privacy (Control Panel › Privacy): 0 everyone, 1 friends, 2 only you.
+const siteLevelNow = () => Math.max(0, ['public', 'friends', 'me'].indexOf(data.site?.privacy));
+const levelOf = (p) => (p.only_me ? 2 : p.friends_only ? 1 : 0);
+function whoSees(s, site) {
+  const box = h('div', { class: 'who-sees', role: 'radiogroup', 'aria-label': 'Who sees it' });
+  const draw = () =>
+    box.replaceChildren(
+      ...LEVELS.map(([k, icon, name, hint], i) => {
+        const on = levelOf(s) === i;
+        const locked = i < site;
+        const b = h('button', { type: 'button', role: 'radio', class: 'who-opt' + (on ? ' on' : ''), 'aria-checked': String(on), disabled: locked, 'data-level': k, title: locked ? `Your whole site is set to ${PRIVACY_WORDS[site]} (Control Panel › Privacy)` : hint }, h('span', { class: 'who-ico', 'aria-hidden': 'true' }, icon), h('b', null, name));
+        b.addEventListener('click', () => {
+          s.level = i;
+          s.friends_only = i === 1;
+          s.only_me = i === 2;
+          draw();
+        });
+        return b;
+      })
+    );
+  draw();
+  const hint = site ? `Your whole site is set to ${PRIVACY_WORDS[site]} just now, so nothing is more open than that (Control Panel › Privacy).` : 'Friends only: not on your site for visitors. Only me: seen by nobody else.';
+  return h('div', { class: 'field who-field' }, h('span', { class: 'label' }, 'Who sees it'), box, h('span', { class: 'hint' }, hint));
+}
+// One post's privacy, changed straight from the post (only its header's two lines change).
+async function setLevel(p, level) {
+  try {
+    const raw = await getFile(p.key);
+    const { head, body } = splitFM(raw);
+    const lines = head.split(/\r?\n/).filter((l) => !/^(only_me|friends_only)\s*:/.test(l));
+    if (level === 2) lines.push('only_me: true');
+    if (level === 1) lines.push('friends_only: true');
+    await putFile(p.key, `---\n${lines.filter((l, i) => l || i < lines.length - 1).join('\n')}\n---\n${body}`);
+    toast(['For everyone now.', 'Friends only now: off the site for visitors.', 'Only you can see it now.'][level]);
+    await refresh();
+    draw();
+  } catch (e) {
+    toast(e.message, true);
+  }
+}
+
 // Friends for a post (who it's with, or who may add photos to its album): your friends as chips
 // to tap on and off. Nothing at all shows until you have friends.
 function friendsPicker(s, field, label, hint) {
@@ -2441,9 +2493,14 @@ function viewEditor() {
   date.addEventListener('change', () => (s.date = date.value));
   const draft = h('input', { type: 'checkbox', checked: s.draft });
   draft.addEventListener('change', () => (s.draft = draft.checked));
-  // Friends only: not on the site at all; your friends see it in their back office.
-  const only = h('input', { type: 'checkbox', checked: !!s.friends_only });
-  only.addEventListener('change', () => (s.friends_only = only.checked));
+  // Who sees it: everyone, friends only, or only you. (A new post starts as private as the
+  // whole site is; nothing can be more open than the site.)
+  const site = siteLevelNow();
+  if (!s.key && s.level === undefined) {
+    s.friends_only = site === 1;
+    s.only_me = site === 2;
+  }
+  const only = whoSees(s, site);
   const pin = h('input', { type: 'checkbox', checked: s.pinned });
   pin.addEventListener('change', () => (s.pinned = pin.checked));
   // The profile grid on the About page: posts with photos you pick, newest first.
@@ -2467,7 +2524,7 @@ function viewEditor() {
     fold(
       'options',
       'Options',
-      [s.draft ? 'a draft' : later ? 'scheduled' : 'goes live now', s.friends_only ? 'friends only' : '', s.pinned ? 'pinned' : '', s.start_here ? 'start here' : '', s.profile ? 'on the grid' : '', hlWanted(s) ? 'in the highlights' : '', s.series?.trim() ? `part of ${s.series.trim()}` : ''].filter(Boolean).join(' · '),
+      [s.draft ? 'a draft' : later ? 'scheduled' : 'goes live now', s.only_me ? 'only you' : s.friends_only ? 'friends only' : '', s.pinned ? 'pinned' : '', s.start_here ? 'start here' : '', s.profile ? 'on the grid' : '', hlWanted(s) ? 'in the highlights' : '', s.series?.trim() ? `part of ${s.series.trim()}` : ''].filter(Boolean).join(' · '),
       [
         field('Date and time', date, SHELF[s.type] ? 'When you finished it, started it or added it. A time in the future publishes it later.' : 'Pick a time in the future to publish it later.'),
         seriesPicker(s),
@@ -2475,7 +2532,7 @@ function viewEditor() {
         s.type === 'photos' ? friendsPicker(s, 'album_with', '📷 A shared album (optional)', 'These friends can add their own photos to it, from their sites. Their photos go after yours, with their names.') : null,
         s.type === 'photos' && s.album?.length ? albumList(s) : null,
         h('label', { class: 'row check' }, draft, 'Keep as a draft (only you can see it)'),
-        h('label', { class: 'row check' }, only, '👥 Friends only (not on your site for visitors: only your friends see it, signed in on theirs)'),
+        only,
         h('label', { class: 'row check' }, pin, '📌 Pin it to the top of the feed and its section'),
         (() => {
           const start = h('input', { type: 'checkbox', checked: !!s.start_here });
@@ -4383,6 +4440,39 @@ export const kit = {
     unsubscribe: (endpoint) => api('push/unsubscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint }) }),
     settings: (body) => api('push/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
     test: () => api('push/test', { method: 'POST' })
+  },
+  // Who sees a post (0 everyone, 1 friends, 2 only you), and the whole site's privacy.
+  setLevel,
+  siteLevel: siteLevelNow,
+  privacy: {
+    // The whole site: more private changes every post (a share at a time, until none are left).
+    async set(level, onStep) {
+      let out;
+      let total = 0;
+      for (let i = 0; i < 50; i++) {
+        out = await api('privacy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level }) });
+        total += out.changed;
+        onStep?.(total, out.left);
+        if (!out.left) break;
+      }
+      await refresh();
+      draw();
+      return { ...out, changed: total };
+    },
+    // Posts opened up again (all of them, or just these), never more open than the site.
+    async reopen(keys, to, onStep) {
+      let out;
+      let total = 0;
+      for (let i = 0; i < 50; i++) {
+        out = await api('privacy/reopen', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keys, to }) });
+        total += out.changed;
+        onStep?.(total, out.left);
+        if (!out.left) break;
+      }
+      await refresh();
+      draw();
+      return { ...out, changed: total };
+    }
   },
   // Posting by email: its settings, and what happened to the last few emails.
   email: {

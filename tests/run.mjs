@@ -33,6 +33,8 @@ const GROUPS = {
   push: ['push'],
   // Reactions, series, Start here and the other little extras.
   extras: ['extras', 'email'],
+  // Privacy, all at once: everyone, friends or only you.
+  privacy: ['privacy'],
   // Reading with no connection (this one stops the local site part-way, to be offline).
   offline: ['offline'],
   // The back office lock with the developer bypass off: once with the lock's settings, once without.

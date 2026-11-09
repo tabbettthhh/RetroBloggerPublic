@@ -37,7 +37,7 @@ If Cloudflare asks you to turn on **R2** (where your posts and photos are kept),
 
 **Signing in as the owner.** The welcome screen has your own account tile under **Visitor**, with your name (set in **Site & wishlist**) and a padlock. Tap it and Cloudflare Access asks who you are. Once you're signed in, you come straight back to your site, and its owner tools are on it:
 - **The taskbar:** **+** next to Explore for a new post, and your own tile in the tray with your menu. On a phone they sit in the taskbar or the dock, or float at the bottom on screens that have neither.
-- **Your posts:** each one has a **⋯** menu (edit, pin, add to highlights, friends only, the profile grid, delete). Your drafts, scheduled and friends-only posts show too, marked so you can tell.
+- **Your posts:** each one has a **⋯** menu (edit, pin, add to highlights, who sees it, the profile grid, delete). Your drafts, scheduled, friends-only and only-you posts show too, marked so you can tell.
 - **Writing in place:** **+** puts a new, blank post at the top of your feed. You write it where it'll be read, in the post's own type, with the kind of post at the top, the photos under the words, and everything else (keepsakes, how it looks, options) in a tray underneath. Publish is always in reach. **Edit** turns a post into its editor right where it is: a card in the feed, a journal page in the journal, a review on its shelf. While you write, the page never redraws under your hands.
 - **Things waiting, where they happen:** a comment waits under its post (and the post says "💬 1 waiting" in your feed), ready to approve or delete; once it's on the site you can reply as yourself or take it down. Signatures wait at the top of the guestbook, and suggestions wait next to the form they came from, on their shelf or your trips wishlist, with **Add** to put them there. Your tile shows a red badge while anything is waiting.
 - **Changing things where they are:** tap **✎** by your status to change it and how you are (online, busy…). In the Planner you tick things off right on the page, take them off with ×, and add to a list underneath; an empty planner offers to start one. In the trips wishlist you add a place, tick it when you've been, or take it off. In the highlights cabinet's closer look you can write its line on why, move it earlier or later on the shelf, or take it out.
@@ -273,10 +273,24 @@ Every photo from every post also lands in the **Photo album** (`#/album`): an ol
 - **Every wallpaper through the day:** every theme's wallpaper (and your own picture or emoji) takes the time of day too, like a phone's dynamic wallpaper: a warm morning, the day as it is, a golden evening, and night with stars and a moon. Dark mode always has the night. To keep one look all day, choose **Stays the same all day** in Themes › Wallpaper.
 - **Quick on old phones:** feeds show twenty posts and add more as you scroll; the map, the picture viewer and the screensaver load the first time they're needed; phones with 2 GB of memory or less skip the paper blotches, the visa shimmer and the fade between sections.
 - **Drafts:** add `draft: true`, or tick "Keep as a draft".
-- **Friends only:** tick **👥 Friends only** in the editor (or add `friends_only: true`) and the post isn't on your site at all, nor its photos: it goes only to your friends (see [Friends](#friends)), who see it signed in on their own site, marked, and never show it to their visitors. On your own site you see it, marked, while you're signed in.
+- **Only me:** choose **🔒 Only me** under **Who sees it** in the editor (or add `only_me: true`) and the post stays published but seen by nobody else: not visitors, not friends, nor its photos. You see it, marked, while you're signed in. See [Privacy](#privacy-everyone-friends-or-only-you) to do this for every post at once.
+- **Friends only:** choose **👥 Friends** under **Who sees it** in the editor (or add `friends_only: true`) and the post isn't on your site at all, nor its photos: it goes only to your friends (see [Friends](#friends)), who see it signed in on their own site, marked, and never show it to their visitors. On your own site you see it, marked, while you're signed in.
 - **Nothing you write gets lost:** what you're typing is also kept in your browser as you go, so if the tab closes, the phone restarts or a save fails (no signal, or your sign-in ran out), **Carry on writing** brings it back next time (new photos need adding again). Opening another post asks first if the one you're on isn't saved.
 - **Header mistakes:** the part between the `---` lines has to be read by the site. If something there can't be read (most often a colon inside a value, like `title: Rome: day one`; put such text in "double quotes"), the editor won't save it and says which line is wrong, so a post can never vanish from the site by accident. A file with a mistake that got into the bucket some other way opens as text with the problem shown.
 - **Time zone:** post times are read as UK time, summer time included. Change `TIMEZONE` in `wrangler.jsonc` if you live elsewhere.
+
+## Privacy: everyone, friends or only you
+
+**Control Panel › Privacy** sets who sees your posts, all of them at once: **🌍 Everyone**, **👥 Friends** or **🔒 Only me** (saved as `privacy:` in `site.md`). Each post also has its own **Who sees it** (in the editor, or a post's **⋯** menu), and what counts is always the more private of the two.
+
+It's made to keep things private:
+
+- **More private changes every post, there and then.** Switch to Friends and every post that was for everyone becomes friends only, in the post itself (`friends_only: true`); switch to Only me and every post becomes only yours (`only_me: true`). It asks first, saying how many.
+- **More open changes none of them.** Switch back to Everyone and nothing opens up by itself: the page lists the posts that are still more private than the site, to **Open up** one by one, or all of them at once.
+- **New posts start as private as the site**, and while the site is Friends or Only me, nothing can be more open than that. Posts sent [by email](#posting-by-email) are written that way too.
+- **Photos follow their post:** a post visitors can't see keeps its photos to you as well.
+
+Visitors still get your site while it's private (About, the guestbook, its look), with a little something from the old days where the posts would be, a different one each time they visit: a tumbleweed rolling through an empty town, an error box, an old computer's crash, or Floppy wondering if he's been neglected. Your friends see what's for friends, on their own sites; while the site is Only me, they see nothing either.
 
 ## Posting by email
 
