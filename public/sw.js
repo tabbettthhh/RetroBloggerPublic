@@ -137,7 +137,8 @@ async function posts(req) {
   }
   try {
     const res = await fetch(req);
-    if (res.ok && res.status === 200) keepPosts(res.clone()).catch(() => {});
+    // (What a friend sees on a visit is never kept: only what any visitor sees.)
+    if (res.ok && res.status === 200 && !res.headers.get('X-Friend-Visit')) keepPosts(res.clone()).catch(() => {});
     return res;
   } catch (err) {
     if (!copy) throw err;

@@ -13,6 +13,7 @@ import { syncRoom } from './cabinet.js';
 import { ownerArrival, openOwnerDoor, ownerHooks } from './owner-door.js';
 import { reactionsSetting } from './reactions.js';
 import { knowFriends } from './extras.js';
+import { refreshSite } from './refresh.js';
 
 const root = document.getElementById('app');
 const desktopQuery = window.matchMedia('(min-width: 900px) and (pointer: fine)');
@@ -23,7 +24,8 @@ async function load() {
   // connection that drops for a moment, on a train say, gets two more tries before giving up.)
   for (let tries = 0; ; tries++) {
     try {
-      const res = await fetch('/api/all', tries ? { cache: 'no-cache' } : {});
+      // (Visiting as a friend: always fresh, never the copy kept for opening quickly.)
+      const res = await fetch('/api/all', tries || visiting() ? { cache: 'no-cache' } : {});
       if (!res.ok) throw new Error('Could not load');
       const data = await res.json();
       offline(res.headers.get('X-Offline'));
@@ -64,6 +66,8 @@ function keepFresh(data, redraw) {
       // (Signed in: your drafts, plans and the rest stay in what's showing.)
       ownerHooks.fresh?.(data);
       registerDesigns(data);
+      // (A friend's visit that has just ended, or begun.)
+      if (!previewing) visitingBar(data);
       // (Not while the owner is trying on a theme.)
       if (!previewing && !ownerHooks.trying?.()) setSoundPack(applySkin(data.theme).sounds);
       // (Not while the owner is writing in a post: it's drawn again once they're done.)
@@ -175,9 +179,64 @@ document.addEventListener(
 );
 document.addEventListener('load', (e) => e.target instanceof HTMLImageElement && e.target.classList.remove('img-gone'), true);
 
+// ---------- visiting as a friend ----------
+// A friend arriving with a pass from their own site (see friends.acceptPass on the server): straight
+// in, no welcome screen. While the visit lasts, a small bar says so, with a way to end it.
+const VISITING = 'friend-visit';
+function visiting() {
+  try {
+    return localStorage.getItem(VISITING) === '1';
+  } catch {
+    return false;
+  }
+}
+function friendArrival() {
+  const url = new URL(location.href);
+  const v = url.searchParams.get('friendvisit');
+  if (v === null) return;
+  try {
+    if (v === '1') {
+      localStorage.setItem(VISITING, '1');
+      sessionStorage.setItem('entered', '1');
+    }
+  } catch {}
+  url.searchParams.delete('friendvisit');
+  history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+}
+function visitingBar(data) {
+  document.querySelector('.visit-bar')?.remove();
+  const v = data.friendVisit;
+  try {
+    if (!v) localStorage.removeItem(VISITING);
+    else localStorage.setItem(VISITING, '1');
+  } catch {}
+  if (!v) return;
+  const host = (data.site.owner || data.site.name || '').split(/\s+/)[0];
+  const stop = h('button', { type: 'button', class: 'visit-stop' }, 'Stop');
+  stop.addEventListener('click', async () => {
+    stop.disabled = true;
+    await fetch('/api/visiting/leave', { method: 'POST' }).catch(() => {});
+    try {
+      localStorage.removeItem(VISITING);
+    } catch {}
+    // (Everything kept from the visit goes, and the site comes back as any visitor sees it.)
+    refreshSite();
+  });
+  document.body.append(
+    h(
+      'div',
+      { class: 'visit-bar', role: 'status' },
+      h('span', { class: 'visit-ico', 'aria-hidden': 'true' }, '👥'),
+      h('span', null, v.as ? `Hi ${v.as.split(/\s+/)[0]}: ` : '', 'you’re visiting as ', host ? `${host}’s friend` : 'a friend', '.'),
+      stop
+    )
+  );
+}
+
 async function main() {
   // Back from signing in as the owner: straight in, no welcome screen.
   ownerArrival();
+  friendArrival();
   liteMode();
   startTheme();
   startSky();
@@ -207,6 +266,7 @@ async function main() {
   const { startDesktop } = isDesktop ? layout : {};
   const { renderPhone } = isDesktop ? {} : layout;
   registerDesigns(data);
+  if (!previewing) visitingBar(data);
   if (!previewing) {
     setSoundPack(applySkin(data.theme).sounds);
     try {

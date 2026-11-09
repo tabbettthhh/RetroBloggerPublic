@@ -96,7 +96,8 @@ function postCard(p) {
       p.title ? h('h3', { class: 'ff-title' }, p.title) : null,
       meta || p.rating != null ? h('div', { class: 'ff-meta' }, meta, p.rating != null ? h('span', { class: 'ff-stars', 'aria-label': `Rated ${p.rating} out of 5` }, (meta ? ' · ' : '') + '★'.repeat(Math.max(0, Math.min(5, Math.round(p.rating))))) : null) : null,
       text,
-      link ? h('a', { class: 'ff-open', href: link, target: '_blank', rel: 'noopener noreferrer' }, `See it on ${who.owner || who.name}’s site ↗`) : null
+      // (Not for a friends-only post: on their site it's only for friends visiting with a pass.)
+      link && !p.friends_only ? h('a', { class: 'ff-open', href: link, target: '_blank', rel: 'noopener noreferrer' }, `See it on ${who.owner || who.name}’s site ↗`) : null
     )
   );
   // Long posts fold to a few lines, with "more" to read the rest.
@@ -139,7 +140,7 @@ function friendCard(p) {
     )
   );
   const link = safeUrl(p.url);
-  if (link) el.append(h('a', { class: 'ff-open', href: link, target: '_blank', rel: 'noopener noreferrer' }, `See it on ${who.owner || who.name}’s site ↗`));
+  if (link && !p.friends_only) el.append(h('a', { class: 'ff-open', href: link, target: '_blank', rel: 'noopener noreferrer' }, `See it on ${who.owner || who.name}’s site ↗`));
   return markFriendPost(foldLong(el, p.full), p);
 }
 

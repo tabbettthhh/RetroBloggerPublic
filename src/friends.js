@@ -217,6 +217,13 @@ export async function friendsApi(request, env, path, deps) {
     return reply({ ...friendFeed(data, store.me || new URL(request.url).origin, friend), share: store.letShare });
   }
 
+  // A friend about to visit your site in their browser: a one-time pass for it (see acceptPass).
+  if (path === '/api/friends/pass' && method === 'POST') {
+    const ticket = randomSecret();
+    await env.CONTENT.put(`${PASSES}${ticket}.json`, JSON.stringify({ k: friend.key, exp: Date.now() + PASS_TTL }), { httpMetadata: { contentType: 'application/json' } });
+    return reply({ ticket, ttl: PASS_TTL });
+  }
+
   // They've moved: check they really are at the new address (their site there must answer,
   // signed with the secret you share), then follow them there, still recognising the old one.
   if (path === '/api/friends/moved' && method === 'POST') {
@@ -825,6 +832,81 @@ export async function addToAlbum(env, key, body) {
   if (!res.ok) throw new Error(out.error === 'Not found' ? 'Their site needs updating before it can take photos from friends.' : out.error || 'Their site didn’t take that photo.');
   if (body.last) await refreshFriends(env, key).catch(() => {});
   return { ok: true };
+}
+
+// ---------- visiting a friend's site, as a friend ----------
+// Friendship is between the two sites, so a friend opening your site in their browser arrives
+// like any visitor. To see what's for friends there, they tap "Visit as a friend" on their own
+// site: it asks yours (signed) for a one-time pass, and their browser opens your site with it.
+// Your site swaps the pass for a cookie (in that browser, for this site only, signed, for a day),
+// and while it's good they see what your friends see. Visitors without one see the site as ever,
+// with no hint of anything more. Unfriending them ends it at once.
+const PASSES = 'data/_passes/';
+const PASS_TTL = 90 * 1000;
+const VISIT = 24 * 60 * 60 * 1000;
+const COOKIE = 'corner_friend';
+async function visitKey(env) {
+  const key = 'data/_friendvisits.json';
+  try {
+    const s = JSON.parse((await env.CONTENT.get(key).then((o) => o?.text())) || 'null');
+    if (s?.secret) return s.secret;
+  } catch {}
+  const secret = randomSecret();
+  await env.CONTENT.put(key, JSON.stringify({ secret }), { httpMetadata: { contentType: 'application/json' } });
+  return secret;
+}
+const cookieOf = (request) => /(?:^|;\s*)corner_friend=([\w.-]{20,400})/.exec(request.headers.get('Cookie') || '')?.[1] || '';
+// Arriving with a pass (?friend_pass=…): good once, for a minute and a half. Answers with the
+// page again, without the pass in its address, and the cookie set; or null (no pass, or no good).
+export async function acceptPass(request, env, url) {
+  const ticket = url.searchParams.get('friend_pass') || '';
+  const back = new URL(url);
+  back.searchParams.delete('friend_pass');
+  const away = (cookie) => new Response(null, { status: 303, headers: { Location: back.pathname + (back.search ? back.search + '&' : '?') + 'friendvisit=' + (cookie ? '1' : '0'), 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', ...(cookie ? { 'Set-Cookie': cookie } : {}) } });
+  if (!/^[\w-]{30,60}$/.test(ticket)) return away('');
+  const at = `${PASSES}${ticket}.json`;
+  let pass = null;
+  try {
+    pass = JSON.parse((await env.CONTENT.get(at).then((o) => o?.text())) || 'null');
+  } catch {}
+  await env.CONTENT.delete(at).catch(() => {});
+  const store = await loadFriends(env);
+  if (!pass || pass.exp < Date.now() || !store.friends.some((f) => f.key === pass.k)) return away('');
+  const body = b64url(enc.encode(JSON.stringify({ k: pass.k, exp: Date.now() + VISIT })));
+  const sig = b64url(await crypto.subtle.sign('HMAC', await hmacKey(await visitKey(env)), enc.encode(body)));
+  return away(`${COOKIE}=${body}.${sig}; Path=/; Max-Age=${VISIT / 1000}; HttpOnly; Secure; SameSite=Lax`);
+}
+// The friend visiting, from their cookie (only while it's good, and they're still a friend).
+export async function friendVisitor(request, env) {
+  const [body, sig] = cookieOf(request).split('.');
+  if (!body || !sig) return null;
+  try {
+    if (!(await crypto.subtle.verify('HMAC', await hmacKey(await visitKey(env)), fromB64url(sig), enc.encode(body)))) return null;
+    const v = JSON.parse(new TextDecoder().decode(fromB64url(body)));
+    if (!(v.exp > Date.now())) return null;
+    const store = await loadFriends(env);
+    const f = store.friends.find((x) => x.key === v.k);
+    return f ? { key: f.key, url: f.url, name: f.name, owner: f.owner, until: v.exp } : null;
+  } catch {
+    return null;
+  }
+}
+// Leaving: the cookie goes.
+export const leaveVisit = () => `${COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
+// You, about to visit a friend's site: a pass from it, and where to go with it.
+export async function visitPass(env, key) {
+  const store = await loadFriends(env);
+  const friend = store.friends.find((f) => f.key === key);
+  if (!friend) throw new Error('That friend isn’t on your list any more.');
+  let res;
+  try {
+    res = await signedFetch(env, store, friend, 'POST', '/api/friends/pass', {});
+  } catch {
+    throw new Error('Couldn’t reach their site just now. Try again in a moment.');
+  }
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok || !out.ticket) throw new Error(res.status === 404 || out.error === 'Not found' ? 'Their site needs its next update before you can visit as a friend (it updates itself overnight).' : out.error || 'Their site didn’t give a pass.');
+  return { url: `${friend.url}/?friend_pass=${encodeURIComponent(out.ticket)}` };
 }
 
 // ---------- notes between friends ("You've got mail!") ----------

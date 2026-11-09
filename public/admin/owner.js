@@ -1145,7 +1145,32 @@ function decorateFriendPosts() {
     // A ♥, a ☆, a smile or any emoji, as on your own posts: it goes to their site.
     const reacts = reactionRow(p, null, 'ff-react', { key: `react:friend:${key}|${id}`, send: (ask) => kit.reactToFriend(key, id, ask) });
     if (reacts) el.append(reacts);
+    // Their own site, as their friend: everything that's for friends, not just what visitors see.
+    // (In place of the plain link, which only shows what any visitor sees.)
+    el.querySelector(':scope > .ff-open, .ff-open')?.remove();
+    const visit = btn(`👥 Visit ${f?.owner ? f.owner.split(/\s+/)[0] + '’s site' : 'their site'} as a friend ↗`, 'okit-visit', () => visitFriend(key, p.url));
+    el.append(h('div', { class: 'okit-visit-row' }, visit));
     el.append(h('div', { class: 'okit-talk-wrap' }, h('div', { class: 'okit-row' }, toggle, note, add), panel));
+  }
+}
+// Off to a friend's site as their friend: a pass from it (asked for by your site, signed), then
+// their site in a new tab, at the post. (The tab is opened straight away, so it isn't blocked.)
+async function visitFriend(key, where = '') {
+  const tab = window.open('', '_blank');
+  try {
+    if (tab) tab.opener = null;
+  } catch {}
+  try {
+    const { url } = await kit.visitFriend(key);
+    let hash = '';
+    try {
+      hash = new URL(where).hash;
+    } catch {}
+    if (tab) tab.location.href = url + hash;
+    else location.href = url + hash;
+  } catch (e) {
+    tab?.close();
+    toast(e.message, true);
   }
 }
 // "📷 Add photos" on a friend's shared album: pick a few, and each goes to their site in turn.
