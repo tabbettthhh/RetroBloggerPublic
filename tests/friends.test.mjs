@@ -2,6 +2,7 @@
 // friend code, follow each other's posts, send each other notes, and refuse anyone else.
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import http from 'node:http';
 import { test, report, assert, eq, launch, close, adminPage, editPost, unfold, clickSave, api, putFile, getFile, publicData, overview, PHOTOS, BASE, chromium, openTab } from './lib.mjs';
 
 const BASE2 = process.env.TEST_BASE2 || 'http://localhost:8801';
@@ -694,6 +695,63 @@ await test('a post just for them never reaches a friend’s site', async () => {
   assert(theirs.some((x) => x.id === 'photos/beach'), 'their other posts arrive');
   assert(!theirs.some((x) => x.id === 'thoughts/hush'), 'not the one only for them');
   await fetch(`${BASE2}/admin/api/file?key=thoughts/hush.md`, { method: 'DELETE' });
+});
+
+await test('visiting a friend’s site as their friend: what’s for friends, with a pass; visitors see none of it', async () => {
+  const at = new Date(Date.now() - 20 * 60e3).toISOString().slice(0, 16).replace('T', ' ');
+  await fetch(`${BASE2}/admin/api/upload?key=thoughts/pals-only/p.jpg`, { method: 'PUT', body: fs.readFileSync(PHOTOS[3]) });
+  await fetch(`${BASE2}/admin/api/file?key=thoughts/pals-only.md`, { method: 'PUT', body: `---\ndate: ${at}\ntitle: Pals only\nfriends_only: true\nphotos: [p.jpg]\n---\nJust for friends.\n` });
+  await post_(api, 'friends/refresh');
+  // (A visitor to their site, not signed in, by another name than "localhost".)
+  const asVisitor = (path) => new Promise((res, rej) => http.get({ host: 'localhost', port: new URL(BASE2).port, path, headers: { Host: 'visitor.test', 'User-Agent': 'Mozilla/5.0 (Macintosh) Safari/605' } }, (r) => (r.resume(), res(r.statusCode))).on('error', rej));
+  eq(await asVisitor('/media/thoughts/pals-only/p.jpg'), 404, 'its photo isn’t for visitors');
+  assert(!(await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json()).posts.some((x) => x.slug === 'pals-only'), 'nor the post');
+  const browser = await chromium.launch();
+  try {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1' });
+    const p = await ctx.newPage();
+    p.errors = [];
+    p.on('pageerror', (e) => p.errors.push(e.message));
+    await p.addInitScript(() => sessionStorage.setItem('entered', '1'));
+    await p.goto(BASE + '/?owner=1#/');
+    const card = p.locator('.ff-in-home[data-friend-post$="|thoughts/pals-only"]');
+    await card.locator('.okit-visit').waitFor();
+    eq(await card.locator('.ff-open').count(), 0, 'no plain link to it (it isn’t there for visitors)');
+    const [tab] = await Promise.all([ctx.waitForEvent('page'), card.locator('.okit-visit').click()]);
+    tab.errors = [];
+    tab.on('pageerror', (e) => tab.errors.push(e.message));
+    await tab.waitForSelector('.visit-bar', { timeout: 20000 });
+    assert(tab.url().startsWith(BASE2) && !tab.url().includes('friend_pass') && !tab.url().includes('friendvisit'), 'their site, the pass gone from the address: ' + tab.url());
+    assert(/visiting as Lina’s friend/.test(await tab.locator('.visit-bar').innerText()), 'it says so');
+    await tab.waitForSelector('[data-post="thoughts/pals-only"]', { timeout: 15000 });
+    eq(await tab.evaluate(async () => (await fetch('/media/thoughts/pals-only/p.jpg')).status), 200, 'its photo too');
+    const cookie = (await ctx.cookies(BASE2)).find((c) => c.name === 'corner_friend');
+    assert(cookie?.httpOnly && cookie.sameSite === 'Lax', 'kept safely, for this site');
+    eq(await tab.evaluate(() => fetch('/api/all', { cache: 'no-cache' }).then((r) => r.headers.get('Cache-Control'))), 'private, no-store', 'never kept anywhere shared');
+    // A ♥ on it, as their friend.
+    await tab.locator('[data-post="thoughts/pals-only"] .react-btn[data-k="heart"]').first().click();
+    await until(async () => (await (await fetch(`${BASE2}/admin/api/overview`)).json()).posts.find((x) => x.slug === 'pals-only')?.reactions?.heart === 1, 'your ♥ on a post for friends');
+    // A pass is good once: the same address again, in another browser, is just a visitor.
+    const used = tab.url().replace(/[?#].*$/, '') + '?friend_pass=' + 'x'.repeat(43);
+    const other = await browser.newContext();
+    const o = await other.newPage();
+    await o.addInitScript(() => sessionStorage.setItem('entered', '1'));
+    await o.goto(used);
+    await o.waitForSelector('.feed');
+    eq(await o.locator('.visit-bar').count(), 0, 'a made-up pass: no visit');
+    eq(await o.locator('[data-post="thoughts/pals-only"]').count(), 0, 'nothing for friends');
+    await other.close();
+    // Stop: the cookie goes, and their site is as any visitor sees it.
+    await tab.locator('.visit-stop').click();
+    await tab.waitForFunction(() => !document.querySelector('.visit-bar') && document.querySelector('.feed'), null, { timeout: 20000 });
+    await tab.waitForTimeout(500);
+    eq(await tab.locator('[data-post="thoughts/pals-only"]').count(), 0, 'gone once you stop');
+    eq((await ctx.cookies(BASE2)).filter((c) => c.name === 'corner_friend').length, 0, 'and the cookie with it');
+    assert(!p.errors.length && !tab.errors.length, [...p.errors, ...tab.errors].join('; '));
+  } finally {
+    await browser.close();
+  }
+  await fetch(`${BASE2}/admin/api/file?key=thoughts/pals-only.md`, { method: 'DELETE' });
 });
 
 await test('your site keeps its address, and friends follow when it moves', async () => {

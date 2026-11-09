@@ -4375,6 +4375,8 @@ export const kit = {
   post: (key) => data?.posts.find((x) => x.key === key) || null,
   togglePin: (p) => togglePin(p),
   toggleFlag: (p, flag, msg) => toggleFlag(p, flag, msg),
+  // A pass for visiting a friend's site as their friend (and where to go with it).
+  visitFriend: (friend) => api('friends/visit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friend }) }),
   // A reaction on a friend's post (or taken back): their site's new counts come back.
   reactToFriend: (friend, post, ask) => api('friends/react', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friend, post, ...ask }) }),
   // A photo of yours for a friend's shared album: made small (and plain: nothing hidden in it),

@@ -293,6 +293,19 @@ function friendWindow(ctx, f, act, redraw) {
       'div',
       { class: 'pal-to' },
       h('div', null, h('span', { class: `pres-dot ${dot}` }), h('b', null, feed?.owner || f.owner || f.name), h('small', null, ` (${word})`), ' ', h('a', { href: f.url, target: '_blank', rel: 'noopener noreferrer' }, f.url.replace(/^https?:\/\//, '') + ' ↗')),
+      // (Their site as their friend: what's for friends too. See visitPass on the server.)
+      h('div', { class: 'pal-visit' }, h('button', { type: 'button', class: 'btn small', onclick: async () => {
+        const tab = window.open('', '_blank');
+        try {
+          if (tab) tab.opener = null;
+          const { url } = await ctx.api('friends/visit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friend: f.key }) });
+          if (tab) tab.location.href = url;
+          else location.href = url;
+        } catch (e) {
+          tab?.close();
+          ctx.toast(e.message, true);
+        }
+      } }, '👥 Visit as a friend ↗')),
       feed?.status ? h('div', { class: 'pal-theirstatus' }, withEmoticons(feed.status, 15), feed.status_updated ? h('small', null, ` · ${ago(feed.status_updated)}`) : null) : null,
       f.cache && f.cache.ok === false ? h('div', { class: 'hint warn' }, `Couldn’t reach their site ${ago(f.cache.tried)}. Showing what it said ${ago(f.cache.at) || 'before'}.`) : null,
       !f.cache ? h('div', { class: 'hint' }, 'Not checked yet: tap Check now.') : null
