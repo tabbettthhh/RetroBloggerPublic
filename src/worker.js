@@ -188,7 +188,9 @@ async function route(request, env, ctx) {
     // (Signed in, you see the photos of every post of theirs you have, friends-only ones too.)
     // (Only a browser's own request is checked: a sign-in only ever arrives with one.)
     const mine = (request.headers.has('Cookie') || request.headers.get('Sec-Fetch-Site') === 'same-origin') && (await adminCheck(request, env)).ok;
-    return friends.friendPhotoForVisitor(env, parts[0], parts.slice(1).join('/'), mine);
+    // (A friend visiting sees the photos of what you show your friends.)
+    const who = mine ? 'me' : (await visitingFriend(request, env)) ? 'friends' : 'everyone';
+    return friends.friendPhotoForVisitor(env, parts[0], parts.slice(1).join('/'), who);
   }
   // Friends' sites talking to yours (every request signed with the secret you share).
   if (p.startsWith('/api/friends/')) return friends.friendsApi(request, env, p, { buildEverything, mediaForFriend: (key) => friendMedia(env, key), friendComment: (who, info) => friendComment(env, who, info, ctx, url.origin), albumPhoto: (who, info) => albumPhoto(env, who, info), react: (info) => giveReaction(env, info, { forFriends: true }), changed: () => bumpVersion(env), news: () => friends.shareNews(env, buildEverything), waitUntil: (work) => ctx.waitUntil(work) });
@@ -959,11 +961,12 @@ function travelFor(stats, includeHidden) {
 
 // What goes to a browser, from what the site has: the finished HTML (the raw Markdown and file
 // names stay for the back office), your friends as visitors may see them, and so on.
-async function dressForVisitors(env, data) {
+// `viewer`: "everyone", or "friends" for a friend visiting with a pass.
+async function dressForVisitors(env, data, viewer = 'everyone') {
   // Visitors get the finished HTML; the raw Markdown and file names stay for the back office.
-  // Your friends: who they are and how they are, and their latest posts (only if you've chosen
-  // to show them to everyone: otherwise they're just for you, signed in).
-  const pals = await friends.publicFriends(env).catch(() => ({ buddies: [], posts: [] }));
+  // Your friends: who they are and how they are (your friends list), and their latest posts,
+  // each as far as you've chosen to show them to this viewer (otherwise just for you, signed in).
+  const pals = await friends.publicFriends(env, { viewer }).catch(() => ({ buddies: [], posts: [], days: [] }));
   // (Who a post is with shows only while visitors can see who your friends are; who may add to
   // an album never does.)
   const shown = new Set(pals.buddies.map((b) => b.url));
@@ -972,12 +975,14 @@ async function dressForVisitors(env, data) {
   // with nothing posted yet.)
   data.site = (({ privacy, ...rest }) => rest)(data.site);
   data.buddies = pals.buddies;
+  data.friendDays = pals.days || [];
   data.friendPosts = pals.posts;
   data.friendLooks = pals.looks || {};
   // (Their keepsake designs and place categories, for drawing their posts as on their site.)
   data.friendKeepsakes = pals.keepsakes || [];
   data.friendCategories = pals.categories || [];
-  // (No Friends tab when you don't show friends' posts; the friends list, if shown, is on About.)
+  // (No Friends tab when you don't show this viewer friends' posts; the friends list, if shown to
+  // them, is on About.)
   data.friendsTab = !!pals.postsShown;
   // (Whether visitors can ask to hear when you post.)
   data.notifyPosts = (await push.settings(env).catch(() => ({}))).visitors === true;
@@ -993,7 +998,7 @@ async function apiAll(request, env, ctx) {
   if ((request.headers.get('Cookie') || '').includes('corner_friend=')) {
     const pal = await friends.friendVisitor(request, env);
     if (pal) {
-      const data = await dressForVisitors(env, await buildEverything(env, { forFriends: true }));
+      const data = await dressForVisitors(env, await buildEverything(env, { forFriends: true }), 'friends');
       data.friendVisit = { as: pal.owner || pal.name, site: pal.url, until: pal.until };
       return json(data, 200, { 'Cache-Control': 'private, no-store', 'X-Friend-Visit': '1', Vary: 'Cookie' });
     }

@@ -45,8 +45,8 @@ function lineDress() {
   } catch {}
   return { charm: (i) => drawingUrl(look.charms[i % look.charms.length], t, 26), garland };
 }
-function photoLine(buddies) {
-  const today = buddies.filter((b) => b.photo_day?.src);
+function photoLine(days) {
+  const today = days.filter((b) => b.photo_day?.src);
   if (!today.length) return null;
   const dress = lineDress();
   const pin = (b, i) => {
@@ -232,7 +232,7 @@ export function friendsApp(ctx) {
     const pick = buddies.find((b) => b.url === only);
     const parts = [
       // (First of all: today's photos, on the line.)
-      only ? null : photoLine(buddies),
+      only ? null : photoLine(ctx.data.friendDays || []),
       buddies.length ? buddyList(buddies, redraw) : null,
       pick
         ? h(
@@ -246,8 +246,9 @@ export function friendsApp(ctx) {
         : null,
       posts.length
         ? posts.map((p) => (p.full ? friendCard(p) : postCard(p)))
-        : ctx.data.friendsTab === false
-          ? h('div', { class: 'card ff-empty' }, h('p', null, `${ctx.data.site.owner || 'This site'} keeps friends’ posts private.`))
+        : // (Never why: to a visitor, there's just nothing from friends yet.)
+          ctx.data.friendsTab === false || (!buddies.length && !ctx.data.ownerView)
+          ? h('div', { class: 'card ff-empty' }, h('p', null, 'No posts from friends yet.'))
           : h('div', { class: 'card ff-empty' }, h('p', null, buddies.length ? 'No posts from friends yet.' : `${ctx.data.site.owner || 'This site'} hasn’t added any friends yet.`), h('p', { class: 'muted small' }, 'Friends are people who run their own copy of this site.'))
     ];
     wrap.replaceChildren(...parts.flat().filter(Boolean));
