@@ -589,7 +589,7 @@ await test('a post in full from a friend\'s site is made safe before anyone sees
   assert(!text.includes('javascript:'), 'nothing that runs');
 });
 
-await test('tagging a friend, a shared album they add photos to, and the webring', async () => {
+await test('tagging a friend, and a shared album they add photos to', async () => {
   const at = (d) => new Date(Date.now() - d * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
   await fetch(`${BASE2}/admin/api/upload?key=photos/beach/own.jpg`, { method: 'PUT', body: fs.readFileSync(PHOTOS[2]) });
   await fetch(`${BASE2}/admin/api/file?key=photos/beach.md`, { method: 'PUT', body: `---\ndate: ${at(1)}\ntitle: Beach day\nphotos: [own.jpg]\nwith: ["${BASE}"]\nalbum_with: ["${BASE}/"]\n---\nSand everywhere.\n` });
@@ -643,12 +643,11 @@ await test('tagging a friend, a shared album they add photos to, and the webring
   await post_(api2, 'albums/remove', { post: 'photos/beach', file: album[0].file });
   eq((await theirs()).photos.length, 1, 'taken out');
   eq((await fetch(BASE2 + b.photos[1])).status, 404, 'and deleted');
-  // Who it's with shows to their visitors only while they can see who their friends are; the
-  // webring too.
-  await post_(api2, 'friends/settings', { visibility: 'list', webring: true });
+  // Who it's with shows to their visitors only while they can see who their friends are.
+  await post_(api2, 'friends/settings', { visibility: 'list' });
   let pub = await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json();
   eq(pub.posts.find((x) => x.slug === 'beach').with, [BASE], 'with you, on their site');
-  eq(pub.webring, [BASE2, BASE, FAKE].sort(), 'the ring: them and their friends');
+  eq(pub.webring, undefined, 'no friends ring any more');
   const v = await chromium.launch();
   const vp = await v.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   vp.errors = [];
@@ -660,20 +659,15 @@ await test('tagging a friend, a shared album they add photos to, and the webring
     eq((await vp.locator('.with-line').innerText()).trim(), '👥 with Sam', 'on the post, linking to your site');
     eq(await vp.locator('.with-line a').getAttribute('href'), BASE, 'your site');
     await vp.evaluate(() => (location.hash = '#/about'));
-    await vp.waitForSelector('.webring');
-    const ring = [BASE2, BASE, FAKE].sort();
-    const i = ring.indexOf(BASE2);
-    eq(await vp.locator('.webring a', { hasText: 'Next' }).getAttribute('href'), ring[(i + 1) % 3], 'next in the ring');
-    eq(await vp.locator('.webring a', { hasText: 'Previous' }).getAttribute('href'), ring[(i + 2) % 3], 'the one before');
+    await vp.waitForSelector('.about-note');
+    eq(await vp.locator('.webring').count(), 0, 'no ring on About');
     assert(!vp.errors.length, vp.errors.join('; '));
   } finally {
     await v.close();
   }
-  await post_(api2, 'friends/settings', { webring: false });
-  eq((await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json()).webring, [], 'the ring, switched off');
-  await post_(api2, 'friends/settings', { visibility: 'off', webring: true });
+  await post_(api2, 'friends/settings', { visibility: 'off' });
   pub = await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).json();
-  eq([pub.posts.find((x) => x.slug === 'beach').with, pub.webring], [[], []], 'friends private: no names, no ring');
+  eq(pub.posts.find((x) => x.slug === 'beach').with, [], 'friends private: no names');
   // Tagging from the editor: your friends as chips.
   await putFile('thoughts/walk.md', `---\ndate: ${at(2)}\ntitle: A walk\n---\nOut and about.\n`);
   const page = await adminPage();

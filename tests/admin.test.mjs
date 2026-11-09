@@ -512,6 +512,54 @@ await test('re-opening the post you are editing keeps your changes', async () =>
   await page.close();
 });
 
+await test('the small print on the About page: the usual words, your own, or none', async () => {
+  const USUAL = 'No trackers, no ads, no cookies. Your sound and wallpaper choices stay in your own browser.';
+  await putFile('site.md', '---\nname: Test Site\nowner: Tester\nstatus: kept\n---\nAbout me.\n');
+  eq((await publicData()).site.about_note, USUAL, 'the usual words to start with');
+  const page = await adminPage();
+  await openTab(page, 'Site');
+  const note = page.locator('.about-note-in');
+  eq(await note.inputValue(), USUAL, 'shown, ready to change');
+  const save = page.locator('fieldset', { has: page.locator('legend', { hasText: 'About the site' }) }).locator('.row.end button');
+  const savedAs = async (want) => {
+    for (let i = 0; i < 50; i++) {
+      const s = await getFile('site.md');
+      if (want(s)) return s;
+      await page.waitForTimeout(200);
+    }
+    return getFile('site.md');
+  };
+  await note.fill('Made with tea, in Birmingham.');
+  await save.click();
+  let site = await savedAs((s) => s.includes('about_note: Made with tea'));
+  assert(site.includes('status: kept') && site.includes('About me.'), 'the rest kept:\n' + site);
+  eq((await publicData()).site.about_note, 'Made with tea, in Birmingham.', 'your own words');
+  // On the About page.
+  const b = await chromium.launch();
+  const v = await b.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  await v.addInitScript(() => sessionStorage.setItem('entered', '1'));
+  await v.goto(BASE + '/#/about');
+  await v.waitForSelector('.about-note');
+  eq((await v.locator('.about-note').innerText()).trim(), 'Made with tea, in Birmingham.', 'on the About page');
+  // None at all.
+  await note.fill('');
+  await save.click();
+  await savedAs((s) => /about_note: off/.test(s));
+  eq((await publicData()).site.about_note, '', 'switched off');
+  await v.reload();
+  await v.waitForSelector('.muted', { timeout: 10000 }).catch(() => {});
+  await v.waitForTimeout(800);
+  eq(await v.locator('.about-note').count(), 0, 'gone from the About page');
+  await b.close();
+  // Back to the usual words: nothing saved, so they stay the usual ones.
+  await page.locator('button', { hasText: 'Use the usual words' }).click();
+  await save.click();
+  site = await savedAs((s) => !/about_note/.test(s));
+  eq((await publicData()).site.about_note, USUAL, 'the usual words again');
+  assert(!page.errors.length, page.errors.join('; '));
+  await page.close();
+});
+
 await test('extra room at the top on a phone’s Home Screen: chosen in Site, kept, and only on the Home Screen', async () => {
   const content = await import('../src/content.js');
   eq([content.parseSite('---\ntop_room: more\n---\n').top_room, content.parseSite('---\ntop_room: huge\n---\n').top_room], ['more', ''], 'checked by the server');

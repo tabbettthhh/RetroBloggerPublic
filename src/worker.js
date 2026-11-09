@@ -971,8 +971,6 @@ async function dressForVisitors(env, data) {
   // (Whether posts are kept from visitors is never said: to them, a private site is just one
   // with nothing posted yet.)
   data.site = (({ privacy, ...rest }) => rest)(data.site);
-  // (The webring: you and your friends, if you have it on.)
-  data.webring = pals.ring?.length > 1 ? pals.ring : [];
   data.buddies = pals.buddies;
   data.friendPosts = pals.posts;
   data.friendLooks = pals.looks || {};

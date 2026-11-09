@@ -114,12 +114,6 @@ function privacyBox(ctx, d, act) {
       { class: 'row check fr-home' },
       h('input', { type: 'checkbox', checked: d.inHome !== false, onchange: (e) => post({ inHome: e.target.checked }, e.target.checked ? 'Their posts are in your Home now (only you see them there).' : 'Their posts are only on Friends now.') }),
       h('span', null, h('b', null, 'Mix their posts into my Home. '), h('small', null, 'Only you see them there, while you’re signed in: each as it looks on their site, with who it’s from on top.'))
-    ),
-    h(
-      'label',
-      { class: 'row check fr-ring' },
-      h('input', { type: 'checkbox', checked: d.webring !== false, onchange: (e) => post({ webring: e.target.checked }, e.target.checked ? 'The friends ring is on your About page.' : 'The friends ring is off.') }),
-      h('span', null, h('b', null, 'A webring on my About page. '), h('small', null, '‹ Previous · 🎲 Random · Next › around you and your friends’ sites, like the old web. Only while visitors can see who your friends are (not when they’re private).'))
     )
   );
 }

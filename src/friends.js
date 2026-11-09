@@ -117,9 +117,6 @@ export async function loadFriends(env) {
     // themselves, signed in on their own site).
     letShare: s.letShare !== false,
     friends: Array.isArray(s.friends) ? s.friends : [],
-    // A webring on your About page (‹ previous · random · next ›, around you and your friends):
-    // only while visitors can see who your friends are.
-    webring: s.webring !== false,
     // Your friend code's secret (none while it's switched off).
     code: s.code && typeof s.code.secret === 'string' ? s.code : null,
     codeOff: !!s.codeOff,
@@ -664,7 +661,7 @@ export async function friendsOverview(env, here = '') {
   );
   // Friends who still know you by an old address (they couldn't be told you moved).
   const behind = store.friends.filter((f) => f.as && f.as !== store.me).map((f) => f.name);
-  return { me: store.me, here, behind, visibility: store.visibility, letShare: store.letShare, inHome: store.inHome, webring: store.webring, friends, code: codeText(store), codeOff: store.codeOff };
+  return { me: store.me, here, behind, visibility: store.visibility, letShare: store.letShare, inHome: store.inHome, friends, code: codeText(store), codeOff: store.codeOff };
 }
 
 const codeText = (store) => (store.code && store.me ? 'MYCORNER-' + b64url(enc.encode(JSON.stringify({ u: store.me, s: store.code.secret }))) : null);
@@ -1028,11 +1025,10 @@ export async function setFriendSettings(env, body) {
   else if (typeof body.showOnSite === 'boolean') store.visibility = body.showOnSite ? 'all' : 'off';
   if (typeof body.letShare === 'boolean') store.letShare = body.letShare;
   if (typeof body.inHome === 'boolean') store.inHome = body.inHome;
-  if (typeof body.webring === 'boolean') store.webring = body.webring;
   delete store.showOnSite;
   await saveFriends(env, store);
   // (Friends' sites hear about a change to letShare at once: see shareNews.)
-  return { visibility: store.visibility, letShare: store.letShare, inHome: store.inHome, webring: store.webring };
+  return { visibility: store.visibility, letShare: store.letShare, inHome: store.inHome };
 }
 // A friend's posts can go on your site only if you show posts and they've said yes.
 const postsShown = (store, feed) => store.visibility === 'all' && feed?.share !== false;
@@ -1058,10 +1054,7 @@ export async function friendPhoto(env, key, photoKey) {
 // comments on each post (and whether you can add one).
 export async function publicFriends(env, { mine = false } = {}) {
   const store = await loadFriends(env);
-  if ((store.visibility === 'off' && !mine) || !store.friends.length) return { buddies: [], posts: [], looks: {}, ring: [], postsShown: store.visibility === 'all', inHome: store.inHome, ...(mine ? { me: store.me } : {}) };
-  // The webring: you and your friends, in order of address (the same order on every site in it
-  // that's yours and your friends').
-  const ring = store.webring && store.visibility !== 'off' ? [...new Set([store.me, ...store.friends.map((f) => f.url)].filter(Boolean))].sort() : [];
+  if ((store.visibility === 'off' && !mine) || !store.friends.length) return { buddies: [], posts: [], looks: {}, postsShown: store.visibility === 'all', inHome: store.inHome, ...(mine ? { me: store.me } : {}) };
   const meToo = [store.me, ...store.friends.map((f) => f.as)].filter(Boolean);
   const caches = await Promise.all(store.friends.map((f) => readCache(env, f.key)));
   const buddies = [];
@@ -1097,7 +1090,7 @@ export async function publicFriends(env, { mine = false } = {}) {
     }
   });
   posts.sort((a, b) => b.ts - a.ts);
-  return { buddies, posts: posts.slice(0, 60), keepsakes, categories, looks, ring, postsShown: store.visibility === 'all', inHome: store.inHome, ...(mine ? { me: store.me } : {}) };
+  return { buddies, posts: posts.slice(0, 60), keepsakes, categories, looks, postsShown: store.visibility === 'all', inHome: store.inHome, ...(mine ? { me: store.me } : {}) };
 }
 
 async function readCache(env, key) {

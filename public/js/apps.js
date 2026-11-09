@@ -27,7 +27,7 @@ import { plannerApp } from './planner.js';
 import { commentLink, commentsBlock, commentsButton } from './comments.js';
 import { reactionRow } from './reactions.js';
 import { quietSite, privateScene } from './private-scene.js';
-import { seriesLine, seriesTag, startHerePost, startHereWrap, fortuneCookie, photoOfTheDay, withLine, webring } from './extras.js';
+import { seriesLine, seriesTag, startHerePost, startHereWrap, fortuneCookie, photoOfTheDay, withLine } from './extras.js';
 import { activeSkin, resolveSkin, word, postFontAttrs } from './skins.js';
 
 const session = storage('session');
@@ -1899,8 +1899,8 @@ function about(ctx) {
     cabinetEntrance(ctx.data),
     profileGrid(ctx.data),
     buddiesCard(ctx.data),
-    webring(ctx.data),
-    h('p', { class: 'muted small' }, 'No trackers, no ads, no cookies. Your sound and wallpaper choices stay in your own browser.')
+    // (The small print: the owner's own words, or none at all. See Control Panel › Site.)
+    ctx.data.site.about_note === '' ? null : h('p', { class: 'muted small about-note' }, ctx.data.site.about_note ?? 'No trackers, no ads, no cookies. Your sound and wallpaper choices stay in your own browser.')
   );
 }
 

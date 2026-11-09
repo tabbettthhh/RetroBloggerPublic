@@ -114,14 +114,6 @@
 .with-line.on-paper { margin: 6px 0; color: #3a2a1a; font-family: var(--hand, inherit); font-size: 15px; opacity: 1; }
 .with-line.on-shelf { margin: 8px 0 0; }
 
-/* The webring on the About page: an old-web ‹ Previous · Random · Next › bar. */
-.webring { display: grid; justify-items: center; gap: 6px; padding: 10px 12px; text-align: center; }
-.ring-title { font-weight: bold; font-size: 13px; letter-spacing: .04em; }
-.ring-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-.ring-go { display: inline-block; min-width: 72px; padding: 4px 10px; border: 2px outset #d8d4c8; border-radius: 3px; background: #ece9d8; color: #1a1a1a; font: bold 12px/1.4 Tahoma, Verdana, sans-serif; text-decoration: none; }
-.ring-go:active { border-style: inset; }
-.ring-go:focus-visible { outline: 2px dotted currentColor; outline-offset: 2px; }
-.ring-count { opacity: .7; font-size: 11px; }
 
 /* While the owner's posts are private: a little something from the old days instead (see
    private-scene.js). */
