@@ -1,12 +1,16 @@
 /* ---------- comments (see comments.js) ---------- */
+/* Their words: the theme's colour pulled towards the card's own text, so a pale theme colour can't
+   leave the heading or Reply faint (in light or dark mode: the text is dark or light to suit),
+   and small print is the text a little softer, never a fixed grey. */
+.comments { --cm-link: color-mix(in srgb, var(--sk-bar, #0054e3) 40%, var(--card-text, #222)); --cm-quiet: color-mix(in srgb, var(--card-text, #222) 88%, var(--card-paper, #fff)); }
 .comments { margin: 4px 0 12px; padding: 12px 12px 14px; border: 1px solid var(--sk-line, #c7c3ae); border-radius: 6px; background: var(--card-paper, #fff); color: var(--card-text, #222); }
-.cm-title { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font: bold 15px/1.2 var(--font-xp-title, inherit); color: var(--sk-bar, #0054e3); }
+.cm-title { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font: bold 15px/1.2 var(--font-xp-title, inherit); color: var(--cm-link); }
 .cm-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .cm-list.replies { margin: 8px 0 0 18px; padding-left: 10px; border-left: 3px solid var(--sk-soft, #cfe6cf); }
 .cm-item { padding: 8px 10px; border-radius: 8px; background: color-mix(in srgb, var(--sk-soft, #cfe6cf) 30%, transparent); }
 .cm-list.replies .cm-item { background: transparent; padding: 4px 0 0 4px; }
 .cm-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
-.cm-head small { color: #777; font-size: 11px; }
+.cm-head small { color: var(--cm-quiet); font-size: 11px; }
 .cm-avatar { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font: bold 12px/1 var(--font-xp-title, inherit); color: #fff; background: var(--sk-accent, #3a9a3a); flex: none; }
 .cm-avatar.owner { background: var(--sk-main, #0054e3); }
 .cm-text { margin: 6px 0 2px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; }
@@ -17,8 +21,8 @@
 .cm-badge.friend { background: #e8692c; }
 .cm-site { color: inherit; text-decoration: none; }
 .cm-site:hover b, .cm-site:focus-visible b { text-decoration: underline; }
-.cm-reply-btn { margin-top: 4px; padding: 0; border: 0; background: none; color: var(--sk-bar, #0054e3); font: inherit; font-size: 12px; cursor: pointer; text-decoration: underline; }
-.cm-empty { margin: 0 0 6px; color: #777; font-style: italic; }
+.cm-reply-btn { margin-top: 4px; padding: 0; border: 0; background: none; color: var(--cm-link); font-weight: 600; font: inherit; font-size: 12px; cursor: pointer; text-decoration: underline; }
+.cm-empty { margin: 0 0 6px; color: var(--cm-quiet); font-style: italic; }
 .cm-leave { margin: 14px 0 6px; font-size: 13px; }
 .cm-form { display: grid; gap: 8px; }
 .cm-form.reply { margin-top: 8px; padding: 8px; border: 1px dashed var(--sk-line, #c7c3ae); border-radius: 6px; }
@@ -27,14 +31,14 @@
 textarea.cm-input { resize: vertical; min-height: 64px; }
 .cm-trap { position: absolute !important; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 .cm-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
-.cm-hint { color: #777; font-size: 11px; flex: 1 1 200px; }
+.cm-hint { color: var(--cm-quiet); font-size: 11px; flex: 1 1 200px; }
 .cm-note { margin: 0; color: #b0302a; font-size: 12px; }
 .cm-note:empty { display: none; }
 .cm-thanks { margin: 6px 0 0; padding: 8px 10px; border-radius: 6px; background: color-mix(in srgb, var(--sk-accent, #3a9a3a) 15%, transparent); font-weight: bold; }
 [data-theme="dark"] .cm-input { background: #1b1b1b; color: #eee; border-color: #555; }
-[data-theme="dark"] :is(.cm-head small, .cm-hint, .cm-empty) { color: #aaa; }
 [data-theme="dark"] .cm-title { color: #8fb4ff; }
-[data-theme="dark"] .cm-reply-btn { color: #8fb4ff; }
+[data-theme="dark"] .cm-reply-btn { color: #b3cdff; }
+[data-theme="dark"] .cm-item { background: color-mix(in srgb, var(--sk-soft, #cfe6cf) 14%, transparent); }
 
 /* On a card in the feed: how many comments. */
 .card > .card-comments { display: inline-flex; align-items: center; gap: 5px; margin: 0 10px 8px; padding: 2px 9px; border-radius: 10px; font-size: 12px; text-decoration: none; color: var(--sk-bar, #0054e3); background: color-mix(in srgb, var(--sk-soft, #cfe6cf) 45%, transparent); }

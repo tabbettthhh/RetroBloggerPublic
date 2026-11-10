@@ -780,8 +780,59 @@ await test('visiting a friend’s site as their friend: what’s for friends, wi
   await post_(api2, 'friends/settings', { listSeen: 'me', postsSeen: 'me' });
 });
 
+await test('the little notice on the desktop: the newest post, yours or a friend’s; a visitor never sees what’s kept back', async () => {
+  const at = (m) => new Date(Date.now() - m * 60e3).toISOString().slice(0, 16).replace('T', ' ');
+  await putFile('thoughts/bal-mine.md', `---\ndate: ${at(120)}\ntitle: My own post\n---\nHello.\n`);
+  await fetch(`${BASE2}/admin/api/file?key=thoughts/bal-theirs.md`, { method: 'PUT', body: `---\ndate: ${at(30)}\ntitle: Their public post\n---\nHi.\n` });
+  await fetch(`${BASE2}/admin/api/file?key=thoughts/bal-pals.md`, { method: 'PUT', body: `---\ndate: ${at(10)}\ntitle: Their friends-only post\nfriends_only: true\n---\nHi.\n` });
+  const was = await api('friends');
+  await post_(api, 'friends/settings', { listSeen: 'everyone', postsSeen: 'everyone' });
+  await post_(api, 'friends/refresh');
+  const browser = await chromium.launch();
+  const notice = async (owner) => {
+    const p = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    p.errors = [];
+    p.on('pageerror', (e) => p.errors.push(e.message));
+    await p.addInitScript(() => sessionStorage.setItem('entered', '1'));
+    try {
+      await p.goto(BASE + (owner ? '/?owner=1' : '/') + '#/');
+      await p.waitForSelector('.balloon:not([hidden])', { timeout: 15000 });
+      assert(!p.errors.length, p.errors.join('; '));
+      return { head: await p.locator('.balloon strong').innerText(), text: await p.locator('.balloon-text').innerText(), href: await p.locator('.balloon-text').getAttribute('href') };
+    } finally {
+      await p.close();
+    }
+  };
+  try {
+    // A visitor: their newest public post (not the friends-only one), as it's newer than yours.
+    let n = await notice(false);
+    assert(/from Lina/.test(n.head) && n.text.includes('Their public post') && !n.text.includes('friends-only'), 'a visitor: the friend’s public post: ' + JSON.stringify(n));
+    eq(n.href, '#/friends', 'which opens their posts');
+    // You, signed in: the newest of everything, a friends-only post too.
+    n = await notice(true);
+    assert(n.text.includes('Their friends-only post'), 'signed in: whatever is newest: ' + JSON.stringify(n));
+    // Their posts kept from visitors: the newest of yours that visitors may see.
+    await post_(api, 'friends/settings', { listSeen: 'everyone', postsSeen: 'me' });
+    n = await notice(false);
+    assert(!/from/.test(n.head) && !n.text.includes('Their') && n.href.startsWith('#/post/thoughts/'), 'a visitor, with friends’ posts kept back: one of yours: ' + JSON.stringify(n));
+    // A post of yours newer than theirs wins.
+    await post_(api, 'friends/settings', { listSeen: 'everyone', postsSeen: 'everyone' });
+    await putFile('thoughts/bal-mine.md', `---\ndate: ${at(5)}\ntitle: My own post\n---\nHello.\n`);
+    n = await notice(false);
+    eq([n.head, n.text.startsWith('My own post')], ['New thought', true], 'newer than theirs: yours');
+  } finally {
+    await browser.close();
+    await post_(api, 'friends/settings', { listSeen: was.listSeen, postsSeen: was.postsSeen });
+    await fetch(`${BASE}/admin/api/file?key=thoughts/bal-mine.md`, { method: 'DELETE' });
+    for (const k of ['bal-theirs', 'bal-pals']) await fetch(`${BASE2}/admin/api/file?key=thoughts/${k}.md`, { method: 'DELETE' });
+  }
+});
+
 await test('friends’ photos of the day: polaroids on a line at the top of Friends, the very ones their sites show', async () => {
   const at = (h) => new Date(Date.now() - h * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
+  // (Only public posts to pick from: which one is today's is by the date, so a friends-only post
+  // left over from an earlier test would make this one pass on some days and not on others.)
+  await fetch(`${BASE2}/admin/api/file?key=thoughts/just-us.md`, { method: 'DELETE' });
   for (const [n, f] of [[1, 0], [2, 1], [3, 2]]) await fetch(`${BASE2}/admin/api/upload?key=photos/day-${n}/a.jpg`, { method: 'PUT', body: fs.readFileSync(PHOTOS[f]) });
   for (const n of [1, 2, 3]) await fetch(`${BASE2}/admin/api/file?key=photos/day-${n}.md`, { method: 'PUT', body: `---\ndate: ${at(n + 2)}\ntitle: Day ${n}\nphotos: [a.jpg]\n---\n` });
   // Their site: today's photo, picked by the site itself.
@@ -793,7 +844,7 @@ await test('friends’ photos of the day: polaroids on a line at the top of Frie
   await post_(api, 'friends/refresh');
   const lina = (await api('overview')).friendsMine.days.find((b) => b.url === BASE2);
   eq(lina.photo_day.id, feed.photo_day.id, 'yours shows the same one');
-  eq((await fetch(BASE + lina.photo_day.src)).status, 200, 'and it loads, through your site');
+  eq((await fetch(BASE + lina.photo_day.src)).status, 200, 'and it loads, through your site: ' + JSON.stringify(lina.photo_day));
   // On your Friends tab, first of all: a polaroid pegged to the line.
   const theme = await getFile('theme.md').catch(() => '');
   const browser = await chromium.launch();
