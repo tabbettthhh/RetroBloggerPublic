@@ -333,18 +333,29 @@ export function startDesktop(root, data) {
   paintBar();
 
   // ---- balloon: the newest post ----
-  const newest = data.posts[0];
-  let balloon = null;
-  if (newest) {
-    const href = newest.type === 'places' ? `#/journal/${newest.slug}` : `#/post/${newest.type}/${newest.slug}`;
-    const kind = { thoughts: 'thought', places: 'place in the journal', photos: 'photo dump', lists: 'list', quotes: 'quote' }[newest.type] || 'post';
-    balloon = h(
-      'div',
-      { class: 'balloon', role: 'status', hidden: true },
-      h('div', { class: 'balloon-top' }, h('span', { class: 'balloon-i', 'aria-hidden': 'true' }, 'i'), h('strong', null, 'New ' + kind), h('button', { type: 'button', class: 'balloon-x', 'aria-label': 'Dismiss', onclick: () => (balloon.hidden = true) }, '×')),
-      h('a', { href, class: 'balloon-text', onclick: () => (balloon.hidden = true) }, (newest.title || newest.excerpt || 'Open it').slice(0, 80), ' · ', niceDate(newest.date))
-    );
-  }
+  // Yours, or a friend's if theirs is newer: only what this visitor may see (a friend's post is in
+  // their data only if you show them your friends' posts, and a friends-only one never is);
+  // signed in, whatever the latest of everything is. Chosen when it's shown, by which time the
+  // owner's own copy (with everything in it) has been read.
+  const KIND = { thoughts: 'thought', places: 'place in the journal', photos: 'photo dump', lists: 'list', quotes: 'quote' };
+  const newest = () => {
+    const mine = data.posts[0];
+    const theirs = (data.friendPosts || [])[0];
+    if (theirs && (!mine || (theirs.ts || 0) > (mine.ts || 0))) {
+      const name = theirs.friend?.owner || theirs.friend?.name || 'a friend';
+      return { href: '#/friends', head: `New ${KIND[theirs.type] || 'post'} from ${name}`, text: (theirs.title || theirs.excerpt || 'Open it').slice(0, 80), date: theirs.date };
+    }
+    if (!mine) return null;
+    return { href: mine.type === 'places' ? `#/journal/${mine.slug}` : `#/post/${mine.type}/${mine.slug}`, head: 'New ' + (KIND[mine.type] || 'post'), text: (mine.title || mine.excerpt || 'Open it').slice(0, 80), date: mine.date };
+  };
+  const balloonHead = h('strong');
+  const balloonLink = h('a', { class: 'balloon-text', onclick: () => (balloon.hidden = true) });
+  const balloon = h(
+    'div',
+    { class: 'balloon', role: 'status', hidden: true },
+    h('div', { class: 'balloon-top' }, h('span', { class: 'balloon-i', 'aria-hidden': 'true' }, 'i'), balloonHead, h('button', { type: 'button', class: 'balloon-x', 'aria-label': 'Dismiss', onclick: () => (balloon.hidden = true) }, '×')),
+    balloonLink
+  );
 
   desk.append(...[icons, layer, ctxMenu, startMenu, balloon, taskbar].filter(Boolean));
   root.replaceChildren(desk);
@@ -382,12 +393,16 @@ export function startDesktop(root, data) {
     },
     welcomeDone() {
       busy(900);
-      if (balloon)
-        setTimeout(() => {
-          balloon.hidden = false;
-          sound.chime();
-          setTimeout(() => (balloon.hidden = true), 9000);
-        }, 1200);
+      setTimeout(() => {
+        const n = newest();
+        if (!n) return;
+        balloonHead.textContent = n.head;
+        balloonLink.href = n.href;
+        balloonLink.replaceChildren(n.text, ' · ', niceDate(n.date));
+        balloon.hidden = false;
+        sound.chime();
+        setTimeout(() => (balloon.hidden = true), 9000);
+      }, 1200);
     },
     openDefault(hashStr) {
       open('#/');
