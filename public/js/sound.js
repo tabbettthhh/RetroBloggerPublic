@@ -105,6 +105,18 @@ export const sound = {
     tone(140, 0, 0.12, 'square', 0.05);
     tone(90, 0.02, 0.18, 'sine', 0.06);
   },
+  // A knock at the door: three raps on wood.
+  knock: () => {
+    for (const t of [0, 0.16, 0.32]) {
+      noise(0.07, 520, 0.9, t);
+      tone(150, t, 0.07, 'sine', 0.06);
+    }
+  },
+  // A door creaking open: a slow, wavering squeak.
+  creak: () => {
+    for (let i = 0; i < 9; i++) tone(300 + i * 34 + (i % 2 ? 26 : 0), i * 0.055, 0.07, 'sawtooth', 0.012);
+    noise(0.06, 700, 0.3, 0.52);
+  },
   // The highlights cabinet: a small key turning in its lock, and the doors' latch.
   key: () => {
     noise(0.05, 4200, 0.35, 0);

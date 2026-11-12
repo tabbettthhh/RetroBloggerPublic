@@ -162,7 +162,7 @@ function house(b, st, looks, i, ctx, day) {
   const pic = day?.photo_day?.src ? daySign(day, name) : null;
   const a = h(
     'a',
-    { class: 'nb-house' + (st.lit ? ' on' : ' asleep'), href: b.url, target: '_blank', rel: 'noopener noreferrer', title: `${name}’s site (${say})`, 'aria-label': `${name}’s site, ${say}` },
+    { class: 'nb-house' + (st.lit ? ' on' : ' asleep') + (st.arrived ? ' nb-arrive' : ''), href: b.url, target: '_blank', rel: 'noopener noreferrer', title: `${name}’s site (${say})`, 'aria-label': `${name}’s site, ${say}` },
     art,
     h('span', { class: 'nb-name', style: `--nb-tilt:${[-3, 2, -1.5, 3][i % 4]}deg` }, name)
   );
@@ -178,7 +178,7 @@ function house(b, st, looks, i, ctx, day) {
       ownerHooks.visitFriend(key, b.url);
     }
   });
-  return h('div', { class: 'nb-plot' }, a, pic);
+  return h('div', { class: 'nb-plot', 'data-house': b.url }, a, pic);
 }
 
 // Their photo of the day (the very one their own site shows today), on a sign in the garden.
@@ -226,12 +226,30 @@ function skyFace(night) {
       );
 }
 
+// Who was in, last time this browser looked: a friend who's come online since gets their door
+// creaking open and the lights flicking on, as buddies used to arrive.
+const HOME_KEY = 'nb-home';
+function arrivals(buddies) {
+  let was = null;
+  try {
+    was = JSON.parse(localStorage.getItem(HOME_KEY) || 'null');
+  } catch {}
+  const now = Object.fromEntries(buddies.map((b) => [b.url, b.presence !== 'offline' ? 1 : 0]));
+  try {
+    localStorage.setItem(HOME_KEY, JSON.stringify(now));
+  } catch {}
+  if (!was || typeof was !== 'object') return new Set();
+  return new Set(buddies.filter((b) => now[b.url] === 1 && was[b.url] === 0).map((b) => b.url));
+}
+
 function neighbourhood(ctx) {
   const buddies = ctx.data.buddies || [];
   if (!buddies.length) return null;
   const posts = ctx.data.friendPosts || [];
   const seen = readSeen();
   const now = new Date();
+  const came = arrivals(buddies);
+  if (came.size) setTimeout(() => sound.creak?.(), 350);
   const dress = lineDress();
   const night = document.documentElement.dataset.theme === 'dark';
   const season = document.documentElement.dataset.season;
@@ -255,7 +273,7 @@ function neighbourhood(ctx) {
         dress?.garland ? h('span', { class: 'nb-garland', 'aria-hidden': 'true', style: `--nb-garland:${dress.garland}` }) : null,
         // (Rolling hills behind, the lawn in front.)
         svg('svg', { viewBox: '0 0 600 96', preserveAspectRatio: 'none', class: 'nb-land', 'aria-hidden': 'true' }, svg('path', { d: 'M0 60Q80 10 170 46Q250 0 340 44Q430 8 520 40Q570 24 600 44V96H0Z', class: `${k} nb-hill` }), svg('path', { d: 'M0 72Q75 66 150 72T300 72T450 72T600 72V96H0Z', class: `${k} nb-lawn` })),
-        h('div', { class: 'nb-row' }, buddies.map((b, i) => house(b, houseState(b, posts, now, seen), ctx.data.friendLooks || {}, i, ctx, (ctx.data.friendDays || []).find((x) => x.url === b.url)))),
+        h('div', { class: 'nb-row' }, buddies.map((b, i) => house(b, { ...houseState(b, posts, now, seen), arrived: came.has(b.url) }, ctx.data.friendLooks || {}, i, ctx, (ctx.data.friendDays || []).find((x) => x.url === b.url)))),
         h(
           'div',
           { class: 'nb-road', 'aria-hidden': 'true' },

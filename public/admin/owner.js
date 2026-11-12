@@ -1207,6 +1207,88 @@ function decorateFriendsTab() {
   // (After the neighbourhood, which always comes first.)
   const line = feed.querySelector(':scope > .nb');
   (line ? (n) => line.after(n) : (n) => feed.prepend(n))(h('div', { class: 'okit-note' }, h('span', null, say[seen] || say.me), btn('Change', '', () => controlPanel('friends'))));
+  // A knocker by each friend's house in the neighbourhood.
+  for (const plot of feed.querySelectorAll('.nb-plot[data-house]')) {
+    const b = (owner.friendsMine?.buddies || []).find((x) => x.url === plot.dataset.house);
+    if (!b?.key) continue;
+    const who = (b.owner || b.name || 'them').split(/\s+/)[0];
+    plot.append(btn('✊', 'okit-knock', () => knockOn(b.key, who), { title: `Knock on ${who}’s door`, 'aria-label': `Knock on ${who}’s door` }));
+  }
+}
+// Knocking on a friend's door: three raps, their house jumps, and their site hears of it (signed
+// in there, it gives a little shake and says it was you).
+const houseOf = (key) => {
+  const b = friendOf(key);
+  return b ? document.querySelector(`.nb-plot[data-house="${CSS.escape(b.url)}"]`) : null;
+};
+function jolt(el) {
+  if (!el) return;
+  el.classList.remove('nb-knocked');
+  void el.offsetWidth;
+  el.classList.add('nb-knocked');
+}
+async function knockOn(key, who) {
+  sound.knock?.();
+  jolt(houseOf(key));
+  try {
+    await kit.mail.knock(key);
+    toast(`Knock knock! ${who} will hear it at their site.`);
+  } catch (e) {
+    toast(e.message, true);
+  }
+}
+// Someone knocked on yours (told once; unheard knocks are kept a day): the site
+// shakes, three raps, and a little notice says who, with a way to knock back.
+const KNOCK_SEEN = 'okit-knock-seen';
+let knockEl = null;
+function showKnocks() {
+  const all = mailBox.knocks || [];
+  if (!all.length || previewing) return;
+  let seen = 0;
+  try {
+    seen = Number(localStorage.getItem(KNOCK_SEEN)) || 0;
+  } catch {}
+  const fresh = all.filter((k) => k.at > seen);
+  if (!fresh.length) return;
+  try {
+    localStorage.setItem(KNOCK_SEEN, String(all[0].at));
+  } catch {}
+  kit.mail.knocksHeard().catch(() => {});
+  const newest = fresh[0];
+  const first = (n) => String(n || 'A friend').split(/\s+/)[0];
+  const others = [...new Set(fresh.slice(1).map((k) => first(k.name)))].filter((n) => n !== first(newest.name));
+  knockEl?.remove();
+  const close = () => {
+    knockEl?.classList.remove('on');
+    const el = knockEl;
+    setTimeout(() => el?.remove(), 300);
+    knockEl = null;
+  };
+  knockEl = h(
+    'aside',
+    { class: 'okit okit-mailpop okit-knockpop' + (site.desktop ? ' balloon' : ' banner'), role: 'status', 'aria-live': 'polite', 'aria-label': 'A knock at the door' },
+    h('div', { class: 'mp-head' }, h('span', { class: 'mp-env', 'aria-hidden': 'true' }, '🚪'), h('b', null, 'Knock knock!'), h('button', { type: 'button', class: 'mp-x', 'aria-label': 'Close', onclick: close }, '×')),
+    h('div', { class: 'mp-body' }, h('span', { class: 'ml-av', 'aria-hidden': 'true' }, initialOf(newest.name)), h('div', null, h('b', null, first(newest.name)), h('p', null, `knocked on your door at ${whenOf(newest.at)}.${others.length ? ` (So did ${others.join(', ')}.)` : ''}`))),
+    h(
+      'div',
+      { class: 'okit-row mp-acts' },
+      btn('Visit', '', () => {
+        close();
+        visitFriend(newest.friend);
+      }),
+      btn('Knock back', 'go', () => {
+        close();
+        knockOn(newest.friend, first(newest.name));
+      })
+    )
+  );
+  document.body.append(knockEl);
+  requestAnimationFrame(() => knockEl?.classList.add('on'));
+  sound.knock?.();
+  document.documentElement.classList.add('okit-shook');
+  setTimeout(() => document.documentElement.classList.remove('okit-shook'), 700);
+  jolt(houseOf(newest.friend));
+  setTimeout(() => knockEl && close(), 30000);
 }
 // A dot on Friends, wherever it's shown (the menus, the desktop, the dock), while there are
 // posts you haven't seen yet. Opening Friends clears it.
@@ -1256,7 +1338,7 @@ window.addEventListener('hashchange', () => owner && friendsDot());
 // A friend's site can send yours a short note. When one comes in, the newest pops up (a balloon
 // over the tray on a computer, a banner along the top on a phone); every note, read or not,
 // waits in Mail, with the ones you've sent. Only you ever see them, signed in.
-const mailBox = { notes: [], unread: 0, friends: [], loaded: false };
+const mailBox = { notes: [], unread: 0, knocks: [], friends: [], loaded: false };
 const POPPED = 'okit-mail-popped';
 const MAIL_EVERY = 90 * 1000;
 let mailAt = 0;
@@ -1278,6 +1360,7 @@ async function loadMail(force = false) {
   }
   showMailCount();
   popNewest();
+  showKnocks();
   // (Mail that's open shows what came in.)
   if (host?.mail) drawMail(host.body, true);
 }

@@ -493,6 +493,63 @@ await test('notes between friends: the newest pops up, the rest wait in Mail; on
   assert(!(await api2('mail')).notes.some((n) => n.id === id), 'deleted');
 });
 
+
+await test('a knock at the door: a friend knocks from their neighbourhood; your site shakes and says who, once; you can stop taking them', async () => {
+  // Not from just anyone.
+  eq((await fetch(`${BASE2}/api/friends/knock`, { method: 'POST', headers: { 'X-Friend-From': BASE } })).status, 403, 'unsigned: refused');
+  const browser = await chromium.launch();
+  try {
+    // Sam knocks on Lina's house, on his Friends tab.
+    const p = await browser.newPage({ viewport: { width: 1280, height: 860 } });
+    p.errors = [];
+    p.on('pageerror', (e) => p.errors.push(e.message));
+    await p.addInitScript(() => sessionStorage.setItem('entered', '1'));
+    await p.goto(BASE + '/?owner=1#/friends');
+    const knocker = p.locator('.nb-plot .okit-knock').first();
+    await knocker.waitFor();
+    await knocker.click();
+    await p.waitForFunction(() => /Knock knock! Lina/.test(document.querySelector('.okit-toast')?.textContent || ''));
+    assert(await p.locator('.nb-plot.nb-knocked').count(), 'her house jumps');
+    // Straight away again: not yet.
+    await knocker.click();
+    await p.waitForFunction(() => /only just knocked/.test(document.querySelector('.okit-toast')?.textContent || ''));
+    assert(!p.errors.length, p.errors.join('; '));
+    // Kept for Lina alone, with no words: who and when.
+    const kept = (await api2('mail')).knocks;
+    eq([kept.length, kept[0].name, Object.keys(kept[0]).sort()], [1, 'Sam', ['at', 'friend', 'name', 'site']], 'who knocked, and when');
+    const pub = await (await fetch(`${BASE2}/api/all?nocache=${Date.now()}`)).text();
+    assert(!/knock/i.test(pub), 'never on the site');
+    // Lina, signed in: the site shakes and says who.
+    const q = await browser.newPage({ viewport: { width: 1280, height: 860 } });
+    q.errors = [];
+    q.on('pageerror', (e) => q.errors.push(e.message));
+    await q.addInitScript(() => sessionStorage.setItem('entered', '1'));
+    await q.goto(BASE2 + '/?owner=1#/');
+    const pop = q.locator('.okit-knockpop');
+    await pop.waitFor();
+    assert(/Sam\s+knocked on your door/.test((await pop.innerText()).replace(/\n/g, ' ')), 'it says who: ' + (await pop.innerText()));
+    // Told once.
+    await q.waitForFunction(async () => !(await (await fetch('/admin/api/mail')).json()).knocks.length);
+    await q.reload();
+    await q.waitForSelector('.okit-mailbtn');
+    await q.waitForTimeout(1500);
+    eq(await q.locator('.okit-knockpop').count(), 0, 'heard once');
+    assert(!q.errors.length, q.errors.join('; '));
+    // A visitor has no knocker.
+    const v = await browser.newPage({ viewport: { width: 1280, height: 860 } });
+    await v.addInitScript(() => sessionStorage.setItem('entered', '1'));
+    await v.goto(BASE + '/#/');
+    await v.waitForTimeout(800);
+    eq(await v.locator('.okit-knock').count(), 0, 'nothing for visitors');
+  } finally {
+    await browser.close();
+  }
+  // Lina stops taking knocks: Sam is told so, and nothing is kept.
+  await post_(api2, 'friends/settings', { knocks: false });
+  await assertThrows(() => post_(api, 'mail/knock', { friend: 'localhost_8801' }), 'not answering the door');
+  eq((await api2('mail')).knocks.length, 0, 'nothing kept');
+  await post_(api2, 'friends/settings', { knocks: true });
+});
 await test('a friend\'s new post reaches your site within moments, and an open page picks it up', async () => {
   // Your site is open on a phone (like the site saved to its home screen).
   const browser = await chromium.launch();

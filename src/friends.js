@@ -117,6 +117,8 @@ export async function loadFriends(env) {
     // Whether friends' sites may show your posts to their visitors (they always see them
     // themselves, signed in on their own site).
     letShare: s.letShare !== false,
+    // Whether friends may knock on your door (see receiveKnock).
+    knocks: s.knocks !== false,
     friends: Array.isArray(s.friends) ? s.friends : [],
     // Your friend code's secret (none while it's switched off).
     code: s.code && typeof s.code.secret === 'string' ? s.code : null,
@@ -288,6 +290,13 @@ export async function friendsApi(request, env, path, deps) {
     } catch {}
     const f = store.friends.find((x) => x.key === friend.key) || friend;
     const out = await receiveNote(env, f, info);
+    return reply(out.ok ? { ok: true } : { error: out.error }, out.status || 200);
+  }
+
+  // A knock on your door, from a friend at their own site: kept for you alone (see receiveKnock).
+  if (path === '/api/friends/knock' && method === 'POST') {
+    const f = store.friends.find((x) => x.key === friend.key) || friend;
+    const out = await receiveKnock(env, store, f);
     return reply(out.ok ? { ok: true } : { error: out.error }, out.status || 200);
   }
 
@@ -691,7 +700,7 @@ export async function friendsOverview(env, here = '') {
   );
   // Friends who still know you by an old address (they couldn't be told you moved).
   const behind = store.friends.filter((f) => f.as && f.as !== store.me).map((f) => f.name);
-  return { me: store.me, here, behind, listSeen: store.listSeen, postsSeen: store.postsSeen, letShare: store.letShare, inHome: store.inHome, friends, code: codeText(store), codeOff: store.codeOff };
+  return { me: store.me, here, behind, listSeen: store.listSeen, postsSeen: store.postsSeen, letShare: store.letShare, inHome: store.inHome, knocks: store.knocks, friends, code: codeText(store), codeOff: store.codeOff };
 }
 
 const codeText = (store) => (store.code && store.me ? 'MYCORNER-' + b64url(enc.encode(JSON.stringify({ u: store.me, s: store.code.secret }))) : null);
@@ -1001,6 +1010,54 @@ async function readMail(env, limit = MAIL_KEEP) {
   }
   return notes.filter(Boolean);
 }
+// A knock on the door: a friend, at their own site, knocks on your house in their neighbourhood;
+// signed in at yours, your site gives a little shake and says who it was. Nothing is written by
+// anyone: only who knocked and when is kept (the last few, for a day), for you alone. You can
+// stop taking knocks in Control Panel › Friends.
+const KNOCKS = 'data/_knocks.json';
+const KNOCK_KEEP = 20;
+const KNOCK_GAP = 30 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+async function readKnocks(env) {
+  try {
+    const o = await env.CONTENT.get(KNOCKS);
+    const v = o ? JSON.parse(await o.text()) : [];
+    return Array.isArray(v) ? v.filter((k) => k && Date.now() - k.at < DAY_MS) : [];
+  } catch {
+    return [];
+  }
+}
+async function receiveKnock(env, store, friend) {
+  if (store.knocks === false) return { error: 'They’re not answering the door just now.', status: 403 };
+  const all = await readKnocks(env);
+  if (all.some((k) => k.friend === friend.key && Date.now() - k.at < KNOCK_GAP)) return { error: 'You’ve only just knocked. Give them a moment to get to the door.', status: 429 };
+  const name = clean(friend.owner || friend.name, 60) || friend.url;
+  const next = [{ friend: friend.key, name, site: friend.url, at: Date.now() }, ...all].slice(0, KNOCK_KEEP);
+  await env.CONTENT.put(KNOCKS, JSON.stringify(next), { httpMetadata: { contentType: 'application/json' } });
+  await push.notifyOwner(env, 'notes', { title: `🚪 Knock knock! It’s ${name}`, body: 'They knocked on your door.', url: '/?owner=1#/friends', tag: 'knock' }, store.me).catch(() => {});
+  return { ok: true };
+}
+// (Once you've been told who knocked, they're cleared: told once, wherever you're signed in.)
+export async function clearKnocks(env) {
+  await env.CONTENT.delete(KNOCKS);
+  return { ok: true };
+}
+// You, knocking on a friend's door.
+export async function sendKnock(env, key) {
+  const store = await loadFriends(env);
+  const friend = store.friends.find((f) => f.key === key);
+  if (!friend) throw new Error('That friend isn’t on your list any more.');
+  let res;
+  try {
+    res = await signedFetch(env, store, friend, 'POST', '/api/friends/knock', {});
+  } catch {
+    throw new Error('Couldn’t reach their site just now. Try again in a moment.');
+  }
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(out.error === 'Not found' ? 'Their site needs updating before you can knock.' : out.error || 'Nobody came to the door.');
+  return { ok: true };
+}
+
 // Your mail, for you signed in: every note, newest first, with who it's from (or to).
 export async function myMail(env) {
   const store = await loadFriends(env);
@@ -1009,6 +1066,8 @@ export async function myMail(env) {
   return {
     notes: notes.map((n) => ({ ...n, still: known.has(n.friend) })),
     unread: notes.filter((n) => !n.out && !n.read).length,
+    // (Who's knocked on your door in the last day, newest first; only from friends still on your list.)
+    knocks: (await readKnocks(env)).filter((k) => known.has(k.friend)),
     friends: store.friends.map((f) => ({ key: f.key, name: f.owner || f.name, site: f.url }))
   };
 }
@@ -1057,11 +1116,12 @@ export async function setFriendSettings(env, body) {
   if (SEEN.includes(body.postsSeen)) store.postsSeen = body.postsSeen;
   if (typeof body.letShare === 'boolean') store.letShare = body.letShare;
   if (typeof body.inHome === 'boolean') store.inHome = body.inHome;
+  if (typeof body.knocks === 'boolean') store.knocks = body.knocks;
   delete store.showOnSite;
   delete store.visibility;
   await saveFriends(env, store);
   // (Friends' sites hear about a change to letShare at once: see shareNews.)
-  return { listSeen: store.listSeen, postsSeen: store.postsSeen, letShare: store.letShare, inHome: store.inHome };
+  return { listSeen: store.listSeen, postsSeen: store.postsSeen, letShare: store.letShare, inHome: store.inHome, knocks: store.knocks };
 }
 // A friend's posts can go in front of someone on your site only if you show them their posts and
 // the friend has said yes to being shown to visitors (your friends, visiting, are visitors too).

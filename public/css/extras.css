@@ -254,6 +254,13 @@
 .nb-wire { fill: none; stroke: var(--nb-ink); stroke-width: 1.5; }
 .nb-bulb { stroke: var(--nb-ink); stroke-width: 1.2; animation: nb-twinkle .9s steps(2) infinite alternate; }
 .nb-puff { fill: #fff; stroke-width: 2.5; opacity: 0; transform-box: fill-box; transform-origin: center; animation: nb-smoke 3.3s ease-out infinite; }
+/* Just come online: the door creaks open and the lights flick on. Knocked on: the house jumps. */
+.nb-arrive .nb-door { transform-box: fill-box; transform-origin: 0 50%; animation: nb-door 1.5s ease-in-out .3s 1; }
+.nb-arrive .nb-pane.lit { animation: nb-flick 1s steps(1) 1; }
+.nb-knocked .nb-art { animation: nb-knocked .5s ease-in-out 1; }
+@keyframes nb-door { 0%, 100% { transform: scaleX(1); } 35%, 65% { transform: scaleX(.2); } }
+@keyframes nb-flick { 0%, 40% { fill: #3b3560; } 20%, 60%, 100% { fill: #fff9c9; } }
+@keyframes nb-knocked { 0%, 100% { transform: translate(0, 0) rotate(0); } 20% { transform: translate(-3px, 0) rotate(-2deg); } 40% { transform: translate(3px, -2px) rotate(2deg); } 60% { transform: translate(-2px, 0) rotate(-1deg); } 80% { transform: translate(2px, 0) rotate(1deg); } }
 /* By each house: a tree, a street lamp or (in winter) a snowman; sometimes a cat. */
 .nb-tree { transform-box: fill-box; transform-origin: 50% 100%; animation: nb-sway 3.2s ease-in-out infinite alternate; }
 .nb-trunk { fill: #8a5a34; }
