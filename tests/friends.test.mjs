@@ -198,6 +198,12 @@ await test('your site has a Friends tab with their posts if you choose (to start
   await site.waitForSelector('.ff-full');
   assert(await site.locator('.xp-links a', { hasText: 'Friends' }).count(), 'a Friends tab');
   eq(await site.locator('.ff-buddy').count(), 1, 'the buddy list');
+  // The neighbourhood: a house for each friend on the list, linking to their own site, lit while they're online.
+  eq(await site.locator('.nb .nb-house').count(), 1, 'a house for the friend');
+  eq(await site.locator('.nb-house').first().getAttribute('href'), BASE2, 'which opens their site');
+  assert(await site.locator('.nb-house.on').count(), 'lights on: they’re online');
+  assert((await site.locator('.nb-house').first().getAttribute('aria-label')).includes('Lina'), 'named for them');
+  eq(await site.evaluate(() => document.querySelector('.feed.ff').firstElementChild.className.split(' ')[0]), 'nb', 'the street comes first');
   const post = site.locator('.ff-full').first();
   assert((await post.innerText()).includes('Harbour walk'), 'post shown');
   eq(await post.locator('.card-body img, .prose img').count(), 0, 'no pictures from the text');
@@ -253,7 +259,20 @@ await test('you choose who sees your friends, and friends choose whether you can
   let set = await post_(api, 'friends/settings', { listSeen: 'everyone', postsSeen: 'me' });
   eq([set.listSeen, set.postsSeen], ['everyone', 'me'], 'list only');
   let d = await publicData();
-  eq([d.buddies.map((b) => b.name), d.friendPosts, d.friendDays, d.friendsTab], [['Lina Lounge'], [], [], false], 'the list, without posts');
+  eq([d.buddies.map((b) => b.name), d.friendPosts, d.friendDays, d.friendsTab], [['Lina Lounge'], [], [], true], 'the list, without posts: the tab holds the street and buddies');
+  // (A visitor then sees the houses but nothing of the posts: no smoke, no envelope, no word of posts.)
+  {
+    const b = await chromium.launch();
+    const v = await b.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
+    v.errors = [];
+    v.on('pageerror', (e) => v.errors.push(e.message));
+    await v.addInitScript(() => sessionStorage.setItem('entered', '1'));
+    await v.goto(BASE + '/#/friends');
+    await v.waitForSelector('.nb .nb-house');
+    eq([await v.locator('.nb-house').count(), await v.locator('.nb-puff').count(), await v.locator('.nb-mail').count(), await v.locator('.ff-full, .ff-post').count()], [1, 0, 0, 0], 'houses only: no smoke, no envelope, no posts');
+    assert(!v.errors.length, v.errors.join('; '));
+    await b.close();
+  }
   eq((await fetch(BASE + photo)).status, 404, 'and no photos');
   // Just their posts: the Friends tab, without the list.
   await post_(api, 'friends/settings', { listSeen: 'me', postsSeen: 'everyone' });
@@ -736,9 +755,13 @@ await test('visiting a friend’s site as their friend: what’s for friends, wi
     await p.addInitScript(() => sessionStorage.setItem('entered', '1'));
     await p.goto(BASE + '/?owner=1#/');
     const card = p.locator('.ff-in-home[data-friend-post$="|thoughts/pals-only"]');
-    await card.locator('.okit-visit').waitFor();
-    eq(await card.locator('.ff-open').count(), 0, 'no plain link to it (it isn’t there for visitors)');
-    const [tab] = await Promise.all([ctx.waitForEvent('page'), card.locator('.okit-visit').click()]);
+    await card.locator('.okit-talk-wrap').waitFor();
+    eq([await card.locator('.ff-open').count(), await card.locator('.okit-visit').count()], [0, 0], 'no link under it: their house is the way in');
+    // Their house in the neighbourhood: tapping it visits as their friend.
+    await p.goto(BASE + '/?owner=1#/friends');
+    await p.waitForSelector('.feed.ff .okit-note');
+    await p.locator('.nb-house').first().waitFor();
+    const [tab] = await Promise.all([ctx.waitForEvent('page'), p.locator('.nb-house').first().click()]);
     tab.errors = [];
     tab.on('pageerror', (e) => tab.errors.push(e.message));
     await tab.waitForSelector('.visit-bar', { timeout: 20000 });
@@ -828,7 +851,7 @@ await test('the little notice on the desktop: the newest post, yours or a friend
   }
 });
 
-await test('friends’ photos of the day: polaroids on a line at the top of Friends, the very ones their sites show', async () => {
+await test('friends’ pictures of the day: a sign in each one’s garden in the neighbourhood, the very ones their sites show', async () => {
   const at = (h) => new Date(Date.now() - h * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
   // (Only public posts to pick from: which one is today's is by the date, so a friends-only post
   // left over from an earlier test would make this one pass on some days and not on others.)
@@ -845,7 +868,7 @@ await test('friends’ photos of the day: polaroids on a line at the top of Frie
   const lina = (await api('overview')).friendsMine.days.find((b) => b.url === BASE2);
   eq(lina.photo_day.id, feed.photo_day.id, 'yours shows the same one');
   eq((await fetch(BASE + lina.photo_day.src)).status, 200, 'and it loads, through your site: ' + JSON.stringify(lina.photo_day));
-  // On your Friends tab, first of all: a polaroid pegged to the line.
+  // On your Friends tab: a sign in their garden.
   const theme = await getFile('theme.md').catch(() => '');
   const browser = await chromium.launch();
   try {
@@ -854,16 +877,32 @@ await test('friends’ photos of the day: polaroids on a line at the top of Frie
     p.on('pageerror', (e) => p.errors.push(e.message));
     await p.addInitScript(() => sessionStorage.setItem('entered', '1'));
     await p.goto(BASE + '/?owner=1#/friends');
-    await p.waitForSelector('.pl .pl-pin');
-    eq(await p.evaluate(() => document.querySelector('.feed.ff').firstElementChild.className), 'pl', 'the very first thing');
-    eq((await p.locator('.pl-pin .pl-name').first().innerText()).trim(), 'Lina', 'with their name');
-    await p.waitForFunction(() => document.querySelector('.pl-pin img')?.naturalWidth > 0);
-    eq(await p.locator('.pl-charm').count(), 0, 'no drawings with the seasons off');
-    // The seasons on: the line dresses for winter.
+    await p.waitForSelector('.nb .nb-sign');
+    // The houses' state: lights from presence; smoke and the envelope only from posts you may see.
+    const st = await p.evaluate(async () => {
+      const { houseState } = await import('/js/neighbourhood.js');
+      const now = new Date(2026, 10, 12, 15, 0);
+      const b = { url: 'https://x.test', presence: 'online' };
+      const at = (d, h) => new Date(2026, 10, d, h).getTime();
+      const post = (ts) => ({ ts, friend: { url: 'https://x.test' } });
+      const pick = (s) => [s.lit, s.smoke, s.mail];
+      return [
+        pick(houseState(b, [], now)),
+        pick(houseState({ ...b, presence: 'offline' }, [post(at(12, 9))], now)),
+        pick(houseState(b, [post(at(10, 9))], now)),
+        pick(houseState(b, [post(at(10, 9))], now, { 'https://x.test': at(11, 9) })),
+        pick(houseState(b, [{ ts: at(12, 9), friend: { url: 'https://y.test' } }], now))
+      ];
+    });
+    eq(st, [[true, false, false], [false, true, true], [true, false, true], [true, false, false], [true, false, false]], 'lights, smoke and envelope');
+    eq([await p.locator('.pl, .pl-pin').count(), await p.locator('.nb-sign').count()], [0, 1], 'no washing line any more: a sign in their garden');
+    assert((await p.locator('.nb-sign').innerText()).includes('Picture of the day'), 'which says what it is');
+    await p.waitForFunction(() => document.querySelector('.nb-sign img')?.naturalWidth > 0);
+    eq(await p.locator('.nb-snow').count(), 0, 'no snow with the seasons off');
+    // The seasons on: the street dresses for winter.
     await putFile('theme.md', '---\ntheme: classic\nseasons: winter\n---\n');
     await p.reload();
-    await p.waitForSelector('.pl .pl-line.dressed');
-    eq(await p.locator('.pl-charm').count(), await p.locator('.pl-pin').count(), 'a winter drawing by each photo');
+    await p.waitForSelector('.nb .nb-snow');
     assert(!p.errors.length, p.errors.join('; '));
   } finally {
     await browser.close();

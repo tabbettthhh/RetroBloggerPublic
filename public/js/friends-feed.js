@@ -10,6 +10,7 @@ import { friendSkin } from './card-dress.js';
 import { ownerHooks } from './owner-door.js';
 import { sound } from './sound.js';
 import { activeSkin, lookOf, drawingUrl, festiveScenery } from './skins.js';
+import { houseState } from './neighbourhood.js';
 
 // Each friend's post cards (from their site), by the name their posts use.
 let looks = {};
@@ -27,12 +28,8 @@ function avatar(who, size = 'small') {
   return h('span', { class: `ff-avatar ${size}`, style: { '--av': colourFor(who.url || who.name) }, 'aria-hidden': 'true' }, initial(who.owner || who.name));
 }
 
-// Your friends' photos of the day, as polaroids pegged along a washing line at the top of
-// Friends: scroll along it. Each is the very one their own site shows today. Tapping one opens
-// its post (signed in: here, if it's in your feed, or on their site as their friend).
-// The line dresses for the season or festive day, as the rest of the site does (and not at all
-// when they're switched off): the day's drawings hang between the photos, a festive day strings
-// its garland along the wire, and in winter snow settles on it.
+// The street dresses for the season or festive day, as the rest of the site does (and not at
+// all when they're switched off): a festive day strings its garland across the sky.
 function lineDress() {
   const on = document.documentElement.dataset;
   const t = activeSkin();
@@ -45,50 +42,230 @@ function lineDress() {
   } catch {}
   return { charm: (i) => drawingUrl(look.charms[i % look.charms.length], t, 26), garland };
 }
-function photoLine(days) {
-  const today = days.filter((b) => b.photo_day?.src);
-  if (!today.length) return null;
-  const dress = lineDress();
-  const pin = (b, i) => {
-    const d = b.photo_day;
-    const name = (b.owner || b.name || '').split(/\s+/)[0];
-    const a = h(
-      'a',
-      { class: 'pl-pin', href: d.url, target: '_blank', rel: 'noopener noreferrer', title: `${name}’s photo of the day${d.cap ? ': ' + d.cap : ''}`, style: `--tilt:${[-3, 2.5, -1.5, 3.5, -2.5, 1.5][i % 6]}deg; --sway:${(i % 3) * 0.6}s` },
-      h('span', { class: 'pl-peg', 'aria-hidden': 'true' }),
-      h('span', { class: 'pl-photo' }, h('img', { src: d.src, alt: d.cap || `${name}’s photo of the day`, loading: 'lazy' }), h('span', { class: 'pl-name' }, name)),
-      // (The season's or day's drawing, hanging on the wire after it.)
-      dress ? h('span', { class: 'pl-charm', 'aria-hidden': 'true', style: `background-image:${dress.charm(i)}; --tilt:${i % 2 ? 6 : -6}deg; --sway:${(i % 3) * 0.5}s` }) : null
+// The Neighbourhood: a little street at the top of Friends, one house per friend on your list.
+// It shows nothing the list doesn't: a name, whether they're online (lights on) and, only where
+// you may see their posts, whether they posted today (smoke from the chimney) and whether
+// there's something you haven't opened yet (an envelope on the step). No places, no addresses.
+// Houses wear the season or festive day your site wears; tap one to visit, as with Visit.
+const SVG = 'http://www.w3.org/2000/svg';
+const svg = (tag, attrs = {}, ...kids) => {
+  const e = document.createElementNS(SVG, tag);
+  for (const [k, v] of Object.entries(attrs || {})) if (v != null) e.setAttribute(k, String(v));
+  for (const k of kids.flat(Infinity)) if (k) e.append(k);
+  return e;
+};
+const SEEN_KEY = 'nb-seen';
+const readSeen = () => {
+  try {
+    const v = JSON.parse(localStorage.getItem(SEEN_KEY) || '{}');
+    return v && typeof v === 'object' && !Array.isArray(v) ? v : {};
+  } catch {
+    return {};
+  }
+};
+const markSeen = (url, ts) => {
+  try {
+    const v = readSeen();
+    v[url] = Math.max(Number(v[url]) || 0, ts || Date.now());
+    localStorage.setItem(SEEN_KEY, JSON.stringify(v));
+  } catch {}
+};
+const hexOk = (v) => (/^#[0-9a-f]{6}$/i.test(String(v || '')) ? String(v) : '');
+
+// Drawn like a Saturday-morning cartoon: thick ink lines, wonky walls, houses that breathe,
+// blink and look about while their owner's online, and snooze (Zzz) while they're not. All of it
+// our own drawings: no characters from anywhere.
+const SHAPES = [
+  { body: 'M16 60 L102 55 L106 113 L13 115Z', roof: 'M4 64 Q58 4 116 58 Q60 48 4 64Z', chim: 'M78 16l14-3 3 28-14 3Z', ex: [38, 82], ey: 80, dx: 60, eave: 60, sx: 87, sy: 8 },
+  { body: 'M32 48 L88 44 L94 114 L27 115Z', roof: 'M20 54 Q50 30 64 2 Q78 30 102 47 Q60 40 20 54Z', chim: 'M76 14l11-1 2 24-12 3Z', ex: [46, 76], ey: 66, dx: 61, eave: 50, sx: 83, sy: 6 },
+  { body: 'M22 64 Q19 110 25 114 L96 114 Q102 108 98 62Z', roof: 'M8 68 Q12 16 60 12 Q108 16 112 66 Q60 54 8 68Z', chim: 'M80 8l12 0 1 22-13 2Z', ex: [40, 82], ey: 82, dx: 61, eave: 64, sx: 87, sy: 0 },
+  { body: 'M20 66 L98 60 L101 114 L17 115Z', roof: 'M6 72 Q28 22 50 10 Q96 38 114 64 Q60 52 6 72Z', chim: 'M74 18l13-2 2 26-13 3Z', ex: [40, 82], ey: 84, dx: 61, eave: 66, sx: 82, sy: 10 }
+];
+const WALLS = ['#ffd23f', '#ff7eb0', '#4fd6cb', '#b79bff', '#ff9a4d', '#8be35a', '#6cb6ff', '#ff7069'];
+const ROOFS = ['#e8443a', '#7a4ad8', '#ff7a1a', '#1f9d8f', '#3a6fe8', '#d6338a', '#f0b400', '#2fa84a'];
+const hashOf = (v) => [...String(v)].reduce((n, c) => (n * 31 + c.charCodeAt(0)) >>> 0, 7);
+
+function house(b, st, looks, i, ctx, day) {
+  const root = document.documentElement.dataset;
+  const season = root.season;
+  const hsh = hashOf(b.url || b.name);
+  const S = SHAPES[hsh % SHAPES.length];
+  const lk = looks[(ctx.data.friendPosts || []).find((p) => p.friend?.url === b.url)?.friend?.look] || {};
+  const wall = hexOk(lk.main) || WALLS[hsh % WALLS.length];
+  const roof = hexOk(lk.accent) || ROOFS[(hsh >>> 3) % ROOFS.length];
+  const name = (b.owner || b.name || '').split(/\s+/)[0];
+  const say = [st.lit ? 'online' : 'offline', st.smoke ? 'posted today' : '', st.mail ? 'something new' : ''].filter(Boolean).join(', ');
+  const k = 'nb-k';
+  // (Windows for eyes: open and looking about while they're online, shut while they're not.)
+  const eye = (x) =>
+    svg(
+      'g',
+      null,
+      svg('rect', { x: x - 10, y: S.ey - 11, width: 20, height: 22, rx: 8, class: `${k} nb-pane` + (st.lit ? ' lit' : '') }),
+      st.lit
+        ? svg('g', { class: 'nb-eye' }, svg('g', { class: 'nb-pupil', style: `animation-delay:${-(hsh % 5)}s` }, svg('ellipse', { cx: x, cy: S.ey + 1, rx: 3.6, ry: 4.8, class: 'nb-ink' }), svg('circle', { cx: x + 1.2, cy: S.ey - 1, r: 1.1, fill: '#fff' })))
+        : svg('path', { d: `M${x - 6} ${S.ey + 1}q6 5 12 0`, class: `${k} nb-shut` })
     );
-    a.addEventListener('click', (e) => {
-      sound.click?.();
-      // (Signed in: their post in your feed, if it's there, or their site as their friend.)
-      if (!b.key) return;
-      const card = document.querySelector(`[data-friend-post="${CSS.escape(`${b.key}|${d.id}`)}"]`);
-      if (card) {
-        e.preventDefault();
-        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        card.classList.remove('pl-found');
-        void card.offsetWidth;
-        card.classList.add('pl-found');
-      } else if (ownerHooks.visitFriend) {
-        e.preventDefault();
-        ownerHooks.visitFriend(b.key, d.url);
-      }
-    });
-    return a;
-  };
+  const lights = root.festival || season === 'winter';
+  const clip = `nbc${i}`;
+  const d = S.dx;
+  const kind = season === 'winter' && hsh % 3 === 0 ? 'snowman' : hsh % 3 === 1 ? 'lamp' : 'tree';
+  const prop =
+    kind === 'snowman'
+      ? svg('g', { class: 'nb-prop' }, svg('circle', { cx: 154, cy: 138, r: 11, class: `${k} nb-snowball` }), svg('circle', { cx: 154, cy: 121, r: 8, class: `${k} nb-snowball` }), svg('circle', { cx: 151, cy: 119, r: 1.2, class: 'nb-ink' }), svg('circle', { cx: 157, cy: 119, r: 1.2, class: 'nb-ink' }), svg('path', { d: 'M154 122l8 2-8 1Z', fill: '#ff8a1f', class: k, 'stroke-width': 1.5 }))
+      : kind === 'lamp'
+        ? svg('g', { class: 'nb-prop' }, svg('circle', { cx: 154, cy: 92, r: 17, class: 'nb-glow' }), svg('path', { d: 'M154 150V100', class: `${k} nb-post` }), svg('path', { d: 'M147 100h14l-3-13h-8Z', class: `${k} nb-lamp` }))
+        : svg('g', { class: 'nb-prop nb-tree', style: `animation-delay:${-(hsh % 4)}s` }, svg('rect', { x: 151, y: 116, width: 7, height: 34, rx: 2, class: `${k} nb-trunk` }), svg('path', { d: 'M136 106q-5-16 9-19q3-15 17-7q13-2 10 13q9 10-4 17q-16 8-28 2q-7-2-4-6Z', class: `${k} nb-leaves` }));
+  const art = svg(
+    'svg',
+    { viewBox: '0 0 170 170', class: 'nb-art', 'aria-hidden': 'true', focusable: 'false' },
+    svg('ellipse', { cx: 82, cy: 150, rx: 56, ry: 6, class: 'nb-shadow' }),
+    // (The garden path, from the door down to the road.)
+    svg('path', { d: `M${d + 13} 148l-6 22h34l-10-22Z`, class: `${k} nb-path` }),
+    day?.photo_day?.src ? null : prop,
+    svg(
+      'g',
+      { class: 'nb-body', transform: 'translate(22 34)' },
+      svg(
+        'g',
+        { class: 'nb-breathe', style: `animation-delay:${-(hsh % 7) * 0.4}s` },
+        svg('path', { d: S.chim, class: `${k} nb-chimney` }),
+        st.smoke ? [0, 1, 2].map((n) => svg('circle', { cx: S.sx, cy: S.sy, r: 5 + n * 1.5, class: `${k} nb-puff`, style: `animation-delay:${n * 1.1}s` })) : null,
+        svg('path', { d: S.body, class: `${k} nb-wall`, style: `fill:${wall}` }),
+        svg('path', { d: S.roof, class: `${k} nb-roof`, style: `fill:${roof}` }),
+        season === 'winter'
+          ? [
+              svg('clipPath', { id: clip }, svg('path', { d: `M-10 -10H130V${S.eave - 22}q-9 9-17 0q-9 9-17 0q-9 9-17 0q-9 9-17 0q-9 9-17 0q-9 9-17 0q-9 9-17 0q-9 9-17 0Z` })),
+              svg('path', { d: S.roof, class: 'nb-snow', 'clip-path': `url(#${clip})` }),
+              svg('path', { d: S.roof, class: `${k} nb-line` })
+            ]
+          : null,
+        eye(S.ex[0]),
+        eye(S.ex[1]),
+        svg('path', { d: `M${d - 9} 114V98Q${d} 84 ${d + 9} 98V114Z`, class: `${k} nb-door` }),
+        svg('circle', { cx: d + 5, cy: 103, r: 1.6, class: 'nb-knob' }),
+        svg('path', { d: 'M88 116q-3-12 8-10q4-8 12-2q9 2 4 12Z', class: `${k} nb-bush` }),
+        season === 'spring' ? [[95, 109], [103, 106], [108, 111]].map(([x, y]) => svg('circle', { cx: x, cy: y, r: 2, class: 'nb-bloom' })) : null,
+        lights
+          ? [svg('path', { d: `M18 ${S.eave + 3}Q60 ${S.eave + 11} 102 ${S.eave - 1}`, class: 'nb-wire' }), [24, 37, 50, 63, 76, 89].map((x, n) => svg('circle', { cx: x, cy: S.eave + 6 + (n === 2 || n === 3 ? 2 : 0) - n * 0.4, r: 2.6, class: 'nb-bulb', style: `animation-delay:${(n % 3) * 0.4}s`, fill: ['#ff5d5d', '#ffd23f', '#6cd4ff', '#8be35a'][n % 4] }))]
+          : null,
+        st.lit ? null : ['z', 'z', 'Z'].map((z, n) => svg('text', { x: S.ex[1] + 10 + n * 6, y: S.ey - 16 - n * 9, class: 'nb-zz', style: `animation-delay:${n * 0.5}s; font-size:${9 + n * 3}px` }, z))
+      )
+    ),
+    // (A cat on the lawn, at some houses.)
+    hsh % 4 === 2 ? svg('g', { class: 'nb-cat' }, svg('path', { d: 'M118 148q10-8 4-14', class: `${k} nb-tail` }), svg('ellipse', { cx: 111, cy: 144, rx: 8, ry: 6, class: `${k} nb-fur` }), svg('path', { d: 'M99 140l1-9 5 4 4-5 2 9q0 6-6 6t-6-5Z', class: `${k} nb-fur` }), svg('circle', { cx: 103, cy: 139, r: 1, class: 'nb-ink' }), svg('circle', { cx: 108, cy: 139, r: 1, class: 'nb-ink' })) : null,
+    // (The mailbox: its flag up, and a letter poking out, while there's something new.)
+    svg('path', { d: 'M13 150V126', class: `${k} nb-post` }),
+    svg('path', { d: 'M3 128v-8q0-9 9-9h7q8 0 8 9v8Z', class: `${k} nb-box` }),
+    st.mail ? svg('g', { class: 'nb-mail' }, svg('path', { d: 'M27 122V104h8v6h-8', class: `${k} nb-flag` }), svg('g', { class: 'nb-letter' }, svg('rect', { x: 5, y: 100, width: 17, height: 12, rx: 1.5, class: `${k} nb-env`, 'stroke-width': 2 }), svg('path', { d: 'M5 101l8.5 6 8.5-6', class: `${k} nb-flap`, 'stroke-width': 2 }))) : null
+  );
+  const pic = day?.photo_day?.src ? daySign(day, name) : null;
+  const a = h(
+    'a',
+    { class: 'nb-house' + (st.lit ? ' on' : ' asleep'), href: b.url, target: '_blank', rel: 'noopener noreferrer', title: `${name}’s site (${say})`, 'aria-label': `${name}’s site, ${say}` },
+    art,
+    h('span', { class: 'nb-name', style: `--nb-tilt:${[-3, 2, -1.5, 3][i % 4]}deg` }, name)
+  );
+  a.addEventListener('click', (e) => {
+    sound.click?.();
+    markSeen(b.url, st.newest);
+    st.mail = false;
+    a.querySelector('.nb-mail')?.remove();
+    // (Signed in: off to their site as their friend, with a pass. Looked up now, in case you signed in since this was drawn.)
+    const key = b.key || (ctx.data.buddies || []).find((x) => x.url === b.url)?.key;
+    if (ownerHooks.visitFriend && key) {
+      e.preventDefault();
+      ownerHooks.visitFriend(key, b.url);
+    }
+  });
+  return h('div', { class: 'nb-plot' }, a, pic);
+}
+
+// Their photo of the day (the very one their own site shows today), on a sign in the garden.
+// Tapping it opens its post (signed in: here, if it's in your feed, or on their site as their friend).
+function daySign(b, name) {
+  const d = b.photo_day;
+  const a = h(
+    'a',
+    { class: 'nb-sign', href: d.url, target: '_blank', rel: 'noopener noreferrer', title: `${name}’s picture of the day${d.cap ? ': ' + d.cap : ''}` },
+    h('span', { class: 'nb-sign-say' }, 'Picture of the day'),
+    h('span', { class: 'nb-sign-pic' }, h('img', { src: d.src, alt: d.cap || `${name}’s picture of the day`, loading: 'lazy' })),
+    h('span', { class: 'nb-sign-post', 'aria-hidden': 'true' })
+  );
+  a.addEventListener('click', (e) => {
+    sound.click?.();
+    if (!b.key) return;
+    const card = document.querySelector(`[data-friend-post="${CSS.escape(`${b.key}|${d.id}`)}"]`);
+    if (card) {
+      e.preventDefault();
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      card.classList.remove('pl-found');
+      void card.offsetWidth;
+      card.classList.add('pl-found');
+    } else if (ownerHooks.visitFriend) {
+      e.preventDefault();
+      ownerHooks.visitFriend(b.key, d.url);
+    }
+  });
+  return a;
+}
+
+// The sun (a moon at night), each with a face.
+function skyFace(night) {
+  const k = 'nb-k';
+  return night
+    ? svg('svg', { viewBox: '0 0 64 64', class: 'nb-sun moon', 'aria-hidden': 'true' }, svg('path', { d: 'M40 8a25 25 0 1 0 16 38a20 20 0 0 1-16-38Z', class: `${k} nb-moonface` }), svg('path', { d: 'M24 30q4 4 8 0', class: k, fill: 'none', 'stroke-width': 2.5 }), svg('path', { d: 'M24 42q5 4 10 1', class: k, fill: 'none', 'stroke-width': 2.5 }))
+    : svg(
+        'svg',
+        { viewBox: '0 0 64 64', class: 'nb-sun', 'aria-hidden': 'true' },
+        svg('g', { class: 'nb-rays' }, [0, 45, 90, 135, 180, 225, 270, 315].map((r) => svg('path', { d: 'M32 3v8', class: k, transform: `rotate(${r} 32 32)` }))),
+        svg('circle', { cx: 32, cy: 32, r: 15, class: `${k} nb-sunface` }),
+        svg('circle', { cx: 27, cy: 29, r: 1.8, class: 'nb-ink' }),
+        svg('circle', { cx: 37, cy: 29, r: 1.8, class: 'nb-ink' }),
+        svg('path', { d: 'M26 35q6 6 12 0', class: k, fill: 'none', 'stroke-width': 2.5 })
+      );
+}
+
+function neighbourhood(ctx) {
+  const buddies = ctx.data.buddies || [];
+  if (!buddies.length) return null;
+  const posts = ctx.data.friendPosts || [];
+  const seen = readSeen();
+  const now = new Date();
+  const dress = lineDress();
+  const night = document.documentElement.dataset.theme === 'dark';
+  const season = document.documentElement.dataset.season;
+  const k = 'nb-k';
+  const falling = { winter: 'snow', autumn: 'leaf', spring: 'petal' }[season];
   return h(
     'section',
-    { class: 'pl', 'aria-label': 'Friends’ photos of the day' },
-    h('div', { class: 'pl-title' }, '📷 Friends’ photos of the day'),
+    { class: 'nb' + (night ? ' night' : ''), 'aria-label': 'Your neighbourhood' },
+    h('div', { class: 'nb-title' }, '🏘 The neighbourhood'),
     h(
       'div',
-      { class: 'pl-scroll' },
+      { class: 'nb-scroll' },
       h(
         'div',
-        { class: 'pl-line' + (dress ? ' dressed' : '') + (dress?.garland ? ' festive' : ''), style: dress?.garland ? `--pl-garland:${dress.garland}` : null },
-        today.map(pin)
+        { class: 'nb-street' },
+        h('span', { class: 'nb-stars', 'aria-hidden': 'true' }),
+        skyFace(night),
+        h('span', { class: 'nb-clouds', 'aria-hidden': 'true' }),
+        h('span', { class: 'nb-clouds far', 'aria-hidden': 'true' }),
+        night ? null : svg('svg', { viewBox: '0 0 40 12', class: 'nb-birds', 'aria-hidden': 'true' }, svg('path', { d: 'M2 7q4-6 7 0q3-6 7 0', class: `${k} nb-wing` }), svg('path', { d: 'M24 5q3-5 6 0q3-5 6 0', class: `${k} nb-wing` })),
+        dress?.garland ? h('span', { class: 'nb-garland', 'aria-hidden': 'true', style: `--nb-garland:${dress.garland}` }) : null,
+        // (Rolling hills behind, the lawn in front.)
+        svg('svg', { viewBox: '0 0 600 96', preserveAspectRatio: 'none', class: 'nb-land', 'aria-hidden': 'true' }, svg('path', { d: 'M0 60Q80 10 170 46Q250 0 340 44Q430 8 520 40Q570 24 600 44V96H0Z', class: `${k} nb-hill` }), svg('path', { d: 'M0 72Q75 66 150 72T300 72T450 72T600 72V96H0Z', class: `${k} nb-lawn` })),
+        h('div', { class: 'nb-row' }, buddies.map((b, i) => house(b, houseState(b, posts, now, seen), ctx.data.friendLooks || {}, i, ctx, (ctx.data.friendDays || []).find((x) => x.url === b.url)))),
+        h(
+          'div',
+          { class: 'nb-road', 'aria-hidden': 'true' },
+          h(
+            'span',
+            { class: 'nb-car' },
+            svg('svg', { viewBox: '0 0 60 34' }, svg('path', { d: 'M4 24v-6q0-4 5-5l6-1q5-9 13-9h8q8 0 12 9q9 1 9 7v5Z', class: `${k} nb-carbody` }), svg('path', { d: 'M19 12q4-6 9-6h2v6ZM33 6h3q5 0 8 6H33Z', class: `${k} nb-glass`, 'stroke-width': 2 }), svg('circle', { cx: 16, cy: 25, r: 5.5, class: `${k} nb-wheel` }), svg('circle', { cx: 44, cy: 25, r: 5.5, class: `${k} nb-wheel` }), svg('circle', { cx: 55, cy: 18, r: 2, class: 'nb-beam' }))
+          )
+        ),
+        falling ? h('span', { class: `nb-weather ${falling}`, 'aria-hidden': 'true' }, Array.from({ length: 14 }, (_, n) => h('i', { style: `left:${(n * 37 + 11) % 100}%; animation-delay:${-((n * 1.7) % 9)}s; animation-duration:${7 + (n % 5)}s` }))) : null
       )
     )
   );
@@ -232,7 +409,7 @@ export function friendsApp(ctx) {
     const pick = buddies.find((b) => b.url === only);
     const parts = [
       // (First of all: today's photos, on the line.)
-      only ? null : photoLine(ctx.data.friendDays || []),
+      only ? null : neighbourhood(ctx),
       buddies.length ? buddyList(buddies, redraw) : null,
       pick
         ? h(

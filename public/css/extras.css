@@ -176,33 +176,146 @@
 .visit-stop { min-height: 28px; padding: 2px 12px; border: 1px solid #1d4fb8; border-radius: 14px; background: #fff; color: #0d2a6b; font: inherit; font-weight: bold; cursor: pointer; }
 .mode-desktop .visit-bar { bottom: 48px; }
 
-/* Friends' photos of the day: polaroids pegged along a washing line, at the top of Friends.
-   Scroll along it; each sways a little. (See photoLine in friends-feed.js.) */
-.pl { margin: 0 0 12px; }
-.pl-title { margin: 0 4px 2px; font: bold 13px/1.3 Tahoma, Verdana, sans-serif; letter-spacing: .02em; opacity: .85; }
-.pl-scroll { overflow-x: auto; overflow-y: hidden; padding: 0 4px 10px; scroll-snap-type: x proximity; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
-.pl-line { --pl-gap: 18px; position: relative; display: flex; align-items: flex-start; gap: var(--pl-gap); width: max-content; min-width: 100%; padding: 14px 22px 4px; }
-/* The wire: a thin line that sags a little between each peg, end to end. */
-.pl-line::before { content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 26px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='142' height='26' viewBox='0 0 142 26' preserveAspectRatio='none'%3E%3Cpath d='M0 7Q71 22 142 7' fill='none' stroke='%23555' stroke-width='1.6' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") repeat-x 84px 0 / calc(124px + var(--pl-gap)) 26px; pointer-events: none; }
-/* (Dressed for the season or a festive day: room between the photos for the day's drawings.) */
-.pl-line.dressed { --pl-gap: 40px; }
-.pl-line.festive::after { content: ""; position: absolute; left: 0; right: 0; top: 7px; height: 15px; background: var(--pl-garland) repeat-x 0 0 / 72px 15px; opacity: .95; pointer-events: none; }
-/* Winter: snow settled along the top of the wire. */
-:root[data-season="winter"] .pl-line.dressed:not(.festive)::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='142' height='26' viewBox='0 0 142 26' preserveAspectRatio='none'%3E%3Cpath d='M0 5.2Q71 20.2 142 5.2' fill='none' stroke='%23fff' stroke-width='4.5' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M0 7Q71 22 142 7' fill='none' stroke='%23555' stroke-width='1.6' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E"); filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .15)); }
-.pl-pin { position: relative; z-index: 1; flex: none; display: grid; justify-items: center; width: 124px; scroll-snap-align: center; color: inherit; text-decoration: none; transform-origin: 50% 0; rotate: var(--tilt, 0deg); animation: pl-sway 5s ease-in-out var(--sway, 0s) infinite alternate; }
-/* A wooden peg, with its spring. */
-.pl-peg { position: relative; z-index: 2; width: 10px; height: 24px; margin-bottom: -8px; border-radius: 2px; background: linear-gradient(90deg, #b88a55, #e1bd8a 45%, #b88a55); box-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
-.pl-peg::after { content: ""; position: absolute; left: -2px; right: -2px; top: 9px; height: 3px; border-radius: 2px; background: #9aa1aa; }
-:root[data-season="winter"] .pl-line.dressed .pl-peg::before { content: ""; position: absolute; left: -2px; right: -2px; top: -3px; height: 5px; border-radius: 4px 4px 2px 2px; background: #fff; box-shadow: 0 1px 1px rgba(0, 0, 0, .12); }
-.pl-photo { display: grid; gap: 4px; padding: 6px 6px 8px; border-radius: 2px; background: #fdfdf9; box-shadow: 0 3px 8px rgba(0, 0, 0, .3); }
-.pl-photo img { display: block; width: 112px; height: 112px; object-fit: cover; background: #e6e2d6; }
-.pl-name { font: 15px/1.1 "Caveat", "Segoe Print", "Bradley Hand", cursive; color: #333; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pl-pin:hover, .pl-pin:focus-visible { animation-play-state: paused; rotate: 0deg; }
-.pl-pin:focus-visible .pl-photo { outline: 2px dotted currentColor; outline-offset: 3px; }
-/* The day's drawings, hanging between the photos. */
-.pl-charm { position: absolute; z-index: 1; top: 0; right: calc(var(--pl-gap) / -2 - 13px); width: 26px; height: 26px; background: no-repeat center / contain; transform-origin: 50% 0; rotate: var(--tilt, 0deg); animation: pl-sway 4s ease-in-out var(--sway, 0s) infinite alternate; }
-@keyframes pl-sway { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
-/* Found in the feed from the line: a moment's glow. */
+/* A friend's post, found in the feed from their picture-of-the-day sign: a moment's glow. */
 .pl-found { animation: pl-found 1.6s ease-out; }
 @keyframes pl-found { 0%, 30% { box-shadow: 0 0 0 3px #f6c431, 0 0 18px #f6c431; } 100% { box-shadow: none; } }
-@media (prefers-reduced-motion: reduce) { .pl-pin, .pl-charm, .pl-found { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .pl-found { animation: none !important; } }
+
+/* The neighbourhood: a cartoon street at the top of Friends, one house per friend. Thick ink
+   lines and wonky walls; houses breathe, blink and look about while their owner's online, and
+   snooze while they're not. Smoke if they posted today; the mailbox flag goes up for something
+   unread. The street dresses for the season and festive day through the page's own settings. */
+.nb { --nb-ink: #1c1436; margin: 0 0 14px; }
+.nb-title { margin: 0 4px 4px; font: bold 13px/1.3 Tahoma, Verdana, sans-serif; letter-spacing: .02em; opacity: .85; }
+.nb-scroll { overflow-x: auto; overflow-y: hidden; padding: 0 0 4px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+.nb-street { position: relative; width: max-content; min-width: 100%; box-sizing: border-box; overflow: hidden; border: 3px solid var(--nb-ink); border-radius: 16px; background: linear-gradient(#59c7ff, #bdeeff 70%); box-shadow: 4px 4px 0 var(--nb-ink); margin: 0 4px 4px 0; }
+.nb.night .nb-street { background: linear-gradient(#22164f, #4b3a94 75%); }
+.nb-k { stroke: var(--nb-ink); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+.nb-ink { fill: var(--nb-ink); }
+/* The sky: a sun or moon with a face, clouds drifting, birds by day, stars at night. */
+.nb-sun { position: absolute; left: 22px; top: 8px; width: 58px; height: 58px; }
+.nb-sunface { fill: #ffd23f; }
+.nb-rays { transform-origin: 32px 32px; animation: nb-spin 24s linear infinite; }
+.nb-moonface { fill: #fff3b8; }
+.nb-sun.moon { animation: nb-bob 4s ease-in-out infinite alternate; }
+.nb-clouds { position: absolute; left: 0; right: 0; top: 6px; height: 46px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='46' viewBox='0 0 260 46'%3E%3Cpath d='M130 36q-12 0-10-10q2-9 12-7q3-12 16-9q11-6 17 5q13-1 12 11q-1 10-12 10Z' fill='%23fff' stroke='%231c1436' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E") repeat-x 0 0 / 260px 46px; animation: nb-drift 50s linear infinite; pointer-events: none; }
+.nb-clouds.far { top: 34px; opacity: .7; background-size: 180px 32px; animation-duration: 80s; animation-direction: reverse; }
+.nb.night .nb-clouds { opacity: .25; }
+.nb.night .nb-clouds.far { opacity: .15; }
+.nb-stars { position: absolute; inset: 0 0 50% 0; display: none; background-image: radial-gradient(1.6px 1.6px at 12% 22%, #fff 99%, transparent), radial-gradient(1.3px 1.3px at 31% 54%, #fff 99%, transparent), radial-gradient(1.6px 1.6px at 47% 14%, #fff 99%, transparent), radial-gradient(1.3px 1.3px at 63% 40%, #fff 99%, transparent), radial-gradient(1.6px 1.6px at 78% 18%, #fff 99%, transparent), radial-gradient(1.3px 1.3px at 92% 48%, #fff 99%, transparent); animation: nb-twinkle 2.2s ease-in-out infinite alternate; }
+.nb.night .nb-stars { display: block; }
+.nb-birds { position: absolute; left: -50px; top: 30px; width: 40px; height: 12px; animation: nb-fly 26s linear infinite; }
+.nb-wing { fill: none; stroke-width: 2; }
+.nb-garland { position: absolute; left: 0; right: 0; top: 0; height: 15px; background: var(--nb-garland) repeat-x 0 0 / 72px 15px; pointer-events: none; z-index: 3; }
+/* The land: hills behind, the lawn the houses stand on. */
+.nb-land { position: absolute; left: 0; right: 0; bottom: 24px; width: 100%; height: 96px; }
+.nb-land .nb-k { vector-effect: non-scaling-stroke; }
+.nb-hill { fill: #7fd858; }
+.nb-lawn { fill: #4fbf3c; }
+.nb.night .nb-hill { fill: #2c6a4c; }
+.nb.night .nb-lawn { fill: #23583c; }
+:root[data-season="autumn"] .nb-hill { fill: #e9b23c; }
+:root[data-season="autumn"] .nb-lawn { fill: #c98f2a; }
+:root[data-season="winter"] .nb-hill { fill: #e6f1fb; }
+:root[data-season="winter"] .nb-lawn { fill: #fff; }
+:root[data-season="autumn"] .nb.night .nb-hill { fill: #8a6524; }
+:root[data-season="autumn"] .nb.night .nb-lawn { fill: #74521c; }
+:root[data-season="winter"] .nb.night .nb-hill { fill: #8f9cc4; }
+:root[data-season="winter"] .nb.night .nb-lawn { fill: #b4bfdd; }
+.nb-row { position: relative; z-index: 1; display: flex; align-items: flex-end; padding: 44px 14px 0; }
+/* A house, on its plot. */
+.nb-plot { position: relative; flex: none; width: 170px; height: 170px; }
+.nb-house { position: relative; display: block; width: 170px; height: 170px; color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+.nb-art { display: block; width: 170px; height: 170px; overflow: visible; }
+.nb-house:focus-visible { outline: 3px dashed var(--nb-ink); outline-offset: -4px; border-radius: 12px; }
+.nb-breathe { transform-box: fill-box; transform-origin: 50% 100%; animation: nb-breathe 1.7s ease-in-out infinite alternate; }
+.nb-house.asleep .nb-breathe { animation-duration: 3.4s; }
+.nb-house:hover .nb-breathe, .nb-house:focus-visible .nb-breathe { animation: nb-jiggle .45s ease-in-out infinite; }
+.nb-house:active .nb-breathe { animation: none; transform: scale(1.08, .86); }
+.nb-shadow { fill: rgba(0, 0, 0, .18); }
+.nb-path { fill: #f3d9a4; }
+.nb.night .nb-path { fill: #a8946e; }
+.nb-chimney { fill: #c2553f; }
+.nb-snow { fill: #fff; }
+.nb-line { fill: none; }
+.nb-door { fill: #7a4424; }
+.nb-knob { fill: #ffd23f; stroke: var(--nb-ink); stroke-width: 1; }
+.nb-pane { fill: #3b3560; }
+.nb-pane.lit { fill: #fff9c9; }
+.nb.night .nb-pane.lit { fill: #ffe45e; filter: drop-shadow(0 0 5px #ffe45e); }
+.nb-eye { transform-box: fill-box; transform-origin: center; animation: nb-blink 4.6s infinite; }
+.nb-pupil { animation: nb-look 7s ease-in-out infinite; }
+.nb-shut { fill: none; stroke: #c9c3f0; stroke-width: 2.5; }
+.nb-zz { font: bold 10px "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive; fill: #fff; stroke: var(--nb-ink); stroke-width: 2.5; paint-order: stroke; opacity: 0; animation: nb-zz 2.4s ease-in-out infinite; }
+.nb-bush { fill: #2fa84a; }
+:root[data-season="autumn"] .nb-bush { fill: #e0792a; }
+:root[data-season="winter"] .nb-bush { fill: #dff0ff; }
+.nb-bloom { fill: #ff7eb0; stroke: var(--nb-ink); stroke-width: 1; }
+.nb-wire { fill: none; stroke: var(--nb-ink); stroke-width: 1.5; }
+.nb-bulb { stroke: var(--nb-ink); stroke-width: 1.2; animation: nb-twinkle .9s steps(2) infinite alternate; }
+.nb-puff { fill: #fff; stroke-width: 2.5; opacity: 0; transform-box: fill-box; transform-origin: center; animation: nb-smoke 3.3s ease-out infinite; }
+/* By each house: a tree, a street lamp or (in winter) a snowman; sometimes a cat. */
+.nb-tree { transform-box: fill-box; transform-origin: 50% 100%; animation: nb-sway 3.2s ease-in-out infinite alternate; }
+.nb-trunk { fill: #8a5a34; }
+.nb-leaves { fill: #58c94a; }
+:root[data-season="spring"] .nb-leaves { fill: #ff9ecb; }
+:root[data-season="autumn"] .nb-leaves { fill: #ff8a2e; }
+:root[data-season="winter"] .nb-leaves { fill: #eef7ff; }
+.nb-post { fill: none; stroke-width: 4; }
+.nb-lamp { fill: #dfe6f2; }
+.nb-glow { fill: #ffe45e; opacity: 0; }
+.nb.night .nb-lamp { fill: #ffe45e; }
+.nb.night .nb-glow { opacity: .35; animation: nb-twinkle 2s ease-in-out infinite alternate; }
+.nb-snowball { fill: #fff; }
+.nb-fur { fill: #ff9a4d; }
+.nb-tail { fill: none; stroke: #ff9a4d; stroke-width: 4; transform-box: fill-box; transform-origin: 0 100%; animation: nb-sway 1.1s ease-in-out infinite alternate; }
+.nb-box { fill: #6cb6ff; }
+.nb-flag { fill: #ff4d4d; stroke-width: 2.5; }
+.nb-env { fill: #fff; }
+.nb-flap { fill: none; }
+.nb-letter { animation: nb-hop .7s ease-in-out infinite alternate; }
+.nb-name { position: absolute; left: 50%; bottom: 3px; z-index: 2; max-width: 120px; padding: 1px 9px 2px; border: 2.5px solid var(--nb-ink); border-radius: 9px; font: bold 14px/1.2 "Comic Sans MS", "Chalkboard SE", "Comic Neue", "Marker Felt", cursive; color: var(--nb-ink); background: #fff; box-shadow: 2px 2px 0 var(--nb-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; translate: -50% 0; rotate: var(--nb-tilt, 0deg); }
+/* Their picture of the day, on a sign in the garden. */
+.nb-sign { position: absolute; right: 0; bottom: 22px; z-index: 2; display: grid; justify-items: center; width: 56px; color: var(--nb-ink); text-decoration: none; transform-origin: 50% 100%; rotate: 3deg; animation: nb-sway 3.6s ease-in-out infinite alternate; }
+.nb-sign-say { margin-bottom: -2px; padding: 1px 4px; border: 2px solid var(--nb-ink); border-radius: 6px; background: #ffd23f; font: bold 8.5px/1.15 "Comic Sans MS", "Chalkboard SE", "Comic Neue", "Marker Felt", cursive; text-align: center; rotate: -4deg; position: relative; z-index: 1; }
+.nb-sign-pic { display: block; padding: 3px; border: 2.5px solid var(--nb-ink); border-radius: 6px; background: #fff; box-shadow: 2px 2px 0 var(--nb-ink); }
+.nb-sign-pic img { display: block; width: 42px; height: 42px; object-fit: cover; border-radius: 3px; background: #e6e2d6; }
+.nb-sign-post { width: 6px; height: 22px; border: 2.5px solid var(--nb-ink); border-top: 0; border-radius: 0 0 3px 3px; background: #b07a45; }
+.nb-sign:hover, .nb-sign:focus-visible { animation: none; rotate: 0deg; scale: 1.12; }
+.nb-sign:focus-visible .nb-sign-pic { outline: 3px dashed var(--nb-ink); outline-offset: 2px; }
+/* The road, and a little car that trundles along it. */
+.nb-road { position: relative; z-index: 1; height: 24px; border-top: 3px solid var(--nb-ink); background: linear-gradient(90deg, #fff 55%, transparent 0) 0 50% / 34px 3px repeat-x, #5d5a6e; }
+.nb.night .nb-road { background-color: #3a3750; }
+.nb-car { position: absolute; left: -70px; bottom: 3px; width: 46px; animation: nb-drive 19s linear infinite; }
+.nb-car svg { display: block; width: 46px; height: 26px; overflow: visible; animation: nb-hop .35s ease-in-out infinite alternate; }
+.nb-carbody { fill: #ff4d6d; }
+.nb-glass { fill: #c9f1ff; }
+.nb-wheel { fill: #2b2540; }
+.nb-beam { fill: #ffe45e; stroke: var(--nb-ink); stroke-width: 1.2; }
+.nb.night .nb-beam { filter: drop-shadow(5px 0 4px #ffe45e); }
+/* The season, falling: snow, leaves or petals. */
+.nb-weather { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.nb-weather i { position: absolute; top: -12px; width: 7px; height: 7px; border-radius: 50%; background: #fff; border: 1.5px solid var(--nb-ink); animation: nb-fall 8s linear infinite; }
+.nb-weather.leaf i { width: 9px; height: 6px; border-radius: 80% 10% 80% 10%; background: #ff8a2e; }
+.nb-weather.petal i { width: 7px; height: 5px; border-radius: 80% 10% 80% 10%; background: #ffb3d4; }
+@keyframes nb-breathe { from { transform: scale(1.03, .97); } to { transform: scale(.98, 1.03); } }
+@keyframes nb-jiggle { 0%, 100% { transform: rotate(-2.5deg) scale(1.04); } 50% { transform: rotate(2.5deg) scale(1.04); } }
+@keyframes nb-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.08); } }
+@keyframes nb-look { 0%, 30%, 100% { transform: translate(0, 0); } 38%, 55% { transform: translate(3px, 0); } 63%, 80% { transform: translate(-3px, 1px); } }
+@keyframes nb-zz { 0% { opacity: 0; transform: translate(0, 4px); } 40% { opacity: 1; } 100% { opacity: 0; transform: translate(5px, -8px); } }
+@keyframes nb-smoke { 0% { opacity: 0; transform: translate(0, 6px) scale(.5); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(14px, -30px) scale(1.5); } }
+@keyframes nb-sway { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+@keyframes nb-hop { from { transform: translateY(0); } to { transform: translateY(-2.5px); } }
+@keyframes nb-twinkle { from { opacity: .45; } to { opacity: 1; } }
+@keyframes nb-bob { from { transform: translateY(0) rotate(-4deg); } to { transform: translateY(-3px) rotate(4deg); } }
+@keyframes nb-spin { to { transform: rotate(360deg); } }
+@keyframes nb-drift { to { background-position-x: -260px; } }
+@keyframes nb-fly { from { transform: translate(0, 0); } 50% { transform: translate(50vw, -10px); } to { transform: translate(110vw, 4px); } }
+@keyframes nb-drive { from { left: -70px; } to { left: 100%; } }
+@keyframes nb-fall { from { transform: translate(0, 0) rotate(0); } to { transform: translate(26px, 250px) rotate(300deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .nb *, .nb *::before, .nb *::after { animation: none !important; }
+  .nb-puff { opacity: .9; }
+  .nb-zz { opacity: 1; }
+  .nb-weather, .nb-car, .nb-birds { display: none; }
+}

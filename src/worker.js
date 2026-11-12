@@ -981,9 +981,9 @@ async function dressForVisitors(env, data, viewer = 'everyone') {
   // (Their keepsake designs and place categories, for drawing their posts as on their site.)
   data.friendKeepsakes = pals.keepsakes || [];
   data.friendCategories = pals.categories || [];
-  // (No Friends tab when you don't show this viewer friends' posts; the friends list, if shown to
-  // them, is on About.)
-  data.friendsTab = !!pals.postsShown;
+  // (No Friends tab when this viewer may see neither your friends' posts nor your friends list:
+  // with only the list, the tab holds the neighbourhood and the buddies.)
+  data.friendsTab = !!pals.postsShown || pals.buddies.length > 0;
   // (Whether visitors can ask to hear when you post.)
   data.notifyPosts = (await push.settings(env).catch(() => ({}))).visitors === true;
   // (Today's photo of the day, from what this browser may see.)
