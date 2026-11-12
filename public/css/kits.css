@@ -1,0 +1,143 @@
+/* The computer themes' values. Each theme is one block of --k-* values (what they mean, and how
+   to add a theme: docs/THEME-KIT.md); kit.css turns them into every app's look. Anything a
+   theme needs beyond the values goes just under its block, as "extras". */
+
+/* ===== Beige box: grey bevels, navy title bars ===== */
+:root[data-sk-machine="beige"], :root[data-sk-machine="browser"] {
+  --k-font: 'Arimo', Arial, sans-serif; --k-head-font: 'Arimo', Arial, sans-serif; --k-hand-font: 'Arimo', Arial, sans-serif; --k-mono-font: 'Share Tech Mono', monospace;
+  --k-page: #c3c3c3; --k-ink: #111; --k-ink-soft: #555; --k-head-ink: #000080; --k-link: #0000ee;
+  --k-surface: #fff; --k-surface-ink: #111; --k-surface-2: #c3c3c3; --k-surface-2-ink: #111; --k-edge: 2px inset #dfdfdf; --k-radius: 0; --k-shadow: none;
+  --k-ctl-bg: #c3c3c3; --k-ctl-ink: #111; --k-ctl-edge: 2px outset #dfdfdf; --k-ctl-radius: 0; --k-ctl-on-bg: #000080; --k-ctl-on-ink: #fff;
+  --k-field-bg: #fff; --k-field-ink: #111; --k-field-edge: 2px inset #dfdfdf;
+  --k-win-bg: #c3c3c3; --k-win-edge: 2px outset #dfdfdf; --k-win-radius: 0; --k-win-pad: 2px; --k-win-shadow: 4px 4px 0 rgba(0, 0, 0, .35);
+  --k-bar-bg: linear-gradient(90deg, #000080, #1084d0); --k-bar-off-bg: linear-gradient(90deg, #808080, #b5b5b5); --k-bar-ink: #fff; --k-bar-font: 700 13px 'Arimo', Arial, sans-serif; --k-bar-gap: 2px;
+  --k-wbtn-bg: #c3c3c3; --k-wbtn-edge: 2px outset #dfdfdf; --k-glyph: #111; --k-body-edge: 2px inset #dfdfdf;
+  --k-taskbar-bg: #c3c3c3; --k-taskbar-edge: 2px solid #fff; --k-task-bg: #c3c3c3; --k-task-ink: #111; --k-task-edge: 2px outset #dfdfdf; --k-task-radius: 0; --k-task-font: 700 13px 'Arimo', Arial, sans-serif; --k-task-on-bg: #dcdcdc; --k-task-on-ink: #111; --k-task-on-edge: 2px inset #dfdfdf; --k-tray-bg: #c3c3c3; --k-tray-ink: #111; --k-tray-edge: 2px inset #dfdfdf;
+  --k-label-ink: #fff; --k-label-font: 12px 'Arimo', Arial, sans-serif; --k-label-shadow: 1px 1px 0 #000;
+}
+/* The old browser: a homepage of the time, pale tables, red headings and blue links. */
+:root[data-sk-machine="browser"] {
+  --k-font: 'Comic Neue', 'Comic Sans MS', sans-serif; --k-head-font: 'Comic Neue', 'Comic Sans MS', sans-serif; --k-hand-font: 'Comic Neue', 'Comic Sans MS', sans-serif;
+  --k-page: #c0c0c0; --k-head-ink: #cc0000; --k-surface: #ffffcc; --k-surface-ink: #000066; --k-edge: 3px ridge #9999ff; --k-surface-2: #000066; --k-surface-2-ink: #ffff66;
+  --k-label-ink: #ffff66; --k-label-font: 700 13px 'Comic Neue', 'Comic Sans MS', sans-serif;
+}
+
+/* ===== Breadbin: a blue screen, lavender panels, blocky words ===== */
+:root[data-sk-machine="breadbin"] {
+  --k-font: 'Pixelify Sans', monospace; --k-head-font: 'Press Start 2P', monospace; --k-hand-font: 'Pixelify Sans', monospace; --k-mono-font: 'Press Start 2P', monospace;
+  --k-page: #3e3393; --k-ink: #dcd7ff; --k-ink-soft: #b0a8f0; --k-head-ink: #2a2170; --k-link: #3e3393;
+  --k-surface: #dcd7ff; --k-surface-ink: #2a2170; --k-surface-2: #9b90ee; --k-surface-2-ink: #1d1660; --k-edge: 3px solid #2a2170; --k-radius: 0; --k-shadow: 4px 4px 0 #1d1660;
+  --k-ctl-bg: #3e3393; --k-ctl-ink: #dcd7ff; --k-ctl-edge: 2px solid #dcd7ff; --k-ctl-radius: 0; --k-ctl-on-bg: #dcd7ff; --k-ctl-on-ink: #3e3393;
+  --k-field-bg: #2a2170; --k-field-ink: #dcd7ff; --k-field-edge: 2px solid #dcd7ff;
+  --k-win-bg: #dcd7ff; --k-win-edge: 4px solid #dcd7ff; --k-win-radius: 0; --k-win-pad: 0; --k-win-shadow: none;
+  --k-bar-bg: #3e3393; --k-bar-off-bg: #5a50b0; --k-bar-ink: #dcd7ff; --k-bar-font: 10px 'Press Start 2P', monospace; --k-bar-gap: 4px;
+  --k-wbtn-bg: #dcd7ff; --k-wbtn-edge: 0; --k-glyph: #3e3393;
+  --k-taskbar-bg: #3e3393; --k-taskbar-edge: 4px solid #dcd7ff; --k-task-bg: transparent; --k-task-ink: #dcd7ff; --k-task-edge: 0; --k-task-radius: 0; --k-task-font: 10px 'Press Start 2P', monospace; --k-task-on-bg: #dcd7ff; --k-task-on-ink: #3e3393; --k-tray-bg: transparent; --k-tray-ink: #dcd7ff;
+  --k-label-ink: #dcd7ff; --k-label-font: 9px/1.5 'Press Start 2P', monospace;
+}
+
+/* ===== Blue desk: blue page, white panels, orange for what's chosen ===== */
+:root[data-sk-machine="bluedesk"] {
+  --k-font: 'Arimo', Arial, sans-serif; --k-head-font: 'Silkscreen', monospace; --k-hand-font: 'Arimo', Arial, sans-serif; --k-mono-font: 'Silkscreen', monospace;
+  --k-page: #0055aa; --k-ink: #fff; --k-ink-soft: #cfe0f5; --k-head-ink: #0055aa; --k-link: #0055aa;
+  --k-surface: #fff; --k-surface-ink: #000; --k-surface-2: #ff8800; --k-surface-2-ink: #000; --k-edge: 2px solid #000; --k-radius: 0; --k-shadow: none;
+  --k-ctl-bg: #fff; --k-ctl-ink: #0055aa; --k-ctl-edge: 2px solid #000; --k-ctl-radius: 0; --k-ctl-on-bg: #ff8800; --k-ctl-on-ink: #000;
+  --k-field-bg: #fff; --k-field-ink: #000; --k-field-edge: 2px solid #000;
+  --k-win-bg: #fff; --k-win-edge: 3px solid #fff; --k-win-outline: 2px solid #000; --k-win-radius: 0; --k-win-pad: 0; --k-win-shadow: none;
+  --k-bar-bg: repeating-linear-gradient(180deg, #0055aa 0 3px, #fff 3px 6px); --k-bar-off-bg: repeating-linear-gradient(180deg, #8a8a8a 0 3px, #fff 3px 6px); --k-bar-ink: #0055aa; --k-bar-font: 14px 'Silkscreen', monospace;
+  --k-wbtn-bg: #fff; --k-wbtn-edge: 3px solid #0055aa; --k-glyph: #0055aa; --k-close-order: -1;
+  --k-taskbar-bg: #fff; --k-taskbar-edge: 2px solid #000; --k-task-bg: #0055aa; --k-task-ink: #fff; --k-task-edge: 2px solid #000; --k-task-radius: 0; --k-task-font: 13px 'Silkscreen', monospace; --k-task-on-bg: #ff8800; --k-task-on-ink: #000; --k-tray-bg: #fff; --k-tray-ink: #0055aa; --k-tray-edge: 0;
+  --k-label-ink: #fff; --k-label-font: 12px 'Silkscreen', monospace;
+}
+/* Extras: the title sits on a white chip across the stripes. */
+:root[data-sk-machine="bluedesk"] .wbar :is(.xp-title-text, .gold, .shelf-bar-title, .marquee-board, .lcd, .hifi-dial, .al-bar-title, .pln-bar-title, .tv-channel, .droid-title), :root[data-sk-machine="bluedesk"] .mac-title > span:not(.lights) { flex: 0 1 auto !important; padding: 0 10px !important; background: #fff !important; margin-right: auto !important; }
+
+/* ===== Aurora glass: see-through frames, soft blue-white panels ===== */
+:root:is([data-sk-machine="glass"], [data-sk-machine="superbar"]) {
+  --k-font: 'Open Sans', sans-serif; --k-head-font: 'Open Sans', sans-serif; --k-hand-font: 'Open Sans', sans-serif; --k-mono-font: 'Share Tech Mono', monospace;
+  --k-page: #f4f8fb; --k-ink: #10202c; --k-ink-soft: #4a5b68; --k-head-ink: #0b3a6b; --k-link: #0b5cad;
+  --k-surface: #fff; --k-surface-ink: #10202c; --k-surface-2: linear-gradient(180deg, #f6fafd, #dfeaf3); --k-surface-2-ink: #10202c; --k-edge: 1px solid #c8d6e2; --k-radius: 6px; --k-shadow: 0 2px 8px rgba(0, 30, 60, .12);
+  --k-ctl-bg: linear-gradient(180deg, #fdfefe, #dce8f3); --k-ctl-ink: #10202c; --k-ctl-edge: 1px solid #8fa5b6; --k-ctl-radius: 3px; --k-ctl-on-bg: linear-gradient(180deg, #cfe6fb, #a6d0f5); --k-ctl-on-ink: #05141e;
+  --k-field-bg: #fff; --k-field-ink: #10202c; --k-field-edge: 1px solid #8fa5b6;
+  --k-win-bg: linear-gradient(180deg, rgba(255, 255, 255, .5), rgba(190, 225, 245, .32)); --k-win-edge: 1px solid rgba(255, 255, 255, .8); --k-win-outline: 1px solid rgba(0, 30, 50, .55); --k-win-radius: 9px; --k-win-pad: 0 8px 8px; --k-win-shadow: 0 18px 50px rgba(0, 0, 0, .5); --k-win-blur: blur(14px);
+  --k-bar-bg: transparent; --k-bar-h: 30px; --k-bar-ink: #05141e; --k-bar-off-ink: #3a4b58; --k-bar-glow: 0 0 10px #fff, 0 0 4px #fff; --k-bar-font: 400 14px 'Open Sans', sans-serif;
+  --k-wbtn-bg: linear-gradient(180deg, rgba(255, 255, 255, .75), rgba(200, 220, 235, .5)); --k-wbtn-edge: 1px solid rgba(0, 30, 50, .6); --k-wbtn-w: 28px; --k-close-bg: linear-gradient(180deg, #f0a090, #c8321e 50%, #a01a08); --k-close-w: 44px; --k-close-glyph: #fff; --k-glyph: #1d2b36; --k-body-edge: 1px solid rgba(0, 30, 50, .6);
+  --k-taskbar-bg: linear-gradient(180deg, rgba(90, 110, 125, .75), rgba(20, 30, 38, .88) 48%, rgba(0, 0, 0, .92) 52%, rgba(20, 30, 38, .9)); --k-taskbar-edge: 1px solid rgba(255, 255, 255, .45); --k-task-bg: linear-gradient(180deg, rgba(255, 255, 255, .25), rgba(255, 255, 255, .05)); --k-task-ink: #fff; --k-task-edge: 1px solid rgba(255, 255, 255, .35); --k-task-radius: 4px; --k-task-font: 13px 'Open Sans', sans-serif; --k-task-on-bg: linear-gradient(180deg, rgba(255, 255, 255, .45), rgba(255, 255, 255, .12)); --k-task-on-ink: #fff; --k-tray-bg: transparent; --k-tray-ink: #fff;
+  --k-label-ink: #fff; --k-label-font: 12px 'Open Sans', sans-serif; --k-label-shadow: 0 1px 3px rgba(0, 0, 0, .9);
+}
+/* ===== Superbar: the same glass, bluer, with big buttons ===== */
+:root[data-sk-machine="superbar"] {
+  --k-win-bg: linear-gradient(180deg, rgba(200, 228, 250, .6), rgba(160, 200, 235, .4)); --k-win-outline: 1px solid rgba(0, 20, 60, .6);
+  --k-surface-2: linear-gradient(180deg, #fafcff, #e3edf8); --k-ctl-on-bg: linear-gradient(180deg, #cfe6fb, #9fcaf2);
+  --k-taskbar-bg: linear-gradient(180deg, rgba(150, 200, 245, .55), rgba(40, 90, 160, .6)); --k-taskbar-edge: 1px solid rgba(255, 255, 255, .65); --k-taskbar-h: 48px; --k-task-bg: transparent; --k-task-edge: 1px solid transparent; --k-task-on-bg: linear-gradient(180deg, rgba(255, 255, 255, .55), rgba(255, 255, 255, .15));
+}
+/* Extras for both: the title bar's buttons hang from the top edge; a round, glowing orb for Explore. */
+:root:is([data-sk-machine="glass"], [data-sk-machine="superbar"]) .wbar { padding: 6px 0 0 6px !important; align-items: flex-start !important; }
+:root:is([data-sk-machine="glass"], [data-sk-machine="superbar"]) .wbtn { margin-top: -6px !important; border-top: 0 !important; }
+:root:is([data-sk-machine="glass"], [data-sk-machine="superbar"]) .taskbar .start-btn { flex: none; width: 48px; height: 48px !important; align-self: center; margin: -6px 10px 0 6px !important; padding: 0 !important; justify-content: center; border-radius: 50% !important; border: 2px solid #dff3ff !important; background: radial-gradient(circle at 40% 30%, #9be0ff, #1470b8 60%, #073a66) !important; box-shadow: 0 0 12px rgba(120, 220, 255, .9) !important; font-size: 0 !important; color: #fff !important; }
+:root[data-sk-machine="superbar"] .taskbar .task-btn { width: 64px; min-width: 64px; justify-content: center; overflow: hidden; font-size: 11px !important; }
+:root[data-sk-machine="glass"] .win-layer { right: 190px; }
+
+/* ===== Start tiles: flat, white pages, deep purple and bright tiles ===== */
+:root[data-sk-machine="tiles"] {
+  --k-font: 'Open Sans', sans-serif; --k-head-font: 'Open Sans', sans-serif; --k-hand-font: 'Open Sans', sans-serif; --k-mono-font: 'Share Tech Mono', monospace;
+  --k-page: #fff; --k-ink: #1b1b1f; --k-ink-soft: #5a5a66; --k-head-ink: #2a1150; --k-link: #0b63b5;
+  --k-surface: #f2f2f5; --k-surface-ink: #1b1b1f; --k-surface-2: #2a1150; --k-surface-2-ink: #fff; --k-edge: 0; --k-radius: 0; --k-shadow: none;
+  --k-ctl-bg: #2a1150; --k-ctl-ink: #fff; --k-ctl-edge: 0; --k-ctl-radius: 0; --k-ctl-on-bg: #00a3a3; --k-ctl-on-ink: #fff;
+  --k-field-bg: #fff; --k-field-ink: #1b1b1f; --k-field-edge: 2px solid #5a5a66;
+  --k-win-bg: #fff; --k-win-edge: 1px solid #2a1150; --k-win-radius: 0; --k-win-pad: 0; --k-win-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  --k-bar-bg: #2a1150; --k-bar-off-bg: #4a3a66; --k-bar-ink: #fff; --k-bar-font: 400 13px 'Open Sans', sans-serif;
+  --k-wbtn-bg: transparent; --k-wbtn-edge: 0; --k-wbtn-w: 34px; --k-wbtn-h: 26px; --k-glyph: #fff; --k-close-bg: #c42b1c;
+  --k-taskbar-bg: #1b1b1f; --k-taskbar-edge: 0; --k-task-bg: transparent; --k-task-ink: #fff; --k-task-edge: 0; --k-task-radius: 0; --k-task-font: 13px 'Open Sans', sans-serif; --k-task-on-bg: rgba(255, 255, 255, .15); --k-task-on-ink: #fff; --k-tray-bg: transparent; --k-tray-ink: #fff;
+  --k-label-ink: #fff; --k-label-font: 13px 'Open Sans', sans-serif;
+}
+:root[data-sk-machine="tiles"] .wbar { padding-right: 0 !important; }
+:root[data-sk-machine="tiles"] .taskbar .task-btn.active { box-shadow: inset 0 -3px 0 #00a3a3 !important; }
+
+/* ===== Tiling terminal: dark panes, one accent, monospace everywhere ===== */
+:root[data-sk-machine="terminal"] {
+  --k-font: 'Share Tech Mono', monospace; --k-head-font: 'Share Tech Mono', monospace; --k-hand-font: 'Share Tech Mono', monospace; --k-mono-font: 'Share Tech Mono', monospace;
+  --k-page: #1d1f21; --k-ink: #d3d6d4; --k-ink-soft: #8c918f; --k-head-ink: var(--sk-accent, #b5bd68); --k-link: #8abeb7;
+  --k-surface: #232629; --k-surface-ink: #d3d6d4; --k-surface-2: #2b2f33; --k-surface-2-ink: #f0c674; --k-edge: 1px solid #373b41; --k-radius: 0; --k-shadow: none;
+  --k-ctl-bg: #373b41; --k-ctl-ink: #d3d6d4; --k-ctl-edge: 0; --k-ctl-radius: 0; --k-ctl-on-bg: var(--sk-accent, #b5bd68); --k-ctl-on-ink: #111315;
+  --k-field-bg: #111315; --k-field-ink: #d3d6d4; --k-field-edge: 1px solid #4a4f57;
+  --k-win-bg: #1d1f21; --k-win-edge: 2px solid var(--sk-accent, #b5bd68); --k-win-radius: 0; --k-win-pad: 0; --k-win-shadow: none;
+  --k-bar-bg: var(--sk-accent, #b5bd68); --k-bar-off-bg: #373b41; --k-bar-h: 22px; --k-bar-ink: #111315; --k-bar-off-ink: #d3d6d4; --k-bar-font: 700 13px 'Share Tech Mono', monospace; --k-bar-icon: none;
+  --k-wbtn-bg: #111315; --k-wbtn-edge: 0; --k-wbtn-w: 12px; --k-wbtn-h: 12px; --k-wbtn-radius: 50%; --k-glyphs: none; --k-glyph: transparent;
+  --k-taskbar-bg: #1d1f21; --k-taskbar-edge: 0; --k-taskbar-h: 32px; --k-task-margin: 4px 2px; --k-task-bg: transparent; --k-task-ink: #d3d6d4; --k-task-edge: 0; --k-task-radius: 0; --k-task-font: 13px 'Share Tech Mono', monospace; --k-start-bg: var(--sk-accent, #b5bd68); --k-start-ink: #111315; --k-task-on-bg: #373b41; --k-task-on-ink: var(--sk-accent, #b5bd68); --k-tray-bg: transparent; --k-tray-ink: #d3d6d4;
+  --k-label-ink: var(--sk-accent, #b5bd68); --k-label-font: 16px 'Share Tech Mono', monospace;
+}
+/* Extras: folders you can ls, prompts before headings, and an unfocused pane goes grey. */
+:root[data-sk-machine="terminal"] .dw:not(.active) { border-color: #373b41 !important; }
+:root[data-sk-machine="terminal"] .desk-icon { min-height: 0; width: auto; flex-direction: row; padding: 2px 6px; }
+:root[data-sk-machine="terminal"] .desk-icon .dock-icon { display: none; }
+:root[data-sk-machine="terminal"] .desk-label::after { content: '/'; }
+:root[data-sk-machine="terminal"] .wbody :is(h1, h2, h3, .card-title)::before { content: '$ '; color: #81a2be; }
+
+/* ===== Teletext telly: black pages, blue bands, yellow and cyan words ===== */
+:root[data-sk-machine="teletext"] {
+  --k-font: 'VT323', monospace; --k-head-font: 'VT323', monospace; --k-hand-font: 'VT323', monospace; --k-mono-font: 'VT323', monospace; --k-zoom: 1.12;
+  --k-page: #000; --k-ink: #fff; --k-ink-soft: #00ffff; --k-head-ink: #ffff00; --k-link: #00ffff;
+  --k-surface: #000; --k-surface-ink: #fff; --k-surface-2: #0000d0; --k-surface-2-ink: #ffff00; --k-edge: 2px solid #0000d0; --k-radius: 0; --k-shadow: none;
+  --k-ctl-bg: #0000d0; --k-ctl-ink: #ffff00; --k-ctl-edge: 0; --k-ctl-radius: 0; --k-ctl-on-bg: #d00000; --k-ctl-on-ink: #fff;
+  --k-field-bg: #000; --k-field-ink: #fff; --k-field-edge: 2px solid #00ffff;
+  --k-win-bg: #000; --k-win-edge: 3px solid #0000d0; --k-win-radius: 0; --k-win-pad: 0; --k-win-shadow: none;
+  --k-bar-bg: #0000d0; --k-bar-off-bg: #20206a; --k-bar-ink: #ffff00; --k-bar-font: 22px/1 'VT323', monospace;
+  --k-wbtn-bg: #000; --k-wbtn-edge: 2px solid #ffff00; --k-glyph: #ffff00; --k-close-bg: #d00000; --k-close-glyph: #fff;
+  --k-taskbar-bg: #000; --k-taskbar-edge: 2px solid #0000d0; --k-task-bg: #0000d0; --k-task-ink: #ffff00; --k-task-edge: 0; --k-task-radius: 0; --k-task-font: 20px 'VT323', monospace; --k-task-on-bg: #d00000; --k-task-on-ink: #fff; --k-tray-bg: #000; --k-tray-ink: #00ffff;
+  --k-label-ink: #fff; --k-label-font: 20px/1 'VT323', monospace; --k-label-bg: #0000d0; --k-label-pad: 1px 5px;
+}
+
+/* ===== Hi-fi stack: dark wood and black, amber glow, brushed-metal buttons ===== */
+:root[data-sk-machine="hifi"] {
+  --k-font: 'Share Tech Mono', monospace; --k-head-font: 'Share Tech Mono', monospace; --k-hand-font: 'Share Tech Mono', monospace; --k-mono-font: 'Share Tech Mono', monospace;
+  --k-page: #2b2523; --k-ink: #f2ece4; --k-ink-soft: #b9ad9c; --k-head-ink: #ffb02e; --k-link: #ffb02e;
+  --k-surface: #1c1916; --k-surface-ink: #f2ece4; --k-surface-2: #0c0a06; --k-surface-2-ink: #ffb02e; --k-edge: 1px solid #4a403a; --k-radius: 3px; --k-shadow: none;
+  --k-ctl-bg: linear-gradient(180deg, #f4f4f6, #c4c4c9); --k-ctl-ink: #1c1c1f; --k-ctl-edge: 2px solid #1c1c1f; --k-ctl-radius: 3px; --k-ctl-on-bg: #ffb02e; --k-ctl-on-ink: #1c1c1f;
+  --k-field-bg: #0c0a06; --k-field-ink: #ffb02e; --k-field-edge: 1px solid #4a403a;
+  --k-win-bg: #2b2523; --k-win-edge: 3px solid #0d0d0f; --k-win-radius: 0; --k-win-pad: 0; --k-win-shadow: 0 12px 30px rgba(0, 0, 0, .5);
+  --k-bar-bg: #0c0a06; --k-bar-off-bg: #1c1916; --k-bar-ink: #ffb02e; --k-bar-off-ink: #a8742a; --k-bar-glow: 0 0 6px rgba(255, 176, 46, .6); --k-bar-font: 14px 'Share Tech Mono', monospace;
+  --k-wbtn-bg: #1c1c1f; --k-wbtn-edge: 1px solid rgba(255, 176, 46, .45); --k-glyph: #ffb02e;
+  --k-taskbar-bg: linear-gradient(180deg, #2b2523, #12100e); --k-taskbar-edge: 1px solid #4a403a; --k-task-bg: #0c0a06; --k-task-ink: #ffb02e; --k-task-edge: 1px solid rgba(255, 176, 46, .35); --k-task-radius: 3px; --k-task-font: 13px 'Share Tech Mono', monospace; --k-task-on-bg: #ffb02e; --k-task-on-ink: #0c0a06; --k-tray-bg: transparent; --k-tray-ink: #ffb02e;
+  --k-label-ink: #f2ece4; --k-label-font: 12px 'Share Tech Mono', monospace; --k-label-shadow: 0 1px 2px #000;
+}

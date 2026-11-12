@@ -810,8 +810,8 @@ export function parsePassport(text) {
 // (and the journal's leather), a wallpaper, a charm for the title bars and one for the pointer.
 // Anything missing or odd falls back to the built-in theme's own.
 // (These lists match public/js/skins.js.)
-export const THEMES = ['classic', 'bunny', 'matcha', 'chrome', 'arcade', 'lemonade', 'cherry', 'cloud', 'froggy', 'boba', 'peach', 'moonlit', 'neon', 'empire', 'rococo', 'disco', 'popart', 'memphis', 'leopard', 'opera', 'blocky', 'bigtop', 'wintry', 'springtime', 'summery', 'autumnal', 'seasonal', 'graphite', 'paper', 'slate', 'sand', 'olive', 'navy', 'mono'];
-export const THEME_WALLPAPERS = ['sky', 'bunnies', 'hearts', 'leaves', 'sparkles', 'stars', 'grid', 'daisies', 'cherries', 'clouds', 'lilypads', 'boba', 'bubbles', 'moons', 'gingham', 'checks', 'plain', 'dots', 'lines', 'graph', 'linen', 'contours', 'grain', 'sunset', 'laurels', 'rococo', 'disco', 'benday', 'memphis', 'leopard', 'damask', 'blocks', 'bigtop', 'frost', 'blossoms', 'seaside', 'harvest', 'emoji', 'picture'];
+export const THEMES = ['classic', 'bunny', 'matcha', 'chrome', 'arcade', 'lemonade', 'cherry', 'cloud', 'froggy', 'boba', 'peach', 'moonlit', 'neon', 'empire', 'rococo', 'disco', 'popart', 'memphis', 'leopard', 'opera', 'blocky', 'bigtop', 'wintry', 'springtime', 'summery', 'autumnal', 'seasonal', 'graphite', 'paper', 'slate', 'sand', 'olive', 'navy', 'mono', 'beigebox', 'breadbin', 'bluedesk', 'aurora', 'superbar', 'starttiles', 'tiling', 'teletext', 'hifi', 'homepage', 'flipphone', 'pocket'];
+export const THEME_WALLPAPERS = ['sky', 'bunnies', 'hearts', 'leaves', 'sparkles', 'stars', 'grid', 'daisies', 'cherries', 'clouds', 'lilypads', 'boba', 'bubbles', 'moons', 'gingham', 'checks', 'plain', 'dots', 'lines', 'graph', 'linen', 'contours', 'grain', 'sunset', 'laurels', 'rococo', 'disco', 'benday', 'memphis', 'leopard', 'damask', 'blocks', 'bigtop', 'frost', 'blossoms', 'seaside', 'harvest', 'solid', 'aurora', 'streaks', 'starfield', 'emoji', 'picture'];
 export const THEME_CHARMS = ['none', 'heart', 'ears', 'bunny', 'bow', 'leaf', 'sparkle', 'star', 'daisy', 'cherry', 'cloud', 'frog', 'boba', 'peach', 'moon', 'plain', 'dot', 'ring', 'diamond', 'plus', 'asterisk', 'chevron', 'rainbow', 'pal', 'twinkle', 'hearts', 'snowman', 'snowflake', 'mitten', 'santa', 'fir', 'present', 'tulip', 'chick', 'bee', 'sun', 'icelolly', 'watermelon', 'maple', 'acorn', 'pumpkin', 'jack', 'ghost', 'lantern', 'blossom', 'sabzeh', 'goldfish', 'fanous', 'mooncake', 'diya', 'splash', 'dreidel', 'pomegranate', 'marigold', 'papel', 'mask', 'crown', 'egg', 'shamrock', 'flowercrown', 'firework', 'tanzaku', 'dragonboat', 'zongzi', 'koinobori', 'palm', 'laurel', 'fan', 'discoball', 'boom', 'squiggle', 'lips', 'chandelier', 'pickaxe', 'tent'];
 export const EMOJI_LAYOUTS = ['grid', 'scatter', 'big'];
 // The rest of a theme's settings, each one of a few choices (these match public/js/skins.js).
@@ -849,7 +849,9 @@ export const THEME_OPTIONS = {
   card_corner: ['none', 'season', 'charm'],
   page: ['layered', 'pattern', 'wallpaper', 'tint', 'plain'],
   page_strength: ['medium', 'soft', 'strong'],
-  wall_time: ['day', 'still']
+  wall_time: ['day', 'still'],
+  machine: ['none', 'beige', 'breadbin', 'bluedesk', 'glass', 'superbar', 'tiles', 'terminal', 'teletext', 'hifi', 'browser'],
+  handset: ['none', 'flip', 'handheld']
 };
 export const THEME_HIDEABLE = ['lastpost', 'status', 'playing', 'countdown', 'nudge', 'clock', 'traystatus', 'fortune', 'photoday'];
 export const THEME_SECTIONS = ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'planner', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about'];

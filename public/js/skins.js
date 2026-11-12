@@ -114,7 +114,21 @@ export const SKINS = {
   sand: { name: 'Sand', vibe: 'Linen, stone and warm beige', main: '#a8916e', accent: '#7f8f6a', paper: '#f4efe5', leather: '#7a6446', wallpaper: 'linen', decoration: 'none', pointer: 'plain', title_font: 'elegant' },
   olive: { name: 'Olive', vibe: 'Olive, brass and maps', main: '#6b7148', accent: '#b0874f', paper: '#f0eee2', leather: '#4c5034', wallpaper: 'contours', decoration: 'none', pointer: 'plain', title_font: 'condensed', bars: 'flat' },
   navy: { name: 'Navy', vibe: 'Deep navy and brass', main: '#22345a', accent: '#b8975a', paper: '#eeebe3', leather: '#1c2740', wallpaper: 'grain', decoration: 'none', pointer: 'plain', title_font: 'elegant' },
-  mono: { name: 'Mono', vibe: 'Black, white and grey', main: '#3a3a3a', accent: '#8a8a8a', paper: '#f2f2f2', leather: '#2a2a2a', wallpaper: 'graph', decoration: 'none', pointer: 'plain', font: 'modern', title_font: 'condensed', bars: 'flat', corners: 'square', icons: 'mono' }
+  mono: { name: 'Mono', vibe: 'Black, white and grey', main: '#3a3a3a', accent: '#8a8a8a', paper: '#f2f2f2', leather: '#2a2a2a', wallpaper: 'graph', decoration: 'none', pointer: 'plain', font: 'modern', title_font: 'condensed', bars: 'flat', corners: 'square', icons: 'mono' },
+  // Old computers: the whole computer around your site on a big screen (speakers, knobs and all,
+  // see machine.js) and a phone of its own on a phone. Every drawing is the site's own.
+  beigebox: { name: 'Beige Box', vibe: 'A cream monitor with stereo speakers and a teal desktop', main: '#0f7b7b', accent: '#000080', paper: '#ece9d8', leather: '#6b5d45', wallpaper: 'solid', wall_time: 'still', decoration: 'none', pointer: 'plain', bars: 'flat', corners: 'square', machine: 'beige', handset: 'flip' },
+  breadbin: { name: 'Breadbin', vibe: 'Brown, tan and a rainbow stripe; READY.', main: '#3e3393', accent: '#9b90ee', paper: '#ecebff', leather: '#5a4632', wallpaper: 'solid', wall_time: 'still', decoration: 'none', pointer: 'plain', font: 'pixel', title_font: 'arcade', bars: 'flat', corners: 'square', sounds: 'chip', machine: 'breadbin', handset: 'handheld' },
+  bluedesk: { name: 'Blue Desk', vibe: 'Blue, white and orange, with striped title bars', main: '#0055aa', accent: '#ff8800', paper: '#f2f2f2', leather: '#22334d', wallpaper: 'solid', wall_time: 'still', decoration: 'none', pointer: 'plain', title_font: 'tiny', bars: 'stripes', corners: 'square', sounds: 'chip', machine: 'bluedesk', handset: 'handheld' },
+  aurora: { name: 'Aurora Glass', vibe: 'See-through glass, a glowing orb and gadgets', main: '#0a6a7c', accent: '#47c8ff', paper: '#eef5fa', leather: '#16384a', wallpaper: 'aurora', wall_time: 'still', decoration: 'none', pointer: 'plain', font: 'modern', title_font: 'modern', bars: 'glossy', corners: 'round', machine: 'glass', handset: 'flip' },
+  superbar: { name: 'Superbar', vibe: 'Blue glass, light streaks and big pinned buttons', main: '#2f6fd0', accent: '#7fd0ff', paper: '#f2f7fc', leather: '#1c3a66', wallpaper: 'streaks', wall_time: 'still', decoration: 'none', pointer: 'plain', font: 'modern', title_font: 'modern', bars: 'glossy', corners: 'round', machine: 'superbar', handset: 'flip' },
+  starttiles: { name: 'Start Tiles', vibe: 'Flat colour tiles on deep purple', main: '#2a1150', accent: '#00a3a3', paper: '#f4f4f6', leather: '#2a1150', wallpaper: 'solid', wall_time: 'still', decoration: 'none', pointer: 'plain', font: 'modern', title_font: 'modern', bars: 'flat', corners: 'square', machine: 'tiles', handset: 'none' },
+  tiling: { name: 'Tiling Terminal', vibe: 'Panes, a prompt and folders you can ls', main: '#26292c', accent: '#b5bd68', paper: '#eeeeec', leather: '#26292c', wallpaper: 'solid', wall_time: 'still', decoration: 'none', pointer: 'plain', font: 'mono', title_font: 'mono', bars: 'flat', corners: 'square', taskbar: 'top', sounds: 'chip', machine: 'terminal', handset: 'none' },
+  teletext: { name: 'Teletext Telly', vibe: 'A wood-cabinet telly showing page 100', main: '#1a1a1a', accent: '#ffd400', paper: '#f6f6f0', leather: '#5a3a1e', wallpaper: 'solid', wall_time: 'still', decoration: 'none', pointer: 'plain', title_font: 'terminal', bars: 'flat', corners: 'square', sounds: 'chip', machine: 'teletext', handset: 'flip' },
+  hifi: { name: 'Hi-fi Stack', vibe: 'Floor speakers, needle meters and an amber glow', main: '#2b2523', accent: '#ffb02e', paper: '#f4efe6', leather: '#3b2a1e', wallpaper: 'solid', wall_time: 'still', decoration: 'none', pointer: 'plain', title_font: 'mono', bars: 'flat', corners: 'square', machine: 'hifi', handset: 'flip' },
+  homepage: { name: 'Homepage', vibe: 'Starry tiles, a marquee and a webring of your friends', main: '#1b1b8f', accent: '#ff3dd2', paper: '#ffffff', leather: '#1b1b8f', wallpaper: 'starfield', wall_time: 'still', decoration: 'star', pointer: 'star', font: 'comic', title_font: 'comic', name_style: 'rainbow', trail: 'sparkles', bars: 'glossy', machine: 'browser', handset: 'flip' },
+  flipphone: { name: 'Flip Phone', vibe: 'A beige clamshell with five little lights', main: '#7a6f55', accent: '#ff9a1f', paper: '#f6f2e6', leather: '#6b5d45', wallpaper: 'dots', decoration: 'none', pointer: 'plain', font: 'modern', title_font: 'tiny', bars: 'flat', corners: 'round', sounds: 'chip', machine: 'beige', handset: 'flip' },
+  pocket: { name: 'Pocket Handheld', vibe: 'Four shades of green and a direction pad', main: '#306230', accent: '#8bac0f', paper: '#e8f0c8', leather: '#306230', wallpaper: 'graph', decoration: 'none', pointer: 'plain', font: 'pixel', title_font: 'arcade', bars: 'pixel', corners: 'square', sounds: 'chip', machine: 'breadbin', handset: 'handheld' },
 };
 
 // How the themes are grouped in the back office (each group folds away).
@@ -122,7 +136,8 @@ export const SKIN_GROUPS = [
   ['Cute and colourful', ['classic', 'bunny', 'matcha', 'chrome', 'arcade', 'lemonade', 'cherry', 'cloud', 'froggy', 'boba', 'peach', 'moonlit']],
   ['Bold and loud', ['neon', 'empire', 'rococo', 'disco', 'popart', 'memphis', 'leopard', 'opera', 'blocky', 'bigtop']],
   ['The four seasons', ['seasonal', 'wintry', 'springtime', 'summery', 'autumnal']],
-  ['Calm and neutral', ['graphite', 'paper', 'slate', 'sand', 'olive', 'navy', 'mono']]
+  ['Calm and neutral', ['graphite', 'paper', 'slate', 'sand', 'olive', 'navy', 'mono']],
+  ['Old computers', ['beigebox', 'breadbin', 'bluedesk', 'aurora', 'superbar', 'starttiles', 'tiling', 'teletext', 'hifi', 'homepage', 'flipphone', 'pocket']]
 ];
 
 // ---------- little drawings: charms for title bars, pointers and patterns ----------
@@ -420,6 +435,11 @@ export const WALLPAPERS = {
       return `${pile} 0 100% / 170px 46px repeat-x, ${leaves} 0 0 / 150px 150px, linear-gradient(180deg, ${mix(t.accent, '#ffffff', 0.55)}, ${mix(t.paper, '#f6d7b0', 0.5)} 75%)`;
     }
   },
+  // For the old computers: a plain screen colour, a glowing aurora, light streaks and a starry homepage.
+  solid: { name: 'Screen colour', css: (t) => t.main },
+  aurora: { name: 'Aurora', dark: true, css: (t, c) => `radial-gradient(900px 420px at 18% 78%, ${mix(t.accent, '#7dffbe', 0.5)}bb, transparent 70%), radial-gradient(800px 380px at 70% 30%, ${t.accent}aa, transparent 70%), radial-gradient(600px 300px at 95% 90%, ${mix(t.accent, '#c8ff96', 0.6)}77, transparent 70%), linear-gradient(160deg, ${mix(t.main, '#000000', 0.55)}, ${t.main} 55%, ${mix(t.main, '#000000', 0.7)})` },
+  streaks: { name: 'Light streaks', css: (t, c) => `linear-gradient(128deg, transparent 30%, rgba(255,255,255,.22) 33%, transparent 37%, transparent 50%, rgba(255,255,255,.16) 55%, transparent 62%, transparent 70%, rgba(255,255,255,.26) 72%, transparent 75%), radial-gradient(700px 500px at 62% 48%, ${mix(t.accent, '#ffffff', 0.3)}, transparent 70%), linear-gradient(180deg, ${mix(t.main, '#000000', 0.35)}, ${t.main} 55%, ${mix(t.main, '#000000', 0.45)})` },
+  starfield: { name: 'Starfield', tile: 96, dark: true, ground: () => '#06061a', draw: (c) => `<g fill="#fff"><circle cx="8" cy="12" r="1.2"/><circle cx="40" cy="6" r=".8"/><circle cx="70" cy="22" r="1.4"/><circle cx="22" cy="44" r=".7"/><circle cx="58" cy="52" r="1"/><circle cx="88" cy="70" r=".8"/><circle cx="12" cy="80" r="1"/><circle cx="46" cy="88" r=".6"/></g><g fill="#ffe14d"><path d="M80 40l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z"/><path d="M30 66l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z"/></g>` },
   emoji: { name: 'Emoji' },
   picture: { name: 'My own picture' }
 };
@@ -742,7 +762,11 @@ export const OPTIONS = {
   page_strength: { name: 'How much it shows', choices: { medium: 'Medium', soft: 'Softly', strong: 'Strongly' } },
   // Like the sky: morning light, the day as it is, a golden evening and night with stars (always
   // night in dark mode). For every wallpaper, your own picture and emoji too.
-  wall_time: { name: 'The wallpaper through the day', choices: { day: 'Follows the time of day', still: 'Stays the same all day' } }
+  wall_time: { name: 'The wallpaper through the day', choices: { day: 'Follows the time of day', still: 'Stays the same all day' } },
+  // The whole computer around the site on a big screen, and a phone of its own on a phone (see
+  // machine.js). The colours stay the theme's; these bring the case, the speakers and the knobs.
+  machine: { name: 'Computer (on a big screen)', choices: { none: 'None: the site fills the screen', beige: 'Beige box: a cream monitor and stereo speakers', breadbin: 'Breadbin: round speakers and a rainbow stripe', bluedesk: 'Blue desk: a slim black monitor', glass: 'Aurora glass: glass windows and gadgets', superbar: 'Superbar: blue glass and big buttons', tiles: 'Start tiles: flat colour tiles', terminal: 'Tiling terminal: panes and a prompt', teletext: 'Teletext telly: a wood-cabinet TV', hifi: 'Hi-fi stack: speakers, meters and a volume knob', browser: 'Old browser: a marquee and a webring' } },
+  handset: { name: 'Phone (on a phone)', choices: { none: 'None: the site fills the phone', flip: 'Flip phone: opens with a flip, five little lights', handheld: 'Handheld: four shades of green and a direction pad' } }
 };
 
 // ---------- the seasons, and festive days ----------
