@@ -57,12 +57,12 @@ await test('picking a theme previews it live, and saving puts it on the site', a
   const page = await adminPage();
   await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
-  eq(await page.locator('.tm-card').count(), 34, 'thirty-four themes');
+  eq(await page.locator('.tm-card').count(), 46, 'forty-six themes');
   // In groups that fold away: only the current theme's group is open to start with.
-  eq(await page.locator('.tm-gbox').count(), 4, 'four groups');
-  eq(await page.locator('.tm-gbox').evaluateAll((g) => g.map((x) => [x.querySelector('summary b').textContent, x.open])), [['Cute and colourful', true], ['Bold and loud', false], ['The four seasons', false], ['Calm and neutral', false]], 'only the current one open');
+  eq(await page.locator('.tm-gbox').count(), 5, 'five groups');
+  eq(await page.locator('.tm-gbox').evaluateAll((g) => g.map((x) => [x.querySelector('summary b').textContent, x.open])), [['Cute and colourful', true], ['Bold and loud', false], ['The four seasons', false], ['Calm and neutral', false], ['Old computers', false]], 'only the current one open');
   eq(await page.locator('.tm-card:visible').count(), 12, 'the others folded away');
-  assert(await page.locator('.tm-gbox:not([open]) .tm-swatches i').count() === 22, 'each folded group shows a strip of its colours');
+  assert(await page.locator('.tm-gbox:not([open]) .tm-swatches i').count() === 34, 'each folded group shows a strip of its colours');
   await page.locator('.tm-card', { hasText: 'Bunny Hop' }).click();
   const frame = page.frameLocator('.tm-frame');
   await page.waitForFunction(() => document.querySelector('.tm-frame')?.contentDocument?.documentElement.dataset.skin === 'bunny', null, { timeout: 15000 });
@@ -1028,7 +1028,7 @@ await test('bold and loud themes: each with its own wallpaper, charm and touches
   await page.locator('.tm-gbox summary', { hasText: 'Bold and loud' }).click();
   await page.locator('.tm-card', { hasText: 'Block World' }).click();
   await page.waitForFunction(() => document.querySelector('.tm-frame')?.contentDocument?.documentElement.dataset.skin === 'blocky', null, { timeout: 15000 });
-  eq(await page.locator('.tm-gbox').evaluateAll((g) => g.map((x) => x.open)), [false, true, false, false], 'its group stays open, the old one folds');
+  eq(await page.locator('.tm-gbox').evaluateAll((g) => g.map((x) => x.open)), [false, true, false, false, false], 'its group stays open, the old one folds');
   await page.locator('button', { hasText: 'Save the theme' }).click();
   await page.waitForFunction(() => !document.querySelector('.tm-savebar.unsaved'));
   eq((await publicData()).theme, { theme: 'blocky' }, 'saved');
@@ -1464,6 +1464,75 @@ await test('seasons and festive days settle on every card design, your own too',
     eq(festive.filter((c) => c.snow).length, 0, 'and no winter snow');
   }, { desktop: false, reducedMotion: 'reduce' });
   for (let i = 0; i < designs.length; i++) await delFile(`thoughts/season-${String(i).padStart(2, '0')}.md`);
+  await putFile('theme.md', '---\ntheme: classic\n---\n');
+});
+
+await test('old computers: a case with knobs that work, every app in the computer\'s look, and phones of their own', async () => {
+  const skins = await import('../public/js/skins.js');
+  const css = fs.readFileSync(new URL('../public/css/kits.css', import.meta.url), 'utf8');
+  // Every computer fills in every value the kit needs (docs/THEME-KIT.md).
+  const NEED = ['font', 'page', 'ink', 'head-ink', 'link', 'surface', 'surface-ink', 'surface-2', 'surface-2-ink', 'edge', 'ctl-bg', 'ctl-ink', 'ctl-edge', 'ctl-on-bg', 'ctl-on-ink', 'field-bg', 'field-ink', 'field-edge', 'win-bg', 'win-edge', 'bar-bg', 'bar-ink', 'bar-font', 'wbtn-bg', 'glyph', 'taskbar-bg', 'task-bg', 'task-ink', 'task-on-bg', 'tray-ink', 'label-ink', 'label-font'];
+  for (const id of Object.keys(skins.OPTIONS.machine.choices).filter((x) => x !== 'none')) {
+    const blocks = [...css.matchAll(/:root([^{]*)\{([^}]*)\}/g)].filter(([, sel]) => sel.includes(`"${id}"`)).map(([, , body]) => body).join(';');
+    const missing = NEED.filter((k) => !new RegExp(`--k-${k}:`).test(blocks));
+    eq(missing, [], `${id}: every value`);
+  }
+  // Every old-computer theme brings one.
+  for (const id of skins.SKIN_GROUPS.find(([name]) => name === 'Old computers')[1]) assert(skins.SKINS[id].machine || skins.SKINS[id].handset, `${id}: a computer or a phone`);
+  await putFile('theme.md', '---\ntheme: beigebox\n---\n');
+  await site(async (pg) => {
+    await pg.waitForSelector('.mc-body .mc-spk');
+    eq(await pg.evaluate(() => document.documentElement.dataset.skMachine), 'beige', 'the machine');
+    // The desktop sits inside the screen.
+    const box = await pg.locator('.desktop').boundingBox();
+    assert(box.x > 100 && box.width < 1100, 'inside the case: ' + JSON.stringify(box));
+    // Volume: a real slider that turns the site's sounds down.
+    const knob = pg.getByRole('slider', { name: 'Volume' });
+    await knob.focus();
+    for (let i = 0; i < 4; i++) await pg.keyboard.press('ArrowDown');
+    eq(await knob.getAttribute('aria-valuenow'), '6', 'turned down');
+    eq(await pg.evaluate(() => localStorage.getItem('volume')), '0.6', 'and the sounds follow');
+    // A sound makes the speakers pulse.
+    await pg.evaluate(() => document.dispatchEvent(new CustomEvent('sitesound', { detail: { level: 0.8 } })));
+    assert(await pg.evaluate(() => document.documentElement.classList.contains('mc-playing')), 'the speakers move');
+    // Every app takes the computer's look, inside as well as its window.
+    for (const app of ['journal', 'album', 'guestbook', 'atlas']) {
+      await pg.evaluate((a) => (location.hash = '#/' + a), app);
+      await pg.waitForSelector(`.dw[data-app="${app}"] .wbody`);
+      const look = await pg.evaluate((a) => {
+        const w = document.querySelector(`.dw[data-app="${a}"]`);
+        const cs = (el) => getComputedStyle(el);
+        return { bar: cs(w.querySelector('.wbar')).backgroundImage.includes('gradient'), page: cs(w.querySelector('.wbody')).backgroundColor, font: cs(w.querySelector('.wbody')).fontFamily.split(',')[0].replace(/"/g, '') };
+      }, app);
+      eq(look, { bar: true, page: 'rgb(195, 195, 195)', font: 'Arimo' }, `${app}: in the beige box's look`);
+    }
+  }, { desktop: true });
+  // The old browser's webring: only friends the list already shows (none here, so none at all).
+  await putFile('theme.md', '---\ntheme: homepage\n---\n');
+  await site(async (pg) => {
+    await pg.waitForSelector('.mc-browser-top .mc-marquee');
+    eq(await pg.locator('.mc-ring').count(), 0, 'no friends shown, no webring');
+    await pg.getByRole('button', { name: 'Home' }).first().waitFor();
+  }, { desktop: true });
+  // Phones: a flip phone that opens, and a handheld with its controls.
+  await putFile('theme.md', '---\ntheme: flipphone\n---\n');
+  await site(async (pg) => {
+    const lid = pg.locator('.mc-lid');
+    await lid.waitFor();
+    await lid.click();
+    await pg.waitForSelector('.mc-closed', { state: 'detached' });
+    eq(await pg.locator('.mc-flipbar .mc-dome').count(), 5, 'five little lights');
+    await pg.reload();
+    await pg.waitForSelector('.mc-flipbar');
+    eq(await pg.locator('.mc-closed').count(), 0, 'opened once a visit');
+  });
+  await putFile('theme.md', '---\ntheme: pocket\n---\n');
+  await site(async (pg) => {
+    await pg.waitForSelector('.mc-hand');
+    eq(await pg.locator('.mc-hand button').count(), 8, 'a direction pad, A, B, Select and Start');
+    await pg.getByRole('button', { name: 'Start' }).click();
+    eq(await pg.evaluate(() => location.hash), '#/', 'Start: home');
+  });
   await putFile('theme.md', '---\ntheme: classic\n---\n');
 });
 

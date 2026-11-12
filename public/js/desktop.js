@@ -128,8 +128,9 @@ export function startDesktop(root, data) {
     const title = appTitle(id, data);
     const f = frame(id, title);
     const [dw, dh] = APPS[id].size;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight - 44;
+    // (The desktop's own size: an old computer's case can leave it smaller than the window.)
+    const vw = desk.clientWidth || window.innerWidth;
+    const vh = (desk.clientHeight || window.innerHeight) - 44;
     const width = Math.min(dw, vw - 140);
     const height = Math.min(dh, vh - 40);
     const left = Math.min(130 + (cascade % 6) * 36 + (id === 'journal' ? 260 : 0), Math.max(110, vw - width - 20));
@@ -210,8 +211,8 @@ export function startDesktop(root, data) {
         moving = true;
         el.classList.add('dragging');
       }
-      const maxX = window.innerWidth - 80;
-      const maxY = window.innerHeight - 44 - 30;
+      const maxX = (desk.clientWidth || window.innerWidth) - 80;
+      const maxY = (desk.clientHeight || window.innerHeight) - 44 - 30;
       el.style.left = Math.max(-el.offsetWidth + 80, Math.min(maxX, ox + dx)) + 'px';
       el.style.top = Math.max(0, Math.min(maxY, oy + dy)) + 'px';
     });
@@ -275,8 +276,9 @@ export function startDesktop(root, data) {
     hideStart();
     buildContext();
     ctxMenu.hidden = false;
-    const x = Math.min(e.clientX, window.innerWidth - 250);
-    const y = Math.min(e.clientY, window.innerHeight - 220);
+    const box = desk.getBoundingClientRect();
+    const x = Math.min(e.clientX - box.left, box.width - 250);
+    const y = Math.min(e.clientY - box.top, box.height - 220);
     Object.assign(ctxMenu.style, { left: x + 'px', top: y + 'px' });
   });
   document.addEventListener('click', (e) => {

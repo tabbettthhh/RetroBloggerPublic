@@ -14,6 +14,7 @@ import { ownerArrival, openOwnerDoor, ownerHooks } from './owner-door.js';
 import { reactionsSetting } from './reactions.js';
 import { knowFriends } from './extras.js';
 import { refreshSite } from './refresh.js';
+import { startMachine } from './machine.js';
 
 const root = document.getElementById('app');
 const desktopQuery = window.matchMedia('(min-width: 900px) and (pointer: fine)');
@@ -296,6 +297,8 @@ async function main() {
 
   if (isDesktop) {
     const desk = startDesktop(root, data);
+    // (An old computer's case around the desktop, if the theme has one.)
+    startMachine(data, true);
     let welcomed = hasEntered();
     const showWelcome = () => {
       const w = renderWelcome(data, () => {
@@ -343,6 +346,8 @@ async function main() {
       show();
     });
     show();
+    // (A flip phone or a handheld, if the theme has one.)
+    startMachine(data, false);
     if (!previewing)
       keepFresh(data, () => {
         if (parseRoute(location.hash).app !== 'welcome' && hasEntered() && nearTop(root)) show();
