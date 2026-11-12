@@ -90,7 +90,7 @@ const WHO = [
 ];
 const SEEN_BY = [
   ['listSeen', 'Your friends list', 'Your buddies’ names and how they are, on your About page and at the top of Friends, linking to their sites.', { everyone: 'Everyone sees your friends list now.', friends: 'Your friends list is for your friends now (when they visit).', me: 'Your friends list is just for you now.' }],
-  ['postsSeen', 'Their posts', 'The Friends tab, with your friends’ posts and their photos of the day. (Their posts only go in your Home for you.)', { everyone: 'Everyone sees your friends’ posts now.', friends: 'Your friends’ posts are for your friends now (when they visit).', me: 'Your friends’ posts are just for you now.' }]
+  ['postsSeen', 'Their posts', 'The Friends tab, with your friends’ posts and their pictures of the day. (Their posts only go in your Home for you.)', { everyone: 'Everyone sees your friends’ posts now.', friends: 'Your friends’ posts are for your friends now (when they visit).', me: 'Your friends’ posts are just for you now.' }]
 ];
 function privacyBox(ctx, d, act) {
   const post = (body, msg) => act(() => ctx.api('friends/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }), msg);

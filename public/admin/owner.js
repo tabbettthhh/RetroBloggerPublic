@@ -1145,12 +1145,9 @@ function decorateFriendPosts() {
     // A ♥, a ☆, a smile or any emoji, as on your own posts: it goes to their site.
     const reacts = reactionRow(p, null, 'ff-react', { key: `react:friend:${key}|${id}`, send: (ask) => kit.reactToFriend(key, id, ask) });
     if (reacts) el.append(reacts);
-    // Their own site, as their friend: everything that's for friends, not just what visitors see.
-    // (In place of the plain link, which only shows what any visitor sees.)
+    // (No plain link to it, which only shows what any visitor sees: their house in the
+    // neighbourhood, on Friends, takes you to their site as their friend.)
     el.querySelector(':scope > .ff-open, .ff-open')?.remove();
-    const whose = f?.owner ? f.owner.split(/\s+/)[0] + '’s site' : 'their site';
-    const visit = btn('Visit ↗', 'okit-visit', () => visitFriend(key, p.url), { title: `Visit ${whose} as a friend`, 'aria-label': `Visit ${whose} as a friend` });
-    el.append(h('div', { class: 'okit-visit-row' }, visit));
     el.append(h('div', { class: 'okit-talk-wrap' }, h('div', { class: 'okit-row' }, toggle, note, add), panel));
   }
 }
@@ -1207,8 +1204,8 @@ function decorateFriendsTab() {
   feed.dataset.okit = '1';
   const seen = owner.friendsMine?.postsSeen || 'me';
   const say = { everyone: '👁 Everyone can see this tab and your friends’ posts on it.', friends: '👥 Your friends can see this tab when they visit your site. Other visitors don’t see your friends’ posts.', me: '🔒 Only you can see this tab: your visitors don’t see your friends’ posts.' };
-  // (After the photos-of-the-day line, which always comes first.)
-  const line = feed.querySelector(':scope > .pl');
+  // (After the neighbourhood, which always comes first.)
+  const line = feed.querySelector(':scope > .nb');
   (line ? (n) => line.after(n) : (n) => feed.prepend(n))(h('div', { class: 'okit-note' }, h('span', null, say[seen] || say.me), btn('Change', '', () => controlPanel('friends'))));
 }
 // A dot on Friends, wherever it's shown (the menus, the desktop, the dock), while there are

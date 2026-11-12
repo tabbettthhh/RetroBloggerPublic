@@ -491,5 +491,3 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 .pv-all-label { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 10px 0 8px; font-size: 13px; font-weight: bold; cursor: pointer; }
 .pv-all-label input { width: 18px; height: 18px; margin: 0; }
 /* Visiting a friend's site as their friend. */
-.okit-visit-row { margin: 8px 12px 0; }
-.okit-visit { min-height: 30px; }
