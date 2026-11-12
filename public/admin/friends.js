@@ -126,6 +126,12 @@ function privacyBox(ctx, d, act) {
     ),
     h(
       'label',
+      { class: 'row check fr-knocks' },
+      h('input', { type: 'checkbox', checked: d.knocks !== false, onchange: (e) => post({ knocks: e.target.checked }, e.target.checked ? 'Friends can knock on your door.' : 'Friends can’t knock on your door now.') }),
+      h('span', null, h('b', null, 'Let friends knock on my door. '), h('small', null, 'A friend can knock on your house in their neighbourhood: signed in here, your site gives a little shake and says who it was. Nobody else ever sees it.'))
+    ),
+    h(
+      'label',
       { class: 'row check fr-home' },
       h('input', { type: 'checkbox', checked: d.inHome !== false, onchange: (e) => post({ inHome: e.target.checked }, e.target.checked ? 'Their posts are in your Home now (only you see them there).' : 'Their posts are only on Friends now.') }),
       h('span', null, h('b', null, 'Mix their posts into my Home. '), h('small', null, 'Only you see them there, while you’re signed in: each as it looks on their site, with who it’s from on top.'))

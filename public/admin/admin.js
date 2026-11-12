@@ -4493,6 +4493,8 @@ export const kit = {
   mail: {
     list: () => api('mail'),
     send: (friend, text, replyTo = '') => api('mail/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friend, text, reply_to: replyTo }) }),
+    knocksHeard: () => api('mail/knocks-heard', { method: 'POST' }),
+    knock: (friend) => api('mail/knock', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friend }) }),
     read: (ids, read = true) => api('mail/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, read }) }),
     remove: (id) => api('mail/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
   },

@@ -491,3 +491,14 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 .pv-all-label { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 10px 0 8px; font-size: 13px; font-weight: bold; cursor: pointer; }
 .pv-all-label input { width: 18px; height: 18px; margin: 0; }
 /* Visiting a friend's site as their friend. */
+
+/* A knock at the door: your knocker by each friend's house; the notice, and the shake, when one knocks on yours. */
+.okit-knock { position: absolute; left: 2px; top: 62px; z-index: 3; width: 30px; height: 30px; min-height: 0; padding: 0; border: 2.5px solid #1c1436; border-radius: 50%; background: #fff; box-shadow: 2px 2px 0 #1c1436; font-size: 15px; line-height: 1; cursor: pointer; }
+.okit-knock:hover, .okit-knock:focus-visible { background: #ffd23f; rotate: -12deg; }
+.okit-knock:active { translate: 1px 1px; box-shadow: 1px 1px 0 #1c1436; }
+.okit-mailpop:not(.okit-knockpop) ~ .okit-knockpop.balloon { right: 372px; }
+.okit-mailpop:not(.okit-knockpop) ~ .okit-knockpop.banner { top: calc(150px + env(safe-area-inset-top)); }
+.okit-knockpop .mp-env { font-size: 16px; background: #ffd23f; }
+.okit-shook body { animation: okit-shake .6s ease-in-out 1; }
+@keyframes okit-shake { 0%, 100% { translate: 0 0; } 15% { translate: -7px 2px; } 30% { translate: 7px -2px; } 45% { translate: -5px 1px; } 60% { translate: 5px -1px; } 75% { translate: -3px 0; } 90% { translate: 2px 0; } }
+@media (prefers-reduced-motion: reduce) { .okit-shook body { animation: none; } }

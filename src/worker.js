@@ -1658,6 +1658,8 @@ async function adminApi(request, env, url, ctx) {
       // Notes between friends: your mail, sending one, marking them read, deleting one.
       if (p === 'mail' && m === 'GET') return json(await friends.myMail(env));
       if (p === 'mail/send' && m === 'POST') return json(await friends.sendNote(env, String(body.friend || ''), body));
+      if (p === 'mail/knocks-heard' && m === 'POST') return json(await friends.clearKnocks(env));
+      if (p === 'mail/knock' && m === 'POST') return json(await friends.sendKnock(env, String(body.friend || '')));
       if (p === 'mail/read' && m === 'POST') return json(await friends.markMail(env, body.ids === 'all' ? 'all' : body.ids || [], body.read !== false));
       if (p === 'mail/delete' && m === 'POST') return json(await friends.deleteNote(env, String(body.id || '')));
       // A comment from you on a friend's post (it goes on at their site, straight away).
