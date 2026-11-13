@@ -241,6 +241,7 @@ await test('the Status page: mood, while you’re away, fortunes, and a countdow
     await p.locator('.okit-menu button', { hasText: 'Control Panel' }).click();
     await p.locator('.cp-item[data-cp="status"]').click();
     await p.waitForSelector('.emo-picker[aria-label="Mood"]');
+    eq(await p.locator('.chip-btn', { hasText: 'Automatic' }).getAttribute('aria-pressed'), 'true', 'Automatic, to start with');
     await p.locator('.emo-picker[aria-label="Mood"] [aria-label="Cool"]').click();
     const plan = p.locator('select[aria-label="From your planner"]');
     eq((await plan.locator('option').allInnerTexts()).length, 2, 'only what’s still to do, with a date ahead');

@@ -23,7 +23,8 @@ const ago = (ts) => {
   return d < 8 ? `${d} day${d === 1 ? '' : 's'} ago` : new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 // Reachable lately, and not set to offline: they go in "Online".
-const isOn = (f) => f.cache?.feed && f.cache.ok !== false && f.cache.feed.presence !== 'offline' && Date.now() - (f.cache.at || 0) < 3 * HOUR;
+// (One whose status is automatic: only while they've been on their site lately.)
+const isOn = (f) => f.cache?.feed && f.cache.ok !== false && f.cache.feed.presence !== 'offline' && Date.now() - (f.cache.at || 0) < 3 * HOUR && (!f.cache.feed.presence_auto || Date.now() - (f.cache.feed.seen || 0) < 25 * 60 * 1000);
 
 // ---------- the page ----------
 
