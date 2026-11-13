@@ -221,6 +221,18 @@ await test('your site has a Friends tab with their posts if you choose (to start
   assert(!(await overview()).files.some((f) => f.key.startsWith('data/_')), 'friends files never listed');
 });
 
+await test('decorating your plot in the village: kept in village.md, and seen round your house on friends’ islands', async () => {
+  const out = await post_(api2, 'village', { items: [{ id: 'fountain', x: 40, y: 20 }, { id: 'nonsense', x: 1, y: 1 }, { id: 'bench', x: 9999, y: -9999 }] });
+  eq(out.items, [{ id: 'fountain', x: 40, y: 20 }, { id: 'bench', x: 360, y: -230 }], 'only real things, kept on the plot');
+  const md = await (await fetch(`${BASE2}/admin/api/file?key=village.md`)).text();
+  assert(/^- fountain 40 20$/m.test(md), 'a line in village.md');
+  await post_(api, 'friends/refresh');
+  eq((await publicData()).buddies[0].village?.[0]?.id, 'fountain', 'in their feed, and on your buddy list');
+  await post_(api2, 'village', { items: [] });
+  await post_(api, 'friends/refresh');
+  eq((await publicData()).buddies[0].village, undefined, 'gone once they clear it');
+});
+
 await test('the arcade: a friend’s best score on your high-score table, where your friends list is shown', async () => {
   await post_(api2, 'arcade', { score: 777 });
   await post_(api, 'friends/refresh');
@@ -580,7 +592,7 @@ await test('a knock at the door: a friend knocks from their neighbourhood; your 
     await p.goto(BASE + '/?owner=1#/friends');
     const knocker = p.locator('.nb-plot .okit-knock').first();
     await knocker.waitFor();
-    assert(await p.locator('.nb-plot .okit-slip').count(), 'a note to slip through each friend’s door');
+    await p.locator('.nb-plot .okit-slip').first().waitFor({ timeout: 5000 }); // (a note to slip through each friend’s door)
     await knocker.click();
     await p.waitForFunction(() => /Knock knock! Lina/.test(document.querySelector('.okit-toast')?.textContent || ''));
     assert(await p.locator('.nb-plot.nb-knocked').count(), 'her house jumps');

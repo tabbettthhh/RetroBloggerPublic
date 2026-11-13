@@ -4,7 +4,7 @@
 import { Zip, ZipDeflate, ZipPassThrough } from 'fflate';
 import { stripImage, UnsupportedImage, CLEAN_TYPES } from './strip.js';
 import { parseVisited } from './content.js';
-import { TYPES, buildPost, isVisible, photoOfDay, postLevel, siteLevel, privacyOf, PRIVACY, todayIn, parseFortunes, parseArcade, arcadeText, ARCADE_MAX, POSTCARD_FRONTS, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parsePlanner, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
+import { TYPES, buildPost, isVisible, photoOfDay, postLevel, siteLevel, privacyOf, PRIVACY, todayIn, parseFortunes, parseArcade, arcadeText, ARCADE_MAX, parseVillage, villageText, POSTCARD_FRONTS, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parsePlanner, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
 import { adminCheck } from './auth.js';
 import { VERSION } from './version.js';
 import * as friends from './friends.js';
@@ -601,7 +601,7 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
   const parsedComments = commentKeys.map((k) => extras[k]?.value).filter(Boolean);
   const guestbook = parsedGuestbook.map(({ key, ...rest }) => rest).sort((a, b) => String(b.date).localeCompare(String(a.date)));
 
-  const [wishText, travelText, logText, catText, passportText, keepText, themeText, highlightsText, plannerText, fortuneText, arcadeFile] = await Promise.all([
+  const [wishText, travelText, logText, catText, passportText, keepText, themeText, highlightsText, plannerText, fortuneText, arcadeFile, villageFile] = await Promise.all([
     readText(env, 'wishlist.md'),
     readText(env, 'travel.md'),
     readText(env, 'status-log.md'),
@@ -612,7 +612,8 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
     readText(env, 'highlights.md'),
     readText(env, 'planner.md'),
     readText(env, 'fortunes.md'),
-    readText(env, 'arcade.md')
+    readText(env, 'arcade.md'),
+    readText(env, 'village.md')
   ]);
   // The highlights cabinet: only posts that are on the site (the back office sees them all), and
   // each of them marked with its place on its shelf, for the rosette on its card.
@@ -713,6 +714,8 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
     fortunes: parseFortunes(fortuneText),
     // Your best scores in the arcade.
     arcade: parseArcade(arcadeFile),
+    // How you've decorated your plot in the village.
+    village: parseVillage(villageFile),
     generated: now
   };
   // (Not sent anywhere: for the back office, which lists every file and comment, and to know
@@ -985,6 +988,7 @@ async function dressForVisitors(env, data, viewer = 'everyone') {
   data.site = (({ privacy, ...rest }) => rest)(data.site);
   // (Nor are your arcade scores on a site with nothing posted for this viewer: it's just quiet.)
   if (!data.posts.length) data.arcade = { scores: [] };
+  if (!data.posts.length) data.village = { items: [] };
   data.buddies = pals.buddies;
   data.friendDays = pals.days || [];
   data.friendPosts = pals.posts;
@@ -1415,6 +1419,13 @@ async function adminApi(request, env, url, ctx) {
   }
 
   // A game in the arcade, just played: kept in arcade.md if it's one of your best.
+  // Your plot in the village, decorated: kept in village.md.
+  if (p === 'village' && m === 'POST') {
+    const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
+    await env.CONTENT.put('village.md', villageText(body.items), { httpMetadata: { contentType: 'text/markdown; charset=utf-8' } });
+    await bumpVersion(env);
+    return json({ ok: true, items: parseVillage(villageText(body.items)).items });
+  }
   if (p === 'arcade' && m === 'POST') {
     const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
     const score = Math.floor(Number(body.score));

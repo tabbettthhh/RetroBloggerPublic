@@ -703,6 +703,37 @@ export function parseFortunes(text) {
   return out;
 }
 
+// village.md: how you've decorated your plot in the village, one thing per line: what it is, then
+// how far across and down from your front door (in the village's little steps): "- fountain 60 -40".
+// The village writes it when you decorate; take a line out to take that thing away.
+export const VILLAGE_ITEMS = ['bench', 'fountain', 'flowerbed', 'hammock', 'kennel', 'birdbath', 'lantern', 'swing', 'beehive', 'scarecrow', 'pumpkins', 'washing', 'picnic', 'telescope', 'bike', 'snowman', 'mushrooms', 'well'];
+export const VILLAGE_MAX = 20;
+const VILLAGE_REACH = { x: 360, up: 230, down: 170 };
+export function tidyVillage(list) {
+  const out = [];
+  for (const it of Array.isArray(list) ? list : []) {
+    if (out.length >= VILLAGE_MAX) break;
+    const id = String(it?.id || '');
+    const x = Math.round(Number(it?.x));
+    const y = Math.round(Number(it?.y));
+    if (!VILLAGE_ITEMS.includes(id) || !Number.isFinite(x) || !Number.isFinite(y)) continue;
+    out.push({ id, x: Math.max(-VILLAGE_REACH.x, Math.min(VILLAGE_REACH.x, x)), y: Math.max(-VILLAGE_REACH.up, Math.min(VILLAGE_REACH.down, y)) });
+  }
+  return out;
+}
+export function parseVillage(text) {
+  const items = [];
+  for (const line of String(splitFrontMatter(text || '').body).split(/\r?\n/)) {
+    const m = /^\s*[-*]\s*([a-z]+)\s+(-?\d{1,4})\s+(-?\d{1,4})\s*$/.exec(line);
+    if (m) items.push({ id: m[1], x: +m[2], y: +m[3] });
+  }
+  return { items: tidyVillage(items) };
+}
+export function villageText(items) {
+  const lines = tidyVillage(items).map((it) => `- ${it.id} ${it.x} ${it.y}`);
+  return `# My plot in the village\n\nWhat's on your plot, and where (across and down from your front door). Take a line out to take that thing away.\n\n${lines.join('\n')}\n`;
+}
+
 // arcade.md: your best scores in the arcade, best first, one per line: "- 4210 · 2026-11-13".
 // The site writes it when you set a new score; take a line out to take that score off.
 export const ARCADE_KEEP = 10;
