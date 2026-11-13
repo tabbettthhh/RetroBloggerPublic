@@ -1207,12 +1207,19 @@ function decorateFriendsTab() {
   // (After the neighbourhood, which always comes first.)
   const line = feed.querySelector(':scope > .nb');
   (line ? (n) => line.after(n) : (n) => feed.prepend(n))(h('div', { class: 'okit-note' }, h('span', null, say[seen] || say.me), btn('Change', '', () => controlPanel('friends'))));
-  // A knocker by each friend's house in the neighbourhood.
-  for (const plot of feed.querySelectorAll('.nb-plot[data-house]')) {
+  decorateHouses(feed);
+  // (A stroll to another street and back draws the houses again: they get theirs again too.)
+  new MutationObserver(() => decorateHouses(feed)).observe(feed, { childList: true, subtree: true });
+}
+// A knocker by each friend's house in the neighbourhood, and a note to slip through the door.
+function decorateHouses(feed) {
+  for (const plot of feed.querySelectorAll('.nb-plot[data-house]:not([data-okit])')) {
+    plot.dataset.okit = '1';
     const b = (owner.friendsMine?.buddies || []).find((x) => x.url === plot.dataset.house);
     if (!b?.key) continue;
     const who = (b.owner || b.name || 'them').split(/\s+/)[0];
     plot.append(btn('✊', 'okit-knock', () => knockOn(b.key, who), { title: `Knock on ${who}’s door`, 'aria-label': `Knock on ${who}’s door` }));
+    plot.append(btn('✉', 'okit-knock okit-slip', () => sendTo(b.key), { title: `Send ${who} a note`, 'aria-label': `Send ${who} a note` }));
   }
 }
 // Knocking on a friend's door: three raps, their house jumps, and their site hears of it (signed
@@ -1570,18 +1577,6 @@ function drawMail(body, quietly = false) {
   fit();
   new ResizeObserver(fit).observe(wrap);
 }
-// On the Friends tab: a note to each buddy.
-function decorateBuddies() {
-  for (const li of document.querySelectorAll('.ff-buddies li:not([data-okit])')) {
-    li.dataset.okit = '1';
-    const name = li.querySelector('.ff-buddy b')?.textContent || 'them';
-    const b = (owner.friendsMine?.buddies || []).find((x) => x.owner === name || x.name === name);
-    if (!b?.key) continue;
-    li.classList.add('okit-buddy');
-    li.append(btn('✉', 'okit-note-btn', () => sendTo(b.key), { 'aria-label': `Send ${name} a note`, title: `Send ${name} a note` }));
-  }
-}
-
 // ---------- notifications ----------
 // Control Panel › Notifications: this device on or off, what you're told about, a test, your
 // other devices, and whether visitors may ask to hear when you post. (See src/push.js.)
@@ -1873,7 +1868,6 @@ function decorate() {
     decorateFriendPosts();
     decorateStartHead();
     decorateFriendsTab();
-    decorateBuddies();
     friendsDot();
   } finally {
     decorating = false;

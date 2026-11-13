@@ -183,9 +183,9 @@
    snooze while they're not. Smoke if they posted today; the mailbox flag goes up for something
    unread. The street dresses for the season and festive day through the page's own settings. */
 .nb { --nb-ink: #1c1436; margin: 0 0 14px; }
-.nb-title { margin: 0 4px 4px; font: bold 13px/1.3 Tahoma, Verdana, sans-serif; letter-spacing: .02em; opacity: .85; }
+.nb-title { margin: 0 4px 4px; font-weight: bold; font-size: 13px; line-height: 1.3; letter-spacing: .02em; opacity: .85; }
 .nb-scroll { overflow-x: auto; overflow-y: hidden; padding: 0 0 4px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
-.nb-street { position: relative; width: max-content; min-width: 100%; box-sizing: border-box; overflow: hidden; border: 3px solid var(--nb-ink); border-radius: 16px; background: linear-gradient(#59c7ff, #bdeeff 70%); box-shadow: 4px 4px 0 var(--nb-ink); margin: 0 4px 4px 0; }
+.nb-street { position: relative; width: max-content; min-width: 100%; box-sizing: border-box; overflow: hidden; border: 3px solid var(--nb-ink); border-radius: 16px; background: linear-gradient(#59c7ff, #bdeeff 70%); background: linear-gradient(color-mix(in srgb, var(--sk-main, #59c7ff) 28%, #59c7ff), color-mix(in srgb, var(--sk-accent, #bdeeff) 14%, #bdeeff) 70%); box-shadow: 4px 4px 0 var(--nb-ink); margin: 0 4px 4px 0; }
 .nb.night .nb-street { background: linear-gradient(#22164f, #4b3a94 75%); }
 .nb-k { stroke: var(--nb-ink); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
 .nb-ink { fill: var(--nb-ink); }
@@ -339,6 +339,24 @@
 @keyframes nb-drift { to { background-position-x: -260px; } }
 @keyframes nb-fly { from { transform: translate(0, 0); } 50% { transform: translate(50vw, -10px); } to { transform: translate(110vw, 4px); } }
 @keyframes nb-drive { from { left: -70px; } to { left: 100%; } }
+/* The street follows your theme and the day. A festive day tints the sky in its colours; an
+   evening one (lanterns, lamps, bonfires) brings dusk; a few bring fireworks. */
+.nb.fest:not(.night) .nb-street { background: linear-gradient(color-mix(in srgb, var(--nb-f1, #59c7ff) 30%, #59c7ff), color-mix(in srgb, var(--nb-f2, #bdeeff) 22%, #fff4d6) 72%); }
+.nb.dusk .nb-street { background: linear-gradient(#2a1e5c, color-mix(in srgb, var(--nb-f1, #f08a5d) 45%, #6a3f8f) 58%, color-mix(in srgb, var(--nb-f2, #f6c431) 55%, #f08a5d)); }
+.nb.dusk .nb-stars { inset: 0 0 62% 0; }
+.nb-fest-door { transform-box: fill-box; transform-origin: 50% 0; animation: nb-swing 2.6s ease-in-out infinite alternate; }
+.nb-fest-prop { transform-box: fill-box; transform-origin: 50% 100%; animation: nb-sway 2.8s ease-in-out infinite alternate; }
+@keyframes nb-swing { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } }
+.nb-fireworks { position: absolute; inset: 0 0 45% 0; z-index: 0; pointer-events: none; }
+.nb-fireworks i { position: absolute; width: 6px; height: 6px; border-radius: 50%; color: var(--c); opacity: 0; box-shadow: 0 -22px 0 1px currentColor, 0 22px 0 1px currentColor, -22px 0 0 1px currentColor, 22px 0 0 1px currentColor, 15px 15px 0 0 currentColor, -15px 15px 0 0 currentColor, 15px -15px 0 0 currentColor, -15px -15px 0 0 currentColor, 0 0 0 2px #fff; animation: nb-burst 2.8s ease-out infinite; }
+@keyframes nb-burst { 0% { opacity: 0; transform: scale(.1); } 12% { opacity: 1; } 55% { opacity: 1; transform: scale(1); } 75%, 100% { opacity: 0; transform: scale(1.15) translateY(6px); } }
+.nb-weather.confetti i { width: 6px; height: 8px; border-radius: 1px; border-width: 1px; background: #ff4fa3; }
+.nb-weather.star i { width: 9px; height: 9px; border: 0; border-radius: 0; background: #ffd23f; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.nb-weather.spark i { width: 5px; height: 5px; border: 0; background: #ffe45e; box-shadow: 0 0 6px 2px rgba(255, 210, 60, .8); }
+/* A friend's status, in a speech bubble over their house. */
+.nb-say { position: absolute; left: 50%; top: -6px; z-index: 3; max-width: 150px; translate: -50% 0; padding: 3px 8px; border: 2.5px solid var(--nb-ink); border-radius: 12px; background: #fff; color: var(--nb-ink); font: bold 11px/1.25 "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive; text-align: center; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; box-shadow: 2px 2px 0 var(--nb-ink); pointer-events: none; }
+.nb-say img { width: 13px; height: 13px; vertical-align: -2px; }
+@media (prefers-reduced-motion: reduce) { .nb-fireworks, .nb-fest-door, .nb-fest-prop { animation: none; } .nb-fireworks i { animation: none; opacity: .8; } }
 @keyframes nb-fall { from { transform: translate(0, 0) rotate(0); } to { transform: translate(26px, 250px) rotate(300deg); } }
 @media (prefers-reduced-motion: reduce) {
   .nb *, .nb *::before, .nb *::after { animation: none !important; }

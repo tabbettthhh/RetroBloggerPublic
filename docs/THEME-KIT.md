@@ -50,6 +50,7 @@ Every value starts `--k-`. Borders and edges are a whole `border` value (like `2
 | `bar-bg`, `bar-ink`, `bar-font` (font), `bar-h` | The title bar. Optional: `bar-off-bg`, `bar-off-ink` (a window not in front), `bar-glow`, `bar-gap`, `bar-icon` (`none` hides the little icon). |
 | `wbtn-bg`, `wbtn-edge`, `wbtn-w`, `wbtn-h`, `wbtn-radius`, `glyph` | Minimise, maximise and close. Optional: `close-bg`, `close-glyph`, `close-w`, `close-order` (`-1` puts close first), `glyphs` (`none` for plain dots). |
 | `body-edge` | Optional: a line around what's inside. |
+| `scene-filter`, `scene-night` | Optional: a filter over the Friends neighbourhood's cartoon street (like `saturate(.6)`), and `1` to put it at night, for a dark theme. |
 | `map-filter`, `shelf` | Optional: a tint for the atlas's map (for dark computers), and the colour of the bookshelf's planks. |
 
 ### The desktop

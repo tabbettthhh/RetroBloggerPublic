@@ -431,9 +431,6 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 .ml.narrow .ml-back-row { display: block; }
 
 /* A note to a buddy, from the Friends tab. */
-.okit-buddy { display: flex; align-items: center; }
-.okit-buddy > .ff-buddy { flex: 1; min-width: 0; }
-.okit-note-btn { min-height: 28px; margin-right: 6px; padding: 0 9px; }
 
 :root[data-theme="dark"] .okit-mailpop { color: #eee; background: #3a3a28; border-color: #6a6a4a; }
 :root[data-theme="dark"] .okit-mailpop.balloon::after { background: #3a3a28; border-color: #6a6a4a; }
@@ -494,6 +491,7 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 
 /* A knock at the door: your knocker by each friend's house; the notice, and the shake, when one knocks on yours. */
 .okit-knock { position: absolute; left: 2px; top: 62px; z-index: 3; width: 30px; height: 30px; min-height: 0; padding: 0; border: 2.5px solid #1c1436; border-radius: 50%; background: #fff; box-shadow: 2px 2px 0 #1c1436; font-size: 15px; line-height: 1; cursor: pointer; }
+.okit-slip { top: 98px; }
 .okit-knock:hover, .okit-knock:focus-visible { background: #ffd23f; rotate: -12deg; }
 .okit-knock:active { translate: 1px 1px; box-shadow: 1px 1px 0 #1c1436; }
 .okit-mailpop:not(.okit-knockpop) ~ .okit-knockpop.balloon { right: 372px; }
