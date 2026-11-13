@@ -13,6 +13,7 @@ import { ownerHooks } from './owner-door.js';
 import { sound } from './sound.js';
 import { activeSkin, lookOf, drawingUrl, festiveScenery, FESTIVE_COLOURS } from './skins.js';
 import { houseState } from './neighbourhood.js';
+import { openVillage } from './village.js';
 
 // Each friend's post cards (from their site), by the name their posts use.
 let looks = {};
@@ -111,7 +112,7 @@ function house(b, st, looks, i, ctx, day) {
   const season = root.season;
   const hsh = hashOf(b.url || b.name);
   const S = SHAPES[hsh % SHAPES.length];
-  const lk = looks[(ctx.data.friendPosts || []).find((p) => p.friend?.url === b.url)?.friend?.look] || {};
+  const lk = b.colours || looks[(ctx.data.friendPosts || []).find((p) => p.friend?.url === b.url)?.friend?.look] || {};
   const wall = hexOk(lk.main) || WALLS[hsh % WALLS.length];
   const roof = hexOk(lk.accent) || ROOFS[(hsh >>> 3) % ROOFS.length];
   const name = (b.owner || b.name || '').split(/\s+/)[0];
@@ -323,7 +324,24 @@ function neighbourhood(ctx) {
     section.setAttribute('aria-label', here ? `${firstName(here)}’s street` : 'Your neighbourhood');
     section.replaceChildren(titleOf(here), sceneOf(ctx, here, go, arrive));
   };
-  const titleOf = (here) =>
+  // (Top right: the whole neighbourhood, opened out as a village.)
+  const opener = (here) =>
+    h('button', {
+      type: 'button',
+      class: 'nb-open',
+      title: 'Open the whole neighbourhood',
+      onclick: () => {
+        const night = isNight();
+        const dress = lineDress();
+        openVillage({ title: here ? `${firstName(here)}’s neighbourhood` : 'Your neighbourhood', seed: here?.url || homeUrl(), houses: plotsFor(ctx, here, go).map((el) => ({ el })), me: here ? null : myHouse(ctx), dress, night: night || !!dress?.evening, dusk: !night && !!dress?.evening });
+      }
+    }, '⤢ Open');
+  const titleOf = (here) => {
+    const row = titleBar(here);
+    row.append(opener(here));
+    return row;
+  };
+  const titleBar = (here) =>
     here
       ? h(
           'div',
@@ -338,6 +356,47 @@ function neighbourhood(ctx) {
   return section;
 }
 
+// The houses on a street: your friends' on yours (lights, smoke, mail, their status), or, on
+// another street, just lights (your own house there takes you home).
+function plotsFor(ctx, here, go) {
+  const buddies = ctx.data.buddies || [];
+  const posts = ctx.data.friendPosts || [];
+  const now = new Date();
+  dressNow = lineDress();
+  if (!here) {
+    const seen = readSeen();
+    const came = arrivals(buddies);
+    if (came.size) setTimeout(() => sound.creak?.(), 350);
+    return buddies.map((b, i) => house(b, { ...houseState(b, posts, now, seen), arrived: came.has(b.url) }, ctx.data.friendLooks || {}, i, ctx, (ctx.data.friendDays || []).find((x) => x.url === b.url)));
+  }
+  return here.houses.map((b, i) => {
+    const you = b.url === homeUrl();
+    const el = house(you ? { ...b, owner: 'You', name: 'You' } : b, { lit: b.presence !== 'offline' }, {}, i, ctx, null);
+    if (you) {
+      const a = el.querySelector('.nb-house');
+      a.removeAttribute('target');
+      a.href = '#/friends';
+      a.title = a.ariaLabel = 'Your house: back to your street';
+      a.addEventListener('click', (e) => (e.preventDefault(), e.stopImmediatePropagation(), document.querySelector('.vl')?.remove(), go(homeUrl())), { capture: true });
+    }
+    return el;
+  });
+}
+
+// Your own house, for the middle of the village: in your theme's colours, with your status.
+function myHouse(ctx) {
+  const site = ctx.data.site || {};
+  const t = activeSkin();
+  const el = house({ url: homeUrl(), name: site.name || 'You', owner: 'You', status: site.status || '', colours: t ? { main: t.main, accent: t.accent } : null }, { lit: site.presence !== 'offline' }, {}, 0, ctx, null);
+  const a = el.querySelector('.nb-house');
+  a.removeAttribute('target');
+  a.removeAttribute('rel');
+  a.href = '#/';
+  a.title = a.ariaLabel = 'Your house';
+  el.removeAttribute('data-house');
+  return el;
+}
+
 function sceneOf(ctx, here, go, arrive) {
   const buddies = ctx.data.buddies || [];
   const posts = ctx.data.friendPosts || [];
@@ -349,28 +408,8 @@ function sceneOf(ctx, here, go, arrive) {
   const k = 'nb-k';
   const falling = dress?.fest ? dress.falling : { winter: 'snow', autumn: 'leaf', spring: 'petal' }[season];
   const cols = dress?.colours || [];
-  let plots;
-  if (!here) {
-    const seen = readSeen();
-    const came = arrivals(buddies);
-    if (came.size) setTimeout(() => sound.creak?.(), 350);
-    plots = buddies.map((b, i) => house(b, { ...houseState(b, posts, now, seen), arrived: came.has(b.url) }, ctx.data.friendLooks || {}, i, ctx, (ctx.data.friendDays || []).find((x) => x.url === b.url)));
-  } else {
-    // (Another street: lights on or off, and nothing else. Your own house waves you home.)
-    plots = here.houses.map((b, i) => {
-      const you = b.url === homeUrl();
-      const el = house(you ? { ...b, owner: 'You', name: 'You' } : b, { lit: b.presence !== 'offline' }, {}, i, ctx, null);
-      if (you) {
-        const a = el.querySelector('.nb-house');
-        a.removeAttribute('target');
-        a.href = '#/friends';
-        a.title = a.ariaLabel = 'Your house: back to your street';
-        a.addEventListener('click', (e) => (e.preventDefault(), e.stopImmediatePropagation(), go(homeUrl())), { capture: true });
-      }
-      return el;
-    });
-    if (!plots.length) plots = [h('div', { class: 'nb-plot nb-empty' }, h('span', { class: 'nb-name' }, 'Nobody about'))];
-  }
+  let plots = plotsFor(ctx, here, go);
+  if (here && !plots.length) plots = [h('div', { class: 'nb-plot nb-empty' }, h('span', { class: 'nb-name' }, 'Nobody about'))];
   // The signpost at the end of the road: one board for each street you can stroll to from here.
   const ways = (here ? here.houses : buddies).filter((b) => b.url && b.url !== homeUrl() && b.url !== here?.url).slice(0, 12);
   const post = ways.length

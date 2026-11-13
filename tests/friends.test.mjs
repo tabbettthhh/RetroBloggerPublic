@@ -259,6 +259,13 @@ await test('strolling: from your street to a friend’s, only what their site sh
     await v.addInitScript(() => sessionStorage.setItem('entered', '1'));
     await v.goto(BASE + '/#/friends');
     await v.waitForSelector('.nb .nb-board');
+    // Opened out: the village, with every house and yours in the middle; Escape closes it.
+    await v.locator('.nb-open').click();
+    await v.waitForSelector('.vl.open');
+    eq(await v.locator('.vl .nb-plot.vl-plot').count(), (await v.locator('.feed .nb-plot[data-house]').count()) + 1, 'every house, and yours');
+    eq(await v.locator('.vl .vl-mine .nb-name').innerText(), 'You', 'yours in the middle');
+    await v.keyboard.press('Escape');
+    await v.waitForFunction(() => !document.querySelector('.vl'));
     await v.locator('.nb-board').first().click();
     await v.waitForSelector('.nb-trail');
     assert((await v.locator('.nb-trail').innerText()).includes('Lina’s street'), 'on their street');

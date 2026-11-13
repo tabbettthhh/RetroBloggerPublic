@@ -1210,6 +1210,8 @@ function decorateFriendsTab() {
   decorateHouses(feed);
   // (A stroll to another street and back draws the houses again: they get theirs again too.)
   new MutationObserver(() => decorateHouses(feed)).observe(feed, { childList: true, subtree: true });
+  // (And in the village, the neighbourhood opened out.)
+  new MutationObserver(() => document.querySelector('.vl') && decorateHouses(document.querySelector('.vl'))).observe(document.body, { childList: true });
 }
 // A knocker by each friend's house in the neighbourhood, and a note to slip through the door.
 function decorateHouses(feed) {
