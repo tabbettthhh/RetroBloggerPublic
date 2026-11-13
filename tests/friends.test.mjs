@@ -238,6 +238,48 @@ await test('the arcade: a friend’s best score on your high-score table, where 
   eq((await api('friends')).friends[0].cache.feed.arcade, null, 'none once they take it off');
 });
 
+await test('strolling: from your street to a friend’s, only what their site shows any visitor', async () => {
+  const UA = { 'User-Agent': 'Mozilla/5.0 (test)' };
+  const was = (await api2('friends')).listSeen;
+  await post_(api2, 'friends/settings', { listSeen: 'everyone' });
+  // Their street, as anyone may see it: names, addresses, lights. Nothing else.
+  const st = await (await fetch(BASE2 + '/api/street', { headers: UA })).json();
+  assert(st.houses.some((h) => h.url === BASE), 'their street has your house');
+  for (const h of st.houses) eq(Object.keys(h).sort(), ['name', 'owner', 'presence', 'url'], 'and only what a house shows');
+  // Strolled to through your own site.
+  const s = await (await fetch(BASE + '/api/stroll?to=' + encodeURIComponent(BASE2), { headers: UA })).json();
+  eq([s.url, s.houses.map((h) => h.url)], [BASE2, st.houses.map((h) => h.url)], 'your site fetches their street');
+  eq((await fetch(BASE + '/api/stroll?to=javascript:alert(1)', { headers: UA })).status, 400, 'only to a proper site');
+  eq((await fetch(BASE + '/api/stroll?to=' + encodeURIComponent(BASE2), { headers: { 'User-Agent': 'somebot/1' } })).status, 400, 'not for bots');
+  // In the neighbourhood: the signpost, over to their street, your own house there, and home again.
+  const browser = await chromium.launch();
+  try {
+    const v = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148' });
+    v.errors = [];
+    v.on('pageerror', (e) => v.errors.push(e.message));
+    await v.addInitScript(() => sessionStorage.setItem('entered', '1'));
+    await v.goto(BASE + '/#/friends');
+    await v.waitForSelector('.nb .nb-board');
+    await v.locator('.nb-board').first().click();
+    await v.waitForSelector('.nb-trail');
+    assert((await v.locator('.nb-trail').innerText()).includes('Lina’s street'), 'on their street');
+    eq(await v.locator('.nb .nb-house').count(), st.houses.length, 'a house for each on their list');
+    const mine = v.locator('.nb-house[aria-label="Your house: back to your street"]');
+    eq(await mine.count(), 1, 'yours among them');
+    eq(await v.locator('.nb-mail, .nb-puff, .nb-sign').count(), 0, 'no mail, smoke or pictures on another street');
+    await mine.click();
+    await v.waitForSelector('.nb-title:not(.nb-trail)');
+    eq(await v.locator('.nb-house').first().getAttribute('href'), BASE2, 'home again');
+    assert(!v.errors.length, v.errors.join('; '));
+  } finally {
+    await browser.close();
+  }
+  // Their list hidden: an empty street.
+  await post_(api2, 'friends/settings', { listSeen: 'me' });
+  eq((await (await fetch(BASE2 + '/api/street', { headers: UA })).json()).houses, [], 'nobody about when their list is hidden');
+  if (was) await post_(api2, 'friends/settings', { listSeen: was });
+});
+
 await test('a friends-only post: not on their site, nor on yours; only in your back office', async () => {
   const at = new Date(Date.now() - 5 * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
   await fetch(`${BASE2}/admin/api/upload?key=thoughts/just-us/c.jpg`, { method: 'PUT', body: fs.readFileSync(PHOTOS[0]) });

@@ -242,49 +242,142 @@ function arrivals(buddies) {
   return new Set(buddies.filter((b) => now[b.url] === 1 && was[b.url] === 0).map((b) => b.url));
 }
 
+// Strolling: the signpost at the end of your street points to each friend's street, and theirs
+// to their friends' streets, and so on. Another street is only what that site's own Friends tab
+// shows any visitor (names and lights on or off; no posts, no mail, no smoke), fetched by your
+// own site. Where you've strolled to, beyond your own street (kept while the page is open).
+let trail = [];
+const firstName = (b) => (b.owner || b.name || '').split(/\s+/)[0];
+const homeUrl = () => location.origin;
+
 function neighbourhood(ctx) {
   const buddies = ctx.data.buddies || [];
   if (!buddies.length) return null;
+  const night = document.documentElement.dataset.theme === 'dark';
+  const section = h('section', { class: 'nb' + (night ? ' night' : '') });
+  const note = (text) => {
+    section.querySelector('.nb-note')?.remove();
+    if (text) section.querySelector('.nb-title')?.append(h('span', { class: 'nb-note', role: 'status' }, text));
+  };
+  // Over to another street (or back along the way you came).
+  let busy = false;
+  const go = async (to, label) => {
+    if (busy) return;
+    sound.click?.();
+    if (to === homeUrl()) return walk([]);
+    const back = trail.findIndex((t) => t.url === to);
+    if (back >= 0) return walk(trail.slice(0, back + 1));
+    busy = true;
+    note(`Strolling over to ${label}’s street…`);
+    let s = null;
+    try {
+      const res = await fetch('/api/stroll?to=' + encodeURIComponent(to), { headers: { Accept: 'application/json' } });
+      s = res.ok ? await res.json() : null;
+    } catch {}
+    busy = false;
+    if (!s || !Array.isArray(s.houses)) return note(`No way through to ${label}’s street just now.`);
+    walk([...trail, s].slice(-8));
+  };
+  const walk = (next) => {
+    const scene = section.querySelector('.nb-street');
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const away = next.length >= trail.length ? 'nb-out' : 'nb-out back';
+    trail = next;
+    if (!scene || calm) return show();
+    scene.className += ' ' + away;
+    setTimeout(() => show(next.length >= 1 && away === 'nb-out' ? 'nb-in' : 'nb-in back'), 420);
+  };
+  const show = (arrive = '') => {
+    const here = trail[trail.length - 1];
+    section.setAttribute('aria-label', here ? `${firstName(here)}’s street` : 'Your neighbourhood');
+    section.replaceChildren(titleOf(here), sceneOf(ctx, here, go, arrive));
+  };
+  const titleOf = (here) =>
+    here
+      ? h(
+          'div',
+          { class: 'nb-title nb-trail' },
+          '🚶 ',
+          h('button', { type: 'button', class: 'nb-crumb', onclick: () => go(homeUrl()) }, 'My street'),
+          trail.map((t, i) => [h('span', { class: 'nb-sep', 'aria-hidden': 'true' }, ' › '), i === trail.length - 1 ? h('b', null, `${firstName(t)}’s street`) : h('button', { type: 'button', class: 'nb-crumb', onclick: () => go(t.url, firstName(t)) }, `${firstName(t)}’s street`)])
+        )
+      : h('div', { class: 'nb-title' }, '🏘 The neighbourhood');
+  // (If you'd strolled off before the page was drawn again, you're still there.)
+  show();
+  return section;
+}
+
+function sceneOf(ctx, here, go, arrive) {
+  const buddies = ctx.data.buddies || [];
   const posts = ctx.data.friendPosts || [];
-  const seen = readSeen();
   const now = new Date();
-  const came = arrivals(buddies);
-  if (came.size) setTimeout(() => sound.creak?.(), 350);
   const dress = lineDress();
   const night = document.documentElement.dataset.theme === 'dark';
   const season = document.documentElement.dataset.season;
   const k = 'nb-k';
   const falling = { winter: 'snow', autumn: 'leaf', spring: 'petal' }[season];
-  return h(
-    'section',
-    { class: 'nb' + (night ? ' night' : ''), 'aria-label': 'Your neighbourhood' },
-    h('div', { class: 'nb-title' }, '🏘 The neighbourhood'),
-    h(
-      'div',
-      { class: 'nb-scroll' },
-      h(
+  let plots;
+  if (!here) {
+    const seen = readSeen();
+    const came = arrivals(buddies);
+    if (came.size) setTimeout(() => sound.creak?.(), 350);
+    plots = buddies.map((b, i) => house(b, { ...houseState(b, posts, now, seen), arrived: came.has(b.url) }, ctx.data.friendLooks || {}, i, ctx, (ctx.data.friendDays || []).find((x) => x.url === b.url)));
+  } else {
+    // (Another street: lights on or off, and nothing else. Your own house waves you home.)
+    plots = here.houses.map((b, i) => {
+      const you = b.url === homeUrl();
+      const el = house(you ? { ...b, owner: 'You', name: 'You' } : b, { lit: b.presence !== 'offline' }, {}, i, ctx, null);
+      if (you) {
+        const a = el.querySelector('.nb-house');
+        a.removeAttribute('target');
+        a.href = '#/friends';
+        a.title = a.ariaLabel = 'Your house: back to your street';
+        a.addEventListener('click', (e) => (e.preventDefault(), e.stopImmediatePropagation(), go(homeUrl())), { capture: true });
+      }
+      return el;
+    });
+    if (!plots.length) plots = [h('div', { class: 'nb-plot nb-empty' }, h('span', { class: 'nb-name' }, 'Nobody about'))];
+  }
+  // The signpost at the end of the road: one board for each street you can stroll to from here.
+  const ways = (here ? here.houses : buddies).filter((b) => b.url && b.url !== homeUrl() && b.url !== here?.url).slice(0, 12);
+  const post = ways.length
+    ? h(
         'div',
-        { class: 'nb-street' },
-        h('span', { class: 'nb-stars', 'aria-hidden': 'true' }),
-        skyFace(night),
-        h('span', { class: 'nb-clouds', 'aria-hidden': 'true' }),
-        h('span', { class: 'nb-clouds far', 'aria-hidden': 'true' }),
-        night ? null : svg('svg', { viewBox: '0 0 40 12', class: 'nb-birds', 'aria-hidden': 'true' }, svg('path', { d: 'M2 7q4-6 7 0q3-6 7 0', class: `${k} nb-wing` }), svg('path', { d: 'M24 5q3-5 6 0q3-5 6 0', class: `${k} nb-wing` })),
-        dress?.garland ? h('span', { class: 'nb-garland', 'aria-hidden': 'true', style: `--nb-garland:${dress.garland}` }) : null,
-        // (Rolling hills behind, the lawn in front.)
-        svg('svg', { viewBox: '0 0 600 96', preserveAspectRatio: 'none', class: 'nb-land', 'aria-hidden': 'true' }, svg('path', { d: 'M0 60Q80 10 170 46Q250 0 340 44Q430 8 520 40Q570 24 600 44V96H0Z', class: `${k} nb-hill` }), svg('path', { d: 'M0 72Q75 66 150 72T300 72T450 72T600 72V96H0Z', class: `${k} nb-lawn` })),
-        h('div', { class: 'nb-row' }, buddies.map((b, i) => house(b, { ...houseState(b, posts, now, seen), arrived: came.has(b.url) }, ctx.data.friendLooks || {}, i, ctx, (ctx.data.friendDays || []).find((x) => x.url === b.url)))),
+        { class: 'nb-plot nb-way' },
         h(
           'div',
-          { class: 'nb-road', 'aria-hidden': 'true' },
-          h(
-            'span',
-            { class: 'nb-car' },
-            svg('svg', { viewBox: '0 0 60 34' }, svg('path', { d: 'M4 24v-6q0-4 5-5l6-1q5-9 13-9h8q8 0 12 9q9 1 9 7v5Z', class: `${k} nb-carbody` }), svg('path', { d: 'M19 12q4-6 9-6h2v6ZM33 6h3q5 0 8 6H33Z', class: `${k} nb-glass`, 'stroke-width': 2 }), svg('circle', { cx: 16, cy: 25, r: 5.5, class: `${k} nb-wheel` }), svg('circle', { cx: 44, cy: 25, r: 5.5, class: `${k} nb-wheel` }), svg('circle', { cx: 55, cy: 18, r: 2, class: 'nb-beam' }))
-          )
+          { class: 'nb-boards', role: 'group', 'aria-label': 'Stroll to another street' },
+          ways.map((b, i) => h('button', { type: 'button', class: 'nb-board', style: `--nb-tilt:${[-4, 3, -2, 4, -3][i % 5]}deg; --nb-board:${WALLS[hashOf(b.url) % WALLS.length]}`, onclick: () => go(b.url, firstName(b)) }, `${firstName(b)}’s street`, h('span', { 'aria-hidden': 'true' }, ' ➜')))
         ),
-        falling ? h('span', { class: `nb-weather ${falling}`, 'aria-hidden': 'true' }, Array.from({ length: 14 }, (_, n) => h('i', { style: `left:${(n * 37 + 11) % 100}%; animation-delay:${-((n * 1.7) % 9)}s; animation-duration:${7 + (n % 5)}s` }))) : null
+        h('span', { class: 'nb-way-post', 'aria-hidden': 'true' }),
+        h('span', { class: 'nb-way-say', 'aria-hidden': 'true' }, 'Stroll')
       )
+    : null;
+  return h(
+    'div',
+    { class: 'nb-scroll' },
+    h(
+      'div',
+      { class: 'nb-street' + (arrive ? ' ' + arrive : '') },
+      h('span', { class: 'nb-stars', 'aria-hidden': 'true' }),
+      skyFace(night),
+      h('span', { class: 'nb-clouds', 'aria-hidden': 'true' }),
+      h('span', { class: 'nb-clouds far', 'aria-hidden': 'true' }),
+      night ? null : svg('svg', { viewBox: '0 0 40 12', class: 'nb-birds', 'aria-hidden': 'true' }, svg('path', { d: 'M2 7q4-6 7 0q3-6 7 0', class: `${k} nb-wing` }), svg('path', { d: 'M24 5q3-5 6 0q3-5 6 0', class: `${k} nb-wing` })),
+      dress?.garland ? h('span', { class: 'nb-garland', 'aria-hidden': 'true', style: `--nb-garland:${dress.garland}` }) : null,
+      // (Rolling hills behind, the lawn in front.)
+      svg('svg', { viewBox: '0 0 600 96', preserveAspectRatio: 'none', class: 'nb-land', 'aria-hidden': 'true' }, svg('path', { d: 'M0 60Q80 10 170 46Q250 0 340 44Q430 8 520 40Q570 24 600 44V96H0Z', class: `${k} nb-hill` }), svg('path', { d: 'M0 72Q75 66 150 72T300 72T450 72T600 72V96H0Z', class: `${k} nb-lawn` })),
+      h('div', { class: 'nb-row' }, plots, post),
+      h(
+        'div',
+        { class: 'nb-road', 'aria-hidden': 'true' },
+        h(
+          'span',
+          { class: 'nb-car' },
+          svg('svg', { viewBox: '0 0 60 34' }, svg('path', { d: 'M4 24v-6q0-4 5-5l6-1q5-9 13-9h8q8 0 12 9q9 1 9 7v5Z', class: `${k} nb-carbody` }), svg('path', { d: 'M19 12q4-6 9-6h2v6ZM33 6h3q5 0 8 6H33Z', class: `${k} nb-glass`, 'stroke-width': 2 }), svg('circle', { cx: 16, cy: 25, r: 5.5, class: `${k} nb-wheel` }), svg('circle', { cx: 44, cy: 25, r: 5.5, class: `${k} nb-wheel` }), svg('circle', { cx: 55, cy: 18, r: 2, class: 'nb-beam' }))
+        )
+      ),
+      falling ? h('span', { class: `nb-weather ${falling}`, 'aria-hidden': 'true' }, Array.from({ length: 14 }, (_, n) => h('i', { style: `left:${(n * 37 + 11) % 100}%; animation-delay:${-((n * 1.7) % 9)}s; animation-duration:${7 + (n % 5)}s` }))) : null
     )
   );
 }

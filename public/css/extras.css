@@ -288,6 +288,29 @@
 .nb-sign:hover, .nb-sign:focus-visible { animation: none; rotate: 0deg; scale: 1.12; }
 .nb-sign:focus-visible .nb-sign-pic { outline: 3px dashed var(--nb-ink); outline-offset: 2px; }
 /* The road, and a little car that trundles along it. */
+/* Strolling: the signpost at the end of the road, the way you came, and the walk between streets. */
+.nb-way { width: 150px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+.nb-way-say { order: -1; margin-bottom: 2px; padding: 1px 8px; border: 2.5px solid var(--nb-ink); border-radius: 8px; background: #fff; color: var(--nb-ink); font: bold 12px/1.2 "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive; box-shadow: 2px 2px 0 var(--nb-ink); }
+.nb-boards { display: flex; flex-direction: column; align-items: center; gap: 4px; max-height: 104px; overflow-y: auto; padding: 4px 6px 2px; scrollbar-width: thin; }
+.nb-board { flex: none; max-width: 134px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 3px 14px 3px 9px; border: 2.5px solid var(--nb-ink); border-radius: 4px 14px 14px 4px; background: var(--nb-board, #ffd23f); color: var(--nb-ink); font: bold 12px/1.15 "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive; box-shadow: 2px 2px 0 var(--nb-ink); rotate: var(--nb-tilt, 0deg); cursor: pointer; }
+.nb-board:hover, .nb-board:focus-visible { rotate: 0deg; scale: 1.08; outline: none; }
+.nb-board:focus-visible { box-shadow: 0 0 0 3px #fff, 0 0 0 5.5px var(--nb-ink); }
+.nb-way-post { flex: none; width: 8px; height: 30px; border: 2.5px solid var(--nb-ink); border-top: 0; border-radius: 0 0 3px 3px; background: #b07a45; }
+.nb-empty { display: grid; place-items: end center; }
+.nb-empty .nb-name { position: static; transform: none; }
+.nb-trail { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px; opacity: 1; }
+.nb-crumb { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; opacity: .85; }
+.nb-crumb:hover { opacity: 1; }
+.nb-note { margin-left: 8px; font-weight: normal; font-style: italic; opacity: .85; }
+.nb-out { animation: nb-out .42s ease-in forwards; }
+.nb-out.back { animation-name: nb-out-back; }
+.nb-in { animation: nb-in .45s ease-out; }
+.nb-in.back { animation-name: nb-in-back; }
+@keyframes nb-out { to { transform: translateX(-35%); opacity: 0; } }
+@keyframes nb-out-back { to { transform: translateX(35%); opacity: 0; } }
+@keyframes nb-in { from { transform: translateX(35%); opacity: 0; } }
+@keyframes nb-in-back { from { transform: translateX(-35%); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .nb-out, .nb-in { animation: none; } .nb-board { rotate: none; } }
 .nb-road { position: relative; z-index: 1; height: 24px; border-top: 3px solid var(--nb-ink); background: linear-gradient(90deg, #fff 55%, transparent 0) 0 50% / 34px 3px repeat-x, #5d5a6e; }
 .nb.night .nb-road { background-color: #3a3750; }
 .nb-car { position: absolute; left: -70px; bottom: 3px; width: 46px; animation: nb-drive 19s linear infinite; }
