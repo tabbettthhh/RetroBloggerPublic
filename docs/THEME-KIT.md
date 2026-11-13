@@ -2,7 +2,7 @@
 
 One way to make a computer theme, so every app takes it on by itself.
 
-A computer theme dresses the whole site: the desktop, the taskbar, every app's window, and what's inside every app (the journal, the album, the atlas, the shelves, the guestbook…). You don't style apps one by one. You fill in one list of values, and the kit does the rest.
+A computer theme dresses the whole site, on a computer and on a phone: the desktop, the taskbar, every app's window, and what's inside every app (the journal, the album, the atlas, the shelves, the guestbook…). On a phone the same values dress each app's top bar (the title bar), its page and the taskbar or dock along the bottom; only the case around the screen is left off. You don't style apps one by one. You fill in one list of values, and the kit does the rest.
 
 ## The three pieces
 
@@ -50,6 +50,7 @@ Every value starts `--k-`. Borders and edges are a whole `border` value (like `2
 | `bar-bg`, `bar-ink`, `bar-font` (font), `bar-h` | The title bar. Optional: `bar-off-bg`, `bar-off-ink` (a window not in front), `bar-glow`, `bar-gap`, `bar-icon` (`none` hides the little icon). |
 | `wbtn-bg`, `wbtn-edge`, `wbtn-w`, `wbtn-h`, `wbtn-radius`, `glyph` | Minimise, maximise and close. Optional: `close-bg`, `close-glyph`, `close-w`, `close-order` (`-1` puts close first), `glyphs` (`none` for plain dots). |
 | `body-edge` | Optional: a line around what's inside. |
+| `map-filter`, `shelf` | Optional: a tint for the atlas's map (for dark computers), and the colour of the bookshelf's planks. |
 
 ### The desktop
 

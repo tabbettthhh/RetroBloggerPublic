@@ -24,6 +24,7 @@
 
 /* ===== Breadbin: a blue screen, lavender panels, blocky words ===== */
 :root[data-sk-machine="breadbin"] {
+  --k-map-filter: grayscale(1) sepia(1) hue-rotate(205deg) saturate(2.2) brightness(.85); --k-shelf: #9b90ee;
   --k-font: 'Pixelify Sans', monospace; --k-head-font: 'Press Start 2P', monospace; --k-hand-font: 'Pixelify Sans', monospace; --k-mono-font: 'Press Start 2P', monospace;
   --k-page: #3e3393; --k-ink: #dcd7ff; --k-ink-soft: #b0a8f0; --k-head-ink: #2a2170; --k-link: #3e3393;
   --k-surface: #dcd7ff; --k-surface-ink: #2a2170; --k-surface-2: #9b90ee; --k-surface-2-ink: #1d1660; --k-edge: 3px solid #2a2170; --k-radius: 0; --k-shadow: 4px 4px 0 #1d1660;
@@ -38,6 +39,7 @@
 
 /* ===== Blue desk: blue page, white panels, orange for what's chosen ===== */
 :root[data-sk-machine="bluedesk"] {
+  --k-shelf: #000;
   --k-font: 'Arimo', Arial, sans-serif; --k-head-font: 'Silkscreen', monospace; --k-hand-font: 'Arimo', Arial, sans-serif; --k-mono-font: 'Silkscreen', monospace;
   --k-page: #0055aa; --k-ink: #fff; --k-ink-soft: #cfe0f5; --k-head-ink: #0055aa; --k-link: #0055aa;
   --k-surface: #fff; --k-surface-ink: #000; --k-surface-2: #ff8800; --k-surface-2-ink: #000; --k-edge: 2px solid #000; --k-radius: 0; --k-shadow: none;
@@ -80,6 +82,7 @@
 
 /* ===== Start tiles: flat, white pages, deep purple and bright tiles ===== */
 :root[data-sk-machine="tiles"] {
+  --k-shelf: #2a1150;
   --k-font: 'Open Sans', sans-serif; --k-head-font: 'Open Sans', sans-serif; --k-hand-font: 'Open Sans', sans-serif; --k-mono-font: 'Share Tech Mono', monospace;
   --k-page: #fff; --k-ink: #1b1b1f; --k-ink-soft: #5a5a66; --k-head-ink: #2a1150; --k-link: #0b63b5;
   --k-surface: #f2f2f5; --k-surface-ink: #1b1b1f; --k-surface-2: #2a1150; --k-surface-2-ink: #fff; --k-edge: 0; --k-radius: 0; --k-shadow: none;
@@ -96,6 +99,7 @@
 
 /* ===== Tiling terminal: dark panes, one accent, monospace everywhere ===== */
 :root[data-sk-machine="terminal"] {
+  --k-map-filter: invert(.9) hue-rotate(180deg) saturate(.4) brightness(.9); --k-shelf: #373b41;
   --k-font: 'Share Tech Mono', monospace; --k-head-font: 'Share Tech Mono', monospace; --k-hand-font: 'Share Tech Mono', monospace; --k-mono-font: 'Share Tech Mono', monospace;
   --k-page: #1d1f21; --k-ink: #d3d6d4; --k-ink-soft: #8c918f; --k-head-ink: var(--sk-accent, #b5bd68); --k-link: #8abeb7;
   --k-surface: #232629; --k-surface-ink: #d3d6d4; --k-surface-2: #2b2f33; --k-surface-2-ink: #f0c674; --k-edge: 1px solid #373b41; --k-radius: 0; --k-shadow: none;
@@ -116,6 +120,7 @@
 
 /* ===== Teletext telly: black pages, blue bands, yellow and cyan words ===== */
 :root[data-sk-machine="teletext"] {
+  --k-map-filter: invert(1) hue-rotate(180deg) saturate(2) contrast(1.2); --k-shelf: #0000d0;
   --k-font: 'VT323', monospace; --k-head-font: 'VT323', monospace; --k-hand-font: 'VT323', monospace; --k-mono-font: 'VT323', monospace; --k-zoom: 1.12;
   --k-page: #000; --k-ink: #fff; --k-ink-soft: #00ffff; --k-head-ink: #ffff00; --k-link: #00ffff;
   --k-surface: #000; --k-surface-ink: #fff; --k-surface-2: #0000d0; --k-surface-2-ink: #ffff00; --k-edge: 2px solid #0000d0; --k-radius: 0; --k-shadow: none;
@@ -130,6 +135,7 @@
 
 /* ===== Hi-fi stack: dark wood and black, amber glow, brushed-metal buttons ===== */
 :root[data-sk-machine="hifi"] {
+  --k-map-filter: sepia(.7) saturate(1.4) brightness(.55); --k-shelf: #4a403a;
   --k-font: 'Share Tech Mono', monospace; --k-head-font: 'Share Tech Mono', monospace; --k-hand-font: 'Share Tech Mono', monospace; --k-mono-font: 'Share Tech Mono', monospace;
   --k-page: #2b2523; --k-ink: #f2ece4; --k-ink-soft: #b9ad9c; --k-head-ink: #ffb02e; --k-link: #ffb02e;
   --k-surface: #1c1916; --k-surface-ink: #f2ece4; --k-surface-2: #0c0a06; --k-surface-2-ink: #ffb02e; --k-edge: 1px solid #4a403a; --k-radius: 3px; --k-shadow: none;

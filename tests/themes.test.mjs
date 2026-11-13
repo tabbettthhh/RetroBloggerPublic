@@ -1514,6 +1514,20 @@ await test('old computers: a case with knobs that work, every app in the compute
     eq(await pg.locator('.mc-ring').count(), 0, 'no friends shown, no webring');
     await pg.getByRole('button', { name: 'Home' }).first().waitFor();
   }, { desktop: true });
+  // On a phone there's no case, but every app still takes the computer's look.
+  await putFile('theme.md', '---\ntheme: tiling\n---\n');
+  await site(async (pg) => {
+    for (const app of ['', 'journal', 'guestbook', 'books']) {
+      await pg.evaluate((a) => (location.hash = '#/' + a), app);
+      await pg.waitForTimeout(600);
+      const look = await pg.evaluate(() => {
+        const main = document.querySelector('.phone #main');
+        return { page: getComputedStyle(main).backgroundColor, font: getComputedStyle(main).fontFamily.split(',')[0].replace(/"/g, '') };
+      });
+      eq(look, { page: 'rgb(29, 31, 33)', font: 'Share Tech Mono' }, `${app || 'home'} on a phone: in the terminal's look`);
+    }
+    eq(await pg.locator('.mc-body').count(), 0, 'no case on a phone');
+  });
   // Phones: a flip phone that opens, and a handheld with its controls.
   await putFile('theme.md', '---\ntheme: flipphone\n---\n');
   await site(async (pg) => {

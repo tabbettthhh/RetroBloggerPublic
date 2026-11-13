@@ -360,7 +360,9 @@ function handheld() {
 
 // ---------- putting it together ----------
 function build() {
-  const machine = desktop ? root.dataset.skMachine || 'none' : 'none';
+  // (On a phone there's no case, but every app still takes the computer's look: see kit.css.)
+  const machine = root.dataset.skMachine || 'none';
+  const cased = desktop && machine !== 'none';
   const handset = desktop ? 'none' : root.dataset.skHandset || 'none';
   const sig = `${machine}|${handset}`;
   if (sig === built) return;
@@ -370,11 +372,11 @@ function build() {
   parts = [];
   timers = [];
   built = sig;
-  root.classList.toggle('mc-case', CASES.has(machine));
+  root.classList.toggle('mc-case', cased && CASES.has(machine));
   root.classList.toggle('mc-on', machine !== 'none');
   root.classList.toggle('mc-flip', handset === 'flip');
   root.classList.toggle('mc-handheld', handset === 'handheld');
-  if (machine !== 'none') {
+  if (cased) {
     paintBrightness();
     if (CASES.has(machine)) {
       const kase = h('div', { class: `mc-body mc-body-${machine}` }, caseFor(machine));
