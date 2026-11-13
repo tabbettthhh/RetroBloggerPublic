@@ -23,7 +23,7 @@
 //   export and visitors never see.
 
 import * as push from './push.js';
-import { safeMarkdown, buildPost, photoOfDay, TYPES, THEME_OPTIONS, KEEPSAKE_SHAPES, THEMES, THEME_CHARMS } from './content.js';
+import { safeMarkdown, buildPost, photoOfDay, TYPES, THEME_OPTIONS, KEEPSAKE_SHAPES, THEMES, THEME_CHARMS, tidyVillage } from './content.js';
 import { cleanCards, OWN_CARD, MIX, cleanMix, cleanSeed } from '../public/js/card-parts.js';
 
 const STORE = 'data/_friends.json';
@@ -408,6 +408,8 @@ export function friendFeed(data, origin, to = null) {
     // (Whether friends can comment on your posts: only while comments are on.)
     comments_on: !!site.comments,
     // Your best score in the arcade (none while there's nothing posted for friends to see).
+    // How you've decorated your plot in the village (likewise).
+    village: data.posts.length && data.village?.items?.length ? data.village.items : null,
     arcade: data.posts.length && data.arcade?.scores?.[0] ? { best: data.arcade.scores[0].score, date: data.arcade.scores[0].date } : null,
     posts: data.posts.slice(0, 30).map((p) => ({
       id: `${p.type}/${p.slug}`,
@@ -643,6 +645,8 @@ export function tidyFeed(f, friend) {
     photo_day: tidyDay(f?.photo_day),
     // (Their best score in the arcade.)
     arcade: tidyArcade(f?.arcade),
+    // (How they've decorated their plot in the village.)
+    village: Array.isArray(f?.village) ? tidyVillage(f.village) : null,
     // (Whether you can comment on their posts: a site new enough, with comments on.)
     comments_on: f?.comments_on === true,
     posts,
@@ -1214,7 +1218,7 @@ export async function publicFriends(env, { mine = false, viewer = 'everyone' } =
     const fresh = c && c.ok !== false && Date.now() - (c.at || 0) < 3 * 60 * 60 * 1000;
     const person = { name: feed?.name || f.name, owner: feed?.owner || f.owner, url: f.url, ...(mine ? { key: f.key, comments_on: !!feed?.comments_on } : {}) };
     // (Their names, how they are, their status and their best in the arcade: only where the list is shown.)
-    if (listShown) buddies.push({ ...person, presence: fresh ? feed?.presence || 'online' : 'offline', status: feed?.status || '', ...(feed?.arcade ? { arcade: feed.arcade } : {}) });
+    if (listShown) buddies.push({ ...person, presence: fresh ? feed?.presence || 'online' : 'offline', status: feed?.status || '', ...(feed?.arcade ? { arcade: feed.arcade } : {}), ...(feed?.village?.length ? { village: feed.village } : {}) });
     if (!postsShown(store, feed, who)) return;
     // Their photo of the day, for the line at the top of Friends (a friends-only one just for you).
     const pd = feed?.photo_day;

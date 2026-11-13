@@ -7,6 +7,7 @@
 // season or festive day, the same theme. Nothing on it that the street doesn't show.
 import { h } from './util.js';
 import { sound } from './sound.js';
+import { decorEl, decorEditor } from './village-decor.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const svg = (tag, attrs = {}, ...kids) => {
@@ -127,6 +128,10 @@ export function openVillage({ ctx, home, title, seed, houses, me, dress, night, 
   const slot = (deg) => ({ x: cx + Math.cos((deg * Math.PI) / 180) * inner.rx * 0.68, y: cy + Math.sin((deg * Math.PI) / 180) * inner.ry * 0.7, r: 80 });
   const slots = home ? { board: slot(-40), arcade: slot(40), bench: slot(-140) } : { arcade: slot(40) };
   things.push(...Object.values(slots));
+  // (And for what you've put out on your plot, round your house in the middle.)
+  const feet = me ? { x: cx + 45, y: cy + 50 } : null;
+  let mine = home && feet ? [...(ctx?.data?.village?.items || [])] : [];
+  for (const it of mine) things.push({ x: feet.x + it.x, y: feet.y + it.y, r: 36 });
   const place = (r, tries = 40) => {
     for (let t = 0; t < tries; t++) {
       const x = cx + (rand() - 0.5) * islandRx * 2;
@@ -253,7 +258,21 @@ export function openVillage({ ctx, home, title, seed, houses, me, dress, night, 
   const cols = dress?.colours || [];
   const fireworks = dress?.fireworks ? h('span', { class: 'nb-fireworks vl-fireworks', style: `left:${cx - 300}px; top:${cy - 420}px`, 'aria-hidden': 'true' }, [[12, 60], [40, 10], [66, 80], [88, 30], [28, 120]].map(([x, y], j) => h('i', { style: `left:${x}%; top:${y}px; --c:${cols[j % cols.length] || '#ffd23f'}; animation-delay:${j * 0.6}s` }))) : null;
 
-  const world = h('div', { class: 'vl-world', style: `width:${W}px; height:${H}px` }, ground, fun.fishing, ducks, cars, bunting, standing, posties, fireworks);
+  // What you've put out on your plot; and what your friends have, round their houses (the few
+  // things nearest their door, a little smaller).
+  const decor = h('div', { class: 'vl-decor-layer' });
+  const showMine = () => decor.replaceChildren(...mine.map((it) => decorEl(it.id, feet.x, feet.y, it.x, it.y)).filter(Boolean));
+  if (feet) showMine();
+  const theirs = houses.flatMap(({ el }, i) => {
+    const b = (ctx?.data?.buddies || []).find((x) => x.url === el.dataset.house);
+    const s = spots[i];
+    if (!b?.village?.length || !s) return [];
+    return b.village
+      .filter((it) => Math.abs(it.x) <= 160 && it.y >= -60 && it.y <= 70)
+      .slice(0, 4)
+      .map((it) => decorEl(it.id, s.x, s.y + 6, Math.round(it.x * 0.8), Math.round(it.y * 0.6), 0.75));
+  });
+  const world = h('div', { class: 'vl-world', style: `width:${W}px; height:${H}px` }, ground, fun.fishing, ducks, cars, bunting, standing, theirs, decor, posties, fireworks);
   const view = h('div', { class: 'vl-view', tabindex: '0', 'aria-label': `${title}. Drag to look about; plus and minus to zoom.` }, world);
   const falling = dress?.falling || { winter: 'snow', autumn: 'leaf', spring: 'petal' }[document.documentElement.dataset.season];
   const weather = falling ? h('span', { class: `nb-weather vl-weather ${falling}`, 'aria-hidden': 'true' }, Array.from({ length: 28 }, (_, j) => h('i', { style: `left:${(j * 37 + 11) % 100}%; animation-delay:${-((j * 1.3) % 12)}s; animation-duration:${10 + (j % 6)}s` + (falling === 'confetti' && cols.length ? `; background:${cols[j % cols.length]}` : '') }))) : null;
@@ -416,6 +435,43 @@ export function openVillage({ ctx, home, title, seed, houses, me, dress, night, 
   // (A hidden tab: everything holds still, and quiet.)
   const onHide = () => box.classList.toggle('vl-paused', document.hidden);
 
+  // ---------- decorating your plot (signed in, on your own island) ----------
+  let tray = null;
+  const decorate = () => {
+    if (tray) return;
+    box.classList.add('vl-decorating');
+    tray = decorEditor({
+      layer: decor,
+      feet,
+      items: mine,
+      scale: () => s,
+      save: async (items) => {
+        const res = await fetch('/admin/api/village', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items }) });
+        const out = await res.json();
+        if (!res.ok) throw new Error(out.error || 'Not saved');
+        return out.items;
+      },
+      onDone: (kept) => {
+        if (kept) {
+          mine = kept;
+          if (ctx?.data) ctx.data.village = { items: kept };
+        }
+        tray?.remove();
+        tray = null;
+        box.classList.remove('vl-decorating');
+        showMine();
+      }
+    });
+    box.append(tray);
+    // (Your plot, in view.)
+    zoomAt(Math.max(s, Math.min(1, view.clientWidth / 900)), 0, 0);
+    x = view.clientWidth / 2 - feet.x * s;
+    y = view.clientHeight / 2 - (feet.y - 40) * s;
+    keepIn();
+    paint();
+  };
+  const decorBtn = home && feet && ctx?.data?.ownerView ? h('button', { type: 'button', class: 'vl-btn vl-decorate', 'aria-label': 'Decorate your plot', title: 'Decorate your plot', onclick: decorate }, '🖌') : null;
+
   // ---------- a panel over the village (the noticeboard close up, fishing, the bench) ----------
   let panelEl = null;
   const openPanel = (heading, body, cls = '') => {
@@ -444,7 +500,7 @@ export function openVillage({ ctx, home, title, seed, houses, me, dress, night, 
     setTimeout(() => box.remove(), matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 200);
     opener?.focus?.();
   };
-  const onKey = (e) => e.key === 'Escape' && (panelEl ? (panelEl.remove(), (panelEl = null)) : close());
+  const onKey = (e) => e.key === 'Escape' && (panelEl ? (panelEl.remove(), (panelEl = null)) : tray ? tray.querySelector('.vl-cancel')?.click() : close());
   const onResize = () => (keepIn(), paint());
   const opener = document.activeElement;
   const closeBtn = h('button', { type: 'button', class: 'vl-btn vl-close', 'aria-label': 'Close the village', onclick: close }, '✕');
@@ -455,7 +511,7 @@ export function openVillage({ ctx, home, title, seed, houses, me, dress, night, 
     view,
     skyLayer,
     weather,
-    h('div', { class: 'vl-bar' }, h('span', { class: 'vl-title' }, title), h('span', { class: 'vl-zoom' }, soundBtn, h('button', { type: 'button', class: 'vl-btn', 'aria-label': 'Zoom out', onclick: () => zoomBy(0.8) }, '−'), h('button', { type: 'button', class: 'vl-btn', 'aria-label': 'Zoom in', onclick: () => zoomBy(1.25) }, '+')), closeBtn)
+    h('div', { class: 'vl-bar' }, h('span', { class: 'vl-title' }, title), h('span', { class: 'vl-zoom' }, decorBtn, soundBtn, h('button', { type: 'button', class: 'vl-btn', 'aria-label': 'Zoom out', onclick: () => zoomBy(0.8) }, '−'), h('button', { type: 'button', class: 'vl-btn', 'aria-label': 'Zoom in', onclick: () => zoomBy(1.25) }, '+')), closeBtn)
   );
   if (dress?.fest) dress.colours.slice(0, 3).forEach((c, j) => box.style.setProperty(`--nb-f${j + 1}`, c));
   document.body.append(box);

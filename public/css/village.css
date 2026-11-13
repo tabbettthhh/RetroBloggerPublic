@@ -117,6 +117,26 @@
 .vl-rod::after { content: ''; position: absolute; left: 0; top: 0; width: 1px; height: 46px; background: rgba(255, 255, 255, .9); rotate: 34deg; transform-origin: 0 0; }
 .vl-fish-sign { position: absolute; right: 0; bottom: 0; padding: 2px 4px; border: 2px solid var(--nb-ink); border-radius: 8px; background: #fff; font-size: 14px; }
 
+/* What's out on your plot (and your friends' round theirs), and the editor's tray. */
+.vl-decor-layer { position: absolute; inset: 0; pointer-events: none; }
+.vl-decor { position: absolute; display: block; pointer-events: none; }
+.vl-decor svg { display: block; overflow: visible; }
+.vl-spray { animation: vl-spray 1.2s ease-in-out infinite alternate; }
+@keyframes vl-spray { from { opacity: .6; } to { opacity: 1; translate: 0 -2px; } }
+.vl-editing { pointer-events: auto; cursor: grab; touch-action: none; outline: 2px dashed rgba(255, 255, 255, .9); outline-offset: 3px; border-radius: 6px; }
+.vl-editing:active { cursor: grabbing; }
+.vl-decor-x { position: absolute; right: -12px; top: -12px; width: 22px; height: 22px; padding: 0; border: 2px solid var(--nb-ink); border-radius: 50%; background: #ff7069; color: #fff; font: bold 14px/1 sans-serif; cursor: pointer; }
+.vl-tray { position: absolute; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); z-index: 4; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px; border: 3px solid var(--nb-ink); border-radius: 16px; background: #fffaf0; box-shadow: 4px 4px 0 var(--nb-ink); }
+.vl-tray-things { flex: 1 1 300px; display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
+.vl-tray-btn { flex: none; display: grid; place-items: center; width: 52px; height: 52px; padding: 5px; border: 2.5px solid var(--nb-ink); border-radius: 12px; background: #e9f7ff; cursor: pointer; }
+.vl-tray-btn:hover, .vl-tray-btn:focus-visible { background: #ffd23f; outline: none; }
+.vl-tray-btn svg { width: 100%; height: 100%; overflow: visible; }
+.vl-tray-end { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.vl-tray-count { font: 13px "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive; opacity: .75; }
+.vl-cancel { background: #fff; }
+.vl-decorating .vl-fun, .vl-decorating .vl-plot { pointer-events: none; }
+.mc-on .vl-tray { background: var(--k-surface) !important; color: var(--k-surface-ink) !important; border: var(--k-edge) !important; border-radius: var(--k-radius) !important; box-shadow: var(--k-shadow) !important; }
+
 /* A panel over the village: the noticeboard close up, the bench, fishing. */
 .vl-panel { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 16px; background: rgba(20, 16, 40, .35); }
 .vl-panel-card { width: min(440px, 100%); max-height: min(80vh, 640px); overflow: auto; padding: 0 16px 16px; border: 3px solid var(--nb-ink); border-radius: 16px; background: #fffaf0; color: var(--nb-ink); box-shadow: 5px 5px 0 var(--nb-ink); font: 15px/1.45 "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive; }
@@ -172,6 +192,7 @@
 @media (prefers-reduced-motion: reduce) {
   .vl, .vl-sea::after, .vl-tree, .vl-ducks, .vl-duck, .vl-car, .vl-car svg, .vl-person, .vl-person svg, .vl-chat, .vl-sky, .vl.sky-storm::after { animation: none !important; transition: none; }
   .vl-postie { display: none; }
+  .vl-spray { animation: none; }
   .vl-water.cast .vl-bob, .vl-water.bite .vl-bob { animation: none; }
   .vl-water.bite .vl-bob { translate: 0 9px; }
   .vl-car { display: none; }
