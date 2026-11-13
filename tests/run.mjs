@@ -35,8 +35,6 @@ const GROUPS = {
   extras: ['extras', 'email'],
   // Privacy, all at once: everyone, friends or only you.
   privacy: ['privacy'],
-  // Reading with no connection (this one stops the local site part-way, to be offline).
-  offline: ['offline'],
   // The back office lock with the developer bypass off: once with the lock's settings, once without.
   locked: [['locked', { LOCK_MODE: 'set' }]],
   'locked-unset': [['locked', { LOCK_MODE: 'unset' }]],

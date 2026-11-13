@@ -25,13 +25,9 @@ async function load() {
   // connection that drops for a moment, on a train say, gets two more tries before giving up.)
   for (let tries = 0; ; tries++) {
     try {
-      // (Visiting as a friend: always fresh, never the copy kept for opening quickly.)
       const res = await fetch('/api/all', tries || visiting() ? { cache: 'no-cache' } : {});
       if (!res.ok) throw new Error('Could not load');
       const data = await res.json();
-      offline(res.headers.get('X-Offline'));
-      // (The copy kept for opening quickly: the site's own is asked for straight away.)
-      if (res.headers.get('X-Copy')) postsChanged = true;
       return data;
     } catch (e) {
       if (tries >= 2) throw e;
@@ -57,7 +53,6 @@ function keepFresh(data, redraw) {
     try {
       const res = await fetch('/api/all', { cache: 'no-cache' });
       if (!res.ok) return;
-      offline(res.headers.get('X-Offline'));
       const fresh = await res.json();
       const now = plain(fresh);
       if (now === seen) return;
@@ -80,13 +75,6 @@ function keepFresh(data, redraw) {
   };
   document.addEventListener('visibilitychange', check);
   window.addEventListener('pageshow', check);
-  // (Shown from the kept copy: the site's own, straight away.)
-  onPostsChanged = () => {
-    postsChanged = false;
-    last = 0;
-    check();
-  };
-  if (postsChanged) onPostsChanged();
   window.addEventListener('focus', check);
   setInterval(check, 5 * 60 * 1000);
 }
@@ -145,29 +133,15 @@ if (window.parent !== window) {
   });
 }
 
-// No connection: the site as it was last seen here (kept by the service worker, sw.js), with a
-// quiet line saying so, gone as soon as the connection is back.
-function offline(since) {
-  let bar = document.querySelector('.offline-bar');
-  if (!since) return bar?.remove();
-  const when = since.length > 8 ? Date.parse(since) : NaN;
-  const words = `No connection: showing what was saved${Number.isNaN(when) ? '' : ' ' + new Date(when).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`;
-  if (!bar) bar = document.body.appendChild(h('div', { class: 'offline-bar', role: 'status' }));
-  bar.textContent = '📴 ' + words;
+// No copy of the site is kept for reading with no signal any more. A device that still has the
+// old offline worker swaps it for the notifications-only one (sw.js), which throws the old copy
+// away; the old copy is also cleared from here, straight away.
+function dropOfflineCopy() {
+  try {
+    navigator.serviceWorker?.getRegistration('/').then((r) => r?.update()).catch(() => {});
+    window.caches?.keys().then((ks) => ks.filter((k) => k.startsWith('corner-')).forEach((k) => caches.delete(k))).catch(() => {});
+  } catch {}
 }
-// Opened from the copy the service worker keeps: the site's own posts are fetched as soon as
-// the page is up, and drawn if anything changed.
-let postsChanged = false;
-let onPostsChanged = null;
-// The service worker that keeps that copy (and shows notifications). (Not while the site is being
-// tested by a program, unless the test asks: it would get in the way of a test's own requests.)
-function keepForOffline() {
-  if (!('serviceWorker' in navigator) || (navigator.webdriver && !sessionStorage.getItem('sw-test'))) return;
-  const go = () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
-  if (document.readyState === 'complete') setTimeout(go, 3000);
-  else addEventListener('load', () => setTimeout(go, 3000), { once: true });
-}
-addEventListener('online', () => document.querySelector('.offline-bar') && window.dispatchEvent(new Event('focus')));
 
 // A photo that can't be shown (deleted since the page loaded, or a friend's site not answering)
 // leaves a quiet gap instead of a broken-picture icon.
@@ -376,5 +350,5 @@ function countVisit() {
 }
 
 main();
-keepForOffline();
+dropOfflineCopy();
 countVisit();
