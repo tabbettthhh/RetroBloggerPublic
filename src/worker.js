@@ -8,6 +8,7 @@ import { TYPES, buildPost, isVisible, photoOfDay, postLevel, siteLevel, privacyO
 import { adminCheck } from './auth.js';
 import { VERSION } from './version.js';
 import * as friends from './friends.js';
+import { presenceNow, livePresence, STATUS_LASTS } from './presence.js';
 import * as push from './push.js';
 import { receiveEmail, emailSettings } from './email.js';
 
@@ -62,7 +63,7 @@ export default {
           .refreshFriends(env)
           .then((r) => r.of && bumpVersion(env))
           .catch((e) => console.error(e)),
-        friends.shareNews(env, buildEverything).catch((e) => console.error(e)),
+        friends.shareNews(env, liveBuild).catch((e) => console.error(e)),
         // (A post scheduled for later that has just gone live: visitors who asked hear about it.)
         announce(env).catch((e) => console.error(e))
       ])
@@ -77,7 +78,7 @@ export default {
         const me = (await friends.loadFriends(env)).me;
         const url = post.draft ? '/?owner=1#/' : `/?owner=1#/post/${post.type}/${post.slug}`;
         await push.notifyOwner(env, 'email', { title: post.draft ? '📧 Your email is a draft' : '📧 Your email is on the site', body: post.title || 'Have a look', url, tag: 'email' }, me).catch(() => {});
-        if (!post.draft) ctx.waitUntil(Promise.all([friends.shareNews(env, buildEverything), announce(env, me)]).catch((e) => console.error(e)));
+        if (!post.draft) ctx.waitUntil(Promise.all([friends.shareNews(env, liveBuild), announce(env, me)]).catch((e) => console.error(e)));
       }
     }).catch((e) => {
       console.error('email', e);
@@ -147,7 +148,7 @@ async function route(request, env, ctx) {
       const res = await adminApi(request, env, url, ctx);
       // Anything saved might be news for your friends: their sites hear straight away (and
       // nothing is sent when what they see hasn't changed).
-      if (method !== 'GET' && res.ok) ctx.waitUntil(friends.shareNews(env, buildEverything).catch((e) => console.error(e)));
+      if (method !== 'GET' && res.ok) ctx.waitUntil(friends.shareNews(env, liveBuild).catch((e) => console.error(e)));
       // (And a post that has just gone on the site is announced to visitors who asked.)
       if (method !== 'GET' && res.ok) ctx.waitUntil(announce(env, url.origin).catch((e) => console.error(e)));
       return res;
@@ -199,7 +200,7 @@ async function route(request, env, ctx) {
     return friends.friendPhotoForVisitor(env, parts[0], parts.slice(1).join('/'), who);
   }
   // Friends' sites talking to yours (every request signed with the secret you share).
-  if (p.startsWith('/api/friends/')) return friends.friendsApi(request, env, p, { buildEverything, mediaForFriend: (key) => friendMedia(env, key), friendComment: (who, info) => friendComment(env, who, info, ctx, url.origin), albumPhoto: (who, info) => albumPhoto(env, who, info), react: (info) => giveReaction(env, info, { forFriends: true }), changed: () => bumpVersion(env), news: () => friends.shareNews(env, buildEverything), waitUntil: (work) => ctx.waitUntil(work) });
+  if (p.startsWith('/api/friends/')) return friends.friendsApi(request, env, p, { buildEverything: liveBuild, mediaForFriend: (key) => friendMedia(env, key), friendComment: (who, info) => friendComment(env, who, info, ctx, url.origin), albumPhoto: (who, info) => albumPhoto(env, who, info), react: (info) => giveReaction(env, info, { forFriends: true }), changed: () => bumpVersion(env), news: () => friends.shareNews(env, liveBuild), waitUntil: (work) => ctx.waitUntil(work) });
   if (p.startsWith('/api/')) return json({ error: 'Not found' }, 404);
 
   return staticFile(request, env, p);
@@ -1007,18 +1008,47 @@ async function dressForVisitors(env, data, viewer = 'everyone') {
   return data;
 }
 
+// ---------- online when you're actually here ----------
+// You show online while you have your site open (signed in): your page says so every minute,
+// and says goodbye when you leave. A status you choose yourself (away, busy, appear offline…)
+// holds for as long as you keep coming back, and lapses after a day without you; then you're
+// back to automatic. A schedule set for while you're away still wins on its days.
+// (Only when you were last here: kept in data/_presence.json, never shown to anyone.)
+let presenceMemo = { at: 0, v: null };
+async function readPresence(env, fresh = false) {
+  if (!fresh && presenceMemo.v && Date.now() - presenceMemo.at < 15000) return presenceMemo.v;
+  let v = { seen: 0, left: 0 };
+  try {
+    const o = JSON.parse((await readText(env, 'data/_presence.json')) || '{}');
+    v = { seen: Number(o.seen) || 0, left: Number(o.left) || 0 };
+  } catch {}
+  presenceMemo = { at: Date.now(), v };
+  return v;
+}
+async function withLivePresence(env, data) {
+  if (!data?.site) return data;
+  const live = livePresence(data.site, await readPresence(env));
+  // (A fresh copy of the site's details: the rest of what was built is untouched.)
+  data.site = { ...data.site, presence: live.presence, presence_auto: live.auto, presence_seen: live.seen || 0 };
+  return data;
+}
+// (What friends' sites are given is built with the presence as it is right now.)
+const liveBuild = async (env, o) => withLivePresence(env, await buildEverything(env, o));
+
 async function apiAll(request, env, ctx) {
   // A friend visiting (with a pass from their own site): what's for friends, just for them, never
   // kept in any shared cache.
   if ((request.headers.get('Cookie') || '').includes('corner_friend=')) {
     const pal = await friends.friendVisitor(request, env);
     if (pal) {
-      const data = await dressForVisitors(env, await buildEverything(env, { forFriends: true }), 'friends');
+      const data = await dressForVisitors(env, await liveBuild(env, { forFriends: true }), 'friends');
       data.friendVisit = { as: pal.owner || pal.name, site: pal.url, until: pal.until };
       return json(data, 200, { 'Cache-Control': 'private, no-store', 'X-Friend-Visit': '1', Vary: 'Cookie' });
     }
   }
-  const version = (await readText(env, 'data/_version')) || '0';
+  // (Whether you're here, and whether a status you chose still holds, are part of the version.)
+  const { here, active } = presenceNow(await readPresence(env));
+  const version = ((await readText(env, 'data/_version')) || '0') + (here ? 'h' : '') + (active ? 'a' : '');
   // Rebuilt every 5 minutes as well, so posts scheduled for later appear on time.
   const slot = Math.floor(Date.now() / 300000);
   // Browsers check back every time (a tiny "nothing new" answer when nothing has changed), so
@@ -1036,7 +1066,7 @@ async function apiAll(request, env, ctx) {
   let res = await cache.match(cacheKey);
   let partial = false;
   if (!res) {
-    const data = await buildEverything(env);
+    const data = await liveBuild(env);
     partial = data.inside.partial;
     await dressForVisitors(env, data);
     res = json(data, 200, { 'Cache-Control': 'public, max-age=300' });
@@ -1419,6 +1449,24 @@ async function adminApi(request, env, url, ctx) {
   }
 
   // A game in the arcade, just played: kept in arcade.md if it's one of your best.
+  // Your page, saying you're here (every minute while it's open), or that you've gone.
+  if (p === 'presence' && m === 'POST') {
+    const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
+    const was = await readPresence(env, true);
+    const now = Date.now();
+    const next = body.state === 'bye' ? { seen: was.seen, left: now } : { seen: now, left: 0 };
+    await env.CONTENT.put('data/_presence.json', JSON.stringify(next));
+    presenceMemo = { at: now, v: next };
+    // (Back after more than a day: a status you'd chosen has lapsed, so it's taken off.)
+    if (body.state !== 'bye' && was.seen && now - was.seen >= STATUS_LASTS) {
+      const text = await readText(env, 'site.md');
+      if (text && /^presence:/m.test(text)) {
+        await env.CONTENT.put('site.md', text.replace(/^presence:.*\r?\n/m, ''), { httpMetadata: { contentType: 'text/markdown; charset=utf-8' } });
+        await bumpVersion(env);
+      }
+    }
+    return json({ ok: true });
+  }
   // Your plot in the village, decorated: kept in village.md.
   if (p === 'village' && m === 'POST') {
     const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
@@ -1447,7 +1495,7 @@ async function adminApi(request, env, url, ctx) {
     const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
     try {
       const out = await albumRemove(env, String(body.post || '').replace(/^photos\//, ''), String(body.file || ''));
-      ctx.waitUntil(friends.shareNews(env, buildEverything).catch(() => {}));
+      ctx.waitUntil(friends.shareNews(env, liveBuild).catch(() => {}));
       return json(out);
     } catch (e) {
       return json({ error: String(e.message || e) }, 400);
@@ -1462,7 +1510,7 @@ async function adminApi(request, env, url, ctx) {
     if (!PRIVACY.includes(body.level)) return json({ error: 'Everyone, friends or only you.' }, 400);
     try {
       const out = await setPrivacy(env, body.level);
-      ctx.waitUntil(friends.shareNews(env, buildEverything).catch(() => {}));
+      ctx.waitUntil(friends.shareNews(env, liveBuild).catch(() => {}));
       return json(out);
     } catch (e) {
       return json({ error: String(e.message || e) }, 500);
@@ -1473,7 +1521,7 @@ async function adminApi(request, env, url, ctx) {
     const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
     try {
       const out = await reopenPosts(env, Array.isArray(body.keys) ? body.keys.map(String).slice(0, 500) : null, body.to);
-      ctx.waitUntil(friends.shareNews(env, buildEverything).catch(() => {}));
+      ctx.waitUntil(friends.shareNews(env, liveBuild).catch(() => {}));
       return json(out);
     } catch (e) {
       return json({ error: String(e.message || e) }, 400);
@@ -1503,7 +1551,7 @@ async function adminApi(request, env, url, ctx) {
     return json({ ok: true });
   }
   if (p === 'overview' && m === 'GET') {
-    const data = await buildEverything(env, { includeHidden: true });
+    const data = await liveBuild(env, { includeHidden: true });
     const { objects } = data.inside;
     const files = objects
       .filter((o) => !o.key.startsWith('data/_'))

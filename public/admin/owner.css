@@ -500,3 +500,4 @@ html.okit-floating #main { padding-bottom: 76px !important; }
 .okit-shook body { animation: okit-shake .6s ease-in-out 1; }
 @keyframes okit-shake { 0%, 100% { translate: 0 0; } 15% { translate: -7px 2px; } 30% { translate: 7px -2px; } 45% { translate: -5px 1px; } 60% { translate: 5px -1px; } 75% { translate: -3px 0; } 90% { translate: 2px 0; } }
 @media (prefers-reduced-motion: reduce) { .okit-shook body { animation: none; } }
+.okit-hint { margin: 2px 0 6px; font: 11.5px/1.4 Tahoma, 'Segoe UI', sans-serif; opacity: .75; }

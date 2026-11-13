@@ -233,6 +233,19 @@ await test('decorating your plot in the village: kept in village.md, and seen ro
   eq((await publicData()).buddies[0].village, undefined, 'gone once they clear it');
 });
 
+await test('online when you’re actually here: your friends see you online while you’ve your site open, and offline once you’ve gone', async () => {
+  const say = (state) => fetch(`${BASE}/admin/api/presence`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state }) });
+  const seenBy = async () => {
+    await post_(api2, 'friends/refresh');
+    return (await (await fetch(`${BASE2}/api/all`, { headers: { 'Cache-Control': 'no-cache' } })).json()).buddies.find((b) => b.url === BASE)?.presence;
+  };
+  await post_(api2, 'friends/settings', { listSeen: 'everyone' });
+  await say('here');
+  eq(await seenBy(), 'online', 'here: online on their site');
+  await say('bye');
+  eq(await seenBy(), 'offline', 'gone: offline on their site');
+});
+
 await test('the arcade: a friend’s best score on your high-score table, where your friends list is shown', async () => {
   await post_(api2, 'arcade', { score: 777 });
   await post_(api, 'friends/refresh');

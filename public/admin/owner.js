@@ -894,8 +894,23 @@ function decorateSuggestions() {
   }
 }
 
-// Your status: tap ✎ by it, and change it there.
-const PRESENCES = [['online', 'Online'], ['away', 'Away'], ['brb', 'Be right back'], ['lunch', 'Out to lunch'], ['busy', 'Busy'], ['offline', 'Appear offline']];
+// Online while you're here: your page tells your site every minute while it's open and in view,
+// and says goodbye when you leave (your site shows you offline a few minutes after the last
+// word if a goodbye never comes).
+let presenceOn = false;
+function keepPresence() {
+  if (presenceOn) return;
+  presenceOn = true;
+  const say = (state) => fetch('/admin/api/presence', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state }), keepalive: state === 'bye' }).catch(() => {});
+  say('here');
+  setInterval(() => !document.hidden && say('here'), 60000);
+  document.addEventListener('visibilitychange', () => !document.hidden && say('here'));
+  addEventListener('pagehide', () => say('bye'));
+}
+
+// Your status: tap ✎ by it, and change it there. ("Automatic" is online while you're here, and
+// offline when you're not; any other you choose lasts until you've been away a day.)
+const PRESENCES = [['online', 'Automatic'], ['away', 'Away'], ['brb', 'Be right back'], ['lunch', 'Out to lunch'], ['busy', 'Busy'], ['offline', 'Appear offline']];
 function decorateStatus() {
   for (const block of document.querySelectorAll('.status-block:not([data-okit])')) {
     block.dataset.okit = '1';
@@ -916,7 +931,7 @@ function decorateStatus() {
         )
       );
       text.addEventListener('keydown', (e) => e.key === 'Enter' && save.click());
-      block.append(h('div', { class: 'okit-status-box' }, chips, text, h('div', { class: 'okit-row' }, btn('Cancel', '', () => block.querySelector('.okit-status-box')?.remove()), save)));
+      block.append(h('div', { class: 'okit-status-box' }, chips, h('p', { class: 'okit-hint' }, 'Automatic: online while you’re on your site, offline when you’re not. Any other you pick lasts until you’ve been away for a day.'), text, h('div', { class: 'okit-row' }, btn('Cancel', '', () => block.querySelector('.okit-status-box')?.remove()), save)));
       text.focus();
     }, { 'aria-label': 'Change your status', title: 'Change your status' });
     block.querySelector('.status-pill')?.after(edit);
@@ -1894,6 +1909,7 @@ export async function startOwner(s) {
     return;
   }
   document.documentElement.classList.add('owner-on');
+  keepPresence();
   ownerHooks.holding = () => writing();
   // (A friend's site as their friend, from anywhere on yours: the photos-of-the-day line, say.)
   ownerHooks.visitFriend = visitFriend;

@@ -203,7 +203,34 @@ await test('while you’re away: the status shows on those days only, and visito
   eq((await overview()).site.away, { status: 'On holiday (plane)', presence: 'busy', from: day(-1), to: day(1) }, 'the back office has them');
   await putFile('site.md', `---\nname: Home Corner\nowner: Sam\nstatus: At my desk\naway_status: On holiday\naway_from: ${day(3)}\naway_to: ${day(9)}\n---\nHi.\n`);
   d = await publicData();
-  eq([d.site.status, d.site.presence], ['At my desk', 'online'], 'not yet');
+  eq([d.site.status, d.site.presence === 'away'], ['At my desk', false], 'not yet');
+});
+
+await test('online when you’re actually here: automatic, or one you chose until you’ve been away a day', async () => {
+  const say = (state) => fetch(`${BASE}/admin/api/presence`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state }) });
+  const shown = async () => (await publicData()).site.presence;
+  await putFile('site.md', '---\nname: Home Corner\nowner: Sam\n---\nHi.\n');
+  await say('here');
+  eq(await shown(), 'online', 'here: online');
+  await say('bye');
+  eq(await shown(), 'offline', 'gone: offline');
+  // One you choose holds while you keep coming back…
+  await putFile('site.md', '---\nname: Home Corner\nowner: Sam\npresence: busy\n---\nHi.\n');
+  await say('here');
+  eq(await shown(), 'busy', 'busy, as chosen');
+  await say('bye');
+  eq(await shown(), 'busy', 'still busy after you’ve gone for now');
+  await say('bye');
+  // …and lapses after a day away: back to automatic.
+  const { livePresence } = await import('../src/presence.js');
+  const now = Date.now();
+  const H = 3600e3;
+  eq(livePresence({ presence: 'busy' }, { seen: now - 23 * H, left: now - 23 * H }, now).presence, 'busy', 'away 23 hours: still busy');
+  eq(livePresence({ presence: 'busy' }, { seen: now - 25 * H, left: now - 25 * H }, now).presence, 'offline', 'away a day: automatic, and not here');
+  eq(livePresence({ presence: 'busy' }, { seen: 0, left: 0 }, now).presence, 'busy', 'never here since this came in: as chosen');
+  eq(livePresence({ presence: 'online' }, { seen: now - 60e3, left: 0 }, now).presence, 'online', 'automatic, here a minute ago: online');
+  eq(livePresence({ presence: 'online' }, { seen: now - 5 * 60e3, left: 0 }, now).presence, 'offline', 'no word for five minutes: offline');
+  eq(livePresence({ presence: 'busy', away_on: true }, { seen: 0, left: 0 }, now).presence, 'busy', 'a schedule for while you’re away still wins');
 });
 
 await test('the Status page: mood, while you’re away, fortunes, and a countdown from the planner; nothing else lost', async () => {
