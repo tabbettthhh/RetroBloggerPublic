@@ -1,5 +1,6 @@
 // The village: the neighbourhood opened out, full screen, like a little island town seen from
-// above. Your house stands on the green in the middle; every friend's house sits round the ring
+// above. (Fetched only the first time it's opened; everything that moves is CSS, and it all holds
+// still in a hidden tab.) Your house stands on the green in the middle; every friend's house sits round the ring
 // road (two rings when there are many), with trees, a pond, flower beds, a bandstand, fences and
 // a car or two going round. Drag to look about, pinch or scroll (or + and −) to zoom, Escape or ✕
 // to close. The same houses as the street (lights, smoke, mail, statuses, knockers), the same
@@ -28,7 +29,7 @@ function seeded(seed) {
 const ellipsePath = (cx, cy, rx, ry) => `M${cx - rx} ${cy}a${rx} ${ry} 0 1 0 ${rx * 2} 0a${rx} ${ry} 0 1 0 ${-rx * 2} 0`;
 
 // opts: { title, seed, houses: [{ el }], me: el | null, dress, night, dusk, festive vars }
-export function openVillage({ title, seed, houses, me, dress, night, dusk }) {
+export function openVillage({ title, seed, houses, me, dress, night, dusk, festive }) {
   document.querySelector('.vl')?.remove();
   const n = houses.length;
   const twoRings = n > 10;
@@ -194,15 +195,56 @@ export function openVillage({ title, seed, houses, me, dress, night, dusk }) {
     me.style.top = `${cy + 50 - 170}px`;
     plots.push({ y: cy + 50, el: me });
   }
+  // Friends who are online, as little people in their gardens; now and then two of them wander
+  // over to the green for a chat. (A few at most, all moved by CSS: nothing to work out per frame.)
+  const person = (colour, x, y, path, n) =>
+    h(
+      'span',
+      { class: 'vl-person' + (path ? ' strolls' : ''), style: (path ? `offset-path: path("${path}"); animation-delay:${-n * 7}s;` : `left:${x}px; top:${y}px;`) + ` --shirt:${colour}`, 'aria-hidden': 'true' },
+      svg('svg', { viewBox: '0 0 20 34' }, svg('circle', { cx: 10, cy: 7, r: 5.5, class: `${k} vl-face`, 'stroke-width': 2 }), svg('path', { d: 'M3 26v-8q0-5 7-5t7 5v8Z', class: `${k} vl-shirt`, 'stroke-width': 2 }), svg('path', { d: 'M7 26v6M13 26v6', class: k, 'stroke-width': 2.5 })),
+      path ? h('span', { class: 'vl-chat' }, '…') : null
+    );
+  const people = [];
+  const online = houses.map((hs, i) => ({ el: hs.el, s: spots[i] })).filter((o) => o.s && o.el.dataset.online).slice(0, 8);
+  online.forEach((o, n) => {
+    const x = o.s.x + 52;
+    const y = o.s.y - 34;
+    // (Pairs of friends meet on the green, either side of the middle.)
+    const pair = Math.floor(n / 2);
+    const meet = pair < 3 && online.length > 1 && n < online.length - (online.length % 2) ? [cx + (n % 2 ? 26 : -26) + (pair - 1) * 90, cy + 92 + (pair % 2) * 14] : null;
+    people.push({ y: y + 34, el: person(o.el.dataset.wall || '#6cb6ff', x, y, meet ? `M${x + 10} ${y + 34}L${meet[0]} ${meet[1]}` : '', pair) });
+  });
+  // The postie: for each friend with something new (a few at most), a walk from their house to
+  // your mailbox, once, and a letter pops up when it's delivered.
+  const posties = me
+    ? houses
+        .map((hs, i) => ({ el: hs.el, s: spots[i] }))
+        .filter((o) => o.s && o.el.dataset.mail)
+        .slice(0, 3)
+        .map((o, n) => {
+          const x = o.s.x;
+          const y = o.s.y - 30;
+          const to = [cx - 40 + 12, cy + 50 - 26];
+          const walker = h('span', { class: 'vl-postie', style: `offset-path: path("M${x} ${y + 30}L${to[0]} ${to[1] + 30}"); animation-delay:${0.8 + n * 3.5}s`, 'aria-hidden': 'true' }, svg('svg', { viewBox: '0 0 22 34' }, svg('path', { d: 'M4 12h14l-2-6H6Z', class: `${k} vl-cap`, 'stroke-width': 2 }), svg('circle', { cx: 11, cy: 14, r: 5, class: `${k} vl-face`, 'stroke-width': 2 }), svg('path', { d: 'M4 30v-9q0-4 7-4t7 4v9Z', class: `${k} vl-cap`, 'stroke-width': 2 }), svg('rect', { x: 13, y: 20, width: 8, height: 7, rx: 1, class: `${k} vl-bag`, 'stroke-width': 1.5 })));
+          walker.addEventListener('animationend', () => {
+            walker.remove();
+            me.classList.remove('vl-got');
+            void me.offsetWidth;
+            me.classList.add('vl-got');
+            if (soundOn()) sound.blip?.(1320, 0.08, 'triangle', 0.03);
+          });
+          return walker;
+        })
+    : [];
   // (Further back drawn first, so nearer things stand in front.)
-  const standing = [...props, ...plots].sort((a, b) => a.y - b.y).map((t) => t.el);
+  const standing = [...props, ...plots, ...people].sort((a, b) => a.y - b.y).map((t) => t.el);
 
   // Festive days: bunting strung across the green, and fireworks over it.
   const bunting = dress?.garland ? [-1, 1].map((side) => h('span', { class: 'vl-bunting', style: `left:${cx - 230}px; top:${cy - 150 + side * 6}px; rotate:${side * 4}deg; --nb-garland:${dress.garland}`, 'aria-hidden': 'true' })) : [];
   const cols = dress?.colours || [];
   const fireworks = dress?.fireworks ? h('span', { class: 'nb-fireworks vl-fireworks', style: `left:${cx - 300}px; top:${cy - 420}px`, 'aria-hidden': 'true' }, [[12, 60], [40, 10], [66, 80], [88, 30], [28, 120]].map(([x, y], j) => h('i', { style: `left:${x}%; top:${y}px; --c:${cols[j % cols.length] || '#ffd23f'}; animation-delay:${j * 0.6}s` }))) : null;
 
-  const world = h('div', { class: 'vl-world', style: `width:${W}px; height:${H}px` }, ground, ducks, cars, bunting, standing, fireworks);
+  const world = h('div', { class: 'vl-world', style: `width:${W}px; height:${H}px` }, ground, ducks, cars, bunting, standing, posties, fireworks);
   const view = h('div', { class: 'vl-view', tabindex: '0', 'aria-label': `${title}. Drag to look about; plus and minus to zoom.` }, world);
   const falling = dress?.falling || { winter: 'snow', autumn: 'leaf', spring: 'petal' }[document.documentElement.dataset.season];
   const weather = falling ? h('span', { class: `nb-weather vl-weather ${falling}`, 'aria-hidden': 'true' }, Array.from({ length: 28 }, (_, j) => h('i', { style: `left:${(j * 37 + 11) % 100}%; animation-delay:${-((j * 1.3) % 12)}s; animation-duration:${10 + (j % 6)}s` + (falling === 'confetti' && cols.length ? `; background:${cols[j % cols.length]}` : '') }))) : null;
@@ -307,9 +349,69 @@ export function openVillage({ title, seed, houses, me, dress, night, dusk }) {
     paint();
   });
 
+  // ---------- the sky: your clock, and the weather where you are ----------
+  // (Not on a dark theme's night or a festive dusk: those stay as they are.)
+  const hour = new Date().getHours();
+  const clock = night || dusk ? '' : hour < 6 || hour >= 21 ? 'night' : hour < 8 || hour >= 18 ? 'night dusk' : '';
+  const skyLayer = h('span', { class: 'vl-sky', 'aria-hidden': 'true' });
+  fetch('/api/sky', { headers: { Accept: 'application/json' } })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((w) => {
+      if (!w || !box.isConnected) return;
+      const kind = String(w.kind || '');
+      if (/^(rain|storm|cloud|fog|snow)$/.test(kind)) box.classList.add('sky-' + kind);
+      if (w.windy) box.classList.add('sky-windy');
+      // (Snow from the sky, if the season or day hasn't brought its own weather already.)
+      if (kind === 'snow' && !weather) skyLayer.append(h('span', { class: 'nb-weather vl-weather snow' }, Array.from({ length: 24 }, (_, j) => h('i', { style: `left:${(j * 41 + 7) % 100}%; animation-delay:${-((j * 1.1) % 12)}s; animation-duration:${11 + (j % 5)}s` }))));
+    })
+    .catch(() => {});
+
+  // ---------- sounds: birds by day, crickets by night, a little tune on a festive day ----------
+  // (Off unless you turn them on here; and never louder than the site's own sound setting allows.)
+  const SOUND_KEY = 'vl-sound';
+  const soundOn = () => {
+    try {
+      return localStorage.getItem(SOUND_KEY) === '1';
+    } catch {
+      return false;
+    }
+  };
+  let ambient = 0;
+  const dark = () => box.classList.contains('night');
+  const tick = () => {
+    if (document.hidden || Math.random() < 0.4) return;
+    if (dark()) [0, 0.09, 0.18].forEach((d) => setTimeout(() => sound.blip?.(4300, 0.025, 'square', 0.005), d * 1000));
+    else {
+      const f = 2300 + Math.random() * 900;
+      sound.blip?.(f, 0.05, 'sine', 0.02);
+      setTimeout(() => sound.blip?.(f * 1.25, 0.06, 'sine', 0.018), 90);
+    }
+  };
+  const tune = () => [523, 659, 784, 659, 1047].forEach((f, j) => setTimeout(() => sound.blip?.(f, 0.16, 'triangle', 0.03), j * 180));
+  const setSound = (on) => {
+    clearInterval(ambient);
+    if (on) {
+      ambient = setInterval(tick, 3200);
+      if (festive) tune();
+    }
+    soundBtn.textContent = on ? '🔊' : '🔈';
+    soundBtn.setAttribute('aria-pressed', String(on));
+  };
+  const soundBtn = h('button', { type: 'button', class: 'vl-btn vl-sound', 'aria-label': 'Village sounds', 'aria-pressed': 'false', onclick: () => {
+    const on = !soundOn();
+    try {
+      localStorage.setItem(SOUND_KEY, on ? '1' : '0');
+    } catch {}
+    setSound(on);
+  } }, '🔈');
+  // (A hidden tab: everything holds still, and quiet.)
+  const onHide = () => box.classList.toggle('vl-paused', document.hidden);
+
   // ---------- the window itself ----------
   const close = () => {
     sound.click?.();
+    clearInterval(ambient);
+    document.removeEventListener('visibilitychange', onHide);
     removeEventListener('keydown', onKey);
     removeEventListener('resize', onResize);
     box.classList.add('closing');
@@ -322,14 +424,17 @@ export function openVillage({ title, seed, houses, me, dress, night, dusk }) {
   const closeBtn = h('button', { type: 'button', class: 'vl-btn vl-close', 'aria-label': 'Close the village', onclick: close }, '✕');
   const box = h(
     'div',
-    { class: 'nb vl' + (night ? ' night' : '') + (dusk ? ' dusk' : '') + (dress?.fest ? ' fest' : ''), role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
+    { class: 'nb vl' + (night ? ' night' : '') + (dusk ? ' dusk' : '') + (clock ? ' ' + clock : '') + (dress?.fest ? ' fest' : ''), role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
     h('div', { class: 'vl-sea', 'aria-hidden': 'true' }),
     view,
+    skyLayer,
     weather,
-    h('div', { class: 'vl-bar' }, h('span', { class: 'vl-title' }, title), h('span', { class: 'vl-zoom' }, h('button', { type: 'button', class: 'vl-btn', 'aria-label': 'Zoom out', onclick: () => zoomBy(0.8) }, '−'), h('button', { type: 'button', class: 'vl-btn', 'aria-label': 'Zoom in', onclick: () => zoomBy(1.25) }, '+')), closeBtn)
+    h('div', { class: 'vl-bar' }, h('span', { class: 'vl-title' }, title), h('span', { class: 'vl-zoom' }, soundBtn, h('button', { type: 'button', class: 'vl-btn', 'aria-label': 'Zoom out', onclick: () => zoomBy(0.8) }, '−'), h('button', { type: 'button', class: 'vl-btn', 'aria-label': 'Zoom in', onclick: () => zoomBy(1.25) }, '+')), closeBtn)
   );
   if (dress?.fest) dress.colours.slice(0, 3).forEach((c, j) => box.style.setProperty(`--nb-f${j + 1}`, c));
   document.body.append(box);
+  document.addEventListener('visibilitychange', onHide);
+  setSound(soundOn());
   addEventListener('keydown', onKey);
   addEventListener('resize', onResize);
   requestAnimationFrame(() => {

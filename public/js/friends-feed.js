@@ -13,7 +13,6 @@ import { ownerHooks } from './owner-door.js';
 import { sound } from './sound.js';
 import { activeSkin, lookOf, drawingUrl, festiveScenery, FESTIVE_COLOURS } from './skins.js';
 import { houseState } from './neighbourhood.js';
-import { openVillage } from './village.js';
 
 // Each friend's post cards (from their site), by the name their posts use.
 let looks = {};
@@ -107,6 +106,13 @@ const WALLS = ['#ffd23f', '#ff7eb0', '#4fd6cb', '#b79bff', '#ff9a4d', '#8be35a',
 const ROOFS = ['#e8443a', '#7a4ad8', '#ff7a1a', '#1f9d8f', '#3a6fe8', '#d6338a', '#f0b400', '#2fa84a'];
 const hashOf = (v) => [...String(v)].reduce((n, c) => (n * 31 + c.charCodeAt(0)) >>> 0, 7);
 
+const UPTO = { places: '🧳', music: '🎵', books: '📚', films: '🍿', tv: '📺', podcasts: '🎧', photos: '📷', thoughts: '💭', lists: '📝', quotes: '❝' };
+const DAYS3 = 3 * 24 * 60 * 60 * 1000;
+// How big a house has grown, and what its owner's been up to lately, from posts this viewer may see.
+function growth(list, now = Date.now()) {
+  const newest = list.reduce((n, p) => ((p.ts || 0) > (n?.ts || 0) ? p : n), null);
+  return { grow: list.length, upto: newest && now - (newest.ts || 0) < DAYS3 ? newest.type : '' };
+}
 function house(b, st, looks, i, ctx, day) {
   const root = document.documentElement.dataset;
   const season = root.season;
@@ -181,6 +187,11 @@ function house(b, st, looks, i, ctx, day) {
     // (The mailbox: its flag up, and a letter poking out, while there's something new.)
     svg('path', { d: 'M13 150V126', class: `${k} nb-post` }),
     svg('path', { d: 'M3 128v-8q0-9 9-9h7q8 0 8 9v8Z', class: `${k} nb-box` }),
+    // (A house grows with its site: window boxes, then a dish on the roof, a shed, a flag.)
+    (st.grow || 0) >= 3 ? svg('g', { class: 'nb-grow', transform: 'translate(22 34)' }, [S.ex[0], S.ex[1]].map((x) => [svg('rect', { x: x - 11, y: S.ey + 13, width: 22, height: 4.5, rx: 1.5, class: `${k} nb-wbox`, 'stroke-width': 1.8 }), [x - 6, x, x + 6].map((fx, j) => svg('circle', { cx: fx, cy: S.ey + 12, r: 2.6, fill: ['#ff5d8f', '#ffd23f', '#ff9a1f'][j] }))])) : null,
+    (st.grow || 0) >= 8 ? svg('g', { class: 'nb-grow', transform: `translate(${22 + S.sx - 6} ${34 + S.sy - 4})` }, svg('path', { d: 'M0 18V0M-7 4h14M-5 9h10', class: k, fill: 'none', 'stroke-width': 2 })) : null,
+    (st.grow || 0) >= 15 ? svg('g', { class: 'nb-grow' }, svg('path', { d: 'M128 150v-22l13-9 13 9v22Z', class: `${k} nb-shed`, 'stroke-width': 2.5 }), svg('path', { d: 'M137 150v-11h8v11', class: `${k} nb-door`, 'stroke-width': 2 })) : null,
+    (st.grow || 0) >= 30 ? svg('g', { class: 'nb-grow nb-flagpole', transform: `translate(${22 + S.sx + 4} ${34 + S.sy - 12})` }, svg('path', { d: 'M0 26V0', class: k, 'stroke-width': 2 }), svg('path', { d: 'M1 1h14l-4 5 4 5H1Z', class: `${k} nb-pennant`, 'stroke-width': 1.5 })) : null,
     st.mail ? svg('g', { class: 'nb-mail' }, svg('path', { d: 'M27 122V104h8v6h-8', class: `${k} nb-flag` }), svg('g', { class: 'nb-letter' }, svg('rect', { x: 5, y: 100, width: 17, height: 12, rx: 1.5, class: `${k} nb-env`, 'stroke-width': 2 }), svg('path', { d: 'M5 101l8.5 6 8.5-6', class: `${k} nb-flap`, 'stroke-width': 2 }))) : null
   );
   const pic = day?.photo_day?.src ? daySign(day, name) : null;
@@ -204,7 +215,15 @@ function house(b, st, looks, i, ctx, day) {
   });
   // (Their status, in a speech bubble over the house: on your own street.)
   const said = b.status ? h('span', { class: 'nb-say', title: b.status }, withEmoticons(String(b.status).slice(0, 90), 13)) : null;
-  return h('div', { class: 'nb-plot', 'data-house': b.url }, said, a, pic);
+  // (What they're up to, by the door: from their latest post you may see, for a few days; or a
+  // "back soon" sign while they're away.)
+  const away = ['away', 'brb', 'lunch', 'busy'].includes(b.presence);
+  const upto = away ? h('span', { class: 'nb-upto nb-back', 'aria-hidden': 'true' }, 'back soon') : st.upto ? h('span', { class: 'nb-upto', 'aria-hidden': 'true' }, UPTO[st.upto] || '') : null;
+  const plot = h('div', { class: 'nb-plot', 'data-house': b.url }, said, a, pic, upto);
+  if (st.lit) plot.dataset.online = '1';
+  if (st.mail) plot.dataset.mail = '1';
+  plot.dataset.wall = wall;
+  return plot;
 }
 
 // Their photo of the day (the very one their own site shows today), on a sign in the garden.
@@ -333,7 +352,8 @@ function neighbourhood(ctx) {
       onclick: () => {
         const night = isNight();
         const dress = lineDress();
-        openVillage({ title: here ? `${firstName(here)}’s neighbourhood` : 'Your neighbourhood', seed: here?.url || homeUrl(), houses: plotsFor(ctx, here, go).map((el) => ({ el })), me: here ? null : myHouse(ctx), dress, night: night || !!dress?.evening, dusk: !night && !!dress?.evening });
+        // (The village is only fetched the first time it's opened.)
+        import('./village.js').then(({ openVillage }) => openVillage({ ctx, title: here ? `${firstName(here)}’s neighbourhood` : 'Your neighbourhood', seed: here?.url || homeUrl(), houses: plotsFor(ctx, here, go).map((el) => ({ el })), me: here ? null : myHouse(ctx), dress, night: night || !!dress?.evening, dusk: !night && !!dress?.evening, festive: !!dress?.fest }));
       }
     }, '⤢ Open');
   const titleOf = (here) => {
@@ -353,6 +373,8 @@ function neighbourhood(ctx) {
       : h('div', { class: 'nb-title' }, '🏘 The neighbourhood');
   // (If you'd strolled off before the page was drawn again, you're still there.)
   show();
+  // (Off screen, the street holds still: nothing moves that nobody can see.)
+  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => section.classList.toggle('nb-still', !e.isIntersecting)).observe(section);
   return section;
 }
 
@@ -367,7 +389,7 @@ function plotsFor(ctx, here, go) {
     const seen = readSeen();
     const came = arrivals(buddies);
     if (came.size) setTimeout(() => sound.creak?.(), 350);
-    return buddies.map((b, i) => house(b, { ...houseState(b, posts, now, seen), arrived: came.has(b.url) }, ctx.data.friendLooks || {}, i, ctx, (ctx.data.friendDays || []).find((x) => x.url === b.url)));
+    return buddies.map((b, i) => house(b, { ...houseState(b, posts, now, seen), ...growth(posts.filter((p) => p.friend?.url === b.url)), arrived: came.has(b.url) }, ctx.data.friendLooks || {}, i, ctx, (ctx.data.friendDays || []).find((x) => x.url === b.url)));
   }
   return here.houses.map((b, i) => {
     const you = b.url === homeUrl();
@@ -387,7 +409,7 @@ function plotsFor(ctx, here, go) {
 function myHouse(ctx) {
   const site = ctx.data.site || {};
   const t = activeSkin();
-  const el = house({ url: homeUrl(), name: site.name || 'You', owner: 'You', status: site.status || '', colours: t ? { main: t.main, accent: t.accent } : null }, { lit: site.presence !== 'offline' }, {}, 0, ctx, null);
+  const el = house({ url: homeUrl(), name: site.name || 'You', owner: 'You', status: site.status || '', colours: t ? { main: t.main, accent: t.accent } : null, presence: site.presence }, { lit: site.presence !== 'offline', ...growth(ctx.data.posts || []) }, {}, 0, ctx, null);
   const a = el.querySelector('.nb-house');
   a.removeAttribute('target');
   a.removeAttribute('rel');

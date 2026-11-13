@@ -249,6 +249,7 @@ await test('strolling: from your street to a friend’s, only what their site sh
   const s = await (await fetch(BASE + '/api/stroll?to=' + encodeURIComponent(BASE2), { headers: UA })).json();
   eq([s.url, s.houses.map((h) => h.url)], [BASE2, st.houses.map((h) => h.url)], 'your site fetches their street');
   eq((await fetch(BASE + '/api/stroll?to=javascript:alert(1)', { headers: UA })).status, 400, 'only to a proper site');
+  assert(['clear', 'cloud', 'rain', 'snow', 'fog', 'storm'].includes((await (await fetch(BASE + '/api/sky', { headers: UA })).json()).kind), 'the village’s sky');
   eq((await fetch(BASE + '/api/stroll?to=' + encodeURIComponent(BASE2), { headers: { 'User-Agent': 'somebot/1' } })).status, 400, 'not for bots');
   // In the neighbourhood: the signpost, over to their street, your own house there, and home again.
   const browser = await chromium.launch();
@@ -264,6 +265,8 @@ await test('strolling: from your street to a friend’s, only what their site sh
     await v.waitForSelector('.vl.open');
     eq(await v.locator('.vl .nb-plot.vl-plot').count(), (await v.locator('.feed .nb-plot[data-house]').count()) + 1, 'every house, and yours');
     eq(await v.locator('.vl .vl-mine .nb-name').innerText(), 'You', 'yours in the middle');
+    assert(await v.locator('.vl .vl-person').count(), 'friends who are online, out in their gardens');
+    eq(await v.locator('.vl.vl-paused').count(), 0, 'moving while it’s in view');
     await v.keyboard.press('Escape');
     await v.waitForFunction(() => !document.querySelector('.vl'));
     await v.locator('.nb-board').first().click();
