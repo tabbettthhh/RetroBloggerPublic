@@ -3253,7 +3253,9 @@ function rawField(head, key) {
   return v.replace(/^'(.*)'$/, '$1');
 }
 
-const PRESENCES = [['online', 'Online', 'green'], ['away', 'Away', 'amber'], ['brb', 'Be right back', 'amber'], ['lunch', 'Out to lunch', 'amber'], ['busy', 'Busy', 'red'], ['offline', 'Appear offline', 'grey']];
+// ("Automatic": online while you've your site open, offline when you're not. Any other lasts
+// until you've been away a day.)
+const PRESENCES = [['online', 'Automatic', 'green'], ['away', 'Away', 'amber'], ['brb', 'Be right back', 'amber'], ['lunch', 'Out to lunch', 'amber'], ['busy', 'Busy', 'red'], ['offline', 'Appear offline', 'grey']];
 
 // Status (presence, message, countdown, past statuses) and Site & wishlist share one form, so
 // saving either keeps everything in site.md; each tab shows its own part.
@@ -3466,7 +3468,7 @@ function viewSite(part = 'site') {
         'fieldset',
         { class: 'group' },
         h('legend', null, 'Status'),
-        h('div', { class: 'field' }, h('span', { class: 'label' }, 'Show me as'), presenceRow),
+        h('div', { class: 'field' }, h('span', { class: 'label' }, 'Show me as'), presenceRow, h('span', { class: 'hint' }, 'Automatic: online while you’re on your site, offline when you’re not. Any other you pick lasts until you’ve been away for a day, then it’s back to Automatic.')),
         field('Personal message', statusIn, 'Shown as "Currently: …". [book], [film], [tv], [music] or [podcast] fill in what you have marked as "now" on that shelf.'),
         picker,
         preview,
