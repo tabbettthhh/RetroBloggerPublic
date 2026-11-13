@@ -38,7 +38,7 @@
 
 /* ---------- corners ---------- */
 [data-sk-corners="square"] :is(.xp-window, .dw-xp, .card, .profile-tile, .status-pill, .start-btn, .task-btn, .start-menu, .nudge-btn, .feed-more, .countdown, .xp-nav a, .chip-btn, .search-chip, .ff-post, .ff-buddies) { border-radius: 0 !important; }
-[data-sk-corners="round"] :is(.card, .profile-tile, .ff-post, .ff-buddies) { border-radius: 14px; }
+[data-sk-corners="round"] :is(.card, .profile-tile, .ff-post) { border-radius: 14px; }
 [data-sk-corners="round"] :is(.xp-window, .dw-xp, .start-menu) { border-radius: 16px 16px 6px 6px; }
 [data-sk-corners="round"] :is(.status-pill, .nudge-btn, .feed-more, .task-btn, .xp-nav a) { border-radius: 999px; }
 [data-sk-corners="round"] .start-btn { border-radius: 0 22px 22px 0; }

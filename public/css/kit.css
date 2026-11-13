@@ -101,3 +101,9 @@
 .mc-on .arc-cab { --cab: var(--k-surface-2); --cab-2: var(--k-surface); color: var(--k-surface-2-ink) !important; border: var(--k-edge); border-radius: var(--k-radius); }
 .mc-on .arc-marquee { background: var(--k-bar-bg) !important; box-shadow: none !important; }
 .mc-on .arc-marquee span { color: var(--k-bar-ink) !important; font: var(--k-bar-font) !important; text-shadow: var(--k-bar-glow, none) !important; }
+/* The neighbourhood keeps its cartoon drawing, in the theme's frame, with its buttons and its
+   look (a computer theme can set --k-scene-filter, and --k-scene-night: 1 for a dark one). */
+.mc-on .nb-street { border: var(--k-edge) !important; border-radius: var(--k-radius) !important; box-shadow: var(--k-shadow) !important; filter: var(--k-scene-filter, none); }
+.mc-on .nb-title { color: var(--k-head-ink, var(--k-ink)) !important; font-family: var(--k-head-font, var(--k-font)) !important; }
+.mc-on .nb-board, .mc-on .nb-way-say { background: var(--k-ctl-bg) !important; color: var(--k-ctl-ink) !important; border: var(--k-ctl-edge) !important; border-radius: var(--k-ctl-radius) !important; box-shadow: none !important; rotate: none; }
+.mc-on :is(.nb-name, .nb-say) { background: var(--k-surface) !important; color: var(--k-surface-ink) !important; border: var(--k-edge) !important; border-radius: var(--k-ctl-radius) !important; box-shadow: none !important; }

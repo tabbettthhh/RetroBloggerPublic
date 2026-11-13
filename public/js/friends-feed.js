@@ -1,15 +1,17 @@
 // The Friends tab: posts from friends who run their own copy of this site, as one scrollable
-// feed (newest first), under a list of your friends. Tap a buddy to see only their posts. Everything comes through your own site; nothing loads from theirs.
+// feed (newest first), under the neighbourhood: a street with a house for each friend (it's the
+// buddy list too: lights on while they're online, their status in a bubble). Everything comes
+// through your own site; nothing loads from theirs.
 // (Signed in, their posts are mixed into your Home too: see friendPost.)
 import { h } from './util.js';
-import { presenceDot, ago } from './statusbar.js';
+import { ago } from './statusbar.js';
 import { withEmoticons } from './emoticons.js';
 import { friendHtml } from './friend-html.js';
 import { card, foldLong } from './apps.js';
 import { friendSkin } from './card-dress.js';
 import { ownerHooks } from './owner-door.js';
 import { sound } from './sound.js';
-import { activeSkin, lookOf, drawingUrl, festiveScenery } from './skins.js';
+import { activeSkin, lookOf, drawingUrl, festiveScenery, FESTIVE_COLOURS } from './skins.js';
 import { houseState } from './neighbourhood.js';
 
 // Each friend's post cards (from their site), by the name their posts use.
@@ -21,15 +23,19 @@ const colourFor = (s) => AVATAR[[...String(s)].reduce((n, c) => (n * 31 + c.char
 const initial = (s) => (String(s || '?').trim()[0] || '?').toUpperCase();
 const safeUrl = (u) => (/^https?:\/\//i.test(String(u || '')) ? String(u) : null);
 
-let only = null;
-
 // A square user picture, like the ones on the XP welcome screen.
 function avatar(who, size = 'small') {
   return h('span', { class: `ff-avatar ${size}`, style: { '--av': colourFor(who.url || who.name) }, 'aria-hidden': 'true' }, initial(who.owner || who.name));
 }
 
 // The street dresses for the season or festive day, as the rest of the site does (and not at
-// all when they're switched off): a festive day strings its garland across the sky.
+// all when they're switched off). A festive day strings its garland across the sky, tints the
+// sky in its colours, hangs its drawings on every door and stands one in every garden, and brings
+// its own weather; an evening one (lanterns, lamps, bonfires) brings dusk, and a few bring
+// fireworks.
+const EVENING = new Set(['diwali', 'bonfire_night', 'eid_al_fitr', 'eid_al_adha', 'ramadan', 'hanukkah', 'mid_autumn', 'tanabata', 'halloween', 'yalda', 'lunar_new_year', 'dia_de_muertos']);
+const FIREWORKS = new Set(['bonfire_night', 'diwali', 'lunar_new_year']);
+const WEATHER = { petals: 'petal', confetti: 'confetti', stars: 'star', snow: 'snow', leaves: 'leaf', sunshine: 'spark' };
 function lineDress() {
   const on = document.documentElement.dataset;
   const t = activeSkin();
@@ -40,8 +46,23 @@ function lineDress() {
   try {
     garland = on.festival ? festiveScenery(look, id, t).garland : '';
   } catch {}
-  return { charm: (i) => drawingUrl(look.charms[i % look.charms.length], t, 26), garland };
+  const fest = on.festival ? id : '';
+  return {
+    charm: (i) => drawingUrl(look.charms[i % look.charms.length], t, 26),
+    // (The same, as a plain address for a picture inside the drawing.)
+    pic: (i) => drawingUrl(look.charms[i % look.charms.length], t, 26).replace(/^url\("(.*)"\)$/, '$1'),
+    garland,
+    fest,
+    falling: fest ? WEATHER[look.falling] || '' : '',
+    colours: fest ? FESTIVE_COLOURS[fest] || [t.accent, t.main, '#f6c431'] : null,
+    evening: EVENING.has(fest),
+    fireworks: FIREWORKS.has(fest) && !look.quiet
+  };
 }
+// Whether the street's at night: dark mode, or a computer theme that's dark all over.
+const isNight = () => document.documentElement.dataset.theme === 'dark' || getComputedStyle(document.documentElement).getPropertyValue('--k-scene-night').trim() === '1';
+// (The festive day's dressing, for the houses being drawn.)
+let dressNow = null;
 // The Neighbourhood: a little street at the top of Friends, one house per friend on your list.
 // It shows nothing the list doesn't: a name, whether they're online (lights on) and, only where
 // you may see their posts, whether they posted today (smoke from the chimney) and whether
@@ -122,7 +143,7 @@ function house(b, st, looks, i, ctx, day) {
     svg('ellipse', { cx: 82, cy: 150, rx: 56, ry: 6, class: 'nb-shadow' }),
     // (The garden path, from the door down to the road.)
     svg('path', { d: `M${d + 13} 148l-6 22h34l-10-22Z`, class: `${k} nb-path` }),
-    day?.photo_day?.src ? null : prop,
+    day?.photo_day?.src ? null : dressNow?.fest ? svg('image', { href: dressNow.pic(i + 1), x: 136, y: 112, width: 34, height: 34, class: 'nb-fest-prop' }) : prop,
     svg(
       'g',
       { class: 'nb-body', transform: 'translate(22 34)' },
@@ -144,6 +165,8 @@ function house(b, st, looks, i, ctx, day) {
         eye(S.ex[1]),
         svg('path', { d: `M${d - 9} 114V98Q${d} 84 ${d + 9} 98V114Z`, class: `${k} nb-door` }),
         svg('circle', { cx: d + 5, cy: 103, r: 1.6, class: 'nb-knob' }),
+        // (A festive day's drawing hung on the door.)
+        dressNow?.fest ? svg('image', { href: dressNow.pic(i), x: d - 8, y: 86, width: 16, height: 16, class: 'nb-fest-door' }) : null,
         svg('path', { d: 'M88 116q-3-12 8-10q4-8 12-2q9 2 4 12Z', class: `${k} nb-bush` }),
         season === 'spring' ? [[95, 109], [103, 106], [108, 111]].map(([x, y]) => svg('circle', { cx: x, cy: y, r: 2, class: 'nb-bloom' })) : null,
         lights
@@ -178,7 +201,9 @@ function house(b, st, looks, i, ctx, day) {
       ownerHooks.visitFriend(key, b.url);
     }
   });
-  return h('div', { class: 'nb-plot', 'data-house': b.url }, a, pic);
+  // (Their status, in a speech bubble over the house: on your own street.)
+  const said = b.status ? h('span', { class: 'nb-say', title: b.status }, withEmoticons(String(b.status).slice(0, 90), 13)) : null;
+  return h('div', { class: 'nb-plot', 'data-house': b.url }, said, a, pic);
 }
 
 // Their photo of the day (the very one their own site shows today), on a sign in the garden.
@@ -253,8 +278,14 @@ const homeUrl = () => location.origin;
 function neighbourhood(ctx) {
   const buddies = ctx.data.buddies || [];
   if (!buddies.length) return null;
-  const night = document.documentElement.dataset.theme === 'dark';
-  const section = h('section', { class: 'nb' + (night ? ' night' : '') });
+  const night = isNight();
+  const dress = lineDress();
+  const dusk = !night && !!dress?.evening;
+  const section = h('section', { class: 'nb' + (night ? ' night' : '') + (dusk ? ' night dusk' : '') + (dress?.fest ? ' fest' : '') });
+  if (dress?.fest) {
+    section.dataset.fest = dress.fest;
+    dress.colours.slice(0, 3).forEach((c, n) => section.style.setProperty(`--nb-f${n + 1}`, c));
+  }
   const note = (text) => {
     section.querySelector('.nb-note')?.remove();
     if (text) section.querySelector('.nb-title')?.append(h('span', { class: 'nb-note', role: 'status' }, text));
@@ -312,10 +343,12 @@ function sceneOf(ctx, here, go, arrive) {
   const posts = ctx.data.friendPosts || [];
   const now = new Date();
   const dress = lineDress();
-  const night = document.documentElement.dataset.theme === 'dark';
+  dressNow = dress;
+  const night = isNight() || !!dress?.evening;
   const season = document.documentElement.dataset.season;
   const k = 'nb-k';
-  const falling = { winter: 'snow', autumn: 'leaf', spring: 'petal' }[season];
+  const falling = dress?.fest ? dress.falling : { winter: 'snow', autumn: 'leaf', spring: 'petal' }[season];
+  const cols = dress?.colours || [];
   let plots;
   if (!here) {
     const seen = readSeen();
@@ -377,33 +410,9 @@ function sceneOf(ctx, here, go, arrive) {
           svg('svg', { viewBox: '0 0 60 34' }, svg('path', { d: 'M4 24v-6q0-4 5-5l6-1q5-9 13-9h8q8 0 12 9q9 1 9 7v5Z', class: `${k} nb-carbody` }), svg('path', { d: 'M19 12q4-6 9-6h2v6ZM33 6h3q5 0 8 6H33Z', class: `${k} nb-glass`, 'stroke-width': 2 }), svg('circle', { cx: 16, cy: 25, r: 5.5, class: `${k} nb-wheel` }), svg('circle', { cx: 44, cy: 25, r: 5.5, class: `${k} nb-wheel` }), svg('circle', { cx: 55, cy: 18, r: 2, class: 'nb-beam' }))
         )
       ),
-      falling ? h('span', { class: `nb-weather ${falling}`, 'aria-hidden': 'true' }, Array.from({ length: 14 }, (_, n) => h('i', { style: `left:${(n * 37 + 11) % 100}%; animation-delay:${-((n * 1.7) % 9)}s; animation-duration:${7 + (n % 5)}s` }))) : null
-    )
-  );
-}
-
-function buddyList(buddies, redraw) {
-  const online = buddies.filter((b) => b.presence !== 'offline').length;
-  return h(
-    'section',
-    { class: 'ff-buddies', 'aria-label': 'Buddies' },
-    h('div', { class: 'ff-buddies-title' }, h('span', { class: 'ff-logo', 'aria-hidden': 'true' }), 'Buddies', h('small', null, ` (${online} of ${buddies.length} online)`)),
-    h(
-      'ul',
-      null,
-      buddies.map((b) =>
-        h(
-          'li',
-          null,
-          h(
-            'button',
-            { type: 'button', class: 'ff-buddy' + (only === b.url ? ' on' : ''), 'aria-pressed': String(only === b.url), onclick: () => { only = only === b.url ? null : b.url; redraw(); } },
-            presenceDot({ presence: b.presence }),
-            avatar(b),
-            h('span', { class: 'ff-buddy-text' }, h('b', null, b.owner || b.name), b.owner ? h('small', null, ` (${b.name})`) : null, b.status ? h('span', { class: 'ff-buddy-status' }, withEmoticons(b.status, 14)) : null)
-          )
-        )
-      )
+      // (Fireworks over the roofs, on the few days that have them.)
+      dress?.fireworks ? h('span', { class: 'nb-fireworks', 'aria-hidden': 'true' }, [[18, 22], [46, 12], [72, 26], [88, 10]].map(([x, y], n) => h('i', { style: `left:${x}%; top:${y}px; --c:${cols[n % cols.length] || '#ffd23f'}; animation-delay:${n * 0.7}s` }))) : null,
+      falling ? h('span', { class: `nb-weather ${falling}`, 'aria-hidden': 'true' }, Array.from({ length: 14 }, (_, n) => h('i', { style: `left:${(n * 37 + 11) % 100}%; animation-delay:${-((n * 1.7) % 9)}s; animation-duration:${7 + (n % 5)}s` + (falling === 'confetti' && cols.length ? `; background:${cols[n % cols.length]}` : '') }))) : null
     )
   );
 }
@@ -516,22 +525,10 @@ export function friendsApp(ctx) {
   looks = ctx.data.friendLooks || {};
   const wrap = h('div', { class: 'feed ff' });
   const redraw = () => {
-    const posts = only ? all.filter((p) => p.friend?.url === only) : all;
-    const pick = buddies.find((b) => b.url === only);
+    const posts = all;
     const parts = [
-      // (First of all: today's photos, on the line.)
-      only ? null : neighbourhood(ctx),
-      buddies.length ? buddyList(buddies, redraw) : null,
-      pick
-        ? h(
-            'div',
-            { class: 'ff-pick' },
-            presenceDot({ presence: pick.presence }),
-            h('b', null, pick.owner || pick.name),
-            pick.status ? h('span', { class: 'ff-pick-status' }, ' – ', withEmoticons(pick.status, 15)) : null,
-            h('button', { type: 'button', class: 'ff-all', onclick: () => { only = null; redraw(); } }, 'Everyone')
-          )
-        : null,
+      // (First of all: the street, with a house for each friend. It's the buddy list now too.)
+      neighbourhood(ctx),
       posts.length
         ? posts.map((p) => (p.full ? friendCard(p) : postCard(p)))
         : // (Never why: to a visitor, there's just nothing from friends yet.)

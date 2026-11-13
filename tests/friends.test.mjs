@@ -197,7 +197,8 @@ await test('your site has a Friends tab with their posts if you choose (to start
   await site.goto(BASE + '/#/friends');
   await site.waitForSelector('.ff-full');
   assert(await site.locator('.xp-links a', { hasText: 'Friends' }).count(), 'a Friends tab');
-  eq(await site.locator('.ff-buddy').count(), 1, 'the buddy list');
+  eq(await site.locator('.ff-buddies').count(), 0, 'no separate buddy list: the street is it');
+  assert((await site.locator('.nb-say').first().innerText()).includes('revising'), 'their status, in a bubble over their house');
   // The neighbourhood: a house for each friend on the list, linking to their own site, lit while they're online.
   eq(await site.locator('.nb .nb-house').count(), 1, 'a house for the friend');
   eq(await site.locator('.nb-house').first().getAttribute('href'), BASE2, 'which opens their site');
@@ -210,8 +211,6 @@ await test('your site has a Friends tab with their posts if you choose (to start
   eq(await post.locator('a[href^="javascript"]').count(), 0, 'no script links');
   const loaded = await site.waitForFunction(() => { const img = document.querySelector('.ff-full img[src^="/friends-media/"]'); return img && img.complete && img.naturalWidth > 0; }, null, { timeout: 10000 }).then(() => true, () => false);
   assert(loaded, 'the photo shows');
-  await site.locator('.ff-buddy').first().click();
-  assert((await site.locator('.ff-pick').innerText()).includes('Lina'), 'tap a buddy to see only theirs');
   assert(!site.errors.length, site.errors.join('; '));
   await browser.close();
   await post_(api, 'friends/settings', { showOnSite: false });
@@ -537,7 +536,7 @@ await test('notes between friends: the newest pops up, the rest wait in Mail; on
     // From the Friends tab: a note to a buddy.
     await q.keyboard.press('Escape');
     await q.goto(BASE + '/?owner=1#/friends');
-    await q.locator('.okit-note-btn').first().click();
+    await q.locator('.nb-plot .okit-slip').first().click();
     await q.waitForSelector('.ml-compose select');
     eq(await q.locator('.ml-compose select').inputValue(), 'localhost_8801', 'to them');
     assert(!q.errors.length, q.errors.join('; '));
@@ -565,6 +564,7 @@ await test('a knock at the door: a friend knocks from their neighbourhood; your 
     await p.goto(BASE + '/?owner=1#/friends');
     const knocker = p.locator('.nb-plot .okit-knock').first();
     await knocker.waitFor();
+    assert(await p.locator('.nb-plot .okit-slip').count(), 'a note to slip through each friend’s door');
     await knocker.click();
     await p.waitForFunction(() => /Knock knock! Lina/.test(document.querySelector('.okit-toast')?.textContent || ''));
     assert(await p.locator('.nb-plot.nb-knocked').count(), 'her house jumps');
