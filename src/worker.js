@@ -160,6 +160,8 @@ async function route(request, env, ctx) {
   // to another site's (fetched here, so the page only ever talks to your own site).
   if (p === '/api/street' && method === 'GET') return json(await friends.street(env, (await buildEverything(env)).site), 200, { 'Cache-Control': 'public, max-age=300' });
   if (p === '/api/stroll' && method === 'GET') return stroll(request, env, ctx);
+  // The village's weather: the viewer's own (roughly where their connection is), never yours.
+  if (p === '/api/sky' && method === 'GET') return sky(request, ctx);
   if (p === '/api/visit' && method === 'POST') return visit(request, env);
   if (p === '/api/guestbook' && method === 'POST') return signGuestbook(request, env, ctx);
   if (p === '/api/comment' && method === 'POST') return leaveComment(request, env, ctx);
@@ -1116,6 +1118,26 @@ async function mediaFor(env, key, head = false, ifNoneMatch = '') {
 }
 
 // ---------- visitors writing ----------
+
+// The village's sky: the weather where the viewer is, as Cloudflare places their connection (to
+// a city or so). Asked of the weather service by rough position only, kept half an hour per
+// rough position, and never stored or kept with anything else.
+const SKY = (code) => (code >= 95 ? 'storm' : code >= 71 && code <= 77 ? 'snow' : code >= 85 && code <= 86 ? 'snow' : code >= 51 ? 'rain' : code >= 45 ? 'fog' : code >= 2 ? 'cloud' : 'clear');
+async function sky(request, ctx) {
+  if (looksLikeBot(request)) return json({ kind: 'clear' });
+  const lat = Math.round(Number(request.cf?.latitude) * 2) / 2;
+  const lon = Math.round(Number(request.cf?.longitude) * 2) / 2;
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || (!request.cf?.latitude && !request.cf?.longitude)) return json({ kind: 'clear' });
+  const key = new Request(`https://sky.cache/${lat},${lon}`);
+  const kept = await caches.default.match(key).catch(() => null);
+  if (kept) return json(await kept.json());
+  const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code,wind_speed_10m,is_day&timezone=auto`, { signal: AbortSignal.timeout(5000) }).catch(() => null);
+  const w = r?.ok ? await r.json().catch(() => null) : null;
+  const code = Number(w?.current?.weather_code);
+  const out = Number.isFinite(code) ? { kind: SKY(code), windy: Number(w.current.wind_speed_10m) > 30 } : { kind: 'clear' };
+  ctx.waitUntil(caches.default.put(key, new Response(JSON.stringify(out), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=1800' } })).catch(() => {}));
+  return json(out);
+}
 
 // A stroll to another site's street: only to a proper site's address, only its street (see
 // friends.street), kept a few minutes so a busy street isn't asked again and again.
