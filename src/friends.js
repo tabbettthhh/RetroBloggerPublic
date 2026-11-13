@@ -371,6 +371,8 @@ export function friendFeed(data, origin, to = null) {
     status_updated: site.status_updated,
     // (Whether friends can comment on your posts: only while comments are on.)
     comments_on: !!site.comments,
+    // Your best score in the arcade (none while there's nothing posted for friends to see).
+    arcade: data.posts.length && data.arcade?.scores?.[0] ? { best: data.arcade.scores[0].score, date: data.arcade.scores[0].date } : null,
     posts: data.posts.slice(0, 30).map((p) => ({
       id: `${p.type}/${p.slug}`,
       type: p.type,
@@ -563,6 +565,11 @@ function tidyDay(d) {
 }
 
 // Tidies a feed from a friend's site before keeping it: plain values only, sizes capped.
+function tidyArcade(a) {
+  const best = Math.floor(Number(a?.best));
+  if (!Number.isFinite(best) || best < 1 || best > 9999999) return null;
+  return { best, date: /^\d{4}-\d{2}-\d{2}$/.test(a?.date) ? a.date : '' };
+}
 export function tidyFeed(f, friend) {
   const posts = (Array.isArray(f?.posts) ? f.posts : []).slice(0, 30).map((p) => ({
     id: clean(p.id, 120),
@@ -598,6 +605,8 @@ export function tidyFeed(f, friend) {
     share: f?.share !== false,
     // (Their photo of the day, for your Friends reel.)
     photo_day: tidyDay(f?.photo_day),
+    // (Their best score in the arcade.)
+    arcade: tidyArcade(f?.arcade),
     // (Whether you can comment on their posts: a site new enough, with comments on.)
     comments_on: f?.comments_on === true,
     posts,
@@ -1168,8 +1177,8 @@ export async function publicFriends(env, { mine = false, viewer = 'everyone' } =
     const feed = c?.feed;
     const fresh = c && c.ok !== false && Date.now() - (c.at || 0) < 3 * 60 * 60 * 1000;
     const person = { name: feed?.name || f.name, owner: feed?.owner || f.owner, url: f.url, ...(mine ? { key: f.key, comments_on: !!feed?.comments_on } : {}) };
-    // (Their names, how they are and their status: only where the list is shown.)
-    if (listShown) buddies.push({ ...person, presence: fresh ? feed?.presence || 'online' : 'offline', status: feed?.status || '' });
+    // (Their names, how they are, their status and their best in the arcade: only where the list is shown.)
+    if (listShown) buddies.push({ ...person, presence: fresh ? feed?.presence || 'online' : 'offline', status: feed?.status || '', ...(feed?.arcade ? { arcade: feed.arcade } : {}) });
     if (!postsShown(store, feed, who)) return;
     // Their photo of the day, for the line at the top of Friends (a friends-only one just for you).
     const pd = feed?.photo_day;

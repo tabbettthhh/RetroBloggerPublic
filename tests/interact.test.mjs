@@ -1,6 +1,6 @@
 // Clicking around with the awkward content still in place: search with odd characters, the
 // photo viewer, the album, page turns, the screensaver, the status bar, forms. No crashes.
-import { test, report, assert, eq, BASE, chromium, seed, publicData, putFile, getFile } from './lib.mjs';
+import { test, report, assert, eq, BASE, chromium, seed, publicData, putFile, getFile, api } from './lib.mjs';
 
 const browser = await chromium.launch();
 const watch = (page) => {
@@ -245,6 +245,49 @@ await test('desktop: the maze screensaver, hung with the photos, gone the moment
     assert(!desk.errors.length, desk.errors.join('\n'));
   } finally {
     await putFile('theme.md', theme || '---\ntheme: classic\n---\n');
+  }
+});
+
+await test('the arcade: your best kept, a visitor’s own best in their browser, and the game plays', async () => {
+  const before = await getFile('arcade.md').catch(() => '');
+  try {
+    // Signed in: a score is kept in arcade.md, best first; nonsense isn't.
+    await putFile('arcade.md', '');
+    let out = await api('arcade', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ score: 340 }) });
+    eq(out.kept && out.best, true, 'a first score is kept, and a best');
+    out = await api('arcade', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ score: 90 }) });
+    eq(out.best, false, 'a lower one is kept, but not a best');
+    eq(out.scores.map((x) => x.score).join(','), '340,90', 'best first');
+    let refused = false;
+    await api('arcade', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ score: 'lots' }) }).catch(() => (refused = true));
+    assert(refused, 'not a score: refused');
+    assert(/^- 340 · \d{4}-\d{2}-\d{2}$/m.test(await getFile('arcade.md')), 'kept as a line in arcade.md');
+    eq((await publicData()).arcade.scores[0].score, 340, 'on the site');
+
+    // A visitor, on a phone: the table, the game, and their own best kept on their device only.
+    await phone.evaluate(() => localStorage.setItem('arcade-best', '120'));
+    await phone.reload();
+    await phone.waitForSelector('.welcome, .phone');
+    if (await phone.locator('.visitor-tile').count()) await phone.locator('.visitor-tile').click();
+    await go(phone, '#/arcade');
+    await phone.waitForSelector('.arcade .arc-canvas');
+    const rows = await phone.locator('.arc-row').allInnerTexts();
+    assert(/340/.test(rows[0]), 'the owner’s best at the top: ' + rows.join(' | '));
+    assert(rows.some((r) => /You/.test(r) && /120/.test(r)), 'and the visitor’s own: ' + rows.join(' | '));
+    const shot = () => phone.evaluate(() => { const c = document.querySelector('.arc-canvas'); return c.toDataURL(); });
+    const title = await shot();
+    await phone.locator('.arc-start').click();
+    await phone.waitForTimeout(400);
+    await phone.locator('.arc-right').dispatchEvent('pointerdown');
+    await phone.waitForTimeout(600);
+    await phone.locator('.arc-right').dispatchEvent('pointerup');
+    assert((await shot()) !== title, 'the game is playing');
+    // Gone from the page, it stops (and nothing breaks).
+    await go(phone, '#/');
+    await phone.waitForTimeout(300);
+    assert(!phone.errors.length, phone.errors.join('\n'));
+  } finally {
+    await putFile('arcade.md', before || '');
   }
 });
 

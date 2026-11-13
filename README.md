@@ -354,6 +354,12 @@ Visitors can comment on any post, or reply to someone else's comment, with just 
 
 Every comment waits for you until you **Approve** it: signed in, it shows under its post (and in **Control Panel › Inbox**). Once it's on the site you can **reply**: your reply shows under their comment, marked as yours. **Delete** removes one. Untick **Let visitors comment on posts** to hide them all and stop new ones (nothing is deleted). Deleting a post deletes its comments too, and the comments on a post go to your friends' sites with it (so they can join the conversation; see [Friends](#friends)). A friend's comment goes straight on, with a 👥 friend badge. The same bot protection as the guestbook applies.
 
+## The arcade
+
+**Arcade** (on the desktop and in Explore) is a games cabinet with one small game of the site's own, **Post Rush**: catch the letters, parcels and gold stamps falling on the street in your satchel, and leave the red bills alone. You have three lives: each letter or parcel you miss, and each bill you catch, costs one. Arrow keys (or A and D) and Space on a computer; the cabinet's big buttons, or a finger on the screen, on a phone.
+
+Beside it is a table of **high scores**. Signed in, your best scores are kept in `arcade.md` (best first; take a line out to take a score off), and your best goes to your friends' sites with your posts, so each of you sees the others' best on your own tables. Visitors see your best and, where your friends list is shown, your friends'. A visitor's own best stays in their browser only. A site with nothing posted for a visitor shows no scores at all.
+
 ## Guestbook and suggestions
 
 Visitors can sign the guestbook and suggest a place (on the wishlist page), a book, a film, a podcast or music (on each shelf). Nothing they write appears until you approve it (signed in, it waits in the guestbook or by its shelf, and in **Control Panel › Inbox**), so spam never reaches the site. Add a suggested place to your wishlist, or a suggested book, film, podcast or album straight onto its shelf as "want to…". The visitor's name goes on a **Suggested by** stamp when you review it; for places, the editor offers to add the stamp when the place is on your wishlist.

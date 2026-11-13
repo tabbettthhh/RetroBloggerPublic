@@ -24,6 +24,7 @@ const DESKTOP_ICONS = [
   ['podcasts', 'Podcasts', 'di-podcasts'],
   ['music', 'Records', 'di-music'],
   ['tv', 'TV', 'di-tv'],
+  ['arcade', 'Arcade', 'di-arcade'],
   ['guestbook', 'Guestbook', 'di-guest'],
   ['about', 'About', 'di-about']
 ];
@@ -84,6 +85,7 @@ export function startDesktop(root, data) {
     else if (era === 'record') bar = h('div', { class: 'wbar hifi-bar' }, h('span', { class: 'hifi-dial' }, title), min, max, close);
     else if (era === 'album') bar = h('div', { class: 'wbar al-bar' }, h('span', { class: 'al-bar-title' }, title), min, max, close);
     else if (era === 'planner') bar = h('div', { class: 'wbar pln-bar' }, h('span', { class: 'pln-bar-title' }, title), min, max, close);
+    else if (era === 'arcade') bar = h('div', { class: 'wbar arc-bar' }, h('span', { class: 'arc-bar-title' }, title), min, max, close);
     else if (era === 'crt') bar = h('div', { class: 'wbar tv-bar' }, h('span', { class: 'tv-channel' }, h('span', { class: 'tv-led', 'aria-hidden': 'true' }, 'CH 03'), title), min, max, close);
     else bar = h('div', { class: 'wbar droid-bar' }, h('span', { class: 'droid-icon', html: ICON.book }), h('span', { class: 'droid-title' }, title), min, close);
     const body = h('div', { class: 'wbody' });

@@ -222,6 +222,22 @@ await test('your site has a Friends tab with their posts if you choose (to start
   assert(!(await overview()).files.some((f) => f.key.startsWith('data/_')), 'friends files never listed');
 });
 
+await test('the arcade: a friend’s best score on your high-score table, where your friends list is shown', async () => {
+  await post_(api2, 'arcade', { score: 777 });
+  await post_(api, 'friends/refresh');
+  const fr = await api('friends');
+  eq(fr.friends[0].cache.feed.arcade?.best, 777, 'in their feed');
+  const d = await publicData();
+  eq(d.buddies.map((b) => b.arcade?.best), [777], 'on your buddy list');
+  await post_(api, 'friends/settings', { showOnSite: false });
+  eq((await publicData()).buddies, [], 'not when your friends list is hidden');
+  await post_(api, 'friends/settings', { showOnSite: true });
+  // (Taken off on their site: gone from yours.)
+  await fetch(`${BASE2}/admin/api/file?key=arcade.md`, { method: 'PUT', body: '' });
+  await post_(api, 'friends/refresh');
+  eq((await api('friends')).friends[0].cache.feed.arcade, null, 'none once they take it off');
+});
+
 await test('a friends-only post: not on their site, nor on yours; only in your back office', async () => {
   const at = new Date(Date.now() - 5 * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
   await fetch(`${BASE2}/admin/api/upload?key=thoughts/just-us/c.jpg`, { method: 'PUT', body: fs.readFileSync(PHOTOS[0]) });

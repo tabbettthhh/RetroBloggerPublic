@@ -4,7 +4,7 @@
 import { Zip, ZipDeflate, ZipPassThrough } from 'fflate';
 import { stripImage, UnsupportedImage, CLEAN_TYPES } from './strip.js';
 import { parseVisited } from './content.js';
-import { TYPES, buildPost, isVisible, photoOfDay, postLevel, siteLevel, privacyOf, PRIVACY, todayIn, parseFortunes, POSTCARD_FRONTS, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parsePlanner, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
+import { TYPES, buildPost, isVisible, photoOfDay, postLevel, siteLevel, privacyOf, PRIVACY, todayIn, parseFortunes, parseArcade, arcadeText, ARCADE_MAX, POSTCARD_FRONTS, parseWishlist, parseSite, parseStatusLog, parseCategories, parseTravel, parsePassport, parseKeepsakeSettings, parseTheme, parseHighlights, parseHighlightsPast, parsePlanner, parseGuestbookEntry, parseComment, isCommentKey, splitFrontMatter, headerProblem } from './content.js';
 import { adminCheck } from './auth.js';
 import { VERSION } from './version.js';
 import * as friends from './friends.js';
@@ -595,7 +595,7 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
   const parsedComments = commentKeys.map((k) => extras[k]?.value).filter(Boolean);
   const guestbook = parsedGuestbook.map(({ key, ...rest }) => rest).sort((a, b) => String(b.date).localeCompare(String(a.date)));
 
-  const [wishText, travelText, logText, catText, passportText, keepText, themeText, highlightsText, plannerText, fortuneText] = await Promise.all([
+  const [wishText, travelText, logText, catText, passportText, keepText, themeText, highlightsText, plannerText, fortuneText, arcadeFile] = await Promise.all([
     readText(env, 'wishlist.md'),
     readText(env, 'travel.md'),
     readText(env, 'status-log.md'),
@@ -605,7 +605,8 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
     readText(env, 'theme.md'),
     readText(env, 'highlights.md'),
     readText(env, 'planner.md'),
-    readText(env, 'fortunes.md')
+    readText(env, 'fortunes.md'),
+    readText(env, 'arcade.md')
   ]);
   // The highlights cabinet: only posts that are on the site (the back office sees them all), and
   // each of them marked with its place on its shelf, for the rosette on its card.
@@ -704,6 +705,8 @@ async function buildFresh(env, { includeHidden = false, forFriends = false } = {
     guestbook,
     // The lines in your fortune cookie.
     fortunes: parseFortunes(fortuneText),
+    // Your best scores in the arcade.
+    arcade: parseArcade(arcadeFile),
     generated: now
   };
   // (Not sent anywhere: for the back office, which lists every file and comment, and to know
@@ -974,6 +977,8 @@ async function dressForVisitors(env, data, viewer = 'everyone') {
   // (Whether posts are kept from visitors is never said: to them, a private site is just one
   // with nothing posted yet.)
   data.site = (({ privacy, ...rest }) => rest)(data.site);
+  // (Nor are your arcade scores on a site with nothing posted for this viewer: it's just quiet.)
+  if (!data.posts.length) data.arcade = { scores: [] };
   data.buddies = pals.buddies;
   data.friendDays = pals.days || [];
   data.friendPosts = pals.posts;
@@ -1365,6 +1370,22 @@ async function adminApi(request, env, url, ctx) {
     return json({ error: 'Not found' }, 404);
   }
 
+  // A game in the arcade, just played: kept in arcade.md if it's one of your best.
+  if (p === 'arcade' && m === 'POST') {
+    const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
+    const score = Math.floor(Number(body.score));
+    if (!Number.isFinite(score) || score < 1 || score > ARCADE_MAX) return json({ error: 'Not a score.' }, 400);
+    const { scores } = parseArcade(await readText(env, 'arcade.md'));
+    const best = scores[0]?.score || 0;
+    const date = todayIn(env.TIMEZONE || 'Europe/London');
+    const next = [...scores, { score, date }].sort((a, b) => b.score - a.score);
+    const kept = next.indexOf(next.find((s) => s.score === score && s.date === date)) < 10;
+    if (kept) {
+      await env.CONTENT.put('arcade.md', arcadeText(next), { httpMetadata: { contentType: 'text/markdown; charset=utf-8' } });
+      await bumpVersion(env);
+    }
+    return json({ ok: true, kept, best: score > best, scores: parseArcade(arcadeText(next)).scores });
+  }
   // An emoji you don't want on a post, taken off it.
   // A friend's photo taken out of one of your shared albums.
   if (p === 'albums/remove' && m === 'POST') {

@@ -219,6 +219,7 @@ function shelfShell(era, id, data, content, param) {
     record: () => h('div', { class: 'hifi-bar' }, back, h('span', { class: 'hifi-dial' }, title)),
     album: () => h('div', { class: 'al-bar' }, back, h('span', { class: 'al-bar-title' }, title)),
     planner: () => h('div', { class: 'pln-bar' }, back, h('span', { class: 'pln-bar-title' }, title)),
+    arcade: () => h('div', { class: 'arc-bar' }, back, h('span', { class: 'arc-bar-title' }, title)),
     crt: () => h('div', { class: 'tv-bar' }, back, h('span', { class: 'tv-channel' }, h('span', { class: 'tv-led', 'aria-hidden': 'true' }, 'CH 03'), title), h('span', { class: 'tv-knobs', 'aria-hidden': 'true' }, h('i'), h('i')))
   };
   return h('div', { class: `phone ${era}-phone` }, bars[era](), h('div', { class: `${era}-body`, id: 'main' }, content));
