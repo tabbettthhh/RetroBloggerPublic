@@ -403,6 +403,9 @@ export function friendFeed(data, origin, to = null) {
     name: site.name,
     owner: site.owner,
     presence: site.presence,
+    // (Automatic: online while you've the site open. Then when you were last here, to the nearest
+    // ten minutes, so their site can tell you've gone.)
+    ...(site.presence_auto ? { presence_auto: true, seen: site.presence_seen || 0 } : {}),
     status: site.status,
     status_updated: site.status_updated,
     // (Whether friends can comment on your posts: only while comments are on.)
@@ -637,6 +640,8 @@ export function tidyFeed(f, friend) {
     name: clean(f?.name, 60) || friend.name,
     owner: clean(f?.owner, 60),
     presence: PRESENCE.includes(f?.presence) ? f.presence : 'online',
+    presence_auto: f?.presence_auto === true,
+    seen: Number.isFinite(Number(f?.seen)) ? Number(f.seen) : 0,
     status: clean(f?.status, 200),
     status_updated: Number(f?.status_updated) || null,
     // (Whether they let you show their posts to your visitors.)
@@ -1196,6 +1201,12 @@ export async function friendPhoto(env, key, photoKey) {
 // ever loads pictures from itself. `viewer`: "everyone", or "friends" for a friend visiting.
 // `mine`: for you, signed in: everything, whoever else sees it, with friends-only posts and the
 // comments on each post (and whether you can add one).
+// How a friend shows: as they chose; or, when theirs is automatic, online only while they've been
+// on their site lately (they say so every ten minutes or so while they're there).
+function shownPresence(feed) {
+  if (!feed?.presence_auto) return feed?.presence || 'online';
+  return feed.presence === 'online' && Date.now() - (feed.seen || 0) < 25 * 60 * 1000 ? 'online' : 'offline';
+}
 export async function publicFriends(env, { mine = false, viewer = 'everyone' } = {}) {
   const store = await loadFriends(env);
   const who = mine ? 'me' : viewer === 'friends' ? 'friends' : 'everyone';
@@ -1218,7 +1229,7 @@ export async function publicFriends(env, { mine = false, viewer = 'everyone' } =
     const fresh = c && c.ok !== false && Date.now() - (c.at || 0) < 3 * 60 * 60 * 1000;
     const person = { name: feed?.name || f.name, owner: feed?.owner || f.owner, url: f.url, ...(mine ? { key: f.key, comments_on: !!feed?.comments_on } : {}) };
     // (Their names, how they are, their status and their best in the arcade: only where the list is shown.)
-    if (listShown) buddies.push({ ...person, presence: fresh ? feed?.presence || 'online' : 'offline', status: feed?.status || '', ...(feed?.arcade ? { arcade: feed.arcade } : {}), ...(feed?.village?.length ? { village: feed.village } : {}) });
+    if (listShown) buddies.push({ ...person, presence: fresh ? shownPresence(feed) : 'offline', status: feed?.status || '', ...(feed?.arcade ? { arcade: feed.arcade } : {}), ...(feed?.village?.length ? { village: feed.village } : {}) });
     if (!postsShown(store, feed, who)) return;
     // Their photo of the day, for the line at the top of Friends (a friends-only one just for you).
     const pd = feed?.photo_day;
