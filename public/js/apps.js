@@ -1737,7 +1737,7 @@ function guestbook(ctx) {
       h(
         'div',
         { class: 'gb-text' },
-        h('div', { class: 'gb-top' }, h('strong', null, g.name), h('span', { class: 'gb-date' }, niceDate(g.date))),
+        h('div', { class: 'gb-top' }, h('strong', null, g.name), g.wave ? h('span', { class: 'gb-wave' }, ' 👋 from the bench') : null, h('span', { class: 'gb-date' }, niceDate(g.date))),
         h('p', null, g.message),
         g.reply ? h('div', { class: 'gb-reply' }, h('strong', null, (ctx.data.site.owner || 'Reply') + ' '), g.reply) : null
       )

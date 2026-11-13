@@ -353,7 +353,7 @@ function neighbourhood(ctx) {
         const night = isNight();
         const dress = lineDress();
         // (The village is only fetched the first time it's opened.)
-        import('./village.js').then(({ openVillage }) => openVillage({ ctx, title: here ? `${firstName(here)}’s neighbourhood` : 'Your neighbourhood', seed: here?.url || homeUrl(), houses: plotsFor(ctx, here, go).map((el) => ({ el })), me: here ? null : myHouse(ctx), dress, night: night || !!dress?.evening, dusk: !night && !!dress?.evening, festive: !!dress?.fest }));
+        import('./village.js').then(({ openVillage }) => openVillage({ ctx, home: !here, title: here ? `${firstName(here)}’s neighbourhood` : 'Your neighbourhood', seed: here?.url || homeUrl(), houses: plotsFor(ctx, here, go).map((el) => ({ el })), me: here ? null : myHouse(ctx), dress, night: night || !!dress?.evening, dusk: !night && !!dress?.evening, festive: !!dress?.fest }));
       }
     }, '⤢ Open');
   const titleOf = (here) => {

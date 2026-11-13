@@ -267,6 +267,12 @@ await test('strolling: from your street to a friend’s, only what their site sh
     eq(await v.locator('.vl .vl-mine .nb-name').innerText(), 'You', 'yours in the middle');
     assert(await v.locator('.vl .vl-person').count(), 'friends who are online, out in their gardens');
     eq(await v.locator('.vl.vl-paused').count(), 0, 'moving while it’s in view');
+    eq(await v.locator('.vl :is(.vl-board, .vl-arcade, .vl-bench, .vl-fishing)').count(), 4, 'the noticeboard, the arcade, the bench and fishing');
+    await v.locator('.vl-fishing').dispatchEvent('click');
+    await v.locator('.vl-panel .vl-go').click();
+    assert((await v.locator('.vl-fish-say').innerText()).includes('Waiting'), 'a line cast');
+    await v.keyboard.press('Escape');
+    eq(await v.locator('.vl-panel').count(), 0, 'Escape puts the rod away first');
     await v.keyboard.press('Escape');
     await v.waitForFunction(() => !document.querySelector('.vl'));
     await v.locator('.nb-board').first().click();

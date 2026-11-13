@@ -29,7 +29,7 @@ function seeded(seed) {
 const ellipsePath = (cx, cy, rx, ry) => `M${cx - rx} ${cy}a${rx} ${ry} 0 1 0 ${rx * 2} 0a${rx} ${ry} 0 1 0 ${-rx * 2} 0`;
 
 // opts: { title, seed, houses: [{ el }], me: el | null, dress, night, dusk, festive vars }
-export function openVillage({ title, seed, houses, me, dress, night, dusk, festive }) {
+export function openVillage({ ctx, home, title, seed, houses, me, dress, night, dusk, festive }) {
   document.querySelector('.vl')?.remove();
   const n = houses.length;
   const twoRings = n > 10;
@@ -122,6 +122,11 @@ export function openVillage({ title, seed, houses, me, dress, night, dusk, festi
     return Math.hypot((x - cx) / (islandRx - 70), (y - cy) / (islandRy - 60)) < 1;
   };
   const things = [];
+  // (Kept clear for the noticeboard, the arcade and the bench, inside the first ring.)
+  const inner = roads[0];
+  const slot = (deg) => ({ x: cx + Math.cos((deg * Math.PI) / 180) * inner.rx * 0.68, y: cy + Math.sin((deg * Math.PI) / 180) * inner.ry * 0.7, r: 80 });
+  const slots = home ? { board: slot(-40), arcade: slot(40), bench: slot(-140) } : { arcade: slot(40) };
+  things.push(...Object.values(slots));
   const place = (r, tries = 40) => {
     for (let t = 0; t < tries; t++) {
       const x = cx + (rand() - 0.5) * islandRx * 2;
@@ -160,6 +165,10 @@ export function openVillage({ title, seed, houses, me, dress, night, dusk, festi
     const at = place(40);
     if (at) props.push({ y: at.y, el: svg('svg', { viewBox: '0 0 90 34', class: 'vl-thing vl-fence', style: `left:${at.x - 45}px; top:${at.y - 30}px`, 'aria-hidden': 'true' }, svg('path', { d: 'M4 12h82M4 24h82', class: `${k} vl-rail`, 'stroke-width': 3 }), [6, 26, 46, 66, 84].map((fx) => svg('path', { d: `M${fx - 4} 32V8l4-5 4 5v24Z`, class: `${k} vl-picket`, 'stroke-width': 2 }))) });
   }
+  // ---------- things to do: the noticeboard, the arcade, the bench, fishing ----------
+  const fun = buildFun({ ctx, home, slots, pond, k, panel: (...a) => openPanel(...a), leave: () => close(), soundOn: () => soundOn() });
+  props.push(...fun.props);
+
   // The bandstand on the green (your house sits in front of it), and ducks on the pond.
   props.push({ y: cy - 2, el: svg('svg', { viewBox: '0 0 120 90', class: 'vl-thing vl-band', style: `left:${cx - 175}px; top:${cy - 92}px`, 'aria-hidden': 'true' }, svg('path', { d: 'M10 34L60 6l50 28Z', class: `${k} vl-band-roof` }), svg('path', { d: 'M18 34v40M44 34v40M76 34v40M102 34v40', class: k, 'stroke-width': 4 }), svg('rect', { x: 8, y: 72, width: 104, height: 12, rx: 3, class: `${k} vl-band-floor` })) });
   const ducks = h('span', { class: 'vl-ducks', style: `left:${pond.x - 40}px; top:${pond.y - 22}px`, 'aria-hidden': 'true' }, [0, 1].map((d) => svg('svg', { viewBox: '0 0 30 22', class: 'vl-duck', style: `animation-delay:${-d * 3}s` }, svg('path', { d: 'M4 14q0 7 10 7h8q6 0 6-6q-3 2-8 0q0-8-6-8q-6 0-5 5Z', class: `${k} vl-duck-body`, 'stroke-width': 2 }), svg('circle', { cx: 13, cy: 10, r: 1.2, class: 'nb-ink' }), svg('path', { d: 'M7 10l-5 1 5 2Z', fill: '#ff9a1f', class: k, 'stroke-width': 1.2 }))));
@@ -244,7 +253,7 @@ export function openVillage({ title, seed, houses, me, dress, night, dusk, festi
   const cols = dress?.colours || [];
   const fireworks = dress?.fireworks ? h('span', { class: 'nb-fireworks vl-fireworks', style: `left:${cx - 300}px; top:${cy - 420}px`, 'aria-hidden': 'true' }, [[12, 60], [40, 10], [66, 80], [88, 30], [28, 120]].map(([x, y], j) => h('i', { style: `left:${x}%; top:${y}px; --c:${cols[j % cols.length] || '#ffd23f'}; animation-delay:${j * 0.6}s` }))) : null;
 
-  const world = h('div', { class: 'vl-world', style: `width:${W}px; height:${H}px` }, ground, ducks, cars, bunting, standing, posties, fireworks);
+  const world = h('div', { class: 'vl-world', style: `width:${W}px; height:${H}px` }, ground, fun.fishing, ducks, cars, bunting, standing, posties, fireworks);
   const view = h('div', { class: 'vl-view', tabindex: '0', 'aria-label': `${title}. Drag to look about; plus and minus to zoom.` }, world);
   const falling = dress?.falling || { winter: 'snow', autumn: 'leaf', spring: 'petal' }[document.documentElement.dataset.season];
   const weather = falling ? h('span', { class: `nb-weather vl-weather ${falling}`, 'aria-hidden': 'true' }, Array.from({ length: 28 }, (_, j) => h('i', { style: `left:${(j * 37 + 11) % 100}%; animation-delay:${-((j * 1.3) % 12)}s; animation-duration:${10 + (j % 6)}s` + (falling === 'confetti' && cols.length ? `; background:${cols[j % cols.length]}` : '') }))) : null;
@@ -407,6 +416,23 @@ export function openVillage({ title, seed, houses, me, dress, night, dusk, festi
   // (A hidden tab: everything holds still, and quiet.)
   const onHide = () => box.classList.toggle('vl-paused', document.hidden);
 
+  // ---------- a panel over the village (the noticeboard close up, fishing, the bench) ----------
+  let panelEl = null;
+  const openPanel = (heading, body, cls = '') => {
+    panelEl?.remove();
+    const shut = () => {
+      panelEl?.remove();
+      panelEl = null;
+      view.focus();
+    };
+    const x = h('button', { type: 'button', class: 'vl-btn vl-panel-x', 'aria-label': 'Close', onclick: shut }, '✕');
+    panelEl = h('div', { class: 'vl-panel ' + cls, role: 'dialog', 'aria-label': heading }, h('div', { class: 'vl-panel-card' }, h('div', { class: 'vl-panel-head' }, h('b', null, heading), x), body));
+    panelEl.addEventListener('click', (e) => e.target === panelEl && shut());
+    box.append(panelEl);
+    x.focus();
+    return { shut, el: panelEl };
+  };
+
   // ---------- the window itself ----------
   const close = () => {
     sound.click?.();
@@ -418,7 +444,7 @@ export function openVillage({ title, seed, houses, me, dress, night, dusk, festi
     setTimeout(() => box.remove(), matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 200);
     opener?.focus?.();
   };
-  const onKey = (e) => e.key === 'Escape' && close();
+  const onKey = (e) => e.key === 'Escape' && (panelEl ? (panelEl.remove(), (panelEl = null)) : close());
   const onResize = () => (keepIn(), paint());
   const opener = document.activeElement;
   const closeBtn = h('button', { type: 'button', class: 'vl-btn vl-close', 'aria-label': 'Close the village', onclick: close }, '✕');
@@ -444,4 +470,176 @@ export function openVillage({ title, seed, houses, me, dress, night, dusk, festi
   });
   sound.click?.();
   return box;
+}
+
+// ---------- things to do ----------
+// The noticeboard (your friends' pictures of the day, pinned up, and the fortune of the day), the
+// arcade (its best scores on a board outside; tap it to play), the bench (visitors leave a wave,
+// which waits for your approval like the guestbook), and fishing at the pond (your catches are
+// kept in this browser only).
+const CATCHES = [
+  ['👢', 'an old boot'], ['✉️', 'a letter in a bottle'], ['🐟', 'a tiny fish'], ['🗝️', 'a rusty key'], ['🐚', 'a shell'], ['⭐', 'a starfish'], ['🥫', 'a tin can'], ['🐸', 'a surprised frog'], ['🌿', 'some pondweed'], ['🦆', 'a rubber duck'], ['🧦', 'one sock'], ['🐠', 'a stripy fish'], ['💍', 'a ring (finders keepers)'], ['📯', 'a little horn']
+];
+const CATCH_KEY = 'vl-catches';
+function readCatches() {
+  try {
+    const v = JSON.parse(localStorage.getItem(CATCH_KEY) || '{}');
+    return v && typeof v === 'object' ? v : {};
+  } catch {
+    return {};
+  }
+}
+function buildFun({ ctx, home, slots, pond, k, panel, leave, soundOn }) {
+  const data = ctx?.data || {};
+  const props = [];
+  const at = (spot, w, hgt) => `left:${spot.x - w / 2}px; top:${spot.y - hgt}px`;
+  const firstName = (b) => String(b?.owner || b?.name || '').split(/\s+/)[0];
+
+  // The noticeboard.
+  if (slots.board) {
+    const days = (data.friendDays || []).filter((d) => d.photo_day?.src).slice(0, 6);
+    const lines = data.fortunes || [];
+    const fortune = lines.length ? lines[Math.floor(Date.now() / 86400000) % lines.length] : '';
+    const buddy = (url) => (data.buddies || []).find((b) => b.url === url);
+    const board = h(
+      'button',
+      { type: 'button', class: 'vl-thing vl-fun vl-board', style: at(slots.board, 150, 120), 'aria-label': 'The noticeboard' },
+      h('span', { class: 'vl-board-face' }, days.slice(0, 3).map((d, i) => h('img', { src: d.photo_day.src, alt: '', loading: 'lazy', style: `--tilt:${[-6, 4, -3][i]}deg` })), fortune ? h('span', { class: 'vl-board-slip' }, '🥠') : null, !days.length && !fortune ? h('span', { class: 'vl-board-empty' }, 'Notices') : null),
+      h('span', { class: 'vl-board-legs', 'aria-hidden': 'true' })
+    );
+    board.addEventListener('click', () => {
+      panel(
+        'The noticeboard',
+        h(
+          'div',
+          { class: 'vl-notices' },
+          days.length
+            ? days.map((d) =>
+                h(
+                  'figure',
+                  { class: 'vl-pin' },
+                  h('img', { src: d.photo_day.src, alt: d.photo_day.cap || `${firstName(buddy(d.url))}’s picture of the day`, loading: 'lazy' }),
+                  h('figcaption', null, h('b', null, firstName(buddy(d.url)) || 'A friend'), d.photo_day.cap ? ` · ${d.photo_day.cap}` : '', /^https?:/.test(d.photo_day.url || '') ? h('a', { href: d.photo_day.url, target: '_blank', rel: 'noopener noreferrer' }, ' ↗') : null)
+                )
+              )
+            : h('p', { class: 'vl-quiet' }, 'No pictures of the day pinned up yet.'),
+          fortune ? h('p', { class: 'vl-fortune' }, '🥠 ', fortune) : null
+        )
+      );
+    });
+    props.push({ y: slots.board.y, el: board });
+  }
+
+  // The arcade, with its best scores outside.
+  if (slots.arcade) {
+    const rows = [];
+    if (data.arcade?.scores?.[0]) rows.push([data.ownerView ? 'You' : firstName({ owner: data.site?.owner, name: data.site?.name }) || 'Host', data.arcade.scores[0].score]);
+    for (const b of (data.ownerView ? data.friendsMine?.buddies : data.buddies) || []) if (b.arcade?.best) rows.push([firstName(b), b.arcade.best]);
+    rows.sort((a, b) => b[1] - a[1]);
+    const hut = h(
+      'button',
+      { type: 'button', class: 'vl-thing vl-fun vl-arcade', style: at(slots.arcade, 130, 130), 'aria-label': 'The arcade: tap to play' },
+      h('span', { class: 'vl-arcade-sign' }, 'ARCADE'),
+      h('span', { class: 'vl-arcade-hut' }, h('span', { class: 'vl-arcade-door' })),
+      h('span', { class: 'vl-arcade-scores' }, rows.length ? rows.slice(0, 3).map(([n, sc], i) => h('span', null, `${i + 1}. ${n} ${sc}`)) : h('span', null, 'Hi-scores'))
+    );
+    hut.addEventListener('click', () => {
+      leave();
+      location.hash = '#/arcade';
+    });
+    props.push({ y: slots.arcade.y, el: hut });
+  }
+
+  // The bench.
+  if (slots.bench) {
+    const waves = (data.guestbook || []).filter((g) => g.wave).slice(0, 8);
+    const bench = h(
+      'button',
+      { type: 'button', class: 'vl-thing vl-fun vl-bench', style: at(slots.bench, 120, 70), 'aria-label': 'The bench: leave a wave' },
+      h('span', { class: 'vl-bench-seat', 'aria-hidden': 'true' }),
+      h('span', { class: 'vl-bench-sign' }, waves.length ? `👋 ${waves.length}` : '👋')
+    );
+    bench.addEventListener('click', () => {
+      const list = waves.length ? h('ul', { class: 'vl-waves' }, waves.map((g) => h('li', null, h('b', null, g.name), ' ', g.message))) : h('p', { class: 'vl-quiet' }, 'Nobody’s waved from the bench yet.');
+      if (data.ownerView) return panel('The bench', h('div', null, list, h('p', { class: 'vl-quiet' }, 'Visitors can wave from here. Their waves wait in your inbox until you approve them, like the guestbook.')));
+      const name = h('input', { type: 'text', maxlength: '40', placeholder: 'Your name', 'aria-label': 'Your name', autocomplete: 'off' });
+      const words = h('input', { type: 'text', maxlength: '80', placeholder: 'A few words (if you like)', 'aria-label': 'A few words', autocomplete: 'off' });
+      const trap = h('input', { type: 'text', class: 'hp', tabindex: '-1', autocomplete: 'off', 'aria-hidden': 'true' });
+      const say = h('p', { class: 'vl-quiet', role: 'status' });
+      const go = h('button', { type: 'submit', class: 'vl-go' }, 'Wave 👋');
+      const form = h('form', { class: 'vl-wave-form' }, name, words, trap, go, say);
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        go.disabled = true;
+        try {
+          const res = await fetch('/api/guestbook', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name.value, message: words.value, wave: true, website: trap.value }) });
+          const out = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(out.error || 'That didn’t go through.');
+          form.replaceChildren(h('p', { class: 'vl-quiet' }, 'Waved! It’ll show here once it’s been seen to.'));
+        } catch (err) {
+          say.textContent = err.message;
+          go.disabled = false;
+        }
+      });
+      panel('The bench', h('div', null, list, form));
+      name.focus();
+    });
+    props.push({ y: slots.bench.y, el: bench });
+  }
+
+  // Fishing at the pond: a little jetty with a rod; cast, wait for the bob, reel in.
+  const fishing = h('button', { type: 'button', class: 'vl-fun vl-fishing', style: `left:${pond.x + pond.rx - 60}px; top:${pond.y - 10}px`, 'aria-label': 'Go fishing' }, h('span', { class: 'vl-rod', 'aria-hidden': 'true' }), h('span', { class: 'vl-fish-sign' }, '🎣'));
+  fishing.addEventListener('click', () => {
+    let state = 'idle';
+    let timer = 0;
+    const kept = readCatches();
+    const total = () => Object.values(kept).reduce((a, b) => a + (Number(b) || 0), 0);
+    const water = h('div', { class: 'vl-water' }, h('span', { class: 'vl-bob' }));
+    const say = h('p', { class: 'vl-fish-say', role: 'status' }, 'Cast your line, then reel in when the float bobs.');
+    const count = h('p', { class: 'vl-quiet' }, `Caught so far: ${total()}`);
+    const btn = h('button', { type: 'button', class: 'vl-go' }, 'Cast');
+    const reset = () => {
+      state = 'idle';
+      water.classList.remove('cast', 'bite');
+      btn.textContent = 'Cast';
+    };
+    btn.addEventListener('click', () => {
+      clearTimeout(timer);
+      if (state === 'idle') {
+        state = 'waiting';
+        water.classList.add('cast');
+        btn.textContent = 'Reel in';
+        say.textContent = 'Waiting for a bite…';
+        timer = setTimeout(() => {
+          state = 'bite';
+          water.classList.add('bite');
+          say.textContent = 'A bite! Reel in!';
+          if (soundOn()) sound.blip?.(880, 0.06, 'square', 0.02);
+          timer = setTimeout(() => {
+            if (state === 'bite') {
+              say.textContent = 'It got away. Try again?';
+              reset();
+            }
+          }, 1400);
+        }, 1500 + Math.random() * 4000);
+      } else if (state === 'bite') {
+        const [icon, what] = CATCHES[Math.floor(Math.random() * CATCHES.length)];
+        kept[what] = (Number(kept[what]) || 0) + 1;
+        try {
+          localStorage.setItem(CATCH_KEY, JSON.stringify(kept));
+        } catch {}
+        say.replaceChildren(h('span', { class: 'vl-catch' }, icon), ` You caught ${what}!`);
+        count.textContent = `Caught so far: ${total()}`;
+        if (soundOn()) [660, 880, 1100].forEach((f, j) => setTimeout(() => sound.blip?.(f, 0.08, 'triangle', 0.025), j * 90));
+        reset();
+      } else {
+        say.textContent = 'Too soon! Wait for the float to bob.';
+        reset();
+      }
+    });
+    const p = panel('Fishing', h('div', { class: 'vl-fish' }, water, say, btn, count), 'vl-fish-panel');
+    // (Closed: no bites left waiting.)
+    new MutationObserver((_, o) => !p.el.isConnected && (clearTimeout(timer), o.disconnect())).observe(p.el.parentNode, { childList: true });
+  });
+  return { props, fishing };
 }

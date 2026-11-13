@@ -1239,6 +1239,8 @@ export function parseGuestbookEntry(key, text) {
     reply: data.reply ? String(data.reply).slice(0, 2000) : '',
     // Sent as a postcard: which painted front it has.
     card: POSTCARD_FRONTS.includes(String(data.card ?? '')) ? String(data.card) : '',
+    // A wave from the bench in the village.
+    wave: data.wave === true,
     message: String(body || '').trim().slice(0, 2000)
   };
 }

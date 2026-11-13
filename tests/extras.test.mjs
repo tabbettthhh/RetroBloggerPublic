@@ -311,6 +311,18 @@ await test('visitors: counted once a visit (never yours), and only how many from
   }, '/?owner=1#/');
   eq((await overview()).counter, after.counter, 'yours not counted');
 });
+await test('a wave from the bench in the village: a name and a few words, waiting for approval like the guestbook', async () => {
+  const sign = (body) => fetch(`${BASE}/api/guestbook`, { method: 'POST', headers: PERSON, body: JSON.stringify(body) }).then((r) => r.status);
+  eq(await sign({ name: 'Ana', wave: true }), 200, 'just a name is enough');
+  eq(await sign({ name: 'Bo', message: 'x'.repeat(200), wave: true }), 200, 'and a long message is cut short');
+  const waiting = (await overview()).pendingGuestbook.filter((g) => g.wave);
+  eq(waiting.map((g) => [g.name, g.message.length <= 80]).sort(), [['Ana', true], ['Bo', true]], 'waiting, as waves');
+  eq(waiting.find((g) => g.name === 'Ana').message, '👋', 'a wave with no words');
+  for (const g of waiting) await fetch(`${BASE}/admin/api/move?key=${encodeURIComponent(g.key)}&to=${encodeURIComponent(g.key.replace('guestbook-pending/', 'guestbook/'))}`, { method: 'POST' });
+  const gb = (await publicData()).guestbook.filter((g) => g.wave);
+  eq(gb.length, 2, 'on the site once approved');
+});
+
 
 const failed = report();
 await close();
