@@ -1,0 +1,90 @@
+/* The village (see village.js): the neighbourhood opened out, full screen. It's a .nb too, so the
+   houses, the season, the festive day and the night all dress it as they do the street. */
+.vl { position: fixed; inset: 0; z-index: 2147483000; margin: 0; overflow: hidden; color: var(--nb-ink); background: #3aa7e0; opacity: 0; transition: opacity .2s ease; touch-action: none; }
+.nb.vl { margin: 0; }
+.vl.open { opacity: 1; }
+.vl.closing { opacity: 0; }
+.vl-sea { position: absolute; inset: 0; background: radial-gradient(ellipse 60% 40% at 50% 50%, #7fd6ff, #3aa7e0 70%), #3aa7e0; }
+.vl-sea::after { content: ''; position: absolute; inset: 0; opacity: .35; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60' viewBox='0 0 120 60'%3E%3Cpath d='M10 20q8-6 16 0M70 46q8-6 16 0' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 120px 60px; animation: vl-waves 9s linear infinite; }
+@keyframes vl-waves { to { background-position: 120px 30px; } }
+.vl.night .vl-sea { background: radial-gradient(ellipse 60% 40% at 50% 50%, #2a4f8f, #14204a 70%), #14204a; }
+.vl.dusk .vl-sea { background: radial-gradient(ellipse 60% 40% at 50% 50%, color-mix(in srgb, var(--nb-f1, #f08a5d) 40%, #5a4fa0), #2a1e5c 70%), #2a1e5c; }
+.vl-view { position: absolute; inset: 0; overflow: hidden; cursor: grab; outline: none; }
+.vl-view.dragging { cursor: grabbing; }
+.vl-view.dragging .nb-house { pointer-events: none; }
+.vl-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; filter: var(--vl-filter, none); }
+.vl-ground { position: absolute; left: 0; top: 0; display: block; overflow: visible; }
+.vl-sand { fill: #f3d9a4; stroke: var(--nb-ink); stroke-width: 3; }
+.vl-grass { stroke-width: 4; }
+.vl-patch { opacity: .55; }
+.vl-road-edge { fill: none; stroke: var(--nb-ink); stroke-width: 50; stroke-linecap: round; }
+.vl-road { fill: none; stroke: #e6cf9a; stroke-width: 42; stroke-linecap: round; }
+.vl-road-line { fill: none; stroke: #fff6dc; stroke-width: 3; stroke-dasharray: 18 22; }
+.vl-plaza { fill: #e6cf9a; }
+.vl-green { stroke-width: 3; }
+.vl-pond { fill: #5ec8f2; }
+.vl-shine { fill: #fff; opacity: .25; }
+.vl-pad { fill: #4fbf3c; }
+.vl-jetty { fill: #b07a45; }
+.nb.night .vl-sand { fill: #a8946e; }
+.nb.night .vl-road { stroke: #a8946e; }
+.nb.night .vl-plaza { fill: #a8946e; }
+.nb.night .vl-pond { fill: #2c5a8f; }
+:root[data-season="winter"] .vl-pond { fill: #d6efff; }
+
+/* Everything standing on the ground: placed by its feet, nearer things in front. */
+.vl-thing { position: absolute; display: block; overflow: visible; pointer-events: none; }
+.vl-tree { width: 80px; height: 100px; transform-origin: 50% 100%; animation: nb-sway 3.4s ease-in-out infinite alternate; }
+.vl-flowers { width: 60px; height: 30px; }
+.vl-bed { fill: #8a5a34; }
+.vl-fence { width: 90px; height: 34px; }
+.vl-rail { fill: none; }
+.vl-picket { fill: #fff6dc; }
+.vl-band { width: 120px; height: 90px; }
+.vl-band-roof { fill: #ff7069; }
+.vl-band-floor { fill: #f3d9a4; }
+.vl-lamp { width: 40px; height: 90px; }
+.nb.night .vl-lamp .nb-glow { opacity: .4; }
+.vl .nb-plot.vl-plot { position: absolute; }
+.vl-mine { scale: 1.25; transform-origin: 50% 100%; }
+.vl-mine .nb-name { background: #ffd23f; }
+.vl-ducks { position: absolute; display: flex; gap: 18px; pointer-events: none; animation: vl-paddle 12s ease-in-out infinite alternate; }
+.vl-duck { width: 30px; height: 22px; overflow: visible; animation: nb-hop 1.2s ease-in-out infinite alternate; }
+.vl-duck-body { fill: #fff; }
+@keyframes vl-paddle { from { translate: -30px 0; } to { translate: 50px 12px; } }
+.vl-car { position: absolute; left: 0; top: 0; width: 44px; offset-rotate: 0deg; animation: vl-drive 40s linear infinite; pointer-events: none; }
+.vl-car svg { display: block; width: 44px; height: 25px; overflow: visible; translate: -22px -18px; animation: nb-hop .35s ease-in-out infinite alternate; }
+.vl-carbody { fill: var(--car, #ff4d6d); }
+@keyframes vl-drive { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+.vl-bunting { position: absolute; width: 460px; height: 15px; background: var(--nb-garland) repeat-x 0 0 / 72px 15px; pointer-events: none; z-index: 1; }
+.vl-fireworks { position: absolute; inset: auto; width: 600px; height: 260px; z-index: 2; }
+.vl-fireworks i { scale: 2.4; }
+.nb.night .vl-thing { filter: brightness(.72) saturate(.85); }
+.nb.night .vl-lamp { filter: none; }
+.vl-weather { position: absolute; inset: 0; z-index: 2; }
+.vl-weather i { animation-name: vl-fall; }
+@keyframes vl-fall { from { transform: translate(0, -20px) rotate(0); } to { transform: translate(40px, 105vh) rotate(420deg); } }
+
+/* The bar along the top: the name, zoom, and close. */
+.vl-bar { position: absolute; left: 10px; right: 10px; top: calc(10px + env(safe-area-inset-top, 0px)); z-index: 3; display: flex; align-items: center; gap: 8px; pointer-events: none; }
+.vl-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; justify-self: start; max-width: max-content; margin-right: auto; padding: 5px 14px; border: 3px solid var(--nb-ink); border-radius: 14px; background: #fff; font: bold 16px/1.2 "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive; box-shadow: 3px 3px 0 var(--nb-ink); pointer-events: auto; }
+.vl-zoom { display: flex; gap: 6px; }
+.vl-btn { display: grid; place-items: center; width: 42px; height: 42px; padding: 0; border: 3px solid var(--nb-ink); border-radius: 50%; background: #fff; color: var(--nb-ink); font: bold 20px/1 "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive; box-shadow: 3px 3px 0 var(--nb-ink); cursor: pointer; pointer-events: auto; }
+.vl-btn:hover, .vl-btn:focus-visible { background: #ffd23f; outline: none; }
+.vl-btn:active { translate: 2px 2px; box-shadow: 1px 1px 0 var(--nb-ink); }
+.vl-close { background: #ff7069; color: #fff; }
+
+/* The button on the street that opens it. */
+.nb-title:has(.nb-open) { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; }
+.nb-open { margin-left: auto; padding: 2px 10px; border: 2.5px solid var(--nb-ink); border-radius: 10px; background: #fff; color: var(--nb-ink); font: bold 12px/1.3 "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive; box-shadow: 2px 2px 0 var(--nb-ink); cursor: pointer; }
+.nb-open:hover, .nb-open:focus-visible { background: #ffd23f; outline: none; }
+
+/* Under a computer theme: its colours for the buttons and the title, its cast over the picture. */
+.mc-on .vl { --vl-filter: var(--k-scene-filter, none); }
+.mc-on :is(.vl-title, .vl-btn:not(.vl-close), .nb-open) { background: var(--k-ctl-bg) !important; color: var(--k-ctl-ink) !important; border: var(--k-ctl-edge) !important; border-radius: var(--k-ctl-radius) !important; box-shadow: none !important; font-family: var(--k-font) !important; }
+.mc-on .vl-title { background: var(--k-bar-bg) !important; color: var(--k-bar-ink) !important; font: var(--k-bar-font) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vl, .vl-sea::after, .vl-tree, .vl-ducks, .vl-duck, .vl-car, .vl-car svg { animation: none; transition: none; }
+  .vl-car { display: none; }
+}
