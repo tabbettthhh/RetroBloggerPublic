@@ -1032,7 +1032,7 @@ const dayNumber = (date) => Math.floor((date - new Date(date.getFullYear(), 0, 0
 // Parts that can be left out: of the profile header, and of the taskbar's tray.
 export const HIDEABLE = { lastpost: 'Last post date', status: 'Status', playing: 'Now playing', countdown: 'Countdown', nudge: 'Nudge button', clock: 'Clock (taskbar)', traystatus: 'Status (taskbar, computers)', fortune: 'Fortune cookie', photoday: 'Photo of the day' };
 // The sections, for the main menu's order and for hiding ones you don't use.
-export const SECTIONS = { home: 'Home', thoughts: 'Thoughts', journal: 'Places', atlas: 'Map', friends: 'Friends', album: 'Photos', more: 'Dumps & lists', passport: 'Passport', wishlist: 'Trips wishlist', planner: 'Planner', guestbook: 'Guestbook', books: 'Books', films: 'Films', podcasts: 'Podcasts', music: 'Music', tv: 'TV', stats: 'Travel stats', about: 'About' };
+export const SECTIONS = { home: 'Home', thoughts: 'Thoughts', journal: 'Places', atlas: 'Map', friends: 'Friends', album: 'Photos', more: 'Dumps & lists', passport: 'Passport', wishlist: 'Trips wishlist', planner: 'Planner', guestbook: 'Guestbook', books: 'Books', films: 'Films', podcasts: 'Podcasts', music: 'Music', tv: 'TV', arcade: 'Arcade', stats: 'Travel stats', about: 'About' };
 export const DEFAULT_MENU = ['home', 'thoughts', 'journal', 'atlas', 'friends'];
 export const FONT_FAMILIES = {
   classic: '',
@@ -1074,11 +1074,11 @@ export const postFontAttrs = (post) => (post?.font && OPTIONS.font.choices[post.
 // Every section's name (in the menus, on the desktop icons and in the Explore menu) and the
 // site's buttons can be renamed. Left empty, each keeps its usual words.
 export const LABELS = {
-  home: 'Home', thoughts: 'Thoughts', journal: 'Places', atlas: 'Map', friends: 'Friends', album: 'Photos', more: 'Dumps & lists', passport: 'Passport', wishlist: 'Trips wishlist', planner: 'Planner', guestbook: 'Guestbook', books: 'Books', films: 'Films', podcasts: 'Podcasts', music: 'Music', tv: 'TV', stats: 'Travel stats', about: 'About',
+  home: 'Home', thoughts: 'Thoughts', journal: 'Places', atlas: 'Map', friends: 'Friends', album: 'Photos', more: 'Dumps & lists', passport: 'Passport', wishlist: 'Trips wishlist', planner: 'Planner', guestbook: 'Guestbook', books: 'Books', films: 'Films', podcasts: 'Podcasts', music: 'Music', tv: 'TV', arcade: 'Arcade', stats: 'Travel stats', about: 'About',
   explore: 'Explore', others: 'Others', search: 'Search', leave: 'Leave', nudge: 'Nudge', open_journal: 'Open in journal', read_review: 'Read the review', visitor: 'Visitor', come_in: 'Tap to come in'
 };
 export const LABEL_GROUPS = [
-  ['Sections', ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'planner', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about']],
+  ['Sections', ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'planner', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'arcade', 'stats', 'about']],
   ['Buttons', ['explore', 'others', 'search', 'leave', 'nudge', 'open_journal', 'read_review', 'visitor', 'come_in']]
 ];
 export function cleanLabels(v) {

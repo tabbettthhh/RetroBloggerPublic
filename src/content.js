@@ -703,6 +703,24 @@ export function parseFortunes(text) {
   return out;
 }
 
+// arcade.md: your best scores in the arcade, best first, one per line: "- 4210 · 2026-11-13".
+// The site writes it when you set a new score; take a line out to take that score off.
+export const ARCADE_KEEP = 10;
+export const ARCADE_MAX = 9999999;
+export function parseArcade(text) {
+  const scores = [];
+  for (const line of String(splitFrontMatter(text || '').body).split(/\r?\n/)) {
+    const m = /^\s*[-*]\s*(\d{1,7})\b(?:\s*[·,-]\s*(\d{4}-\d{2}-\d{2}))?/.exec(line);
+    if (m) scores.push({ score: Math.min(ARCADE_MAX, +m[1]), date: m[2] || '' });
+  }
+  scores.sort((a, b) => b.score - a.score);
+  return { scores: scores.slice(0, ARCADE_KEEP) };
+}
+export function arcadeText(scores) {
+  const lines = [...scores].sort((a, b) => b.score - a.score).slice(0, ARCADE_KEEP).map((s) => `- ${s.score}${s.date ? ' · ' + s.date : ''}`);
+  return `# Arcade\n\nYour best scores, best first. Take a line out to take that score off.\n\n${lines.join('\n')}\n`;
+}
+
 // status-log.md: one past status per line, newest first: "- 2026-10-23 11:39 · text".
 // categories.md: your own place categories, one per line: "- Bookshops, #8a4f26".
 // The colour is optional. Built-in ones (food, coffee…) don't need to be listed.
@@ -818,7 +836,7 @@ export const EMOJI_LAYOUTS = ['grid', 'scatter', 'big'];
 // Festive days an owner can tick (these match FESTIVALS in public/js/skins.js).
 export const THEME_FESTIVALS = ['lunar_new_year', 'hanami', 'childrens_day', 'dragon_boat', 'tanabata', 'mid_autumn', 'nowruz', 'holi', 'ramadan', 'eid_al_fitr', 'eid_al_adha', 'diwali', 'yalda', 'dia_de_reyes', 'carnival', 'dia_de_muertos', 'st_patricks', 'easter', 'midsummer', 'bonfire_night', 'halloween', 'hanukkah', 'christmas'];
 // Words on buttons that can be renamed (these match LABELS in public/js/skins.js).
-export const THEME_LABELS = ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'planner', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about', 'explore', 'others', 'search', 'leave', 'nudge', 'open_journal', 'read_review', 'visitor', 'come_in'];
+export const THEME_LABELS = ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'planner', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'arcade', 'stats', 'about', 'explore', 'others', 'search', 'leave', 'nudge', 'open_journal', 'read_review', 'visitor', 'come_in'];
 // Places the seasons' glass can go (these match GLASS_PLACES in public/js/skins.js).
 export const THEME_GLASS = ['photos', 'thoughts', 'journal', 'passport', 'atlas', 'wishlist', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv'];
 export const THEME_OPTIONS = {
@@ -855,7 +873,7 @@ export const THEME_OPTIONS = {
   handset: ['none', 'flip', 'handheld']
 };
 export const THEME_HIDEABLE = ['lastpost', 'status', 'playing', 'countdown', 'nudge', 'clock', 'traystatus', 'fortune', 'photoday'];
-export const THEME_SECTIONS = ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'planner', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about'];
+export const THEME_SECTIONS = ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'planner', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'arcade', 'stats', 'about'];
 // Each app's own look (these match public/js/skins.js).
 export const THEME_APPS = { 'journal': ['paper', 'hand', 'map', 'font'], 'passport': ['paper', 'hand', 'font'], 'atlas': ['map', 'font'], 'wishlist': ['font'], 'planner': ['paper', 'hand', 'font'], 'guestbook': ['font'], 'books': ['font'], 'films': ['font'], 'podcasts': ['font'], 'music': ['font'], 'tv': ['font'], 'album': ['font'] };
 export const APP_LOOKS = ['auto', 'original', 'tint', 'custom'];

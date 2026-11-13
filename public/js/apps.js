@@ -24,6 +24,7 @@ import { friendsApp, friendPost } from './friends-feed.js';
 import { dressCard, profileDecor } from './card-dress.js';
 import { cabinetEntrance } from './cabinet.js';
 import { plannerApp } from './planner.js';
+import { arcadeApp } from './arcade.js';
 import { commentLink, commentsBlock, commentsButton } from './comments.js';
 import { reactionRow } from './reactions.js';
 import { quietSite, privateScene } from './private-scene.js';
@@ -51,10 +52,11 @@ const SECTION_INFO = {
   podcasts: { label: 'Podcasts', href: '#/podcasts', sub: 'On tape', swatch: 'tape' },
   music: { label: 'Music', long: 'Record crate', href: '#/music', sub: 'Albums and songs', swatch: 'record' },
   tv: { label: 'TV', href: '#/tv', sub: 'Shows on tape', swatch: 'crt' },
+  arcade: { label: 'Arcade', href: '#/arcade', sub: 'A game and high scores', swatch: 'arcade' },
   stats: { label: 'Stats', long: 'Travel stats', href: '#/stats', sub: 'From the flight log', swatch: 'xp' },
   about: { label: 'About', href: '#/about', swatch: 'about' }
 };
-const OTHERS_ORDER = ['album', 'passport', 'wishlist', 'planner', 'guestbook', 'more', 'books', 'films', 'podcasts', 'music', 'tv', 'stats', 'about', 'thoughts', 'journal', 'atlas', 'friends'];
+const OTHERS_ORDER = ['album', 'passport', 'wishlist', 'planner', 'guestbook', 'more', 'books', 'films', 'podcasts', 'music', 'tv', 'arcade', 'stats', 'about', 'thoughts', 'journal', 'atlas', 'friends'];
 // The main bar's sections (in order) and the ones left out of the menus.
 export function menuOf(data) {
   const t = activeSkin() || resolveSkin(data.theme || {});
@@ -1923,6 +1925,7 @@ export const APPS = {
   podcasts: { title: 'Podcasts', era: 'tape', size: [560, 640], render: shelfApp('podcasts') },
   music: { title: 'Record crate', era: 'record', size: [620, 640], render: shelfApp('music') },
   tv: { title: 'TV', era: 'crt', size: [620, 640], render: shelfApp('tv') },
+  arcade: { title: 'Arcade', era: 'arcade', size: [660, 640], render: arcadeApp },
   album: { title: 'Photo album', era: 'album', size: [760, 680], render: albumApp },
   friends: { title: 'Friends', era: 'xp', icon: 'bubble', size: [480, 680], nav: true, render: friendsApp }
 };

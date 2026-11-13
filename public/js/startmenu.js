@@ -22,7 +22,8 @@ const MAIN = [
   ['#/films', 'Cinema', 'Film reviews', 'di-films'],
   ['#/podcasts', 'Podcasts', 'On tape', 'di-podcasts'],
   ['#/music', 'Record crate', 'Albums and songs', 'di-music'],
-  ['#/tv', 'TV', 'Shows on tape', 'di-tv']
+  ['#/tv', 'TV', 'Shows on tape', 'di-tv'],
+  ['#/arcade', 'Arcade', 'A game and high scores', 'di-arcade']
 ];
 const SHELVES = ['books', 'films', 'podcasts', 'music', 'tv'];
 

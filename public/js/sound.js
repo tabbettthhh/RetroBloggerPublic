@@ -103,6 +103,8 @@ function noise(dur, freq, vol, start = 0) {
 }
 
 export const sound = {
+  // One short note (the arcade's game).
+  blip: (freq, dur = 0.06, type = 'square', vol = 0.03) => tone(freq, 0, dur, type, vol),
   click: () => tone(1800, 0, 0.03, 'square', 0.015),
   // A buzzy two-part rattle for a nudge.
   nudge: () => {
