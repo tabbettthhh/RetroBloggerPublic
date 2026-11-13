@@ -3,10 +3,10 @@
    and docs/THEME-KIT.md). It applies whenever a computer is on (.mc-on, set by machine.js).
    A new app joins by adding its classes to the lists below, once. */
 
-/* ---------- the desktop: icons and taskbar ---------- */
+/* ---------- the desktop (and a phone's) taskbar, and the icons ---------- */
 .mc-on .desk-label { color: var(--k-label-ink) !important; font: var(--k-label-font) !important; background: var(--k-label-bg, none); text-shadow: var(--k-label-shadow, none) !important; padding: var(--k-label-pad, 0); }
-.mc-on .desktop .taskbar { background: var(--k-taskbar-bg) !important; border-top: var(--k-taskbar-edge) !important; border-bottom: 0 !important; height: var(--k-taskbar-h, 44px); }
-.mc-on .taskbar :is(.start-btn, .task-btn) { height: auto !important; align-self: stretch; margin: var(--k-task-margin, 5px 3px) !important; background: var(--k-task-bg) !important; color: var(--k-task-ink) !important; border: var(--k-task-edge) !important; border-radius: var(--k-task-radius) !important; box-shadow: none !important; text-shadow: none !important; font: var(--k-task-font) !important; }
+.mc-on :is(.desktop, .phone) .taskbar, .mc-on .phone .dock { background: var(--k-taskbar-bg) !important; border-top: var(--k-taskbar-edge) !important; border-bottom: 0 !important; height: var(--k-taskbar-h, 44px); }
+.mc-on .taskbar :is(.start-btn, .task-btn, .task) { height: auto !important; align-self: stretch; margin: var(--k-task-margin, 5px 3px) !important; background: var(--k-task-bg) !important; color: var(--k-task-ink) !important; border: var(--k-task-edge) !important; border-radius: var(--k-task-radius) !important; box-shadow: none !important; text-shadow: none !important; font: var(--k-task-font) !important; }
 .mc-on .taskbar .start-btn { background: var(--k-start-bg, var(--k-task-bg)) !important; color: var(--k-start-ink, var(--k-task-ink)) !important; }
 .mc-on .taskbar :is(.task-btn.active, .start-btn.pressed) { background: var(--k-task-on-bg) !important; color: var(--k-task-on-ink) !important; border: var(--k-task-on-edge, var(--k-task-edge)) !important; }
 .mc-on .taskbar .tray { margin: var(--k-task-margin, 5px 3px); background: var(--k-tray-bg) !important; color: var(--k-tray-ink) !important; border: var(--k-tray-edge, 0) !important; font: var(--k-task-font); }
@@ -34,31 +34,66 @@
 
 /* ---------- inside every app ---------- */
 /* The page behind the app, its words and fonts. */
-.mc-on .dw .wbody { margin: 0 !important; border: var(--k-body-edge, 0) !important; border-radius: 0 !important; box-shadow: none !important; background: var(--k-page) !important; color: var(--k-ink) !important; font-family: var(--k-font) !important; }
-.mc-on .dw .wbody > * { zoom: var(--k-zoom, 1); }
-.mc-on .wbody *:not(svg, svg *, .emoji, [class*="icon"], .wbtn) { font-family: var(--k-font) !important; }
-.mc-on .wbody :is(.hand, .ruled, .ruled *, .al-said, .board-note, .pln-page *, .sticky-hand, .gb-msg, .caption) { font-family: var(--k-hand-font, var(--k-font)) !important; }
-.mc-on .wbody :is(h1, h2, h3, h4, .card-title, .card-head strong, .al-cover h1, .sg-title, .finder-head, .pln-month) { font-family: var(--k-head-font, var(--k-font)) !important; color: var(--k-head-ink, inherit) !important; -webkit-text-fill-color: currentColor !important; text-shadow: none !important; letter-spacing: normal; }
-.mc-on .wbody :is(code, pre, .mono, .v-mrz, .lcd) { font-family: var(--k-mono-font, var(--k-font)) !important; }
+.mc-on :is(.dw .wbody, .phone #main) { margin: 0 !important; border: var(--k-body-edge, 0) !important; border-radius: 0 !important; box-shadow: none !important; background: var(--k-page) !important; color: var(--k-ink) !important; font-family: var(--k-font) !important; }
+.mc-on :is(.dw .wbody, .phone #main) > * { zoom: var(--k-zoom, 1); }
+.mc-on :is(.wbody, .phone #main) *:not(svg, svg *, .emoji, [class*="icon"], .wbtn) { font-family: var(--k-font) !important; }
+.mc-on :is(.wbody, .phone #main) :is(.hand, .ruled, .ruled *, .al-said, .board-note, .pln-page *, .sticky-hand, .gb-msg, .caption) { font-family: var(--k-hand-font, var(--k-font)) !important; }
+.mc-on :is(.wbody, .phone #main) :is(h1, h2, h3, h4, .card-title, .card-head strong, .al-cover h1, .finder-head, .pln-month) { font-family: var(--k-head-font, var(--k-font)) !important; color: var(--k-head-ink, inherit) !important; -webkit-text-fill-color: currentColor !important; text-shadow: none !important; letter-spacing: normal; }
+.mc-on :is(.wbody, .phone #main) :is(code, pre, .mono, .v-mrz, .lcd) { font-family: var(--k-mono-font, var(--k-font)) !important; }
 /* The big backgrounds each app is drawn on (desks, walls, shelves' backs, covers): the page. */
-.mc-on .wbody :is(.board-wall, .board-cork, .pln-desk, .shelf-view, .shelf-back, .tape-back, .record-back, .album-back, .album, .guestbook, .droid-phone, .feed, .wishlist, .search) { background: var(--k-page) !important; color: var(--k-ink) !important; }
+.mc-on :is(.wbody, .phone #main) :is(.board-wall, .board-cork, .pln-desk, .shelf-view, .shelf-back, .tape-back, .record-back, .album-back, .album, .guestbook, .droid-phone, .feed, .wishlist, .search) { background: var(--k-page) !important; color: var(--k-ink) !important; }
 /* The sheets, cards and panels everything sits on: the surface. */
-.mc-on .wbody :is(.card:not([data-card]), .profile-tile, .spread .page, .paper, .passport-page, .board-frame, .board-diary, .board-note, .pln-cover, .pln-page, .al-cover, .al-page, .gb-form, .gb-entry, .gb-card, .droid-section, .counter, .shelf-suggest, .shelf-board, .read-log, .boarding-pass, .finder, .wish, .ff-post, .ff-buddies, .xp-dialog, .memory-pop, .search-box, .shelf-empty, .stats-card, .review) { background: var(--k-surface) !important; color: var(--k-surface-ink, var(--k-ink)) !important; border: var(--k-edge) !important; border-radius: var(--k-radius) !important; box-shadow: var(--k-shadow) !important; }
-.mc-on .wbody .spread { background: var(--k-page) !important; border: 0 !important; box-shadow: none !important; gap: var(--k-gap, 10px); }
-.mc-on .wbody :is(.spread .page, .paper, .ruled)::before, .mc-on .wbody :is(.spread .page, .paper, .ruled)::after { opacity: var(--k-paper-marks, 0) !important; }
-.mc-on .wbody .ruled { background: none !important; }
+.mc-on :is(.wbody, .phone #main) :is(.card:not([data-card]), .profile-tile, .spread .page, .page.single, .paper, .passport-page, .board-frame, .board-diary, .board-note, .pln-cover, .pln-page, .al-cover, .al-page, .gb-form, .gb-entry, .gb-card, .droid-section, .counter, .shelf-suggest, .shelf-board, .read-log, .finder, .wish, .ff-post, .ff-buddies, .xp-dialog, .memory-pop, .search-box, .shelf-empty, .stats-card, .review) { background: var(--k-surface) !important; color: var(--k-surface-ink, var(--k-ink)) !important; border: var(--k-edge) !important; border-radius: var(--k-radius) !important; box-shadow: var(--k-shadow) !important; }
+.mc-on :is(.wbody, .phone #main) .spread { background: var(--k-page) !important; border: 0 !important; box-shadow: none !important; gap: var(--k-gap, 10px); }
+.mc-on :is(.wbody, .phone #main) :is(.spread .page, .page.single, .paper, .ruled)::after { opacity: var(--k-paper-marks, 0) !important; }
+.mc-on :is(.wbody, .phone #main) .ruled { background: none !important; }
 /* Their headers and insets. */
-.mc-on .wbody :is(.card-head, .finder-head, .rl-head, .bp-top, .board-legend, .shelf-bar, .droid-bar, .menubar, .al-bar, .pln-bar, .tv-bar, .deck-bar, .hifi-bar, .xp-nav, .pg-bar) { background: var(--k-surface-2) !important; color: var(--k-surface-2-ink) !important; border-color: transparent !important; box-shadow: none !important; }
+.mc-on :is(.wbody, .phone #main) :is(.card-head, .finder-head, .rl-head, .bp-top, .board-legend, .shelf-bar, .droid-bar, .menubar, .al-bar, .pln-bar, .tv-bar, .deck-bar, .hifi-bar, .xp-nav, .pg-bar) { background: var(--k-surface-2) !important; color: var(--k-surface-2-ink) !important; border-color: transparent !important; box-shadow: none !important; }
 /* Words take their place's colour (a keepsake keeps its own: see below). */
-.mc-on .wbody :is(p, li, span, small, strong, em, b, i, time, label, td, th, dt, dd, blockquote, figcaption, .card-body, .prose, .excerpt):not(:where(.page-deco, .stamp, .polaroid, .visa, .photo-btn, .frame, .nb, .sticker, [data-card], .chip, .tm-card) *) { color: inherit !important; }
-.mc-on .wbody a:not([class]) { color: var(--k-link) !important; }
+.mc-on :is(.wbody, .phone #main) :is(p, li, span, small, strong, em, b, i, time, label, td, th, dt, dd, blockquote, figcaption, .card-body, .prose, .excerpt):not(:where(.page-deco, .stamp, .polaroid, .visa, .photo-btn, .frame, .nb, .sticker, [data-card], .chip, .tm-card) *) { color: inherit !important; }
+.mc-on :is(.wbody, .phone #main) a:not([class]) { color: var(--k-link) !important; }
 /* Buttons, tabs and chips. */
-.mc-on .wbody :is(.xp-btn, .chip-btn, .react-btn, .feed-more, .keep-reading, .nudge-btn, .droid-btn, .shelf-btn, .aqua-pill, .seg, .board-tab, .pln-tab, .paper-pill, .leather-pill, .search-chip, .card-comments, .fl-btn, .tab, .al-tab, .gb-send, .visit-btn) { background: var(--k-ctl-bg) !important; color: var(--k-ctl-ink) !important; border: var(--k-ctl-edge) !important; border-radius: var(--k-ctl-radius) !important; box-shadow: none !important; text-shadow: none !important; font-family: var(--k-font) !important; }
-.mc-on .wbody :is(.seg.on, .aqua-pill.on, .board-tab.on, .search-chip.on, .pln-tab.on, .chip-btn[aria-pressed="true"], .tab.on, .al-tab.on) { background: var(--k-ctl-on-bg) !important; color: var(--k-ctl-on-ink) !important; }
+.mc-on :is(.wbody, .phone #main) :is(.xp-btn, .chip-btn, .react-btn, .feed-more, .keep-reading, .nudge-btn, .droid-btn, .shelf-btn, .aqua-pill, .seg, .board-tab, .pln-tab, .paper-pill, .leather-pill, .search-chip, .card-comments, .fl-btn, .tab, .al-tab, .gb-send, .visit-btn) { background: var(--k-ctl-bg) !important; color: var(--k-ctl-ink) !important; border: var(--k-ctl-edge) !important; border-radius: var(--k-ctl-radius) !important; box-shadow: none !important; text-shadow: none !important; font-family: var(--k-font) !important; }
+.mc-on :is(.wbody, .phone #main) :is(.seg.on, .aqua-pill.on, .board-tab.on, .search-chip.on, .pln-tab.on, .chip-btn[aria-pressed="true"], .tab.on, .al-tab.on) { background: var(--k-ctl-on-bg) !important; color: var(--k-ctl-on-ink) !important; }
 /* Things you type into. */
-.mc-on .wbody :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], .hp), select, textarea) { background: var(--k-field-bg) !important; color: var(--k-field-ink) !important; border: var(--k-field-edge) !important; border-radius: var(--k-ctl-radius) !important; box-shadow: none !important; font-family: var(--k-font) !important; }
-.mc-on .wbody ::placeholder { color: var(--k-ink-soft, currentColor); opacity: .8; }
+.mc-on :is(.wbody, .phone #main) :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], .hp), select, textarea) { background: var(--k-field-bg) !important; color: var(--k-field-ink) !important; border: var(--k-field-edge) !important; border-radius: var(--k-ctl-radius) !important; box-shadow: none !important; font-family: var(--k-font) !important; }
+.mc-on :is(.wbody, .phone #main) ::placeholder { color: var(--k-field-ink); opacity: .55; }
 /* Lines and rules. */
-.mc-on .wbody hr { border-color: var(--k-rule, currentColor); }
+.mc-on :is(.wbody, .phone #main) hr { border-color: var(--k-rule, currentColor); }
 /* The journal's page numbers and corner turns, and a speech bubble's words. */
-.mc-on .wbody :is(.page-no, .page-turn, .page-turn *, .floppy-say, .bubble) { color: var(--k-surface-ink, var(--k-ink)) !important; }
+.mc-on :is(.wbody, .phone #main) :is(.page-no, .page-turn, .page-turn *, .floppy-say, .bubble) { color: var(--k-surface-ink, var(--k-ink)) !important; }
+
+/* ---------- on a phone ----------
+   The phone is the screen: each app's top bar is the title bar, its page the app's page, and
+   the taskbar or dock along the bottom the taskbar. The rest is the same as on a computer. */
+.mc-on .phone, .mc-on .phone :is(.xp-window, .mac-window) { background: var(--k-page) !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+.mc-on .phone :is(.xp-title, .leather-head, .menubar, .mac-title, .droid-bar, .shelf-bar, .marquee, .deck-bar, .hifi-bar, .al-bar, .pln-bar, .tv-bar) { background: var(--k-bar-bg) !important; color: var(--k-bar-ink) !important; font: var(--k-bar-font) !important; text-shadow: var(--k-bar-glow, none) !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+.mc-on .phone :is(.xp-title, .leather-head, .menubar, .mac-title, .droid-bar, .shelf-bar, .marquee, .deck-bar, .hifi-bar, .al-bar, .pln-bar, .tv-bar) :is(span, a, b, strong, .gold, .lcd, .marquee-board, .hifi-dial, [class$="-title"], [class$="-back"], .menubar-item) { color: inherit !important; font: inherit !important; background: none !important; border: 0 !important; box-shadow: none !important; text-shadow: inherit !important; letter-spacing: normal !important; text-transform: none !important; }
+.mc-on .phone :is(.xp-title, .leather-head, .menubar, .mac-title, .droid-bar, .shelf-bar, .marquee, .deck-bar, .hifi-bar, .al-bar, .pln-bar, .tv-bar) svg { color: inherit; fill: currentColor; }
+.mc-on .phone :is(.tv-led, .tv-knobs, .droid-icon) { display: none !important; }
+.mc-on .phone .xp-ctl { background: var(--k-wbtn-bg) !important; border: var(--k-wbtn-edge) !important; border-radius: var(--k-wbtn-radius, 0) !important; box-shadow: none !important; }
+.mc-on .phone .xp-ctl.close { background: var(--k-close-bg, var(--k-wbtn-bg)) !important; }
+.mc-on .phone :is(.xp-nav, .xp-nav a) { background: var(--k-surface-2) !important; color: var(--k-surface-2-ink) !important; border-color: transparent !important; box-shadow: none !important; text-shadow: none !important; font-family: var(--k-font) !important; }
+.mc-on .phone .xp-nav a[aria-current], .mc-on .phone .xp-nav a.on { background: var(--k-ctl-on-bg) !important; color: var(--k-ctl-on-ink) !important; }
+.mc-on .phone .dock-icon { filter: none; }
+.mc-on .start-menu.mobile { background: var(--k-surface) !important; color: var(--k-surface-ink) !important; border: var(--k-edge) !important; }
+.mc-on .start-menu.mobile :is(.sm-head) { background: var(--k-bar-bg) !important; color: var(--k-bar-ink) !important; }
+.mc-on .start-menu.mobile :is(.sm-item, .sm-right a, strong, small) { color: inherit !important; }
+
+/* ---------- the last of each app's own materials ----------
+   Wood, leather, cork and bulbs that would otherwise show through, and the map, which takes the
+   computer's tint (--k-map-filter, for the dark ones). Keepsakes still keep their own. */
+.mc-on :is(.wbody, .phone #main) .spread.paged::before, .mc-on :is(.wbody, .phone #main) .spread.paged::after, .mc-on .marquee::after, .mc-on .phone #main.paper::before, .mc-on .phone #main.paper::after { display: none !important; }
+.mc-on .phone #main.paper { background: var(--k-page) !important; }
+.mc-on .phone .stitched { border: 0 !important; filter: none !important; background: var(--k-page) !important; }
+.mc-on :is(.wbody, .phone #main) .shelf-row { background: none !important; }
+.mc-on :is(.wbody, .phone #main) .shelf-books .shelf-row { background: repeating-linear-gradient(180deg, transparent 0 154px, var(--k-shelf, var(--k-surface-2)) 154px 162px, transparent 162px 176px) !important; }
+.mc-on :is(.wbody, .phone #main) :is(.shelf-plaque, .al-month) { background: var(--k-surface-2) !important; color: var(--k-surface-2-ink) !important; border: 0 !important; border-radius: var(--k-ctl-radius) !important; box-shadow: none !important; transform: none !important; font-family: var(--k-head-font, var(--k-font)) !important; }
+.mc-on :is(.wbody, .phone #main) :is(.leaflet-tile-pane, .board-map .leaflet-pane > svg) { filter: var(--k-map-filter, none); }
+.mc-on :is(.wbody, .phone #main) :is(.board-folds, .board-cork) { background: var(--k-page) !important; }
+.mc-on :is(.wbody, .phone #main) .al-page::after { display: none !important; }
+/* Words on a header strip or a label take the strip's own ink (a heading there too). */
+.mc-on :is(.wbody, .phone #main) :is(.card-head, .finder-head, .rl-head, .bp-top, .board-legend, .xp-nav, .pg-bar, .shelf-plaque, .al-month) :is(*, strong, b, span, h1, h2, h3, h4, time, small) { color: var(--k-surface-2-ink) !important; -webkit-text-fill-color: currentColor !important; }
+.mc-on :is(.wbody, .phone #main) :is(.shelf-plaque, .al-month) { -webkit-text-fill-color: currentColor !important; text-shadow: none !important; }
+/* Floppy's notes are paper of their own: dark words on them, whatever the computer. */
+.mc-on :is(.wbody, .phone #main) .al-said, .mc-on :is(.wbody, .phone #main) .al-said * { color: #2a2410 !important; }
