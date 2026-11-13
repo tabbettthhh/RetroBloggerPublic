@@ -5,7 +5,6 @@
 // Signing in: the owner's tile on the welcome screen goes to /admin/signin, Access asks who you
 // are, and you come back to the site with ?owner=1. From then on this browser remembers to ask
 // (quietly, once a visit) whether you're still signed in, and if you are, owner mode switches on.
-import { tellWho } from './refresh.js';
 
 const store = (() => {
   try {
@@ -26,7 +25,6 @@ export function forgetOwner() {
   try {
     store?.removeItem(HINT);
   } catch {}
-  tellWho(false);
 }
 
 // Arriving from the sign-in: remember it, skip the welcome screen, and tidy the address.
@@ -65,7 +63,6 @@ export async function openOwnerDoor(site) {
   try {
     // (This update's copy, like this file itself: see deployId in the server.)
     const id = /^\/v\/([\w-]{8,64})\//.exec(new URL(import.meta.url).pathname)?.[1];
-    tellWho(true);
     const { startOwner } = await import(id ? `/admin/owner.js?v=${id}` : '/admin/owner.js');
     await startOwner(site);
   } catch (e) {

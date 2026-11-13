@@ -86,9 +86,6 @@
 [data-theme="dark"] .react-pick { background: #2a2a2e; color: #eee; border-color: #555; }
 [data-theme="dark"] .react-type { background: #1e1e22; color: #eee; border-color: #555; }
 
-/* No connection: what was saved, and a line saying so (see app.js). */
-.offline-bar { position: fixed; z-index: 7500; left: 50%; bottom: calc(64px + env(safe-area-inset-bottom)); translate: -50% 0; max-width: calc(100vw - 24px); padding: 6px 12px; border-radius: 14px; background: rgba(30, 30, 40, .88); color: #fff; font: 12px/1.3 Tahoma, sans-serif; box-shadow: 0 2px 8px rgba(0, 0, 0, .3); pointer-events: none; }
-
 /* The atlas: how often (see maps.js). */
 .heat-spot { mix-blend-mode: multiply; }
 .heat-tip { font: 12px/1.3 Tahoma, sans-serif; }
