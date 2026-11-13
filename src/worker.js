@@ -156,6 +156,10 @@ async function route(request, env, ctx) {
   }
 
   if (p === '/api/all' && method === 'GET') return apiAll(request, env, ctx);
+  // Strolling between neighbourhoods: your own street (as any visitor sees it), and a stroll over
+  // to another site's (fetched here, so the page only ever talks to your own site).
+  if (p === '/api/street' && method === 'GET') return json(await friends.street(env, (await buildEverything(env)).site), 200, { 'Cache-Control': 'public, max-age=300' });
+  if (p === '/api/stroll' && method === 'GET') return stroll(request, env, ctx);
   if (p === '/api/visit' && method === 'POST') return visit(request, env);
   if (p === '/api/guestbook' && method === 'POST') return signGuestbook(request, env, ctx);
   if (p === '/api/comment' && method === 'POST') return leaveComment(request, env, ctx);
@@ -1112,6 +1116,22 @@ async function mediaFor(env, key, head = false, ifNoneMatch = '') {
 }
 
 // ---------- visitors writing ----------
+
+// A stroll to another site's street: only to a proper site's address, only its street (see
+// friends.street), kept a few minutes so a busy street isn't asked again and again.
+async function stroll(request, env, ctx) {
+  if (looksLikeBot(request)) return json({ error: 'Not accepted' }, 400);
+  const to = friends.siteOrigin(new URL(request.url).searchParams.get('to'), env);
+  if (!to) return json({ error: 'There’s no street there.' }, 400);
+  if (to === new URL(request.url).origin) return json({ ...(await friends.street(env, (await buildEverything(env)).site)), url: to, home: true });
+  const key = new Request(`https://stroll.cache/${encodeURIComponent(to)}`);
+  const kept = await caches.default.match(key).catch(() => null);
+  if (kept) return json(await kept.json());
+  const s = await friends.fetchStreet(env, to);
+  if (!s) return json({ error: 'No way through to that street just now.' }, 404);
+  ctx.waitUntil(caches.default.put(key, new Response(JSON.stringify(s), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=300' } })).catch(() => {}));
+  return json(s);
+}
 
 function looksLikeBot(request) {
   const ua = (request.headers.get('User-Agent') || '').toLowerCase();

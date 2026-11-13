@@ -184,6 +184,42 @@ async function verify(request, env, store, body, secrets) {
   return null;
 }
 
+// ---------- strolling between streets ----------
+// Your street, as anyone may see it: just the houses your Friends tab already shows a visitor
+// (names, addresses, lights on or off), never more. Another site's neighbourhood asks for it when
+// someone strolls over from theirs.
+export async function street(env, site) {
+  const pals = await publicFriends(env, { viewer: 'everyone' }).catch(() => ({ buddies: [] }));
+  return { v: 1, name: clipText(site.name, 60), owner: clipText(site.owner, 60), houses: pals.buddies.slice(0, STREET_MAX).map((b) => ({ name: clipText(b.name, 60), owner: clipText(b.owner, 60), url: b.url, presence: b.presence === 'offline' ? 'offline' : 'online' })) };
+}
+const STREET_MAX = 24;
+const clipText = (v, n) => String(v || '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, n);
+// Another site's street, fetched for a stroll, and trimmed to what a street holds: nothing else
+// they sent gets through. Null when there's no way there (no such site, or one that hasn't got
+// streets yet).
+export async function fetchStreet(env, origin) {
+  const res = await fetch(origin + '/api/street', { headers: { 'User-Agent': FRIEND_UA, Accept: 'application/json' }, redirect: 'manual', signal: AbortSignal.timeout(6000) }).catch(() => null);
+  if (!res || !res.ok || !/json/.test(res.headers.get('Content-Type') || '')) return null;
+  const text = await res.text().catch(() => '');
+  if (!text || text.length > 60000) return null;
+  let s;
+  try {
+    s = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  if (!s || typeof s !== 'object' || !Array.isArray(s.houses)) return null;
+  const seen = new Set();
+  const houses = [];
+  for (const h of s.houses.slice(0, STREET_MAX)) {
+    const url = siteOrigin(h?.url, env);
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    houses.push({ name: clipText(h.name, 60) || new URL(url).hostname, owner: clipText(h.owner, 60), url, presence: h.presence === 'offline' ? 'offline' : 'online' });
+  }
+  return { name: clipText(s.name, 60) || new URL(origin).hostname, owner: clipText(s.owner, 60), url: origin, houses };
+}
+
 // ---------- the public endpoints a friend's site calls ----------
 
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
