@@ -1240,16 +1240,18 @@ async function signGuestbook(request, env, ctx) {
   }
   if (body.website) return json({ ok: true, pending: true }); // honeypot: bots fill hidden fields
   const name = cleanText(body.name, 40) || 'Visitor';
-  const message = cleanText(body.message, 600);
-  if (message.length < 2) return json({ error: 'Write a message first.' }, 400);
+  // (A wave from the bench in the village: just a name and, if they like, a few words.)
+  const wave = body.wave === true;
+  const message = wave ? cleanText(body.message, 80) || '👋' : cleanText(body.message, 600);
+  if (message.length < (wave ? 1 : 2)) return json({ error: 'Write a message first.' }, 400);
   const pending = await env.CONTENT.list({ prefix: 'guestbook-pending/', limit: 300 });
   if (pending.objects.length >= 300) return json({ error: 'The guestbook is full for now. Try again later.' }, 429);
   const { iso, file } = stamp();
   // (Sent as a postcard, with one of the painted fronts.)
-  const card = POSTCARD_FRONTS.includes(String(body.card || '')) ? String(body.card) : '';
-  const text = `---\nname: ${yamlString(name)}\ndate: ${yamlString(iso.slice(0, 16).replace('T', ' '))}\n${card ? `card: ${card}\n` : ''}---\n${message}\n`;
+  const card = wave ? '' : POSTCARD_FRONTS.includes(String(body.card || '')) ? String(body.card) : '';
+  const text = `---\nname: ${yamlString(name)}\ndate: ${yamlString(iso.slice(0, 16).replace('T', ' '))}\n${card ? `card: ${card}\n` : ''}${wave ? 'wave: true\n' : ''}---\n${message}\n`;
   await env.CONTENT.put(`guestbook-pending/${file}.md`, text, { httpMetadata: { contentType: 'text/markdown; charset=utf-8' } });
-  later(ctx, push.notifyOwner(env, 'comments', { title: card ? `📮 ${name} sent you a postcard` : `✍ ${name} signed the guestbook`, body: message, url: '/?owner=1#/guestbook', tag: 'guestbook' }, new URL(request.url).origin));
+  later(ctx, push.notifyOwner(env, 'comments', { title: wave ? `👋 ${name} waved from the bench` : card ? `📮 ${name} sent you a postcard` : `✍ ${name} signed the guestbook`, body: message, url: '/?owner=1#/guestbook', tag: 'guestbook' }, new URL(request.url).origin));
   return json({ ok: true, pending: true });
 }
 

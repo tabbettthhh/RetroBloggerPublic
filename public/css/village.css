@@ -95,6 +95,59 @@
 .vl.sky-windy .vl-tree { animation-duration: 1.1s; }
 .vl-sound { font-size: 17px; }
 
+/* Things to do: the noticeboard, the arcade, the bench, fishing. Each is a button on the ground. */
+.vl-fun { position: absolute; padding: 0; border: 0; background: none; color: var(--nb-ink); font: inherit; cursor: pointer; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
+.vl-fun:hover, .vl-fun:focus-visible { outline: none; filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 2px #fff); }
+.vl-board { width: 150px; height: 120px; display: flex; flex-direction: column; align-items: center; }
+.vl-board-face { position: relative; display: flex; align-items: center; justify-content: center; gap: 4px; width: 150px; height: 84px; border: 3px solid var(--nb-ink); border-radius: 6px; background: #c98f52 repeating-linear-gradient(90deg, transparent 0 28px, rgba(0, 0, 0, .1) 28px 30px); box-shadow: 3px 3px 0 var(--nb-ink); }
+.vl-board-face img { width: 38px; height: 44px; padding: 3px 3px 9px; border: 1.5px solid var(--nb-ink); background: #fff; object-fit: cover; rotate: var(--tilt, 0deg); box-shadow: 1px 2px 0 rgba(0, 0, 0, .3); }
+.vl-board-slip { position: absolute; right: 6px; bottom: 4px; font-size: 18px; }
+.vl-board-empty { font: bold 14px "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive; color: #fff6dc; }
+.vl-board-legs { width: 110px; height: 34px; border-left: 6px solid #7a4a24; border-right: 6px solid #7a4a24; }
+.vl-arcade { width: 130px; height: 130px; display: flex; flex-direction: column; align-items: center; }
+.vl-arcade-sign { z-index: 1; margin-bottom: -6px; padding: 3px 8px; border: 3px solid var(--nb-ink); border-radius: 6px; background: #ffd23f; color: #d8203a; font: 12px/1 'Press Start 2P', monospace; box-shadow: 0 0 10px rgba(255, 210, 60, .8); }
+.vl-arcade-hut { position: relative; display: block; width: 104px; height: 70px; border: 3px solid var(--nb-ink); border-radius: 8px 8px 2px 2px; background: linear-gradient(90deg, #5a1a9a, #3a1466); box-shadow: 3px 3px 0 var(--nb-ink); }
+.vl-arcade-door { position: absolute; left: 36px; bottom: 0; width: 30px; height: 44px; border: 3px solid var(--nb-ink); border-bottom: 0; border-radius: 14px 14px 0 0; background: #ff3cc8; box-shadow: inset 0 0 10px #ffd0ec; }
+.vl-arcade-scores { display: grid; margin-top: 3px; padding: 2px 6px; border: 2px solid var(--nb-ink); border-radius: 4px; background: #05050c; color: #8af0ff; font: 7px/1.5 'Press Start 2P', monospace; text-align: left; white-space: nowrap; }
+.vl-bench { width: 120px; height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+.vl-bench-seat { display: block; width: 96px; height: 34px; border: 3px solid var(--nb-ink); border-radius: 4px; background: repeating-linear-gradient(#b07a45 0 6px, #8a5a34 6px 8px); box-shadow: 0 10px 0 -4px var(--nb-ink); }
+.vl-bench-sign { position: absolute; top: 0; right: 0; padding: 1px 6px; border: 2px solid var(--nb-ink); border-radius: 8px; background: #fff; font: bold 12px/1.3 "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive; }
+.vl-fishing { width: 60px; height: 60px; z-index: 1; }
+.vl-rod { position: absolute; left: 6px; top: 4px; width: 4px; height: 52px; border-radius: 2px; background: #7a4a24; rotate: -32deg; transform-origin: 50% 100%; }
+.vl-rod::after { content: ''; position: absolute; left: 0; top: 0; width: 1px; height: 46px; background: rgba(255, 255, 255, .9); rotate: 34deg; transform-origin: 0 0; }
+.vl-fish-sign { position: absolute; right: 0; bottom: 0; padding: 2px 4px; border: 2px solid var(--nb-ink); border-radius: 8px; background: #fff; font-size: 14px; }
+
+/* A panel over the village: the noticeboard close up, the bench, fishing. */
+.vl-panel { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 16px; background: rgba(20, 16, 40, .35); }
+.vl-panel-card { width: min(440px, 100%); max-height: min(80vh, 640px); overflow: auto; padding: 0 16px 16px; border: 3px solid var(--nb-ink); border-radius: 16px; background: #fffaf0; color: var(--nb-ink); box-shadow: 5px 5px 0 var(--nb-ink); font: 15px/1.45 "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive; }
+.vl-panel-head { position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 -16px 10px; padding: 10px 12px 10px 16px; border-bottom: 3px solid var(--nb-ink); background: #ffd23f; font-size: 17px; }
+.vl-panel-x { width: 34px; height: 34px; font-size: 15px; box-shadow: 2px 2px 0 var(--nb-ink); }
+.vl-notices { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+.vl-pin { margin: 0; padding: 6px 6px 8px; border: 2px solid var(--nb-ink); background: #fff; box-shadow: 2px 3px 0 rgba(0, 0, 0, .25); rotate: -1.5deg; }
+.vl-pin:nth-child(even) { rotate: 2deg; }
+.vl-pin img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: #e6e2d6; }
+.vl-pin figcaption { margin-top: 4px; font-size: 12px; line-height: 1.3; overflow-wrap: anywhere; }
+.vl-pin a { color: inherit; text-decoration: none; }
+.vl-fortune { grid-column: 1 / -1; margin: 4px 0 0; padding: 8px 10px; border: 2px dashed var(--nb-ink); border-radius: 6px; background: #fff; }
+.vl-quiet { margin: 6px 0; opacity: .8; font-size: 13px; }
+.vl-waves { margin: 0 0 10px; padding: 0; list-style: none; }
+.vl-waves li { padding: 6px 0; border-bottom: 1.5px dashed rgba(28, 20, 54, .25); }
+.vl-wave-form { display: grid; gap: 8px; }
+.vl-wave-form input:not(.hp) { padding: 8px 10px; border: 2.5px solid var(--nb-ink); border-radius: 10px; background: #fff; color: var(--nb-ink); font: inherit; }
+.vl-wave-form .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.vl-go { justify-self: start; padding: 7px 16px; border: 2.5px solid var(--nb-ink); border-radius: 12px; background: #ffd23f; color: var(--nb-ink); font: bold 15px/1.2 "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive; box-shadow: 2px 2px 0 var(--nb-ink); cursor: pointer; }
+.vl-go:active { translate: 2px 2px; box-shadow: none; }
+.vl-go:disabled { opacity: .6; }
+.vl-fish { display: grid; justify-items: center; gap: 8px; text-align: center; }
+.vl-water { position: relative; width: 100%; height: 120px; border: 3px solid var(--nb-ink); border-radius: 50%; background: radial-gradient(ellipse at 40% 35%, #9fe2ff, #3aa7e0 70%); overflow: hidden; }
+.vl-bob { position: absolute; left: 50%; top: 45%; width: 16px; height: 22px; margin-left: -8px; border: 2px solid var(--nb-ink); border-radius: 50% 50% 45% 45%; background: linear-gradient(#ff4d4d 50%, #fff 50%); opacity: 0; transition: opacity .2s; }
+.vl-water.cast .vl-bob { opacity: 1; animation: vl-float 1.6s ease-in-out infinite alternate; }
+.vl-water.bite .vl-bob { animation: vl-bite .18s ease-in-out infinite alternate; }
+@keyframes vl-float { from { translate: 0 0; } to { translate: 0 3px; } }
+@keyframes vl-bite { from { translate: 0 0; } to { translate: 0 9px; } }
+.vl-catch { font-size: 26px; vertical-align: -5px; }
+.vl-fish-say { margin: 0; min-height: 2.6em; }
+
 /* The bar along the top: the name, zoom, and close. */
 .vl-bar { position: absolute; left: 10px; right: 10px; top: calc(10px + env(safe-area-inset-top, 0px)); z-index: 3; display: flex; align-items: center; gap: 8px; pointer-events: none; }
 .vl-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; justify-self: start; max-width: max-content; margin-right: auto; padding: 5px 14px; border: 3px solid var(--nb-ink); border-radius: 14px; background: #fff; font: bold 16px/1.2 "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive; box-shadow: 3px 3px 0 var(--nb-ink); pointer-events: auto; }
@@ -111,11 +164,16 @@
 
 /* Under a computer theme: its colours for the buttons and the title, its cast over the picture. */
 .mc-on .vl { --vl-filter: var(--k-scene-filter, none); }
-.mc-on :is(.vl-title, .vl-btn:not(.vl-close), .nb-open) { background: var(--k-ctl-bg) !important; color: var(--k-ctl-ink) !important; border: var(--k-ctl-edge) !important; border-radius: var(--k-ctl-radius) !important; box-shadow: none !important; font-family: var(--k-font) !important; }
+.mc-on :is(.vl-title, .vl-btn:not(.vl-close), .nb-open, .vl-go) { background: var(--k-ctl-bg) !important; color: var(--k-ctl-ink) !important; border: var(--k-ctl-edge) !important; border-radius: var(--k-ctl-radius) !important; box-shadow: none !important; font-family: var(--k-font) !important; }
+.mc-on .vl-panel-card { background: var(--k-surface) !important; color: var(--k-surface-ink) !important; border: var(--k-edge) !important; border-radius: var(--k-radius) !important; box-shadow: var(--k-shadow) !important; font-family: var(--k-font) !important; }
+.mc-on .vl-panel-head { background: var(--k-bar-bg) !important; color: var(--k-bar-ink) !important; font: var(--k-bar-font) !important; }
 .mc-on .vl-title { background: var(--k-bar-bg) !important; color: var(--k-bar-ink) !important; font: var(--k-bar-font) !important; }
 
 @media (prefers-reduced-motion: reduce) {
   .vl, .vl-sea::after, .vl-tree, .vl-ducks, .vl-duck, .vl-car, .vl-car svg, .vl-person, .vl-person svg, .vl-chat, .vl-sky, .vl.sky-storm::after { animation: none !important; transition: none; }
   .vl-postie { display: none; }
+  .vl-water.cast .vl-bob, .vl-water.bite .vl-bob { animation: none; }
+  .vl-water.bite .vl-bob { translate: 0 9px; }
   .vl-car { display: none; }
 }
+.vl-fish .vl-go { justify-self: center; }
