@@ -1,6 +1,6 @@
 // Clicking around with the awkward content still in place: search with odd characters, the
 // photo viewer, the album, page turns, the screensaver, the status bar, forms. No crashes.
-import { test, report, assert, BASE, chromium, seed, publicData } from './lib.mjs';
+import { test, report, assert, eq, BASE, chromium, seed, publicData, putFile, getFile } from './lib.mjs';
 
 const browser = await chromium.launch();
 const watch = (page) => {
@@ -217,6 +217,35 @@ await test('desktop: the screensaver runs with all the awkward content', async (
   await desk.mouse.move(420, 420);
   await desk.waitForTimeout(500);
   assert(!desk.errors.length, desk.errors.join('\n'));
+});
+
+await test('desktop: the maze screensaver, hung with the photos, gone the moment you move', async () => {
+  const theme = await getFile('theme.md').catch(() => '');
+  await putFile('theme.md', '---\ntheme: classic\nscreensaver: maze\n---\n');
+  try {
+    await desk.reload();
+    await desk.waitForSelector('.dw');
+    await desk.locator('.start-btn').click();
+    await desk.locator('.sm-foot-btn', { hasText: 'Screensaver' }).click();
+    await desk.waitForSelector('.screensaver.ss-maze canvas');
+    eq(await desk.locator('.screensaver .ss-slot').count(), 0, 'the maze, not the drifting things');
+    await desk.waitForTimeout(3000);
+    // It's drawing: the middle of the screen isn't one flat colour.
+    const busy = await desk.evaluate(() => {
+      const c = document.querySelector('.ss-maze canvas');
+      const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+      const seen = new Set();
+      for (let y = 0; y < c.height; y += 7) for (let x = 0; x < c.width; x += 7) { const i = (y * c.width + x) * 4; seen.add(`${d[i] >> 5},${d[i + 1] >> 5},${d[i + 2] >> 5}`); }
+      return seen.size;
+    });
+    assert(busy > 6, 'walls, floor and sky drawn: ' + busy);
+    await desk.mouse.move(400, 400);
+    await desk.mouse.move(420, 420);
+    await desk.waitForSelector('.screensaver', { state: 'detached' });
+    assert(!desk.errors.length, desk.errors.join('\n'));
+  } finally {
+    await putFile('theme.md', theme || '---\ntheme: classic\n---\n');
+  }
 });
 
 const failed = report();

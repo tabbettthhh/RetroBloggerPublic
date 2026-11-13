@@ -208,6 +208,9 @@
 .ss-pipes { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; opacity: .92; pointer-events: none; }
 .screensaver .ss-slot { z-index: 1; }
 .screensaver .ss-note { z-index: 2; }
+/* The maze: drawn small and stretched to fill the screen, a little blocky on purpose. */
+.ss-maze { background: #0b0d1a; }
+.ss-maze-canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
 /* Keep the pipes in the background: softer overall, and a dark glow behind each floating
    thing and behind Floppy so they read clearly on top. */
 .ss-pipes { opacity: .62; filter: saturate(.85) blur(1.6px); }

@@ -766,6 +766,9 @@ export const OPTIONS = {
   // The whole computer around the site on a big screen, and a phone of its own on a phone (see
   // machine.js). The colours stay the theme's; these bring the case, the speakers and the knobs.
   machine: { name: 'Computer (on a big screen)', choices: { none: 'None: the site fills the screen', beige: 'Beige box: a cream monitor and stereo speakers', breadbin: 'Breadbin: round speakers and a rainbow stripe', bluedesk: 'Blue desk: a slim black monitor', glass: 'Aurora glass: glass windows and gadgets', superbar: 'Superbar: blue glass and big buttons', tiles: 'Start tiles: flat colour tiles', terminal: 'Tiling terminal: panes and a prompt', teletext: 'Teletext telly: a wood-cabinet TV', hifi: 'Hi-fi stack: speakers, meters and a volume knob', browser: 'Old browser: a marquee and a webring' } },
+  // The screensaver: things from the site drifting by with pipes behind, a walk through a maze
+  // hung with your photos, or each in turn (see screensaver.js and maze.js).
+  screensaver: { name: 'Screensaver', choices: { drift: 'Drifting: bits of the site, with pipes behind', maze: 'The maze: a walk past your photos', turns: 'Taking turns' } },
   handset: { name: 'Phone (on a phone)', choices: { none: 'None: the site fills the phone', flip: 'Flip phone: opens with a flip, five little lights', handheld: 'Handheld: four shades of green and a direction pad' } }
 };
 
