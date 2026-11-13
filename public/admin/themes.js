@@ -417,7 +417,9 @@ function themeControls(ctx, saved, redraw, preview) {
       h('p', { class: 'hint' }, 'A little old-homepage magic. Moving effects stay still for visitors who’ve asked their device for less motion, and never get in the way of tapping or clicking.'),
       opt('name_style'),
       opt('trail'),
-      opt('falling')
+      opt('falling'),
+      opt('screensaver'),
+      h('p', { class: 'hint' }, 'The maze is a slow walk through brick corridors with your photos hung on the walls, each with its title on a little plaque. It’s new every time. Visitors who’ve asked for less motion get the drifting one.')
     ]],
     words_own: ['Words', () => labelControls(d, redraw)],
     floppy: ['Floppy', () => floppyControls(d, t, redraw)],

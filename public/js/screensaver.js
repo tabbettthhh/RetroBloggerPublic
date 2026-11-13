@@ -7,6 +7,7 @@ import { stampSvg, INK_DEFS, passportStamps } from './stamps.js';
 import { withEmoticons } from './emoticons.js';
 import { floppySvg, LINES } from './helper.js';
 import { ABOUT } from './floppy-lines.js';
+import { startMaze } from './maze.js';
 import { startPipes } from './pipes.js';
 
 const COVERS = { books: bookCover, films: ticket, podcasts: cassette, music: record, tv: vhs };
@@ -127,6 +128,25 @@ export function makeScreensaver(data) {
     start() {
       if (el) return;
       const phone = matchMedia('(max-width: 899px), (pointer: coarse)').matches;
+      // The maze, if the theme says so (or its turn, taking turns), unless this visitor wants
+      // stillness or the device is a slow one.
+      const pick = document.documentElement.dataset.skScreensaver;
+      const still = matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('lite');
+      makeScreensaver.turn = (makeScreensaver.turn || 0) + 1;
+      if (!still && (pick === 'maze' || (pick === 'turns' && makeScreensaver.turn % 2 === 0))) {
+        const cv = h('canvas', { class: 'ss-maze-canvas' });
+        el = h('div', { class: 'screensaver ss-maze' + (phone ? ' ss-phone' : ''), 'aria-hidden': 'true' }, cv, h('span', { class: 'ss-note' }, `${data.site.name} · ${phone ? 'tap' : 'move the mouse'} to come back`));
+        document.body.append(el);
+        const photos = data.posts.flatMap((p) => (p.photos || []).filter((src) => String(src).startsWith('/media/')).map((src, i) => ({ src, title: p.captions?.[i] || p.title || '' })));
+        el.pipesStop = startMaze(cv, photos.sort(() => Math.random() - 0.5));
+        document.addEventListener('visibilitychange', away);
+        setTimeout(() => {
+          window.addEventListener('pointermove', stop);
+          window.addEventListener('keydown', stop);
+          window.addEventListener('pointerdown', stop);
+        }, 600);
+        return;
+      }
       const spots = !phone ? SPOTS : innerWidth > innerHeight ? PHONE_SPOTS_WIDE : PHONE_SPOTS;
       const items = shuffle(pool(data));
       const slots = spots.slice(0, Math.max(1, Math.min(spots.length, items.length || 1)));

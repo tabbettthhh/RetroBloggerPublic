@@ -851,6 +851,7 @@ export const THEME_OPTIONS = {
   page_strength: ['medium', 'soft', 'strong'],
   wall_time: ['day', 'still'],
   machine: ['none', 'beige', 'breadbin', 'bluedesk', 'glass', 'superbar', 'tiles', 'terminal', 'teletext', 'hifi', 'browser'],
+  screensaver: ['drift', 'maze', 'turns'],
   handset: ['none', 'flip', 'handheld']
 };
 export const THEME_HIDEABLE = ['lastpost', 'status', 'playing', 'countdown', 'nudge', 'clock', 'traystatus', 'fortune', 'photoday'];
