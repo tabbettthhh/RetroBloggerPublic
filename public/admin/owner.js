@@ -1915,6 +1915,8 @@ export async function startOwner(s) {
   }
   document.documentElement.classList.add('owner-on');
   keepPresence();
+  // (Your picture as the site's icon: made now if it never was, say for a picture chosen before this came in.)
+  import('/admin/app-icon.js').then((m) => m.ensureAppIcon(site.data?.site?.picture || '')).catch(() => {});
   ownerHooks.holding = () => writing();
   // (A friend's site as their friend, from anywhere on yours: the photos-of-the-day line, say.)
   ownerHooks.visitFriend = visitFriend;

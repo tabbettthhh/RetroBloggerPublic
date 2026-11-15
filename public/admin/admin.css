@@ -121,10 +121,26 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .filter-btn { width: 96px; min-height: 30px; padding: 0 4px; border: 1px solid #7f9db9; border-radius: 3px; background: linear-gradient(180deg, #fff, #dfe8f6); color: #0d3a9a; font-size: 11px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .filter-btn.on { border-color: #e68b2c; box-shadow: inset 0 0 0 1px #e68b2c; }
 .filter-panel { display: flex; flex-direction: column; gap: 8px; min-width: 0; min-inline-size: 0; max-width: 100%; }
-.filter-big { width: 100%; height: auto; max-height: 55vh; object-fit: contain; background: #222; border: 1px solid #b9b5a0; }
+.filter-big { display: block; width: 100%; height: auto; max-height: 55vh; object-fit: contain; background: #222; border: 1px solid #b9b5a0; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; pointer-events: none; }
+/* The photo you're choosing for: swipe for the next filter, hold to compare. */
+.filter-stage { position: relative; touch-action: pan-y; cursor: grab; -webkit-user-select: none; user-select: none; border-radius: 4px; outline: none; }
+.filter-stage:focus-visible { box-shadow: 0 0 0 3px #2f6fd6; }
+.filter-tag { position: absolute; left: 50%; bottom: 12px; translate: -50% 0; padding: 4px 12px; border-radius: 999px; background: rgba(0, 0, 0, .62); color: #fff; font-size: 13px; font-weight: bold; pointer-events: none; transition: opacity .3s; }
+.filter-stage.comparing .filter-tag { background: rgba(255, 255, 255, .9); color: #111; }
+.filter-stage.flash .filter-tag { animation: filter-pop .35s ease-out; }
+@keyframes filter-pop { from { scale: .8; opacity: .3; } to { scale: 1; opacity: 1; } }
+.filter-arrows { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 6px; pointer-events: none; }
+.filter-step { pointer-events: auto; width: 38px; height: 38px; padding: 0; border: 0; border-radius: 50%; background: rgba(0, 0, 0, .45); color: #fff; font-size: 24px; line-height: 1; cursor: pointer; }
+.filter-step:hover { background: rgba(0, 0, 0, .7); }
+.filter-photos { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13px; }
+.filter-strength { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.filter-strength input { flex: 1; }
+.filter-strength output { width: 3em; text-align: right; font-variant-numeric: tabular-nums; }
+.thumb-pick { cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .filter-stage.flash .filter-tag { animation: none; } }
 .filter-strip { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 8px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
-.filter-tile { flex: none; width: 84px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 3px; border: 2px solid transparent; border-radius: 6px; background: transparent; font-size: 11px; color: #222; cursor: pointer; scroll-snap-align: start; }
-.filter-tile img { width: 76px; height: 76px; object-fit: cover; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+.filter-tile { flex: none; width: 92px; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 3px; border: 2px solid transparent; border-radius: 6px; background: transparent; font-size: 11px; color: #222; cursor: pointer; scroll-snap-align: start; }
+.filter-tile img { width: 84px; height: 84px; object-fit: cover; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
 /* The digicam's DATE button: a black key and a little orange LCD, like the camera's own */
 .stamp-set { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
 .cam-date { display: inline-flex; align-items: stretch; padding: 0; border: 1px solid #1b1b1b; border-radius: 4px; overflow: hidden; background: #2b2b2b; cursor: pointer; box-shadow: 0 2px 0 #0e0e0e, inset 0 1px 0 rgba(255,255,255,.15); }

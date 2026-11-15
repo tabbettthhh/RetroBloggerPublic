@@ -292,7 +292,7 @@ export const WALLPAPERS = {
   graph: { name: 'Graph paper', css: (t) => `linear-gradient(${mix(t.paper, t.main, 0.28)} 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, ${mix(t.paper, t.main, 0.28)} 1px, transparent 1px) 0 0 / 24px 24px, ${mix(t.paper, '#ffffff', 0.5)}` },
   linen: { name: 'Linen', css: (t) => `repeating-linear-gradient(0deg, ${mix(t.paper, t.main, 0.12)} 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, ${mix(t.paper, t.main, 0.1)} 0 1px, transparent 1px 4px), ${mix(t.paper, t.main, 0.06)}` },
   contours: { name: 'Contour lines', tile: 160, draw: (c, t) => `<g fill="none" stroke="${mix(t.paper, t.main, 0.35)}" stroke-width="1">${[0, 1, 2, 3, 4, 5].map((i) => `<path d="M-10 ${20 + i * 26} C 30 ${4 + i * 26}, 60 ${44 + i * 26}, 90 ${22 + i * 26} S 150 ${2 + i * 26}, 170 ${20 + i * 26}"/>`).join('')}</g>`, ground: (t) => mix(t.paper, t.main, 0.06) },
-  grain: { name: 'Grain', tile: 200, draw: () => `<filter id="g"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .12 0"/></filter><rect width="100%" height="100%" filter="url(#g)"/>`, ground: (t) => mix(t.main, '#000000', 0.15) },
+  grain: { name: 'Grain', tile: 200, draw: () => `<filter id="g"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .5 -.12"/></filter><rect width="100%" height="100%" filter="url(#g)"/>`, ground: (t) => mix(t.main, '#000000', 0.15) },
   // Bold and loud
   sunset: {
     name: 'Neon sunset',
@@ -300,7 +300,11 @@ export const WALLPAPERS = {
       const night = hslHex(hsl(t.main)[0] + 40, 0.6, 0.1);
       const palm = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})" fill="${night}"><path d="M44 220C46 170 52 120 64 76l5 1c-10 43-16 93-16 143z"/><path d="M66 76C40 54 12 56 0 74c22-8 44-8 66 2zM66 76C70 46 94 30 118 38 94 44 78 58 66 76zM66 76c28-14 56-8 70 14-24-12-46-14-70-14zM66 76C46 88 26 106 22 132 34 108 50 92 66 76zM66 76c4-30-8-56-30-66 16 18 24 40 30 66zM66 76c18 8 32 26 34 50-10-20-22-36-34-50z"/></g>`;
       const palms = svgUrl(palm(10, 0, 1) + palm(196, 66, 0.7), 300, 220);
-      return `${palms} 0 100% / 300px 220px repeat-x, repeating-linear-gradient(0deg, ${c.main}cc 0 2px, transparent 2px 26px) 0 100% / 100% 30% no-repeat, repeating-linear-gradient(90deg, ${c.accent}88 0 2px, transparent 2px 56px) 0 100% / 100% 30% no-repeat, repeating-linear-gradient(0deg, transparent 0 9px, ${night} 9px 12px) 50% 58% / 220px 110px no-repeat, radial-gradient(circle 110px at 50% 64%, #ffd166 0, #ff8a5c 45%, ${c.main} 80%, transparent 81%), linear-gradient(180deg, ${night} 0%, ${hslHex(hsl(t.main)[0] - 40, 0.7, 0.24)} 38%, ${c.main} 62%, #ff8a5c 70%, ${night} 70.2%)`;
+      // (The sun and its stripes are one picture, so they stay together on any screen; it sets
+      // behind the horizon, which is drawn over it. The palms stand on the horizon.)
+      const bands = [86, 101, 115, 128, 140, 151, 161, 170].map((y, i) => `<rect x="0" y="${y}" width="240" height="${2 + i * 0.9}" fill="${night}"/>`).join('');
+      const sun = svgUrl(`<defs><radialGradient id="s" cx="50%" cy="62%" r="60%"><stop offset="0" stop-color="#ffd166"/><stop offset=".45" stop-color="#ff8a5c"/><stop offset=".85" stop-color="${c.main}"/></radialGradient></defs><clipPath id="c"><circle cx="120" cy="120" r="110"/></clipPath><circle cx="120" cy="120" r="110" fill="url(#s)"/><g clip-path="url(#c)">${bands}</g>`, 240, 240);
+      return `${palms} 0 70% / 300px 220px repeat-x, repeating-linear-gradient(0deg, ${c.main}cc 0 2px, transparent 2px 26px) 0 100% / 100% 30% no-repeat, repeating-linear-gradient(90deg, ${c.accent}88 0 2px, transparent 2px 56px) 0 100% / 100% 30% no-repeat, linear-gradient(${night}, ${night}) 0 100% / 100% 30% no-repeat, ${sun} 50% 70% / 240px 240px no-repeat, linear-gradient(180deg, ${night} 0%, ${hslHex(hsl(t.main)[0] - 40, 0.7, 0.24)} 38%, ${c.main} 62%, #ff8a5c 70%, ${night} 70.2%)`;
     }
   },
   laurels: {
