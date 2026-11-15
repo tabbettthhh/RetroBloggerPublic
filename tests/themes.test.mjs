@@ -854,6 +854,30 @@ await test('every day your own way: its drawings and their places, what falls, a
   await putFile('theme.md', '---\ntheme: classic\n---\n');
 });
 
+await test('a season’s own theme brings its season whatever the date: what falls, its glass everywhere, its light', async () => {
+  // (Left over from another theme: hearts would stay, but another season's snow gives way.)
+  await putFile('theme.md', '---\ntheme: autumnal\nseasons: off\nfalling: snow\nglass_style: winter\n---\n');
+  const look = (p) => p.evaluate(() => { const r = document.documentElement; return { season: r.dataset.season, falling: r.dataset.skFalling, glass: r.dataset.glassLook, light: (r.dataset.seasonLight || '').split(' ')[0], post: !!document.querySelector('.feed > .card > .glass.glass-card'), bar: !!document.querySelector('.glass.glass-bar'), fx: document.querySelectorAll('canvas.fx-layer').length }; });
+  await siteAt(async (p) => {
+    await p.waitForSelector('.feed > .card > .glass');
+    eq(await look(p), { season: 'autumn', falling: 'leaves', glass: 'autumn', light: 'autumn', post: true, bar: true, fx: 1 }, 'autumn in July');
+    eq(await p.locator('.glass').first().evaluate((g) => getComputedStyle(g).pointerEvents), 'none', 'never in the way');
+  }, { time: new Date('2026-07-01T12:00:00'), desktop: false });
+  // Summer: dandelion seeds by day, fireflies in dark mode. No glass if you say so; your own falling stays.
+  await putFile('theme.md', '---\ntheme: summery\nglass_style: off\nfalling: hearts\n---\n');
+  eq((await publicData()).theme, { theme: 'summery', falling: 'hearts', glass_style: 'off' }, 'saved');
+  await siteAt(async (p) => {
+    const l = await look(p);
+    eq([l.season, l.falling, l.glass, await p.locator('.glass').count()], ['summer', 'hearts', undefined, 0], 'summer in January, hearts kept, no glass');
+  }, { time: new Date('2026-01-10T12:00:00'), desktop: false });
+  await putFile('theme.md', '---\ntheme: summery\nscreensaver: season\n---\n');
+  eq((await publicData()).theme.screensaver, 'season', 'the season’s screensaver is kept');
+  await siteAt(async (p) => eq((await look(p)).falling, 'seeds', 'dandelion seeds'), { desktop: false });
+  // Through the year keeps to the date.
+  await putFile('theme.md', '---\ntheme: seasonal\n---\n');
+  await siteAt(async (p) => eq((await look(p)).season, 'spring', 'spring in April'), { time: new Date('2026-04-10T12:00:00'), desktop: false });
+});
+
 await test('seasonal glass over photos, thoughts and covers: with the season, or a style of its own', async () => {
   const at = (d) => new Date(Date.now() - d * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
   await putFile('thoughts/glass-thought.md', `---\ndate: ${at(1)}\ntitle: Through the glass\n---\nA thought behind frosted glass.\n`);
@@ -1208,7 +1232,7 @@ await test('the four seasons: a theme for each, with its own wallpaper and scene
   const content = await import('../src/content.js');
   const group = skins.SKIN_GROUPS.find(([name]) => name === 'The four seasons')[1];
   eq(group, ['seasonal', 'wintry', 'springtime', 'summery', 'autumnal'], 'five of them');
-  const own = { wintry: ['frost', 'winter', 'snow'], springtime: ['blossoms', 'spring', 'petals'], summery: ['seaside', 'summer', 'sunshine'], autumnal: ['harvest', 'autumn', 'leaves'] };
+  const own = { wintry: ['frost', 'winter', 'snow'], springtime: ['blossoms', 'spring', 'petals'], summery: ['seaside', 'summer', 'seeds'], autumnal: ['harvest', 'autumn', 'leaves'] };
   for (const [id, [wall, season, falling]] of Object.entries(own)) {
     const t = skins.resolveSkin({ theme: id });
     eq([t.wallpaper, t.seasons, t.falling], [wall, season, falling], `${id}: its wallpaper, its season settling on everything, and what falls`);
@@ -1221,8 +1245,9 @@ await test('the four seasons: a theme for each, with its own wallpaper and scene
   const now = skins.seasonOf(new Date());
   eq([skins.resolveSkin({ theme: 'seasonal' }).wallpaper, skins.resolveSkin({ theme: 'seasonal' }).seasons], [own[{ winter: 'wintry', spring: 'springtime', summer: 'summery', autumn: 'autumnal' }[now]][0], 'auto'], 'today’s, with the seasons on');
   eq(content.parseTheme('---\ntheme: seasonal\n---\n').theme, 'seasonal', 'the server knows it');
-  // Picked in the back office, it's on the site with its season.
-  await putFile('theme.md', '---\ntheme: classic\n---\n');
+  // Picked in the back office, it's on the site with its season (what fell with the last theme,
+  // and its seasons being off, don't come along).
+  await putFile('theme.md', '---\ntheme: classic\nfalling: hearts\nseasons: off\nglass_style: gloss\n---\n');
   const page = await adminPage();
   await openTab(page, 'Themes');
   await page.waitForSelector('.tm-gbox');

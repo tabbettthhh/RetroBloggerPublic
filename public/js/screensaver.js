@@ -9,6 +9,7 @@ import { floppySvg, LINES } from './helper.js';
 import { ABOUT } from './floppy-lines.js';
 import { startMaze } from './maze.js';
 import { startPipes } from './pipes.js';
+import { seasonOf } from './skins.js';
 
 const COVERS = { books: bookCover, films: ticket, podcasts: cassette, music: record, tv: vhs };
 
@@ -139,6 +140,33 @@ export function makeScreensaver(data) {
         document.body.append(el);
         const photos = data.posts.flatMap((p) => (p.photos || []).filter((src) => String(src).startsWith('/media/')).map((src, i) => ({ src, title: p.captions?.[i] || p.title || '' })));
         el.pipesStop = startMaze(cv, photos.sort(() => Math.random() - 0.5));
+        document.addEventListener('visibilitychange', away);
+        setTimeout(() => {
+          window.addEventListener('pointermove', stop);
+          window.addEventListener('keydown', stop);
+          window.addEventListener('pointerdown', stop);
+        }, 600);
+        return;
+      }
+      // The season's own: your photos one after another, with the season falling slowly past.
+      if (!still && pick === 'season') {
+        const season = document.documentElement.dataset.season || seasonOf(new Date(), document.documentElement.dataset.skHemisphere === 'south');
+        const photos = shuffle(data.posts.flatMap((p) => (p.photos || []).filter((src) => String(src).startsWith('/media/')))).slice(0, 24);
+        const frames = [h('div', { class: 'ss-photo' }), h('div', { class: 'ss-photo' })];
+        const fall = h('div', { class: 'ss-fall' }, Array.from({ length: phone ? 14 : 26 }, (_, i) => h('i', { style: { left: `${(i * 37 + 11) % 100}%`, '--s': `${0.6 + ((i * 7) % 10) / 12}`, animationDuration: `${11 + ((i * 5) % 9)}s`, animationDelay: `${-((i * 13) % 17)}s` } })));
+        el = h('div', { class: `screensaver ss-season ss-${season}` + (phone ? ' ss-phone' : ''), 'aria-hidden': 'true' }, frames, fall, h('span', { class: 'ss-note' }, `${data.site.name} · ${phone ? 'tap' : 'move the mouse'} to come back`));
+        document.body.append(el);
+        let n = 0;
+        const next = () => {
+          if (!photos.length) return;
+          const f = frames[n % 2];
+          f.style.backgroundImage = `url("${photos[n % photos.length]}")`;
+          f.classList.add('on');
+          frames[(n + 1) % 2].classList.remove('on');
+          n++;
+        };
+        next();
+        if (photos.length > 1) timer = setInterval(next, 9000);
         document.addEventListener('visibilitychange', away);
         setTimeout(() => {
           window.addEventListener('pointermove', stop);

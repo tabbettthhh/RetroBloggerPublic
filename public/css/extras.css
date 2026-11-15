@@ -186,6 +186,8 @@
 .nb-title { margin: 0 4px 4px; font-weight: bold; font-size: 13px; line-height: 1.3; letter-spacing: .02em; opacity: .85; }
 .nb-scroll { overflow-x: auto; overflow-y: hidden; padding: 0 0 4px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
 .nb-street { position: relative; width: max-content; min-width: 100%; box-sizing: border-box; overflow: hidden; border: 3px solid var(--nb-ink); border-radius: 16px; background: linear-gradient(#59c7ff, #bdeeff 70%); background: linear-gradient(color-mix(in srgb, var(--sk-main, #59c7ff) 28%, #59c7ff), color-mix(in srgb, var(--sk-accent, #bdeeff) 14%, #bdeeff) 70%); box-shadow: 4px 4px 0 var(--nb-ink); margin: 0 4px 4px 0; }
+/* (Summer Days: a brighter sky, with the sun's glow in its corner.) */
+:root[data-season-light~="summer"] .nb-street { background: radial-gradient(circle at 92% 0, rgba(255, 236, 150, .9), rgba(255, 236, 150, 0) 32%), linear-gradient(#2fb4ff, #c9f3ff 70%); }
 .nb.night .nb-street { background: linear-gradient(#22164f, #4b3a94 75%); }
 .nb-k { stroke: var(--nb-ink); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
 .nb-ink { fill: var(--nb-ink); }

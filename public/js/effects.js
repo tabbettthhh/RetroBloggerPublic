@@ -4,7 +4,7 @@
 // for less motion, on low-memory devices, or while the page is in the background.
 
 export const TRAILS = { none: 'None', sparkles: 'Sparkles', hearts: 'Hearts', stars: 'Stars', bubbles: 'Bubbles', rainbow: 'Rainbow', pixels: 'Pixel dust' };
-export const FALLING = { none: 'Nothing', snow: 'Snow', petals: 'Petals', hearts: 'Hearts', stars: 'Stars', leaves: 'Leaves', confetti: 'Confetti', bubbles: 'Bubbles (rising)', sunshine: 'Sunshine' };
+export const FALLING = { none: 'Nothing', snow: 'Snow', petals: 'Petals', hearts: 'Hearts', stars: 'Stars', leaves: 'Leaves', confetti: 'Confetti', bubbles: 'Bubbles (rising)', sunshine: 'Sunshine', seeds: 'Dandelion seeds (fireflies in dark mode)', fireflies: 'Fireflies' };
 
 const RAINBOW = ['#ff5f6d', '#ffb347', '#ffe66d', '#7ee081', '#4facfe', '#a974ff'];
 const PALETTES = {
@@ -14,6 +14,11 @@ const PALETTES = {
   stars: ['#ffe066', '#fff3a8', '#ffd23f'],
   leaves: ['#e8833a', '#d9622b', '#f2b134', '#b5562b', '#9c7a2d'],
   sunshine: ['#ffd36b', '#ffe9a8', '#ffc24a', '#fff4cf'],
+  seeds: ['#ffffff', '#fffdf2', '#f6f1e2'],
+  fireflies: ['#e9ff7a', '#fff27a', '#c8ff8a'],
+  twinkle: ['#ffffff', '#dff0ff', '#fff6c8'],
+  embers: ['#ffb347', '#ff7a3c', '#ffd36b'],
+  moonpetals: ['#fff0f6', '#ffe1ec', '#f3e6ff'],
   bubbles: null,
   sparkles: null,
   pixels: null,
@@ -36,12 +41,19 @@ export function stopEffects() {
 export function startEffects(t, doc = document) {
   const win = doc.defaultView;
   const want = { trail: TRAILS[t.trail] && t.trail !== 'none' ? t.trail : null, falling: FALLING[t.falling] && t.falling !== 'none' ? t.falling : null };
+  // (Dandelion seeds by day; in dark mode, fireflies. Looked at again when the page goes dark or light.)
+  const dark = doc.documentElement.dataset.theme === 'dark';
+  if (want.falling === 'seeds' && dark) want.falling = 'fireflies';
+  // A season's own theme after dark: snow that glows under twinkling stars, petals pale in the
+  // moonlight, leaves with warm sparks drifting up among them.
+  const night = (dark || !!t.night) && !!t.settles && { snow: { kind: 'twinkle', share: 0.3, glow: 'rgba(190, 220, 255, .95)' }, petals: { kind: 'twinkle', share: 0.18, glow: 'rgba(255, 215, 235, .95)' }, leaves: { kind: 'embers', share: 0.34, glow: '' } }[want.falling];
+  watchDark(t, doc);
   const calm = win.matchMedia?.('(prefers-reduced-motion: reduce)').matches || doc.documentElement.classList.contains('lite');
   const fine = win.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
   if (!fine) want.trail = null;
   // (The seasons are gentler: fewer, fainter, slower.)
   const gentle = !!t.gentle;
-  const sig = JSON.stringify([want, t.main, t.accent, gentle]);
+  const sig = JSON.stringify([want, t.main, t.accent, gentle, !!t.settles, !!night]);
   if (state?.sig === sig && state.doc === doc) return;
   stopEffects();
   if (calm || (!want.trail && !want.falling)) return;
@@ -53,7 +65,7 @@ export function startEffects(t, doc = document) {
   const g = canvas.getContext('2d');
   if (!g) return canvas.remove();
   const theme = [t.main, t.accent, '#ffffff', mixHex(t.main, '#ffffff', 0.5), mixHex(t.accent, '#ffffff', 0.4)];
-  const S = (state = { sig, doc, canvas, raf: 0, off: [], bits: [], falling: [], want, theme, gentle, w: 0, h: 0, ratio: 1, last: 0 });
+  const S = (state = { sig, doc, canvas, raf: 0, off: [], bits: [], falling: [], want, theme, gentle, w: 0, h: 0, ratio: 1, last: 0, settle: t.settles && ['snow', 'leaves', 'petals'].includes(want.falling) ? want.falling : '', pile: null, landed: [], floor: 0, blown: 0, night: night || null });
   // Sunshine: a soft warm light from the top corner, and specks of light drifting in it.
   if (want.falling === 'sunshine') canvas.style.background = `radial-gradient(circle at 96% 0%, rgba(255, 214, 120, ${gentle ? 0.16 : 0.24}), rgba(255, 214, 120, 0) ${gentle ? 34 : 42}%)`;
 
@@ -63,6 +75,9 @@ export function startEffects(t, doc = document) {
     S.h = win.innerHeight;
     canvas.width = S.w * S.ratio;
     canvas.height = S.h * S.ratio;
+    findFloor(S);
+    if (S.settle === 'snow') S.pile = new Float32Array(Math.ceil(S.w / COL) + 1);
+    S.landed.length = 0;
     if (!want.falling) return;
     // Fewer on small screens, never a blizzard.
     const count = Math.round(Math.min(42, Math.max(14, (S.w * S.h) / 30000)) * (S.gentle ? 0.5 : 1));
@@ -90,6 +105,12 @@ export function startEffects(t, doc = document) {
     win.addEventListener('pointermove', onMove, { passive: true });
     S.off.push(() => win.removeEventListener('pointermove', onMove));
   }
+  // What has settled is gone when the page is scrolled (snow shaken off, leaves blown away).
+  if (S.settle) {
+    const onScroll = () => (S.blown = performance.now());
+    win.addEventListener('scroll', onScroll, { passive: true, capture: true });
+    S.off.push(() => win.removeEventListener('scroll', onScroll, { capture: true }));
+  }
   // Paused while the page is in the background (another tab, the phone locked), and started again
   // when it's back. (It used to stay paused: the loop thought it was still running.)
   const onVis = () => {
@@ -108,6 +129,7 @@ export function startEffects(t, doc = document) {
   });
   // A safety net: if frames ever stop coming while things should be falling, start again.
   const watchdog = win.setInterval(() => {
+    if (S.settle) findFloor(S);
     if (!doc.hidden && S.want.falling && performance.now() - S.last > 1500) {
       running = false;
       wake();
@@ -133,9 +155,14 @@ export function startEffects(t, doc = document) {
     if (S.want.falling) {
       for (const f of S.falling) {
         stepFaller(S, f, dt, now);
-        const a = S.want.falling === 'sunshine' ? f.alpha * (0.45 + 0.55 * Math.abs(Math.sin(now / 900 + f.phase))) : f.alpha;
-        draw(g, S.want.falling, f.x, f.y, f.r, f.rot, f.colour, a, f.flip);
+        const kind = f.kind;
+        g.shadowColor = S.night?.glow && kind === S.want.falling ? S.night.glow : 'transparent';
+        g.shadowBlur = S.night?.glow && kind === S.want.falling ? 7 : 0;
+        const a = kind === 'sunshine' ? f.alpha * (0.45 + 0.55 * Math.abs(Math.sin(now / 900 + f.phase))) : kind === 'fireflies' || kind === 'twinkle' ? f.alpha * Math.max(0, Math.sin(now / (kind === 'twinkle' ? 1300 : 700) + f.phase * 3)) ** 2 : kind === 'embers' ? f.alpha * (0.5 + 0.5 * Math.abs(Math.sin(now / 300 + f.phase))) : f.alpha;
+        draw(g, kind, f.x, f.y, f.r, kind === 'seeds' ? Math.sin(now / 1100 + f.phase) * 0.35 : f.rot, f.colour, a, f.flip);
       }
+      g.shadowBlur = 0;
+      if (S.settle) drawSettled(g, S, dt, now);
     }
     for (let i = S.bits.length - 1; i >= 0; i--) {
       const b = S.bits[i];
@@ -171,30 +198,111 @@ function colourFor(S, kind) {
   if (kind === 'bubbles') return pick([S.theme[0], S.theme[1], S.theme[3]]);
   return pick(PALETTES[kind] || ['#ffffff']);
 }
+// ---------- what settles ----------
+// With a season's own theme, snow builds up gently along the foot of the screen (on top of the
+// taskbar), and leaves or petals gather in its bottom corners. It thaws or blows away after a
+// while, and at once when the page is scrolled.
+const COL = 6;
+function findFloor(S) {
+  const r = S.doc.querySelector('.taskbar')?.getBoundingClientRect();
+  // (On the taskbar, when it's along the foot of the screen and nothing is over it.)
+  S.floor = r && !S.doc.querySelector('.screensaver') && r.height < 120 && r.bottom >= S.h - 2 && r.top > S.h / 2 ? r.top : S.h;
+}
+// Has this one landed? (Then it stays where it fell, and a new one sets off from the top.)
+function lands(S, f) {
+  if (S.settle === 'snow') {
+    const i = Math.max(0, Math.min(S.pile.length - 1, Math.round(f.x / COL)));
+    if (f.y < S.floor - S.pile[i]) return false;
+    const add = f.r * 0.9;
+    for (let k = -3; k <= 3; k++) if (S.pile[i + k] != null) S.pile[i + k] = Math.min(12, S.pile[i + k] + add * (1 - Math.abs(k) / 4));
+    return true;
+  }
+  if (f.y < S.floor - 4) return false;
+  const edge = Math.min(f.x, S.w - f.x) / S.w;
+  if (edge < 0.24 && S.landed.length < 34 && Math.random() > edge * 3) S.landed.push({ x: f.x, y: S.floor - 2 - Math.random() * 9 * (1 - edge * 4), r: f.r, rot: f.rot, colour: f.colour, born: performance.now(), a: 0.9 });
+  return true;
+}
+function drawSettled(g, S, dt, now) {
+  const blown = now - S.blown < 900;
+  if (S.settle === 'snow') {
+    const keep = blown ? 0.9 ** dt : 0.99985 ** dt;
+    let any = false;
+    g.beginPath();
+    g.moveTo(0, S.floor + 1);
+    for (let i = 0; i < S.pile.length; i++) {
+      S.pile[i] *= keep;
+      if (S.pile[i] > 0.4) any = true;
+      g.lineTo(i * COL, S.floor + 1 - S.pile[i]);
+    }
+    g.lineTo(S.w, S.floor + 1);
+    g.closePath();
+    if (!any) return;
+    g.fillStyle = 'rgba(255, 255, 255, .95)';
+    g.fill();
+    g.strokeStyle = 'rgba(150, 180, 220, .5)';
+    g.lineWidth = 1;
+    g.stroke();
+    return;
+  }
+  for (let i = S.landed.length - 1; i >= 0; i--) {
+    const b = S.landed[i];
+    if (blown) {
+      b.x += (b.x < S.w / 2 ? -3 : 3) * dt;
+      b.y -= 0.6 * dt;
+      b.rot += 0.2 * dt;
+      b.a -= 0.05 * dt;
+    } else if (now - b.born > 45000) b.a -= 0.01 * dt;
+    if (b.a <= 0) S.landed.splice(i, 1);
+    else draw(g, S.settle, b.x, b.y, b.r, b.rot, b.colour, b.a, 0.55);
+  }
+}
+
+// Dark or light: seeds become fireflies, and back again.
+let darkWatch = null;
+function watchDark(t, doc) {
+  if ((t.falling !== 'seeds' && !t.settles) || typeof MutationObserver !== 'function') {
+    darkWatch?.obs.disconnect();
+    darkWatch = null;
+    return;
+  }
+  if (darkWatch) darkWatch.t = t;
+  else {
+    const w = (darkWatch = { t, obs: new MutationObserver(() => startEffects(w.t, doc)) });
+    w.obs.observe(doc.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  }
+}
+
 function newFaller(S, anywhere) {
-  const kind = S.want.falling;
-  const rising = kind === 'bubbles' || kind === 'sunshine';
-  const big = { snow: [2, 4.5], petals: [5, 8], hearts: [5, 9], stars: [4, 8], leaves: [6, 10], confetti: [3, 6], bubbles: [4, 11], sunshine: [1.2, 2.8] }[kind] || [3, 6];
-  const calm = (S.gentle ? 0.7 : 1) * (kind === 'sunshine' ? 0.35 : 1);
+  // (After dark, some of them are the night's own: stars that twinkle where they are, or sparks.)
+  const kind = S.night && Math.random() < S.night.share ? S.night.kind : S.want.falling;
+  const rising = kind === 'bubbles' || kind === 'sunshine' || kind === 'embers';
+  const big = { snow: [2, 4.5], petals: [5, 8], hearts: [5, 9], stars: [4, 8], leaves: [6, 10], confetti: [3, 6], bubbles: [4, 11], sunshine: [1.2, 2.8], seeds: [4, 6.5], fireflies: [1.4, 2.6], twinkle: [3, 6.5], embers: [1.2, 2.4] }[kind] || [3, 6];
+  const calm = (S.gentle ? 0.7 : 1) * (kind === 'sunshine' ? 0.35 : kind === 'seeds' ? 0.45 : kind === 'fireflies' ? 0.3 : kind === 'twinkle' ? 0 : kind === 'embers' ? 0.5 : 1);
+  const wander = kind === 'fireflies';
   return {
+    kind,
     x: Math.random() * S.w,
-    y: anywhere ? Math.random() * S.h : rising ? S.h + 20 : -20,
+    y: anywhere || wander || kind === 'twinkle' ? Math.random() * S.h : rising ? S.h + 20 : -20,
     r: big[0] + Math.random() * (big[1] - big[0]),
-    speed: (rising ? -1 : 1) * (0.35 + Math.random() * 0.6) * (kind === 'snow' ? 0.8 : 1) * calm,
-    sway: 0.4 + Math.random() * 1.2,
+    speed: (rising || (wander && Math.random() < 0.5) ? -1 : 1) * (0.35 + Math.random() * 0.6) * (kind === 'snow' ? 0.8 : 1) * calm,
+    sway: (0.4 + Math.random() * 1.2) * (kind === 'seeds' ? 2.2 : wander ? 3 : kind === 'twinkle' ? 0 : 1),
+    // (Seeds are carried sideways on the breeze.)
+    drift: kind === 'seeds' ? 0.25 + Math.random() * 0.35 : 0,
     phase: Math.random() * Math.PI * 2,
     rot: Math.random() * Math.PI * 2,
     spin: (Math.random() - 0.5) * 0.04,
-    colour: colourFor(S, kind),
-    alpha: (kind === 'snow' ? 0.65 + Math.random() * 0.3 : kind === 'bubbles' ? 0.55 : kind === 'sunshine' ? 0.5 + Math.random() * 0.4 : 0.8) * (S.gentle ? 0.75 : 1),
+    colour: colourFor(S, S.night && kind === 'petals' ? 'moonpetals' : kind),
+    alpha: (kind === 'snow' ? 0.65 + Math.random() * 0.3 : kind === 'bubbles' ? 0.55 : kind === 'sunshine' ? 0.5 + Math.random() * 0.4 : wander || kind === 'twinkle' || kind === 'embers' ? 0.95 : 0.8) * (S.gentle ? 0.75 : 1),
     flip: 1
   };
 }
 function stepFaller(S, f, dt, now) {
   f.y += f.speed * dt;
-  f.x += Math.sin(now / 1400 + f.phase) * 0.35 * f.sway * dt;
+  f.x += (Math.sin(now / 1400 + f.phase) * 0.35 * f.sway + (f.drift || 0)) * dt;
+  if (f.kind === 'fireflies') f.y += Math.cos(now / 1900 + f.phase * 2) * 0.3 * dt;
   f.rot += f.spin * dt;
-  f.flip = S.want.falling === 'confetti' || S.want.falling === 'petals' || S.want.falling === 'leaves' ? Math.cos(now / 500 + f.phase) : 1;
+  f.flip = f.kind === 'confetti' || f.kind === 'petals' || f.kind === 'leaves' ? Math.cos(now / 500 + f.phase) : 1;
+  if (S.settle && f.kind === S.settle && f.y > S.floor - 14 && lands(S, f)) return Object.assign(f, newFaller(S, false));
   if (f.y > S.h + 24 || f.y < -30 || f.x < -30 || f.x > S.w + 30) Object.assign(f, newFaller(S, false));
 }
 function newBit(S, x, y) {
@@ -259,7 +367,8 @@ function draw(g, kind, x, y, r, rot, colour, alpha, flip) {
       break;
     case 'stars':
     case 'sparkles':
-      if (kind === 'sparkles') {
+    case 'twinkle':
+      if (kind !== 'stars') {
         g.beginPath();
         for (let i = 0; i < 4; i++) {
           g.rotate(Math.PI / 2);
@@ -279,6 +388,33 @@ function draw(g, kind, x, y, r, rot, colour, alpha, flip) {
         g.fill();
       }
       break;
+    case 'seeds':
+      // A dandelion seed: a fluffy parasol, a fine stalk, the seed hanging under it.
+      g.lineWidth = 0.8;
+      g.lineCap = 'round';
+      g.strokeStyle = 'rgba(120, 105, 80, .6)';
+      g.beginPath();
+      g.moveTo(0, 0);
+      g.lineTo(0, r * 1.5);
+      g.stroke();
+      g.strokeStyle = colour;
+      g.shadowColor = 'rgba(110, 95, 70, .7)';
+      g.shadowBlur = 1.5;
+      g.beginPath();
+      for (let i = 0; i < 9; i++) {
+        const a = Math.PI + (i * Math.PI) / 8;
+        g.moveTo(0, 0);
+        g.lineTo(Math.cos(a) * r, Math.sin(a) * r * 0.8);
+      }
+      g.stroke();
+      g.shadowBlur = 0;
+      g.fillStyle = '#8a6a3c';
+      g.beginPath();
+      g.ellipse(0, r * 1.6, 0.9, 1.7, 0, 0, Math.PI * 2);
+      g.fill();
+      break;
+    case 'fireflies':
+    case 'embers':
     case 'sunshine':
       g.shadowColor = colour;
       g.shadowBlur = r * 4;

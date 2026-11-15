@@ -71,10 +71,15 @@ const REF = { main: '#0054e3', accent: '#3a9a3a', paper: '#ece9d8' };
 const SEASON_SKINS = {
   wintry: { name: 'Winter Frost', vibe: 'Snowy hills, icy blues and a warm mug of cocoa', main: '#3f74b0', accent: '#d94a5c', paper: '#f1f7fc', leather: '#2f4466', wallpaper: 'frost', decoration: 'snowflake', pointer: 'mitten', font: 'rounded', title_font: 'elegant', name_style: 'glitter', falling: 'snow', card_style: 'letter', seasons: 'winter' },
   springtime: { name: 'Spring Bloom', vibe: 'Blossom, tulips and the first warm day', main: '#d9658c', accent: '#6fae4b', paper: '#fff8f6', leather: '#7a9a55', wallpaper: 'blossoms', decoration: 'blossom', pointer: 'tulip', font: 'rounded', title_font: 'handwritten', falling: 'petals', trail: 'sparkles', card_style: 'scrapbook', seasons: 'spring' },
-  summery: { name: 'Summer Days', vibe: 'Sun, sea, sand and an ice lolly', main: '#f07a2a', accent: '#1aa3c2', paper: '#fffaeb', leather: '#1f6f87', wallpaper: 'seaside', decoration: 'sun', pointer: 'icelolly', title_font: 'bubbly', name_style: 'rainbow', falling: 'sunshine', card_style: 'polaroid', seasons: 'summer' },
+  summery: { name: 'Summer Days', vibe: 'Sun, sea, sand and an ice lolly', main: '#f07a2a', accent: '#1aa3c2', paper: '#fffaeb', leather: '#1f6f87', wallpaper: 'seaside', decoration: 'sun', pointer: 'icelolly', title_font: 'bubbly', name_style: 'rainbow', falling: 'seeds', card_style: 'polaroid', seasons: 'summer' },
   autumnal: { name: 'Autumn Leaves', vibe: 'Falling leaves, conkers and cosy jumpers', main: '#b4521f', accent: '#d99a1c', paper: '#fcf3e6', leather: '#5b3418', wallpaper: 'harvest', decoration: 'maple', pointer: 'acorn', title_font: 'typewriter', falling: 'leaves', card_style: 'notebook', seasons: 'autumn' }
 };
 const SEASON_OF_SKIN = { winter: 'wintry', spring: 'springtime', summer: 'summery', autumn: 'autumnal' };
+// A season's own theme (or Through the year) brings the whole season with it, whatever the date:
+// what falls, the glass, the light, the street and the village.
+export const isSeasonSkin = (id) => id === 'seasonal' || !!SEASON_SKINS[id];
+// (What falls with each season: on a season's theme, one of these left over from another is its own.)
+const SEASON_FALLS = ['season', 'snow', 'petals', 'leaves', 'sunshine', 'seeds', 'fireflies'];
 // Through the year: the season's own theme for today (south of the equator, the other way round).
 export function seasonalSkin(south = false, date = new Date()) {
   const now = SEASON_SKINS[SEASON_OF_SKIN[seasonOf(date, south)]];
@@ -675,8 +680,8 @@ function decorate(doc) {
 }
 // ---------- seasonal glass ----------
 // An optional extra for the seasons and festive days: a pane of glass over photos and the apps'
-// covers, in the season's mood (frost in winter, petals and a soft bloom in spring, a sun flare in
-// summer, raindrops and a fallen leaf in autumn, sparkles on festive days). Each place gets a
+// covers, in the season's mood (snowflakes and a snowman in winter, a branch of blossom in spring, a smiling sun in
+// summer, leaves and beads of rain in autumn, sparkles on festive days). Each place gets a
 // version that suits it: the whole pane over a photo or a cover, only the corners on a thought
 // (so the words stay clear), and the corners of a page or the map.
 export const GLASS_PLACES = {
@@ -691,7 +696,10 @@ export const GLASS_PLACES = {
   films: { name: 'Cinema', kind: 'item', sel: ['.ticket'] },
   podcasts: { name: 'Podcasts', kind: 'item', sel: ['.cassette'] },
   music: { name: 'Record crate', kind: 'item', sel: ['.record', '.vinyl-single'] },
-  tv: { name: 'TV', kind: 'item', sel: ['.vhs'] }
+  tv: { name: 'TV', kind: 'item', sel: ['.vhs'] },
+  posts: { name: 'Posts', kind: 'card', sel: ['.feed > .card'] },
+  windows: { name: 'Windows', kind: 'corner', sel: ['.dw'] },
+  bars: { name: 'Title bars and the taskbar', kind: 'bar', sel: ['.xp-title', '.wbar', '.taskbar', '.phone :is(.al-bar, .shelf-bar, .marquee, .deck-bar, .hifi-bar, .tv-bar, .droid-bar, .menubar, .leather-head)'] }
 };
 let glassState = null;
 function decorateGlass(doc) {
@@ -707,6 +715,8 @@ function decorateGlass(doc) {
       g.dataset.sig = st.sig;
       g.setAttribute('aria-hidden', 'true');
       el.classList.add('has-glass');
+      // (Over a window, the pane starts under its title bar, clear of the buttons.)
+      if (place === 'windows') g.style.top = `${el.querySelector(':scope > .wbar')?.offsetHeight || 0}px`;
       el.append(g);
     });
   }
@@ -754,7 +764,7 @@ export const OPTIONS = {
   falling: { name: 'Falling over the page', choices: { season: 'With the season or festive day', ...Object.fromEntries(Object.entries(FALLING).map(([k, v]) => [k, k === 'none' ? 'Nothing at all' : v])) } },
   seasons: { name: 'Seasons & festive days', choices: { off: 'Off', auto: 'Automatic, by the date', winter: 'Winter', spring: 'Spring', summer: 'Summer', autumn: 'Autumn', lunar_new_year: 'Lunar New Year', hanami: 'Cherry blossom', childrens_day: 'Children’s Day', dragon_boat: 'Dragon Boat Festival', tanabata: 'Tanabata', mid_autumn: 'Mid-Autumn Festival', nowruz: 'Nowruz', holi: 'Holi', ramadan: 'Ramadan', eid_al_fitr: 'Eid al-Fitr', eid_al_adha: 'Eid al-Adha', diwali: 'Diwali', yalda: 'Yalda Night', dia_de_reyes: 'Día de Reyes', carnival: 'Carnival', dia_de_muertos: 'Día de Muertos', st_patricks: 'St Patrick’s Day', easter: 'Easter', midsummer: 'Midsummer', bonfire_night: 'Bonfire Night', halloween: 'Halloween', hanukkah: 'Hanukkah', christmas: 'Christmas', ...Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`my_${i + 1}`, `My day ${i + 1}`])) } },
   hemisphere: { name: 'Where the seasons are', choices: { north: 'North of the equator', south: 'South of the equator' } },
-  glass_style: { name: 'Glass', choices: { season: 'With the season or festive day', winter: 'Frost', spring: 'Petals and bloom', summer: 'Sun flare', autumn: 'Raindrops and a leaf', festive: 'Sparkles', gloss: 'Plain glass' } },
+  glass_style: { name: 'Glass', choices: { season: 'With the season or festive day', winter: 'Snowflakes and a snowman', spring: 'A branch of blossom', summer: 'A smiling sun and daisies', autumn: 'Leaves, an acorn and rain', festive: 'Sparkles', gloss: 'Plain glass', off: 'No glass' } },
   glass_strength: { name: 'How strong', choices: { medium: 'Medium', soft: 'Soft', strong: 'Strong' } },
   // How each post's card is dressed (a post can have its own: `card:` in its file), a ribbon of the
 // day for posts written on a festive day, and a mark in the corner.
@@ -772,7 +782,7 @@ export const OPTIONS = {
   machine: { name: 'Computer (on a big screen)', choices: { none: 'None: the site fills the screen', beige: 'Beige box: a cream monitor and stereo speakers', breadbin: 'Breadbin: round speakers and a rainbow stripe', bluedesk: 'Blue desk: a slim black monitor', glass: 'Aurora glass: glass windows and gadgets', superbar: 'Superbar: blue glass and big buttons', tiles: 'Start tiles: flat colour tiles', terminal: 'Tiling terminal: panes and a prompt', teletext: 'Teletext telly: a wood-cabinet TV', hifi: 'Hi-fi stack: speakers, meters and a volume knob', browser: 'Old browser: a marquee and a webring' } },
   // The screensaver: things from the site drifting by with pipes behind, a walk through a maze
   // hung with your photos, or each in turn (see screensaver.js and maze.js).
-  screensaver: { name: 'Screensaver', choices: { drift: 'Drifting: bits of the site, with pipes behind', maze: 'The maze: a walk past your photos', turns: 'Taking turns' } },
+  screensaver: { name: 'Screensaver', choices: { drift: 'Drifting: bits of the site, with pipes behind', maze: 'The maze: a walk past your photos', season: 'The season: snow, blossom, seeds or leaves over your photos', turns: 'Taking turns' } },
   handset: { name: 'Phone (on a phone)', choices: { none: 'None: the site fills the phone', flip: 'Flip phone: opens with a flip, five little lights', handheld: 'Handheld: four shades of green and a direction pad' } }
 };
 
@@ -1410,6 +1420,15 @@ export function resolveSkin(settings = {}) {
   t.bar_decor = cleanBarDecor(settings.bar_decor);
   t.floppy = cleanFloppy(settings.floppy, (x) => (CHARMS[x] && !['none', 'plain'].includes(x) ? x : emojiList(x, 1)[0] || ''));
   Object.assign(t, resolveOptions(settings, base));
+  // A season's theme: its own season, what falls with it, and its glass everywhere (unless you've
+  // ticked places of your own, or chosen No glass).
+  if (isSeasonSkin(settings.theme)) {
+    t.season_theme = base.seasons;
+    if (SEASON_FALLS.includes(t.falling)) t.falling = base.falling;
+    if (SEASONS[t.glass_style]) t.glass_style = 'season';
+    if (!t.glass.length) t.glass = Object.keys(GLASS_PLACES);
+    t.settles = true;
+  }
   // Post cards of your own, and one of them for every post if you've chosen it.
   t.cards = cleanCards(settings.cards, Object.keys(OPTIONS.title_font.choices));
   if (OWN_CARD.test(String(settings.card_style)) && t.cards.some((c) => c.id === settings.card_style)) t.card_style = settings.card_style;
@@ -1638,6 +1657,8 @@ export function applySkin(settings, doc = document) {
     festival = festivalOn(now, t.festivals, t.my_days, t.festival_dates);
   } else if (SEASONS[t.seasons]) season = t.seasons;
   else if (lookOf(t.seasons, t)) festival = t.seasons;
+  // (A season's own theme is always in its season; Through the year keeps to the date.)
+  if (t.season_theme && !SEASONS[preview]) season = SEASONS[t.season_theme] ? t.season_theme : seasonOf(now, south);
   const look = festival ? lookOf(festival, t) : season ? lookOf(season, t) : null;
   let extras = [];
   if (look) {
@@ -1659,6 +1680,11 @@ export function applySkin(settings, doc = document) {
   t.today = { season: festival ? season : floppySeason, festival, charm: extras[0]?.what || lookOf(floppySeason, t).charms[0] };
   if (season) root.dataset.season = season;
   else delete root.dataset.season;
+  // A season's own theme has its own light: cool and low in winter (dusk comes early), soft and
+  // fresh in spring, a long golden evening in summer, amber in autumn.
+  const hour = now.getHours() + now.getMinutes() / 60;
+  if (t.season_theme && season) root.dataset.seasonLight = season + ((season === 'winter' && hour >= 15.5 && hour < 19) || (season === 'summer' && hour >= 18 && hour < 21.5) || (season === 'autumn' && hour >= 16.5 && hour < 19) ? ' eve' : '');
+  else delete root.dataset.seasonLight;
   // Where the season settles: everywhere, unless you've chosen.
   const settleFrom = festival ? look : season ? lookOf(season, t) : null;
   root.dataset.settle = settleFrom?.settle ? settleFrom.settle.join(' ') : Object.keys(SCENERY_PLACES).join(' ');
@@ -1715,7 +1741,7 @@ export function applySkin(settings, doc = document) {
   stickerState = all.length ? { t: { ...t, stickers: all }, sig: JSON.stringify(all) + t.main + t.accent } : null;
   // The glass takes the season's mood, or a festive one (a quiet festive day keeps the season's);
   // or a style of its own, whatever the date.
-  const glassLook = t.glass_style !== 'season' ? t.glass_style : festival && !(look?.quiet) ? 'festive' : season || '';
+  const glassLook = t.glass_style === 'off' ? '' : t.glass_style !== 'season' ? t.glass_style : festival && !(look?.quiet) && !t.season_theme ? 'festive' : season || '';
   glassState = glassLook && t.glass.length ? { places: t.glass, sig: glassLook + t.glass.join() } : null;
   if (glassState) root.dataset.glassLook = glassLook;
   else delete root.dataset.glassLook;

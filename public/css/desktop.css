@@ -215,6 +215,23 @@
 .screensaver .ss-note { z-index: 2; }
 /* The maze: drawn small and stretched to fill the screen, a little blocky on purpose. */
 .ss-maze { background: #0b0d1a; }
+/* The season's screensaver: your photos, one fading into the next, and the season falling past. */
+.ss-season { background: linear-gradient(#1d2b4f, #6f8fc0); }
+.ss-season.ss-spring { background: linear-gradient(#ffd6e4, #bfe8c8); }
+.ss-season.ss-summer { background: linear-gradient(#2fb4ff, #ffe9a8); }
+.ss-season.ss-autumn { background: linear-gradient(#5b3418, #d99a1c); }
+.ss-photo { position: absolute; inset: 0; background: center / cover no-repeat; opacity: 0; transition: opacity 2.5s ease; animation: ss-zoom 18s ease-in-out infinite alternate; }
+.ss-photo.on { opacity: 1; }
+@keyframes ss-zoom { from { transform: scale(1); } to { transform: scale(1.08); } }
+.ss-fall { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.ss-fall i { position: absolute; top: -24px; width: 9px; height: 9px; border-radius: 50%; background: #fff; box-shadow: 0 0 4px rgba(120, 150, 200, .6); scale: var(--s, 1); animation: ss-fall 14s linear infinite; }
+.ss-spring .ss-fall i { width: 13px; height: 8px; border-radius: 50%; background: #ffc4d6; box-shadow: 0 0 2px rgba(200, 90, 130, .5); }
+.ss-summer .ss-fall i { width: 7px; height: 7px; background: radial-gradient(circle, #fff 0 30%, rgba(255, 255, 255, .5) 34% 60%, rgba(255, 255, 255, 0) 70%); box-shadow: none; scale: calc(var(--s, 1) * 2); animation-name: ss-float; }
+.ss-autumn .ss-fall i { width: 15px; height: 15px; border-radius: 0 70% 0 70%; background: #e8833a; box-shadow: inset -2px -2px 0 rgba(120, 50, 10, .35); }
+.ss-autumn .ss-fall i:nth-child(3n) { background: #f2b134; }
+.ss-autumn .ss-fall i:nth-child(3n + 1) { background: #c8472b; }
+@keyframes ss-fall { from { transform: translate(0, 0) rotate(0); } to { transform: translate(60px, calc(100vh + 40px)) rotate(400deg); } }
+@keyframes ss-float { from { transform: translate(-10vw, 20vh); } 50% { transform: translate(30vw, 60vh); } to { transform: translate(70vw, calc(100vh + 40px)); } }
 .ss-maze-canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
 /* Keep the pipes in the background: softer overall, and a dark glow behind each floating
    thing and behind Floppy so they read clearly on top. */

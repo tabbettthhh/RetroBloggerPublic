@@ -6,7 +6,7 @@
 import { h } from '/js/util.js';
 import { CARD_STYLES, miniCard, mixMini, isOwnCard, ensureOwnCardsCss } from '/js/card-dress.js';
 import { CARD_PARTS, CARD_COLOURS, MAX_CARDS, cleanCards, nextCardId, MIX, MAX_SEED, cleanMix, cleanSeed } from '/js/card-parts.js';
-import { SKINS, SKIN_GROUPS, WALLPAPERS, CHARMS, CHARM_NAMES, resolveSkin, wallpaperCss, charmUrl, pointerSvgs, themeColour, TITLE_STOPS, inks, mix, emojiList, EMOJI_LAYOUTS, STICKER_SPOTS, STICKER_SIZES, OPTIONS, HIDEABLE, SECTIONS, DEFAULT_MENU, FONT_FAMILIES, APPS, APP_LOOKS, APP_EXTRAS, cleanApps, hexHsl, hslHex, SEASONS, FESTIVALS, FALLING_CHOICES, cleanMyDays, MAX_MY_DAYS, cleanFestivalDates, nextFestival, LABELS, LABEL_GROUPS, cleanLabels, GLASS_PLACES, SCENERY_PLACES, lookOf, cleanLooks, MAX_LOOK_CHARMS, seasonOf, BAR_APPS, BAR_DECOR, MAX_BAR_STICKERS, cleanBarDecor, isNight } from '/js/skins.js';
+import { isSeasonSkin, SKINS, SKIN_GROUPS, WALLPAPERS, CHARMS, CHARM_NAMES, resolveSkin, wallpaperCss, charmUrl, pointerSvgs, themeColour, TITLE_STOPS, inks, mix, emojiList, EMOJI_LAYOUTS, STICKER_SPOTS, STICKER_SIZES, OPTIONS, HIDEABLE, SECTIONS, DEFAULT_MENU, FONT_FAMILIES, APPS, APP_LOOKS, APP_EXTRAS, cleanApps, hexHsl, hslHex, SEASONS, FESTIVALS, FALLING_CHOICES, cleanMyDays, MAX_MY_DAYS, cleanFestivalDates, nextFestival, LABELS, LABEL_GROUPS, cleanLabels, GLASS_PLACES, SCENERY_PLACES, lookOf, cleanLooks, MAX_LOOK_CHARMS, seasonOf, BAR_APPS, BAR_DECOR, MAX_BAR_STICKERS, cleanBarDecor, isNight } from '/js/skins.js';
 import { FLOPPY_PIECES, FLOPPY_DRESS, outfitFor, dressFloppy, cleanFloppy } from '/js/floppy-look.js';
 import { FLOPPY } from '/js/helper.js';
 
@@ -275,6 +275,8 @@ function themeControls(ctx, saved, redraw, preview) {
         { type: 'button', role: 'radio', 'aria-checked': String(on), class: 'tm-card' + (on ? ' on' : ''), style: st.pointer !== 'none' ? { cursor: `${pointerSvgs(st).arrow} 3 3, pointer` } : null, onclick: () => {
           // A new theme brings all of its own parts (your stickers and emoji stay).
           draft = { ...blank(), theme: id, picture: d.picture, file: d.file, blob: d.blob, emoji: d.emoji, emoji_layout: d.emoji_layout, stickers: d.stickers, cards: d.cards, card_mix: d.card_mix, card_seed: d.card_seed, ...(d.card_style === MIX ? { card_style: MIX } : {}), hide: d.hide, menu: d.menu, sections_hidden: d.sections_hidden, apps: d.apps, festivals: d.festivals, my_days: d.my_days, festival_dates: d.festival_dates, labels: d.labels, glass: d.glass, looks: d.looks, bar_decor: d.bar_decor, floppy: d.floppy, ...Object.fromEntries(KEEP_ON_SWITCH.map((k) => [k, d[k]])) };
+          // (A season's own theme brings its season with it: what falls, and its glass everywhere.)
+          if (isSeasonSkin(id)) Object.assign(draft, { falling: '', seasons: '', glass_style: '', glass: [] });
           redraw();
         } },
         mini(st),
@@ -1235,6 +1237,7 @@ function labelControls(d, redraw) {
 // The seasons' glass: an optional extra, place by place.
 function glassControls(d, redraw, opt) {
   d.glass ||= [];
+  const own = isSeasonSkin(d.theme);
   const tick = (id) =>
     h('label', { class: 'check tm-tick' }, h('input', { type: 'checkbox', checked: d.glass.includes(id), onchange: (e) => {
       const set = new Set(d.glass);
@@ -1245,10 +1248,11 @@ function glassControls(d, redraw, opt) {
   return h(
     'div',
     { class: 'design-field wide' },
-    h('span', null, 'Seasonal glass (an extra, if you like)'),
-    h('p', { class: 'hint' }, 'A pane of glass in the season’s mood over the places you tick: frost in winter, petals and a soft bloom in spring, a sun flare in summer, raindrops and a fallen leaf in autumn, sparkles on festive days. Photos and covers get the whole pane; thoughts only the corners, so the words stay clear.'),
+    h('span', null, own ? 'Seasonal glass' : 'Seasonal glass (an extra, if you like)'),
+    own ? h('p', { class: 'hint' }, 'This theme wears its season’s glass everywhere, by itself. Tick places to keep it to those, or choose No glass.') : null,
+    h('p', { class: 'hint' }, 'A pane of glass in the season’s mood over the places you tick: snowflakes and a little snowman in winter, a branch of blossom in spring, a smiling sun and daisies in summer, leaves, an acorn and beads of rain in autumn, sparkles on festive days. Photos and covers get the whole pane; posts, thoughts and windows only the corners, and bars only the light across them, so the words stay clear.'),
     h('div', { class: 'tm-ticks' }, Object.keys(GLASS_PLACES).map(tick)),
-    d.glass.length ? [opt('glass_style'), opt('glass_strength')] : null,
+    d.glass.length || own ? [opt('glass_style'), opt('glass_strength')] : null,
     h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn small', onclick: () => { d.glass = Object.keys(GLASS_PLACES); redraw(); } }, 'Everywhere'), d.glass.length ? h('button', { type: 'button', class: 'btn small', onclick: () => { d.glass = []; redraw(); } }, 'Nowhere') : null)
   );
 }
