@@ -126,6 +126,11 @@ export function record(post, cls = '') {
   const [a, b, c] = pick(SLEEVE, post.title + '#sleeve');
   const style = { '--sa': a, '--sb': b, '--sc': c, '--lb': pick(['#e8692c', '#f2c14e', '#d9533a', '#7fbf5a', '#e8e2d2'], post.title + '#label') };
   const wanted = post.state === 'want' ? ' wanted' : '';
+  // A playlist: a home-made mix on a disc, its name written on in marker.
+  if (post.format === 'playlist') {
+    const n = post.tracks?.length || 0;
+    return h('span', { class: `mix-cd${wanted} ${cls}`, style }, h('span', { class: 'mx-disc' }, h('span', { class: 'mx-title' + sizeClass(post.title) }, post.title || 'Untitled'), n ? h('span', { class: 'mx-count' }, `${n} song${n === 1 ? '' : 's'}`) : null));
+  }
   if (post.format === 'song') {
     return h('span', { class: `vinyl-single${wanted} ${cls}`, style }, h('span', { class: 'sg-sleeve' }, h('span', { class: 'sg-title' + sizeClass(post.title) }, post.title || 'Untitled')));
   }
@@ -203,7 +208,7 @@ function when(post) {
 function creatorLine(post) {
   const w = WORDS[post.type];
   const bits = [];
-  if (post.type === 'music') bits.push(post.format === 'song' ? 'Song' : 'Album');
+  if (post.type === 'music') bits.push(post.format === 'song' ? 'Song' : post.format === 'playlist' ? `Playlist${post.tracks?.length ? ` · ${post.tracks.length} song${post.tracks.length === 1 ? '' : 's'}` : ''}` : 'Album');
   if (post.creator) bits.push(`${w.creator} ${post.creator}`);
   if (post.album) bits.push(`from ${post.album}`);
   if (post.season) bits.push(/^\d+$/.test(post.season.trim()) ? `Season ${post.season.trim()}` : post.season);
@@ -261,7 +266,7 @@ function shelfView(type, ctx) {
   }
   for (const state of ORDER) {
     // Albums first, then singles, on the record shelf.
-    const items = list.filter((p) => p.state === state).sort((x, y) => (y.pinned - x.pinned) || ((x.format === 'song') - (y.format === 'song')));
+    const items = list.filter((p) => p.state === state).sort((x, y) => (y.pinned - x.pinned) || (FORMAT_ORDER[x.format] || 0) - (FORMAT_ORDER[y.format] || 0));
     if (!items.length) continue;
     wrap.append(
       h('h2', { class: 'shelf-plaque' }, h('span', null, w[state]), h('small', null, String(items.length))),
@@ -322,6 +327,35 @@ function readingLog(post) {
 function shortDay(d) {
   const [y, m, day] = d.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, day)).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }).toUpperCase();
+}
+
+// ---------- a playlist's songs ----------
+
+// (Albums first on the record shelf, then singles, then playlists.)
+const FORMAT_ORDER = { song: 1, playlist: 2 };
+
+// The songs on a playlist, like the card in a disc's case: number, song, artist, year.
+function trackList(post) {
+  const list = post.format === 'playlist' ? post.tracks || [] : [];
+  if (!list.length) return null;
+  return h(
+    'section',
+    { class: 'mx-list', 'aria-label': 'Songs on this playlist' },
+    h('h3', { class: 'mx-head' }, h('span', null, post.title || 'Playlist'), h('span', { class: 'mx-total' }, `${list.length} song${list.length === 1 ? '' : 's'}`)),
+    h(
+      'ol',
+      { class: 'mx-tracks' },
+      list.map((t, i) =>
+        h(
+          'li',
+          { class: 'mx-track' },
+          h('span', { class: 'mx-no', 'aria-hidden': 'true' }, String(i + 1).padStart(2, '0')),
+          h('span', { class: 'mx-main' }, h('strong', { class: 'mx-song' }, t.title || 'Untitled'), t.artist ? h('span', { class: 'mx-artist' }, t.artist) : null, t.note ? h('span', { class: 'mx-note' }, t.note) : null),
+          t.year ? h('span', { class: 'mx-year' }, t.year) : null
+        )
+      )
+    )
+  );
 }
 
 // ---------- TV episode diary ----------
@@ -422,6 +456,7 @@ function detailView(type, ctx) {
     ),
     reviewKeepsakes(post),
     episodeDiary(post),
+    trackList(post),
     readingLog(post),
     // (Its comments open in a little window.)
     seriesLine(post, 'on-shelf'),

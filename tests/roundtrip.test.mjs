@@ -14,6 +14,7 @@ const AWKWARD = {
   'books/2026-08-09-gr.md': '---\ndate: 2026-08-09\ntitle: "Dune: Messiah"\nauthor: Frank Herbert\nyear: 1969\nstatus: currently-reading\nrating: 4\nrecommend: true\npages: "336"\npage: 100\nquote: "Fear is: the mind-killer"\n---\n',
   'films/2026-08-10-film.md': '---\ndate: 2026-08-10 21:00\ntitle: Heat\ndirector: Michael Mann\nyear: 1995\nstatus: watched\nrating: 5\nrewatch: true\n---\nStill great.\n',
   'music/2026-08-11-song.md': '---\ndate: 2026-08-11 21:00\ntitle: A Song\nartist: Someone & Co\nformat: single\nalbum: The Album\nstatus: on repeat\n---\n',
+  'music/2026-08-11-mix.md': '---\ndate: 2026-08-11 22:00\ntitle: A Mix\nformat: playlist\nstatus: on repeat\ntracks:\n  - title: "One: with colon"\n    artist: Someone & Co\n    year: 1999\n  - title: Two\n    artist: Other\n    year: ""\n    note: a few words\n---\nSongs.\n',
   'podcasts/2026-08-12-pod.md': '---\ndate: 2026-08-12 21:00\ntitle: The Pod\nhost: Host Name\nepisode: "Ep. 12: lighthouses"\nstatus: listening\n---\n',
   'tv/2026-08-13-tv.md': '---\ndate: 2026-08-13 21:00\ntitle: Show\ncreator: Maker\nseason: "2"\nepisode: 4\nnetwork: BBC\nstatus: watching\nepisodes:\n  - season: 2\n    ep: 1-3\n    rating: 4\n    date: 2026-08-13\n  - season: 2\n    ep: 4\n    title: "Twist: part one"\n---\n',
   'quotes/2026-08-14-quote.md': '---\ndate: 2026-08-14 09:00\nsource: "Author, Book: Subtitle"\n---\n> A quote.\n',

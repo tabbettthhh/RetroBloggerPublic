@@ -310,7 +310,7 @@ It needs a domain of your own on Cloudflare (see [Your own domain](#your-own-dom
 
 ## Books, films, TV, podcasts and music
 
-Five shelves, each in its own style: a wooden **Bookshelf**, a **Cinema** of ticket stubs, **TV** shows as video tapes in front of an old set, **Podcasts** on cassette tapes, and a **Record crate** of album sleeves and 7-inch singles. Covers are drawn by the site with the title only.
+Five shelves, each in its own style: a wooden **Bookshelf**, a **Cinema** of ticket stubs, **TV** shows as video tapes in front of an old set, **Podcasts** on cassette tapes, and a **Record crate** of album sleeves, 7-inch singles and playlists on home-made discs. Covers are drawn by the site with the title only.
 
 Signed in, tap **+** and pick **Book**, **Film**, **TV**, **Podcast** or **Music**. Each has the maker (author, director, host or artist), the year, where you are with it (for example reading, read, want to read or put down), stars, a "Recommended" stamp and a favourite quote. Reviews with words also appear in the home feed; ones without stay on the shelf.
 
@@ -328,7 +328,7 @@ quote: "Every light is a promise that someone stayed awake."
 Your review.
 ```
 
-Music also takes `format: album` or `format: song`, and `album:` for a song. Podcasts can take `episode:`. Books can take `pages:` (how long it is) and `page:` (where you're up to), shown as a progress bar on the cover and the review, and a reading log under `reading_log:` (each with `date`, `from`, `to`, and optional `chapter` and `note`); in the editor, tap **+ Log reading**. TV shows use `creator:`, and can take `season:`, `episode:` (the episode you're up to) and `network:` (where you watched it). They can also keep an episode diary, shown as an episode guide under the review; in the editor, tap **+ Log an episode** (or **+ Log a binge** for several at once), or write it by hand:
+Music also takes `format: album`, `format: song` (with `album:`) or `format: playlist`. A playlist is your own mix: add its songs one by one when you write it, each with its own artist and year (and a few words, if you like), and move them into the order you want. It sits in the crate as a home-made disc with its name in marker, and its songs show as a numbered track list under your words. By hand it's a `tracks:` list, each with `title:`, `artist:` and `year:`, or just a line like `- "Song — Artist (1999)"`. Podcasts can take `episode:`. Books can take `pages:` (how long it is) and `page:` (where you're up to), shown as a progress bar on the cover and the review, and a reading log under `reading_log:` (each with `date`, `from`, `to`, and optional `chapter` and `note`); in the editor, tap **+ Log reading**. TV shows use `creator:`, and can take `season:`, `episode:` (the episode you're up to) and `network:` (where you watched it). They can also keep an episode diary, shown as an episode guide under the review; in the editor, tap **+ Log an episode** (or **+ Log a binge** for several at once), or write it by hand:
 
 ```yaml
 episodes:
