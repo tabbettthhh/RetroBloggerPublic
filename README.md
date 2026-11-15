@@ -478,9 +478,16 @@ Under **Themes** (in your menu, or the Control Panel) you can dress the whole si
 
 **Stickers:** add up to sixteen little extras, each an emoji or one of the drawings (a bunny friend, a rainbow, twinkles, hearts and more), in places that suit them: the title bars, the bottom corners of the window, your profile picture, the corner of every post, next to the clock, or anywhere on the computer desktop (drag them into place). Pick a size and a tilt for each. They never get in the way of tapping or clicking.
 
-**Every level, like a Rockbox theme.** Under **Make it your own**, each part of the theme has its own tab:
+**Every level, like a Rockbox theme.** Under **Make it your own**, the parts of the theme are in six groups, and each group opens onto its parts:
 
-| Tab | What you can change |
+- **Look:** Colours, Wallpaper, Fonts, Bars, corners & depth, Charms & pointer
+- **Posts & profile:** Post cards, Feed, Profile header
+- **Menu & apps:** Menu, Apps, Words
+- **Computer & phone:** Computer & phone, Taskbar & scrolling, Icons & sounds, Tab icon
+- **Effects & seasons:** Effects, Seasons & festive days, After dark, Stickers, Floppy
+- **Share**
+
+| Part | What you can change |
 | --- | --- |
 | Colours | Main, accent and background colours, the journal's leather, and the highlight on menus (a solid bar, a gradient bar, a pointer, an outline, or inverted). **Colours from a picture** finds the colours in a photo you love (or your wallpaper) and offers four sets made from them; the picture never leaves your device |
 | Wallpaper | The sky, a pattern, emoji, or your own picture |
@@ -497,7 +504,7 @@ Under **Themes** (in your menu, or the Control Panel) you can dress the whole si
 | Floppy | Floppy, the site's little helper, can dress for the seasons and festive days (a bobble hat and scarf in winter, a flower crown in spring, a sun hat and sunglasses in summer, a beret and umbrella in autumn, a festive hat at Christmas, a witch's hat at Halloween, and something for every festive day, holding the day's drawing), or wear an outfit you put together: a hat, glasses, something round his neck, something to hold (any drawing or emoji), the outfit's colour and his own. A picture shows him as he'll look |
 | Words | Your own words on the buttons: rename any section (everywhere it shows: the menus, the desktop icons and the Explore menu) and the site's buttons (Explore, Others, Search, Leave, Nudge, Open in journal, Read the review, and the welcome screen's Visitor and Tap to come in). Leave a box empty to keep the usual words |
 | Seasons & festive days | Gentle touches for the time of year, in every theme (see below). Pick a season or a festive day yourself, or choose **Automatic** and your site follows the date |
-| Tab icon & after dark | The little picture on your browser tab and bookmarks (a drawing or any emoji), and another theme for after dark: from 7pm to 7am, wherever your visitor is, the site changes into that theme's colours, wallpaper, charm and pointer. Preview either in the editor |
+| Tab icon, After dark | The little picture on your browser tab and bookmarks (a drawing or any emoji); and another theme for after dark: from 7pm to 7am, wherever your visitor is, the site changes into that theme's colours, wallpaper, charm and pointer. Preview either in the editor |
 | Apps | Each app's own look (see below) |
 | Stickers | See above |
 | Share | Download your theme as a file, install a friend's theme file, or swap theme codes |

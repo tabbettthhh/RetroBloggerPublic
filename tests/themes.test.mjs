@@ -43,6 +43,14 @@ async function site(fn, { desktop = false, dark = false } = {}) {
 async function openEditor(page) {
   if (!(await page.locator('details.tm-own').evaluate((d) => d.open))) await page.locator('.tm-own > summary').click();
 }
+// A part of the theme: its group first, then the part (a group of one has no parts to choose).
+async function ownTab(page, name) {
+  await page.waitForSelector('.tm-sect');
+  const i = await page.evaluate((name) => [...document.querySelectorAll('.tm-sect')].findIndex((b) => b.dataset.tabs.split('|').some((t) => t.includes(name))), name);
+  await page.locator('.tm-sect').nth(i).click();
+  const tab = page.locator('.tm-tab', { hasText: name });
+  if (await tab.count()) await tab.first().click();
+}
 const skinCss = (page) => page.evaluate(() => document.getElementById('skin-css')?.textContent || '');
 
 await test('with no theme set, the site keeps its classic look', async () => {
@@ -101,9 +109,9 @@ await test('make it your own: colours, wallpaper, charm and pointer', async () =
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
   });
-  await page.locator('.tm-tab', { hasText: 'Wallpaper' }).click();
+  await ownTab(page, 'Wallpaper');
   await page.locator('.tm-chips[aria-label="Wallpaper"] .tm-chip', { hasText: 'Hearts' }).click();
-  await page.locator('.tm-tab', { hasText: 'Charms' }).click();
+  await ownTab(page, 'Charms');
   await page.locator('.tm-chips[aria-label="Charm on the title bars"] .tm-chip', { hasText: 'Star' }).click();
   await page.locator('.tm-chips[aria-label="Mouse pointer (on computers)"] .tm-chip', { hasText: 'Frog' }).click();
   await page.locator('button', { hasText: 'Save the theme' }).click();
@@ -155,12 +163,12 @@ await test('an emoji wallpaper and stickers, chosen in the back office', async (
   await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
-  await page.locator('.tm-tab', { hasText: 'Wallpaper' }).click();
+  await ownTab(page, 'Wallpaper');
   await page.locator('.tm-chips[aria-label="Wallpaper"] .tm-chip', { hasText: 'Emoji' }).click();
   await page.getByRole('textbox', { name: 'Emoji for the wallpaper' }).fill('🍓 x 🌸');
   await page.getByRole('textbox', { name: 'Emoji for the wallpaper' }).dispatchEvent('change');
   await page.locator('.chip-btn', { hasText: 'Big and small' }).click();
-  await page.locator('.tm-tab', { hasText: 'Stickers' }).click();
+  await ownTab(page, 'Stickers');
   await page.locator('button', { hasText: '+ Add a sticker' }).click();
   await page.getByRole('button', { name: 'Rainbow', exact: true }).click();
   await page.locator('.tm-stk-row select').first().selectOption('title');
@@ -210,7 +218,7 @@ await test('every level: fonts, feed, header, menu, taskbar, icons and sounds', 
   await page.waitForSelector('.tm-card');
   await openEditor(page);
   const pick = async (tabName, group, choice) => {
-    await page.locator('.tm-tab', { hasText: tabName }).click();
+    await ownTab(page, tabName);
     await page.locator(`.chip-row[aria-label="${group}"] .chip-btn`, { hasText: choice }).first().click();
   };
   await pick('Colours', 'Highlight', 'Pointer');
@@ -224,7 +232,7 @@ await test('every level: fonts, feed, header, menu, taskbar, icons and sounds', 
   await pick('Feed', 'Spacing', 'Compact');
   await pick('Profile header', 'Profile header', 'Card');
   await page.locator('.tm-tick', { hasText: 'Nudge button' }).locator('input').uncheck();
-  await page.locator('.tm-tab', { hasText: 'Menu' }).click();
+  await ownTab(page, 'Menu');
   await page.getByLabel('Main menu, place 2').selectOption('music');
   await page.getByLabel('Main menu, place 5').selectOption('');
   await page.locator('.tm-tick', { hasText: 'Wishlist' }).locator('input').uncheck();
@@ -278,15 +286,15 @@ await test('themes travel: a theme code and a theme file', async () => {
   await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
-  await page.locator('.tm-tab', { hasText: 'Share' }).click();
+  await ownTab(page, 'Share');
   const code = await page.getByRole('textbox', { name: 'Your theme code' }).inputValue();
   assert(code.startsWith('MYTHEME-'), code);
   await page.locator('button', { hasText: 'Back to Classic' }).click();
-  await page.locator('.tm-tab', { hasText: 'Share' }).click();
+  await ownTab(page, 'Share');
   await page.getByRole('textbox', { name: 'Paste a theme code' }).fill(code);
   await page.locator('button', { hasText: 'Try it' }).click();
   eq(await page.locator('.tm-card.on b').innerText(), 'Froggy Pond', 'the code brings the theme back');
-  await page.locator('.tm-tab', { hasText: 'Share' }).click();
+  await ownTab(page, 'Share');
   await page.locator('label', { hasText: 'Install a theme file' }).locator('input').setInputFiles({ name: 'friend-theme.md', mimeType: 'text/markdown', buffer: Buffer.from('---\ntheme: moonlit\nbars: flat\nmenu: ["home", "friends"]\n---\nA friend\'s theme.\n') });
   await page.waitForFunction(() => document.querySelector('.tm-card.on b')?.textContent === 'Moonlit');
   await page.locator('button', { hasText: 'Save the theme' }).click();
@@ -303,7 +311,7 @@ await test('each app its own look, chosen in the back office', async () => {
   await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
-  await page.locator('.tm-tab', { hasText: 'Apps' }).click();
+  await ownTab(page, 'Apps');
   const journal = page.locator('.tm-app[aria-label="Places journal"]');
   await journal.locator('.chip-btn', { hasText: 'A colour of its own' }).click();
   await page.locator('.tm-app[aria-label="Places journal"] input[type=color]').evaluate((el) => {
@@ -467,7 +475,7 @@ await test('the editor: effects, after dark, colours from a picture, surprise me
   await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
-  await page.locator('.tm-tab', { hasText: 'Effects' }).click();
+  await ownTab(page, 'Effects');
   await page.locator('.chip-row[aria-label="Your name"] .chip-btn', { hasText: 'Glitter' }).click();
   await page.locator('.chip-row[aria-label="Falling over the page"] .chip-btn', { hasText: 'Snow' }).click();
   // The preview shows it.
@@ -477,14 +485,15 @@ await test('the editor: effects, after dark, colours from a picture, surprise me
   eq(await page.locator('.chip-row[aria-label="Falling over the page"] .chip-btn[aria-pressed="true"]').innerText(), 'With the season or festive day', 'snow undone (back to the season)');
   eq(await page.locator('.chip-row[aria-label="Your name"] .chip-btn[aria-pressed="true"]').innerText(), 'Glitter', 'glitter kept');
   // Tab icon and after dark.
-  await page.locator('.tm-tab', { hasText: 'Tab icon' }).click();
+  await ownTab(page, 'Tab icon');
   await page.locator('.tm-pick[aria-label="Bunny friend"]').click();
-  await page.getByLabel('After dark', { exact: true }).selectOption('moonlit');
+  await ownTab(page, 'After dark');
+  await page.locator('select[aria-label="After dark"]').selectOption('moonlit');
   await page.waitForFunction(() => document.querySelector('.tm-frame')?.contentDocument?.documentElement.dataset.skin === 'moonlit', null, { timeout: 10000 });
   await page.locator('.chip-btn', { hasText: 'Daytime' }).click();
   await page.waitForFunction(() => document.querySelector('.tm-frame')?.contentDocument?.documentElement.dataset.skin === 'classic', null, { timeout: 10000 });
   // Colours from a picture.
-  await page.locator('.tm-tab', { hasText: 'Colours' }).click();
+  await ownTab(page, 'Colours');
   await page.locator('label', { hasText: 'Choose a picture' }).locator('input').setInputFiles('tests/fixtures/p1.jpg');
   await page.waitForSelector('.tm-set');
   eq(await page.locator('.tm-set').count(), 4, 'four colour sets');
@@ -574,7 +583,7 @@ await test('Surprise me remixes every part, optional extras too, but keeps your 
   await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
-  await page.locator('.tm-tab', { hasText: 'Share' }).click();
+  await ownTab(page, 'Share');
   // Press it many times, reading the whole theme (as it would be saved) each time.
   const seen = new Set();
   const mains = new Set();
@@ -610,7 +619,7 @@ await test('the editor: seasons and festive days, previewed', async () => {
   await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
-  await page.locator('.tm-tab', { hasText: 'Seasons' }).click();
+  await ownTab(page, 'Seasons');
   // By hand first: shown straight away in the preview.
   await page.locator('.chip-row[aria-label^="Festive day"] .chip-btn', { hasText: 'Diwali' }).click();
   await page.waitForFunction(() => document.querySelector('.tm-frame')?.contentDocument?.documentElement.dataset.festival === 'diwali', null, { timeout: 10000 });
@@ -736,7 +745,7 @@ await test('your own words on the buttons, everywhere they show', async () => {
   await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
-  await page.locator('.tm-tab', { hasText: 'Words' }).click();
+  await ownTab(page, 'Words');
   await page.getByLabel('Your words for “Thoughts”').fill('Diary');
   await page.getByLabel('Your words for “Thoughts”').press('Tab');
   await page.waitForFunction(() => [...(document.querySelector('.tm-frame')?.contentDocument?.querySelectorAll('.xp-links a') || [])].some((a) => a.textContent === 'Diary'), null, { timeout: 20000 });
@@ -925,7 +934,7 @@ await test('Floppy dresses for the seasons and festive days, or in your own outf
   await openTab(page, 'Themes');
   await page.waitForSelector('.tm-card');
   await openEditor(page);
-  await page.locator('.tm-tab', { hasText: 'Floppy' }).click();
+  await ownTab(page, 'Floppy');
   await page.locator('.chip-row[aria-label="Dress him"] .chip-btn', { hasText: 'My own outfit' }).click();
   await page.locator('.chip-row[aria-label="Hat"] .chip-btn', { hasText: 'Party hat' }).click();
   assert((await page.locator('.tm-floppy-pic').innerHTML()).includes('fl-outfit'), 'the picture shows the outfit');
@@ -1168,7 +1177,7 @@ await test('post cards: designs for every post or just one, ribbons of your own,
   await openTab(page, 'Themes');
   await page.waitForSelector('.tm-own');
   if (!(await page.locator('.tm-own').evaluate((e) => e.open))) await page.locator('.tm-own summary').click();
-  await page.locator('.tm-tab', { hasText: 'Post cards' }).click();
+  await ownTab(page, 'Post cards');
   await page.locator('.tm-tabpanel .dress-pick', { hasText: 'Scrapbook' }).click();
   await page.locator('button', { hasText: 'Save the theme' }).click();
   await page.waitForFunction(() => !document.querySelector('.tm-savebar.unsaved'));
@@ -1198,7 +1207,7 @@ await test('post cards of your own: made from parts in Themes, for every post or
   await openTab(page, 'Themes');
   await page.waitForSelector('.tm-own');
   if (!(await page.locator('.tm-own').evaluate((e) => e.open))) await page.locator('.tm-own summary').click();
-  await page.locator('.tm-tab', { hasText: 'Post cards' }).click();
+  await ownTab(page, 'Post cards');
   await page.locator('button', { hasText: '+ Make a card' }).click();
   await page.getByRole('textbox', { name: 'Name of this card' }).fill('Sunday paper');
   for (const [part, choice] of [['Paper', 'Grid'], ['Edge', 'Airmail stripes'], ['On top', 'A wax seal'], ['Heading', 'Solid colour']]) await page.getByRole('radiogroup', { name: part }).getByRole('radio', { name: choice }).click();
@@ -1368,7 +1377,7 @@ await test('the apps’ top bars: bunting and stickers for the day, and each app
   await openTab(page, 'Themes');
   await page.waitForSelector('.tm-own');
   if (!(await page.locator('.tm-own').evaluate((e) => e.open))) await page.locator('.tm-own summary').click();
-  await page.locator('.tm-tab', { hasText: 'Seasons' }).click();
+  await ownTab(page, 'Seasons');
   await page.getByRole('radiogroup', { name: 'On the Cinema bar' }).getByRole('radio', { name: 'My own' }).click();
   await page.locator('.tm-bars .tm-pick[aria-label="Snowman"]').click();
   await page.getByRole('radiogroup', { name: 'On the TV bar' }).getByRole('radio', { name: 'Nothing' }).click();
@@ -1425,7 +1434,7 @@ await test('post cards mixed at random: each post keeps its own draw, a dressed 
   await openTab(page, 'Themes');
   await page.waitForSelector('.tm-own');
   if (!(await page.locator('.tm-own').evaluate((e) => e.open))) await page.locator('.tm-own summary').click();
-  await page.locator('.tm-tab', { hasText: 'Post cards' }).click();
+  await ownTab(page, 'Post cards');
   await page.getByRole('radiogroup', { name: 'How posts wear them' }).getByRole('radio', { name: 'Mixed at random' }).click();
   const inMix = page.getByRole('group', { name: 'Designs in the mix' });
   eq(await inMix.getByRole('checkbox', { checked: true }).count(), 13, 'every design but the plain one, to start');
