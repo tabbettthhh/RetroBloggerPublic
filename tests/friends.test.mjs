@@ -233,6 +233,26 @@ await test('decorating your plot in the village: kept in village.md, and seen ro
   eq((await publicData()).buddies[0].village, undefined, 'gone once they clear it');
 });
 
+await test('a friend’s profile picture by their name: one of the site’s own, or their photo, through your own site', async () => {
+  const site2 = await (await fetch(`${BASE2}/admin/api/file?key=site.md`)).text();
+  const setPic = async (pic) => {
+    await fetch(`${BASE2}/admin/api/file?key=site.md`, { method: 'PUT', body: site2.replace('---\n', `---\npicture: ${pic}\n`) });
+    await post_(api, 'friends/refresh');
+    return (await api('overview')).friendPosts?.[0]?.friend?.picture || (await publicData()).buddies?.[0]?.picture;
+  };
+  eq(await setPic('duck'), 'duck', 'one of the site’s own, by name');
+  const put = await fetch(`${BASE2}/admin/api/upload?key=design/me.jpg`, { method: 'PUT', body: fs.readFileSync(PHOTOS[0]), headers: { 'Content-Type': 'image/jpeg' } });
+  eq(put.status, 200, 'their photo kept: ' + (await put.text()).slice(0, 200));
+  eq((await fetch(`${BASE2}/media/design/me.jpg`)).status, 200, 'on their own site');
+  const src = await setPic('design/me.jpg');
+  assert(/^\/friends-media\/[^/]+\/design\/me\.jpg$/.test(src || ''), 'their photo, through your site: ' + src);
+  const res = await fetch(BASE + src);
+  eq([res.status, res.headers.get('Content-Type')], [200, 'image/jpeg'], 'and it loads');
+  eq((await fetch(BASE + src.replace('me.jpg', 'other.jpg'))).status, 404, 'only their profile picture, nothing else of theirs');
+  await fetch(`${BASE2}/admin/api/file?key=site.md`, { method: 'PUT', body: site2 });
+  await post_(api, 'friends/refresh');
+});
+
 await test('online when you’re actually here: your friends see you online while you’ve your site open, and offline once you’ve gone', async () => {
   const say = (state) => fetch(`${BASE}/admin/api/presence`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state }) });
   const seenBy = async () => {
@@ -951,6 +971,18 @@ await test('visiting a friend’s site as their friend: what’s for friends, wi
     await tab.waitForTimeout(500);
     eq(await tab.locator('[data-post="thoughts/pals-only"]').count(), 0, 'gone once you stop');
     eq((await ctx.cookies(BASE2)).filter((c) => c.name === 'corner_friend').length, 0, 'and the cookie with it');
+    // Their name (or picture) on one of their posts: a visit as their friend too.
+    const name = p.locator('.ff-post .ff-who a, .ff-full .ff-who a').first();
+    if (await name.count()) {
+      const [tab2] = await Promise.all([ctx.waitForEvent('page'), name.click()]);
+      await tab2.waitForSelector('.visit-bar', { timeout: 20000 });
+      assert(tab2.url().startsWith(BASE2), 'their name: a visit as their friend');
+      await tab2.close();
+    }
+    if (await name.count()) {
+      // (And stopped again, as before.)
+      await ctx.clearCookies();
+    }
     assert(!p.errors.length && !tab.errors.length, [...p.errors, ...tab.errors].join('; '));
   } finally {
     await browser.close();

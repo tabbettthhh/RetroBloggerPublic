@@ -5,6 +5,7 @@
 // (Signed in, their posts are mixed into your Home too: see friendPost.)
 import { h } from './util.js';
 import { ago } from './statusbar.js';
+import { PICTURES, pictureHtml } from './pictures.js';
 import { withEmoticons } from './emoticons.js';
 import { friendHtml } from './friend-html.js';
 import { card, foldLong } from './apps.js';
@@ -24,8 +25,13 @@ const initial = (s) => (String(s || '?').trim()[0] || '?').toUpperCase();
 const safeUrl = (u) => (/^https?:\/\//i.test(String(u || '')) ? String(u) : null);
 
 // A square user picture, like the ones on the XP welcome screen.
+// Their profile picture: their photo (through your own site), one of the site's own pictures, or
+// their first letter on a colour of their own.
 function avatar(who, size = 'small') {
-  return h('span', { class: `ff-avatar ${size}`, style: { '--av': colourFor(who.url || who.name) }, 'aria-hidden': 'true' }, initial(who.owner || who.name));
+  const pic = String(who.picture || '');
+  const photo = /^\/friends-media\/[^/]+\/design\/[^/]+$/.test(pic);
+  const inner = photo ? h('img', { src: pic, alt: '', loading: 'lazy', decoding: 'async' }) : PICTURES[pic] ? h('span', { class: 'ff-avatar-pic', html: pictureHtml(pic) }) : initial(who.owner || who.name);
+  return h('span', { class: `ff-avatar ${size}` + (photo || PICTURES[pic] ? ' has-pic' : ''), style: { '--av': colourFor(who.url || who.name) }, 'aria-hidden': 'true' }, inner);
 }
 
 // The street dresses for the season or festive day, as the rest of the site does (and not at
@@ -490,6 +496,20 @@ function photos(list, title) {
   return h('div', { class: 'ff-media' }, strip, dots, h('span', { class: 'ff-count' }, `1/${list.length}`));
 }
 
+// Signed in, a link to a friend's site (their name on a post, "See it on their site", a link in
+// their post) visits them as their friend, with a pass, like their house on the street does.
+// Visitors just follow the link.
+let pals = [];
+function asFriend(a, who) {
+  a.addEventListener('click', (e) => {
+    const key = who.key || pals.find((b) => b.url === who.url)?.key;
+    if (!ownerHooks.visitFriend || !key) return;
+    e.preventDefault();
+    ownerHooks.visitFriend(key, a.href);
+  });
+  return a;
+}
+
 // Which friend's post a card is, for the owner's tools (commenting on it from here).
 function markFriendPost(el, p) {
   const who = p.friend || {};
@@ -514,8 +534,8 @@ function postCard(p) {
     h(
       'header',
       { class: 'ff-head' },
-      avatar(who),
-      h('span', { class: 'ff-who' }, site ? h('a', { href: site, target: '_blank', rel: 'noopener noreferrer' }, h('b', null, who.name)) : h('b', null, who.name), h('small', null, `${emoji} ${word} · ${ago(p.ts)}`))
+      site ? asFriend(h('a', { class: 'ff-avatar-link', href: site, target: '_blank', rel: 'noopener noreferrer', tabindex: '-1', 'aria-hidden': 'true' }, avatar(who)), who) : avatar(who),
+      h('span', { class: 'ff-who' }, site ? asFriend(h('a', { href: site, target: '_blank', rel: 'noopener noreferrer' }, h('b', null, who.name)), who) : h('b', null, who.name), h('small', null, `${emoji} ${word} · ${ago(p.ts)}`))
     ),
     photos(p.photos, p.title),
     h(
@@ -525,7 +545,7 @@ function postCard(p) {
       meta || p.rating != null ? h('div', { class: 'ff-meta' }, meta, p.rating != null ? h('span', { class: 'ff-stars', 'aria-label': `Rated ${p.rating} out of 5` }, (meta ? ' · ' : '') + '★'.repeat(Math.max(0, Math.min(5, Math.round(p.rating))))) : null) : null,
       text,
       // (Not for a friends-only post: on their site it's only for friends visiting with a pass.)
-      link && !p.friends_only ? h('a', { class: 'ff-open', href: link, target: '_blank', rel: 'noopener noreferrer' }, `See it on ${who.owner || who.name}’s site ↗`) : null
+      link && !p.friends_only ? asFriend(h('a', { class: 'ff-open', href: link, target: '_blank', rel: 'noopener noreferrer' }, `See it on ${who.owner || who.name}’s site ↗`), who) : null
     )
   );
   // Long posts fold to a few lines, with "more" to read the rest.
@@ -555,7 +575,7 @@ function friendCard(p) {
   if (!el) return postCard(p);
   for (const a of el.querySelectorAll('a[href]')) {
     const href = a.getAttribute('href') || '';
-    if (href.startsWith('#/') && site) Object.assign(a, { href: site + '/' + href, target: '_blank', rel: 'noopener noreferrer' });
+    if (href.startsWith('#/') && site) asFriend(Object.assign(a, { href: site + '/' + href, target: '_blank', rel: 'noopener noreferrer' }), who);
     else if (!/^https?:\/\//i.test(href)) a.removeAttribute('href');
   }
   el.classList.add('ff-full');
@@ -563,18 +583,19 @@ function friendCard(p) {
     h(
       'div',
       { class: 'ff-head ff-from' },
-      avatar(who),
-      h('span', { class: 'ff-who' }, site ? h('a', { href: site, target: '_blank', rel: 'noopener noreferrer' }, h('b', null, who.name)) : h('b', null, who.name), h('small', null, ago(p.ts)))
+      site ? asFriend(h('a', { class: 'ff-avatar-link', href: site, target: '_blank', rel: 'noopener noreferrer', tabindex: '-1', 'aria-hidden': 'true' }, avatar(who)), who) : avatar(who),
+      h('span', { class: 'ff-who' }, site ? asFriend(h('a', { href: site, target: '_blank', rel: 'noopener noreferrer' }, h('b', null, who.name)), who) : h('b', null, who.name), h('small', null, ago(p.ts)))
     )
   );
   const link = safeUrl(p.url);
-  if (link && !p.friends_only) el.append(h('a', { class: 'ff-open', href: link, target: '_blank', rel: 'noopener noreferrer' }, `See it on ${who.owner || who.name}’s site ↗`));
+  if (link && !p.friends_only) el.append(asFriend(h('a', { class: 'ff-open', href: link, target: '_blank', rel: 'noopener noreferrer' }, `See it on ${who.owner || who.name}’s site ↗`), who));
   return markFriendPost(foldLong(el, p.full), p);
 }
 
 // A friend's post, drawn as on their site with who it's from on top (for your Home, signed in).
 export function friendPost(p, data) {
   looks = data?.friendLooks || looks;
+  pals = data?.buddies || pals;
   const el = p.full ? friendCard(p) : postCard(p);
   el.classList.add('ff-in-home');
   return el;
@@ -584,6 +605,7 @@ export function friendsApp(ctx) {
   const buddies = ctx.data.buddies || [];
   const all = ctx.data.friendPosts || [];
   looks = ctx.data.friendLooks || {};
+  pals = buddies;
   const wrap = h('div', { class: 'feed ff' });
   const redraw = () => {
     const posts = all;

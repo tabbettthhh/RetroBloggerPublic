@@ -1025,6 +1025,14 @@ async function readPresence(env, fresh = false) {
   presenceMemo = { at: Date.now(), v };
   return v;
 }
+async function markHere(env) {
+  const was = await readPresence(env, true);
+  const now = Date.now();
+  if (was.seen && now - was.seen < 50000 && !(was.left >= was.seen)) return;
+  const next = { seen: now, left: 0 };
+  await env.CONTENT.put('data/_presence.json', JSON.stringify(next));
+  presenceMemo = { at: now, v: next };
+}
 async function withLivePresence(env, data) {
   if (!data?.site) return data;
   const live = livePresence(data.site, await readPresence(env));
@@ -1113,6 +1121,8 @@ async function hiddenPost(env, type, slug) {
 // For a friend's site: a photo only if it belongs to a post that's published (not a draft, not
 // scheduled for later).
 async function friendMedia(env, key) {
+  // (Your profile picture, if it's a photo of yours.)
+  if (/^design\/[\w.-]{1,80}\.(jpe?g|png|webp|gif)$/i.test(String(key)) && (await buildEverything(env, { forFriends: true })).site.picture === key) return mediaFor(env, key);
   const [type, slug, file, more] = String(key).split('/');
   if (more !== undefined) return new Response('Not found', { status: 404 });
   const { posts } = await buildEverything(env, { forFriends: true });
@@ -1454,6 +1464,7 @@ async function adminApi(request, env, url, ctx) {
     const body = await request.json().then((b) => (b && typeof b === 'object' ? b : {}), () => ({}));
     const was = await readPresence(env, true);
     const now = Date.now();
+    const back = body.state !== 'bye' && !presenceNow(was, now).here;
     const next = body.state === 'bye' ? { seen: was.seen, left: now } : { seen: now, left: 0 };
     await env.CONTENT.put('data/_presence.json', JSON.stringify(next));
     presenceMemo = { at: now, v: next };
@@ -1465,7 +1476,8 @@ async function adminApi(request, env, url, ctx) {
         await bumpVersion(env);
       }
     }
-    return json({ ok: true });
+    // (Back after being away: your page fetches your site again, so it shows you online.)
+    return json({ ok: true, back });
   }
   // Your plot in the village, decorated: kept in village.md.
   if (p === 'village' && m === 'POST') {
@@ -1551,6 +1563,8 @@ async function adminApi(request, env, url, ctx) {
     return json({ ok: true });
   }
   if (p === 'overview' && m === 'GET') {
+    // (You're looking at your own site, signed in: you're here, so you show online straight away.)
+    await markHere(env);
     const data = await liveBuild(env, { includeHidden: true });
     const { objects } = data.inside;
     const files = objects

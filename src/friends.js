@@ -76,7 +76,10 @@ async function signatureOk(secret, method, pathAndQuery, time, body, sig) {
 }
 const clean = (v, n) => String(v ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, n);
 // A photo of a friend's post is named "type/post/file.jpg", nothing more.
-const photoKeyOk = (k) => typeof k === 'string' && k.length <= 200 && /^[a-z]+\/[^/\\]+\/[^/\\]+\.(jpe?g|png|webp|gif)$/i.test(k) && !k.includes('..');
+const photoKeyOk = (k) => typeof k === 'string' && k.length <= 200 && (/^[a-z]+\/[^/\\]+\/[^/\\]+\.(jpe?g|png|webp|gif)$/i.test(k) || PROFILE_PHOTO.test(k)) && !k.includes('..');
+// (A profile picture that's a photo of their own: kept with their designs.)
+const PROFILE_PHOTO = /^design\/[\w.-]{1,80}\.(jpe?g|png|webp|gif)$/i;
+const profilePicture = (v) => (typeof v === 'string' && (PROFILE_PHOTO.test(v) || /^[a-z]{2,20}$/.test(v)) ? v : '');
 const PRESENCE = ['online', 'away', 'brb', 'lunch', 'busy', 'offline'];
 
 // A friend's site address, tidied to its origin. Only https on the open internet; plain http
@@ -403,6 +406,8 @@ export function friendFeed(data, origin, to = null) {
     name: site.name,
     owner: site.owner,
     presence: site.presence,
+    // Your profile picture: one of the site's own, or your photo (fetched by their site, signed).
+    picture: site.picture || '',
     // (Automatic: online while you've the site open. Then when you were last here, to the nearest
     // ten minutes, so their site can tell you've gone.)
     ...(site.presence_auto ? { presence_auto: true, seen: site.presence_seen || 0 } : {}),
@@ -640,6 +645,7 @@ export function tidyFeed(f, friend) {
     name: clean(f?.name, 60) || friend.name,
     owner: clean(f?.owner, 60),
     presence: PRESENCE.includes(f?.presence) ? f.presence : 'online',
+    picture: profilePicture(f?.picture),
     presence_auto: f?.presence_auto === true,
     seen: Number.isFinite(Number(f?.seen)) ? Number(f.seen) : 0,
     status: clean(f?.status, 200),
@@ -1227,7 +1233,9 @@ export async function publicFriends(env, { mine = false, viewer = 'everyone' } =
     const c = caches[i];
     const feed = c?.feed;
     const fresh = c && c.ok !== false && Date.now() - (c.at || 0) < 3 * 60 * 60 * 1000;
-    const person = { name: feed?.name || f.name, owner: feed?.owner || f.owner, url: f.url, ...(mine ? { key: f.key, comments_on: !!feed?.comments_on } : {}) };
+    // (Their profile picture: one of the site's own by name, or their photo through your site.)
+    const pic = profilePicture(feed?.picture);
+    const person = { name: feed?.name || f.name, owner: feed?.owner || f.owner, url: f.url, ...(pic ? { picture: PROFILE_PHOTO.test(pic) ? `/friends-media/${encodeURIComponent(f.key)}/${pic.split('/').map(encodeURIComponent).join('/')}` : pic } : {}), ...(mine ? { key: f.key, comments_on: !!feed?.comments_on } : {}) };
     // (Their names, how they are, their status and their best in the arcade: only where the list is shown.)
     if (listShown) buddies.push({ ...person, presence: fresh ? shownPresence(feed) : 'offline', status: feed?.status || '', ...(feed?.arcade ? { arcade: feed.arcade } : {}), ...(feed?.village?.length ? { village: feed.village } : {}) });
     if (!postsShown(store, feed, who)) return;
@@ -1278,6 +1286,8 @@ export async function friendPhotoForVisitor(env, key, photoKey, who = 'everyone'
   // (Not a friends-only post's: those are for you, signed in.)
   // (Their photo of the day too, which may be from an older post than the feed carries.)
   const today = feed?.photo_day?.photo === photoKey && (mine || !feed.photo_day.friends_only);
+  // (Their profile picture, wherever their name is shown.)
+  if (cached && PROFILE_PHOTO.test(photoKey) && cached.picture === photoKey && (mine || sees(store.listSeen, SEEN.includes(who) ? who : 'everyone') || feed)) return friendPhoto(env, key, photoKey);
   if (!feed || !(today || (feed.posts || []).some((p) => p.photos.includes(photoKey) && (mine || !p.friends_only)))) return new Response('Not found', { status: 404 });
   return friendPhoto(env, key, photoKey);
 }

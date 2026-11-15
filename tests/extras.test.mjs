@@ -214,6 +214,13 @@ await test('online when you’re actually here: automatic, or one you chose unti
   eq(await shown(), 'online', 'here: online');
   await say('bye');
   eq(await shown(), 'offline', 'gone: offline');
+  // Back again (your site opened, signed in): online straight away, without a word from the page.
+  const back = await (await say('here')).json();
+  eq(back.back, true, 'your page told you’re back, to fetch your site again');
+  await say('bye');
+  await overview();
+  eq(await shown(), 'online', 'opening your site: online again');
+  await say('bye');
   // One you choose holds while you keep coming back…
   await putFile('site.md', '---\nname: Home Corner\nowner: Sam\npresence: busy\n---\nHi.\n');
   await say('here');
