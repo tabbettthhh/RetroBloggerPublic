@@ -1,6 +1,6 @@
 // End-to-end checks of the back office: every save should leave the site showing exactly
 // what was saved, with every photo loading and nothing lost.
-import { api, test, report, assert, eq, launch, close, adminPage, newPost, waitPhotos, editPost, clickSave, toastText, publicData, overview, getFile, putFile, fileExists, mediaOk, split, upload, PHOTOS, BASE, chromium, openTab, rowMenu } from './lib.mjs';
+import { unfold, api, test, report, assert, eq, launch, close, adminPage, newPost, waitPhotos, editPost, clickSave, toastText, publicData, overview, getFile, putFile, fileExists, mediaOk, split, upload, PHOTOS, BASE, chromium, openTab, rowMenu } from './lib.mjs';
 
 const findPost = async (pred) => (await overview()).posts.find(pred);
 async function photosAllLoad(post) {
@@ -457,6 +457,43 @@ await test('logging an episode just after midnight uses today, not yesterday', a
   const d = await page.locator('.ep-edit input[type="date"]').first().inputValue();
   eq(d, '2026-10-24', 'episode date');
   await page.close();
+});
+
+await test('a playlist: songs each with their own artist and year, in the order you put them', async () => {
+  const page = await adminPage();
+  await newPost(page, 'Music');
+  await page.locator('.field', { has: page.locator('label', { hasText: /title|name/i }) }).locator('input').first().fill('Night Drive Mix');
+  await page.locator('.chip-btn', { hasText: /^Playlist$/ }).click();
+  await unfold(page);
+  for (const [i, [title, artist, year]] of [['Second Song', 'Ada Vale', '1997'], ['First Song', 'The Lanterns', '1984']].entries()) {
+    await page.locator('button', { hasText: '+ Add a song' }).click();
+    await unfold(page);
+    await page.getByLabel(`Song ${i + 1} title`).fill(title);
+    await page.getByLabel(`Song ${i + 1} artist`).fill(artist);
+    await page.getByLabel(`Song ${i + 1} year`).fill(year);
+  }
+  // (An empty row is left out; the second song moves to the top.)
+  await page.locator('button', { hasText: '+ Add a song' }).click();
+  await unfold(page);
+  await page.getByLabel('Move song 2 up').click();
+  await unfold(page);
+  await clickSave(page);
+  const post = (await publicData()).posts.find((p) => p.title === 'Night Drive Mix');
+  eq([post.format, post.tracks], ['playlist', [{ title: 'First Song', artist: 'The Lanterns', year: '1984', note: '' }, { title: 'Second Song', artist: 'Ada Vale', year: '1997', note: '' }]], 'saved, in order');
+  await page.close();
+  // On the site: a disc in the crate, and its songs under the words.
+  const browser = await chromium.launch();
+  const site = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await site.addInitScript(() => sessionStorage.setItem('entered', '1'));
+  await site.goto(`${BASE}/#/music/${post.slug}`);
+  await site.waitForSelector('.mx-list');
+  eq(await site.locator('.mx-track').allInnerTexts().then((l) => l.map((x) => x.replace(/\s+/g, ' ').trim())), ['01 First Song The Lanterns 1984', '02 Second Song Ada Vale 1997'], 'the track list');
+  eq(await site.locator('.mix-cd .mx-count').first().innerText(), '2 songs', 'the disc says how many');
+  await browser.close();
+  // By hand: a line of plain words is a song too, and anything odd is left out.
+  await putFile('music/2026-09-03-by-hand.md', '---\ndate: 2026-09-03 10:00\ntitle: By hand\nformat: mix\ntracks:\n  - "Plain Song — Plain Artist (2001)"\n  - {title: "<b>x</b>", year: nope}\n  - {note: nothing else}\n  - 7\n---\n');
+  const hand = (await publicData()).posts.find((p) => p.title === 'By hand');
+  eq([hand.format, hand.tracks.map((t) => [t.title, t.artist, t.year])], ['playlist', [['Plain Song', 'Plain Artist', '2001'], ['<b>x</b>', '', 'nope'], ['7', '', '']]], 'by hand');
 });
 
 await test('a sign-in that has run out is reported as such, and the writing stays', async () => {

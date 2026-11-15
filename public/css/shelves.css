@@ -195,6 +195,29 @@ a.shelf-item:hover { transform: translateY(-3px); }
 .sg-title.long, .sg-title.tiny { font-size: 1em; }
 .vinyl-single.small { font-size: 6.4px; }
 .vinyl-single.big { font-size: 18px; }
+/* A playlist: a home-made mix on a disc, its name in marker, and its songs on a card like the one in the case. */
+.mix-cd { font-size: 10px; position: relative; flex: none; display: block; width: 12em; height: 12em; text-decoration: none; }
+.mx-disc { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 1.5em 1.6em 0; border-radius: 50%; text-align: center; box-shadow: .2em .3em .6em rgba(0,0,0,.45), inset 0 0 0 1px rgba(0,0,0,.25);
+  background: radial-gradient(circle, transparent 0 .75em, rgba(255,255,255,.75) .78em 1.05em, #cfd3d8 1.08em 1.9em, transparent 1.95em), conic-gradient(from 20deg, #f4f1e6, #e6eef8 12%, #f4f1e6 24%, #f6e8ee 38%, #f4f1e6 52%, #e6f4ec 66%, #f4f1e6 80%, #f1ecd8 92%, #f4f1e6); }
+.mx-disc::after { content: ''; position: absolute; left: 50%; top: 50%; width: 1.5em; height: 1.5em; margin: -.75em 0 0 -.75em; border-radius: 50%; background: rgba(30, 20, 10, .55); box-shadow: inset 0 0 0 1px rgba(0,0,0,.3); }
+.mx-title { max-width: 100%; color: #1f2a55; font: 700 1.5em/1.05 Caveat, Gaegu, 'Comic Sans MS', cursive; transform: rotate(-4deg); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mx-title.long, .mx-title.tiny { font-size: 1.25em; }
+.mx-count { position: absolute; left: 0; right: 0; bottom: 1.5em; color: #b3261e; font: 700 1.15em/1 Caveat, Gaegu, 'Comic Sans MS', cursive; transform: rotate(-3deg); }
+.mix-cd.wanted .mx-disc { filter: grayscale(.7); opacity: .8; }
+.mix-cd.small { font-size: 6.2px; }
+.mix-cd.big { font-size: 17px; }
+.mx-list { width: min(560px, 100%); border-radius: 4px; overflow: hidden; background: #fbf7ea; color: #2a2118; box-shadow: 0 4px 14px rgba(0,0,0,.4), inset 0 0 0 1px #d8cfb6; }
+.mx-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0; padding: 10px 14px; background: #1f2a55; color: #fbf7ea; font: 700 20px/1.1 Caveat, Gaegu, 'Comic Sans MS', cursive; }
+.mx-total { flex: none; font: 12px/1 'Share Tech Mono', monospace; letter-spacing: .5px; text-transform: uppercase; opacity: .85; }
+.mx-tracks { list-style: none; margin: 0; padding: 2px 0; }
+.mx-track { display: flex; align-items: baseline; gap: 10px; padding: 8px 14px; border-bottom: 1px solid #e6dec6; background: linear-gradient(transparent calc(100% - 1px), rgba(31, 42, 85, .08) 0); }
+.mx-track:last-child { border-bottom: 0; }
+.mx-no { flex: none; width: 2ch; color: #b3261e; font: 13px/1.3 'Share Tech Mono', monospace; }
+.mx-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.mx-song { font-size: 15px; line-height: 1.25; overflow-wrap: anywhere; }
+.mx-artist { font-size: 13px; color: #5d5140; overflow-wrap: anywhere; }
+.mx-note { font: 15px/1.2 Caveat, Gaegu, 'Comic Sans MS', cursive; color: #1f2a55; }
+.mx-year { flex: none; font: 13px/1.3 'Share Tech Mono', monospace; color: #5d5140; }
 
 .record-phone, .dw-record, .record-body { color: #f6e7c8; background: var(--lamp, none), repeating-linear-gradient(90deg, rgba(0,0,0,.18) 0 2px, transparent 2px 42px), repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px 9px), linear-gradient(180deg, #7a4420, #4e2a12); }
 .hifi-bar { flex: none; position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; height: calc(58px + var(--safe-top)); padding: var(--safe-top) 12px 0;

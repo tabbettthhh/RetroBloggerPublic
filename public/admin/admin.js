@@ -47,7 +47,7 @@ const SHELF = {
   books: { creatorKey: 'author', creator: 'Author', titleLabel: 'Book title', states: [['read', 'Read'], ['reading', 'Reading now'], ['want', 'Want to read'], ['dropped', 'Put down']] },
   films: { creatorKey: 'director', creator: 'Director', titleLabel: 'Film title', states: [['watched', 'Watched'], ['watching', 'Watching'], ['want', 'Want to watch'], ['dropped', 'Walked out']] },
   podcasts: { creatorKey: 'host', creator: 'Host', titleLabel: 'Podcast name', states: [['finished', 'Finished'], ['listening', 'Listening now'], ['want', 'Want to listen'], ['dropped', 'Stopped']] },
-  music: { creatorKey: 'artist', creator: 'Artist', titleLabel: 'Album or song title', states: [['listened', 'Listened'], ['repeat', 'On repeat'], ['want', 'Want to hear'], ['skipped', 'Skipped']] },
+  music: { creatorKey: 'artist', creator: 'Artist', titleLabel: 'Album, song or playlist name', states: [['listened', 'Listened'], ['repeat', 'On repeat'], ['want', 'Want to hear'], ['skipped', 'Skipped']] },
   tv: { creatorKey: 'creator', creator: 'Created by', titleLabel: 'Show name', states: [['finished', 'Finished'], ['watching', 'Watching'], ['want', 'Want to watch'], ['dropped', 'Gave up']] }
 };
 const STATE_OF = { read: 'done', watched: 'done', finished: 'done', listened: 'done', reading: 'now', watching: 'now', listening: 'now', repeat: 'now', want: 'want', dropped: 'dropped', skipped: 'dropped' };
@@ -1066,6 +1066,7 @@ async function edit(p) {
     year: p.year || '',
     episode: p.episode || '',
     format: p.format || 'album',
+    tracks: (p.tracks || []).map((t) => ({ title: t.title || '', artist: t.artist || '', year: t.year || '', note: t.note || '' })),
     album: p.album || '',
     season: p.season || '',
     network: p.network || '',
@@ -1144,6 +1145,7 @@ function buildText(s) {
     if (s.type === 'podcasts') fm.episode = s.episode.trim();
     let tvEpisodes = null;
     let bookLog = null;
+    let playlist = null;
     if (s.type === 'books') {
       const num = (v) => (/^\d+$/.test(String(v ?? '').trim()) ? Number(String(v).trim()) : null);
       fm.pages = num(s.pages) ?? '';
@@ -1167,13 +1169,16 @@ function buildText(s) {
         .map((e) => ({ season: n(e.season), ep: n(e.ep), to: num(e.to) != null && num(e.ep) != null && num(e.to) > num(e.ep) ? num(e.to) : '', title: e.title.trim(), rating: e.rating, date: /^\d{4}-\d{2}-\d{2}$/.test(e.date) ? e.date : '', note: e.note.trim() }));
     }
     if (s.type === 'music') {
-      fm.format = s.format === 'song' ? 'song' : 'album';
+      fm.format = ['song', 'playlist'].includes(s.format) ? s.format : 'album';
       if (s.format === 'song') fm.album = s.album.trim();
+      // (A playlist's songs go last, so the header stays easy to read by hand.)
+      if (s.format === 'playlist') playlist = (s.tracks || []).filter((t) => t.title.trim() || t.artist.trim()).map((t) => ({ title: t.title.trim(), artist: t.artist.trim(), year: /^\d{3,4}$/.test(String(t.year).trim()) ? Number(t.year) : String(t.year).trim(), ...(t.note.trim() ? { note: t.note.trim() } : {}) }));
     }
     fm.year = /^\d{3,4}$/.test(String(s.year).trim()) ? Number(s.year) : String(s.year).trim();
     Object.assign(fm, { status: s.status, rating: s.rating, recommend: s.recommend, rewatch: (s.type === 'films' || s.type === 'tv') && s.rewatch, quote: s.quote.trim() });
     // The episode diary goes last, so the header stays easy to read by hand.
     if (tvEpisodes) fm.episodes = tvEpisodes;
+    if (playlist?.length) fm.tracks = playlist;
     if (bookLog) fm.reading_log = bookLog;
   }
   if (s.type === 'places' || SHELF[s.type]) fm.suggested_by = s.suggested_by.trim();
@@ -1710,6 +1715,46 @@ function readingLogEditor(s, rerender) {
     h('p', { class: 'hint' }, 'Log what you read and when, with an optional chapter and note. It shows as a library card under the review, and "Up to page" follows along.'),
     h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn', onclick: add }, '+ Log reading')),
     ...rows
+  );
+}
+
+// Music: a playlist's songs, each with its own artist and year, in the order you put them.
+function trackEditor(s, rerender) {
+  s.tracks ||= [];
+  const rows = s.tracks.map((t, i) => {
+    const inp = (key, attrs) => {
+      const el = h('input', { class: 'input', value: t[key] ?? '', ...attrs });
+      el.addEventListener('input', () => (t[key] = el.value));
+      return el;
+    };
+    const move = (by) => () => { const [x] = s.tracks.splice(i, 1); s.tracks.splice(i + by, 0, x); rerender(); };
+    return h(
+      'div',
+      { class: 'ep-edit trk-edit' },
+      h(
+        'div',
+        { class: 'ep-edit-top' },
+        h('label', { class: 'ep-grow' }, `Song ${i + 1}`, inp('title', { maxlength: 140, 'aria-label': `Song ${i + 1} title` })),
+        h('label', { class: 'ep-grow' }, 'Artist', inp('artist', { maxlength: 100, 'aria-label': `Song ${i + 1} artist` })),
+        h('label', { class: 'ep-mini trk-year' }, 'Year', inp('year', { maxlength: 4, inputmode: 'numeric', 'aria-label': `Song ${i + 1} year` }))
+      ),
+      h('label', { class: 'ep-grow' }, 'A few words about it (optional)', inp('note', { maxlength: 300, 'aria-label': `Song ${i + 1} note` })),
+      h(
+        'div',
+        { class: 'row' },
+        h('button', { type: 'button', class: 'btn small', disabled: i === 0, 'aria-label': `Move song ${i + 1} up`, onclick: move(-1) }, '↑ Up'),
+        h('button', { type: 'button', class: 'btn small', disabled: i === s.tracks.length - 1, 'aria-label': `Move song ${i + 1} down`, onclick: move(1) }, '↓ Down'),
+        h('button', { type: 'button', class: 'btn small danger', onclick: () => { s.tracks.splice(i, 1); rerender(); } }, 'Remove this song')
+      )
+    );
+  });
+  return h(
+    'fieldset',
+    { class: 'group ep-log' },
+    h('legend', null, `Songs on the playlist${s.tracks.length ? ` (${s.tracks.length})` : ''}`),
+    h('p', { class: 'hint' }, 'Each song with its own artist and year, in the order you want them. They show as a track list under your words. The Artist box above can stay empty for a playlist.'),
+    ...rows,
+    h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn', disabled: s.tracks.length >= 200, onclick: () => { s.tracks.push({ title: '', artist: '', year: '', note: '' }); rerender(); } }, '+ Add a song'))
   );
 }
 
@@ -2525,8 +2570,9 @@ function viewEditor() {
     if (s.type === 'books') details.push(h('div', { class: 'grid-2' }, text('pages', 'Pages (optional)', 'e.g. 320', { maxlength: 6, inputmode: 'numeric' }), text('page', 'Up to page (optional)', 'e.g. 142', { maxlength: 6, inputmode: 'numeric' })));
     if (s.type === 'tv') details.push(h('div', { class: 'grid-2' }, text('season', 'Season (optional)', 'e.g. 2', { maxlength: 30, inputmode: 'numeric' }), text('episode', 'Up to episode (optional)', 'e.g. 5', { maxlength: 30, inputmode: 'numeric' })), text('network', 'Watched on (optional)', 'e.g. BBC, Netflix', { maxlength: 40 }));
     if (s.type === 'music') {
-      details.push(h('fieldset', { class: 'group' }, h('legend', null, 'Album or song'), h('div', { class: 'chip-row' }, [['album', 'Album'], ['song', 'Song']].map(([f, label]) => h('button', { type: 'button', class: 'chip-btn', 'aria-pressed': String(s.format === f), onclick: () => { s.format = f; rerender(); } }, label)))));
+      details.push(h('fieldset', { class: 'group' }, h('legend', null, 'Album, song or playlist'), h('div', { class: 'chip-row' }, [['album', 'Album'], ['song', 'Song'], ['playlist', 'Playlist']].map(([f, label]) => h('button', { type: 'button', class: 'chip-btn', 'aria-pressed': String(s.format === f), onclick: () => { s.format = f; rerender(); } }, label)))));
       if (s.format === 'song') details.push(text('album', 'From the album (optional)', '', { maxlength: 140 }));
+      if (s.format === 'playlist') details.push(trackEditor(s, rerender));
     }
     const rec = h('input', { type: 'checkbox', checked: s.recommend });
     rec.addEventListener('change', () => (s.recommend = rec.checked));

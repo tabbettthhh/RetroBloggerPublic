@@ -695,7 +695,7 @@ export const GLASS_PLACES = {
   books: { name: 'Bookshelf', kind: 'item', sel: ['.book-cover'] },
   films: { name: 'Cinema', kind: 'item', sel: ['.ticket'] },
   podcasts: { name: 'Podcasts', kind: 'item', sel: ['.cassette'] },
-  music: { name: 'Record crate', kind: 'item', sel: ['.record', '.vinyl-single'] },
+  music: { name: 'Record crate', kind: 'item', sel: ['.record', '.vinyl-single', '.mix-cd'] },
   tv: { name: 'TV', kind: 'item', sel: ['.vhs'] },
   posts: { name: 'Posts', kind: 'card', sel: ['.feed > .card'] },
   windows: { name: 'Windows', kind: 'corner', sel: ['.dw'] },

@@ -715,3 +715,8 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 /* Themes: an after-dark theme, said plainly beside Save. */
 .tm-night-note { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 8px 0 0; padding: 8px 10px; border: 1px solid #c9c2e8; border-radius: 6px; background: #f3f0ff; color: #2b2257; font-size: 13px; line-height: 1.35; }
 .tm-night-btns { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+/* A playlist's songs in the editor. */
+.trk-edit .ep-edit-top { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 76px; }
+.trk-edit .ep-edit-top .ep-grow { grid-column: auto; }
+.trk-edit > label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: #555; }
+@media (max-width: 520px) { .trk-edit .ep-edit-top { grid-template-columns: minmax(0, 1fr) 76px; } .trk-edit .ep-edit-top .ep-grow:first-child { grid-column: 1 / -1; } }
