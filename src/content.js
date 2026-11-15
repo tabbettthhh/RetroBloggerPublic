@@ -869,7 +869,7 @@ export const THEME_FESTIVALS = ['lunar_new_year', 'hanami', 'childrens_day', 'dr
 // Words on buttons that can be renamed (these match LABELS in public/js/skins.js).
 export const THEME_LABELS = ['home', 'thoughts', 'journal', 'atlas', 'friends', 'album', 'more', 'passport', 'wishlist', 'planner', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'arcade', 'stats', 'about', 'explore', 'others', 'search', 'leave', 'nudge', 'open_journal', 'read_review', 'visitor', 'come_in'];
 // Places the seasons' glass can go (these match GLASS_PLACES in public/js/skins.js).
-export const THEME_GLASS = ['photos', 'thoughts', 'journal', 'passport', 'atlas', 'wishlist', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv'];
+export const THEME_GLASS = ['photos', 'thoughts', 'journal', 'passport', 'atlas', 'wishlist', 'guestbook', 'books', 'films', 'podcasts', 'music', 'tv', 'posts', 'windows', 'bars'];
 export const THEME_OPTIONS = {
   font: ['classic', 'modern', 'system', 'mono', 'rounded', 'bubbly', 'pixel', 'terminal', 'comic', 'handwritten', 'typewriter', 'elegant'],
   title_font: ['classic', 'modern', 'system', 'mono', 'condensed', 'rounded', 'bubbly', 'pixel', 'terminal', 'comic', 'handwritten', 'typewriter', 'elegant', 'arcade', 'tiny'],
@@ -888,10 +888,10 @@ export const THEME_OPTIONS = {
   header: ['banner', 'card', 'minimal', 'hidden'],
   name_style: ['plain', 'rainbow', 'glitter', 'glow', 'wordart', 'outline', 'chrome'],
   trail: ['none', 'sparkles', 'hearts', 'stars', 'bubbles', 'rainbow', 'pixels'],
-  falling: ['season', 'none', 'snow', 'petals', 'hearts', 'stars', 'leaves', 'confetti', 'bubbles', 'sunshine'],
+  falling: ['season', 'none', 'snow', 'petals', 'hearts', 'stars', 'leaves', 'confetti', 'bubbles', 'sunshine', 'seeds', 'fireflies'],
   seasons: ['off', 'auto', 'winter', 'spring', 'summer', 'autumn', 'lunar_new_year', 'hanami', 'childrens_day', 'dragon_boat', 'tanabata', 'mid_autumn', 'nowruz', 'holi', 'ramadan', 'eid_al_fitr', 'eid_al_adha', 'diwali', 'yalda', 'dia_de_reyes', 'carnival', 'dia_de_muertos', 'st_patricks', 'easter', 'midsummer', 'bonfire_night', 'halloween', 'hanukkah', 'christmas', 'my_1', 'my_2', 'my_3', 'my_4', 'my_5', 'my_6', 'my_7', 'my_8', 'my_9', 'my_10', 'my_11', 'my_12'],
   hemisphere: ['north', 'south'],
-  glass_style: ['season', 'winter', 'spring', 'summer', 'autumn', 'festive', 'gloss'],
+  glass_style: ['season', 'winter', 'spring', 'summer', 'autumn', 'festive', 'gloss', 'off'],
   glass_strength: ['medium', 'soft', 'strong'],
   card_style: ['classic', 'polaroid', 'scrapbook', 'notebook', 'postcard', 'sticky', 'ticket', 'torn', 'comic', 'neon', 'letter', 'film', 'pixel', 'chrome'],
   card_festive: ['on', 'off'],
@@ -900,7 +900,7 @@ export const THEME_OPTIONS = {
   page_strength: ['medium', 'soft', 'strong'],
   wall_time: ['day', 'still'],
   machine: ['none', 'beige', 'breadbin', 'bluedesk', 'glass', 'superbar', 'tiles', 'terminal', 'teletext', 'hifi', 'browser'],
-  screensaver: ['drift', 'maze', 'turns'],
+  screensaver: ['drift', 'maze', 'season', 'turns'],
   handset: ['none', 'flip', 'handheld']
 };
 export const THEME_HIDEABLE = ['lastpost', 'status', 'playing', 'countdown', 'nudge', 'clock', 'traystatus', 'fortune', 'photoday'];

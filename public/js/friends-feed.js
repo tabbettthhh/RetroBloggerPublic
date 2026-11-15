@@ -143,9 +143,12 @@ function house(b, st, looks, i, ctx, day) {
   const lights = root.festival || season === 'winter';
   const clip = `nbc${i}`;
   const d = S.dx;
-  const kind = season === 'winter' && hsh % 3 === 0 ? 'snowman' : hsh % 3 === 1 ? 'lamp' : 'tree';
+  const kind = season === 'winter' && hsh % 3 === 0 ? 'snowman' : season === 'summer' && hsh % 3 === 0 ? 'parasol' : hsh % 3 === 1 ? 'lamp' : 'tree';
   const prop =
-    kind === 'snowman'
+    kind === 'parasol'
+      ? // (Summer: a parasol on the lawn, and a towel under it.)
+        svg('g', { class: 'nb-prop' }, svg('path', { d: 'M143 150l22-3 2 5-22 3Z', class: k, fill: '#6cc5ff', 'stroke-width': 2 }), svg('path', { d: 'M154 150V112', class: k, fill: 'none', 'stroke-width': 2.5 }), svg('path', { d: 'M132 118q22-28 44 0q-5.5-5-11 0q-5.5-5-11 0q-5.5-5-11 0q-5.5-5-11 0Z', class: k, fill: '#ff5d8f', 'stroke-width': 2.5 }), svg('path', { d: 'M143 118q4-20 11-22q7 2 11 22q-5.5-5-11 0q-5.5-5-11 0Z', fill: '#fff6dc' }))
+      : kind === 'snowman'
       ? svg('g', { class: 'nb-prop' }, svg('circle', { cx: 154, cy: 138, r: 11, class: `${k} nb-snowball` }), svg('circle', { cx: 154, cy: 121, r: 8, class: `${k} nb-snowball` }), svg('circle', { cx: 151, cy: 119, r: 1.2, class: 'nb-ink' }), svg('circle', { cx: 157, cy: 119, r: 1.2, class: 'nb-ink' }), svg('path', { d: 'M154 122l8 2-8 1Z', fill: '#ff8a1f', class: k, 'stroke-width': 1.5 }))
       : kind === 'lamp'
         ? svg('g', { class: 'nb-prop' }, svg('circle', { cx: 154, cy: 92, r: 17, class: 'nb-glow' }), svg('path', { d: 'M154 150V100', class: `${k} nb-post` }), svg('path', { d: 'M147 100h14l-3-13h-8Z', class: `${k} nb-lamp` }))
