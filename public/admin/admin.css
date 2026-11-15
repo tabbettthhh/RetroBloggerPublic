@@ -461,6 +461,13 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .tm-board-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 6%; }
 .tm-board-stk { position: absolute; translate: -50% -50%; display: grid; place-items: center; cursor: grab; touch-action: none; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .3)); }
 .tm-board-stk:active { cursor: grabbing; }
+/* The parts of a theme: a few groups, and under the one that's open, its parts. */
+.tm-sects { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.tm-sect { min-height: 38px; padding: 0 14px; border: 1px solid #c9c4ae; border-radius: 19px; background: linear-gradient(#fff, #ecebe6); font: inherit; font-size: 13px; font-weight: bold; color: #222; cursor: pointer; }
+.tm-sect.on { border-color: #316ac5; background: #316ac5; color: #fff; }
+.tm-sect:focus-visible, .tm-tab:focus-visible { outline: 2px solid #f8b636; outline-offset: 2px; }
+.tm-sect-hint { margin: 6px 2px 0; }
+.linkish { padding: 0; border: 0; background: none; font: inherit; color: #0d3a9a; text-decoration: underline; cursor: pointer; }
 .tm-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; padding-bottom: 6px; border-bottom: 1px solid #c9c4ae; }
 .tm-tab { min-height: 32px; padding: 0 10px; border: 1px solid #c9c4ae; border-radius: 4px 4px 0 0; background: linear-gradient(#fff, #ecebe6); font: inherit; font-size: 12px; color: #222; }
 .tm-tab.on { border-color: #316ac5; background: #eef4fd; color: #0d3a9a; font-weight: bold; box-shadow: inset 0 3px 0 #f8b636; }

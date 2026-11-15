@@ -23,6 +23,16 @@ let seasonPreview = '';
 let tucked = false;
 const firstChoice = (k) => Object.keys(OPTIONS[k].choices)[0];
 let ownTab = 'colours';
+// The parts of a theme, in a few groups (each remembers which of its parts you were last in).
+const TAB_GROUPS = [
+  ['look', 'Look', 'Colours, wallpaper, fonts and shapes.', ['colours', 'wallpaper', 'words', 'shapes', 'charms']],
+  ['posts', 'Posts & profile', 'How your posts and your profile header look.', ['cards', 'feed', 'header']],
+  ['menu', 'Menu & apps', 'What’s in the menu, each app’s look, and your own words on the buttons.', ['menu', 'apps', 'words_own']],
+  ['device', 'Computer & phone', 'The machine around your site, its taskbar, icons and sounds.', ['computer', 'bars', 'icons', 'tabicon']],
+  ['effects', 'Effects & seasons', 'Things that move, the time of year, the night, stickers and Floppy.', ['effects', 'seasons', 'night', 'stickers', 'floppy']],
+  ['share', 'Share', 'Pass your theme on, or load one.', ['share']]
+];
+const lastTabOf = {};
 let ownOpen = false;
 // Opens a page of the site in the preview (set while the Themes page is showing).
 let showInPreview = () => {};
@@ -286,7 +296,7 @@ function themeControls(ctx, saved, redraw, preview) {
   };
   const cards = h(
     'div',
-    { class: 'tm-groups', role: 'radiogroup', 'aria-label': 'Themes' },
+    { class: 'tm-sects', role: 'radiogroup', 'aria-label': 'Themes' },
     SKIN_GROUPS.map(([name, ids]) => {
       const here = ids.includes(d.theme);
       return h(
@@ -338,6 +348,7 @@ function themeControls(ctx, saved, redraw, preview) {
   const pointerLook = (id) => h('span', { class: 'tm-swatch charm', style: { background: `${id === 'none' ? 'url(/cursors/cursor-xp.svg)' : pointerSvgs({ ...t, pointer: id }).arrow} center / 26px no-repeat, ${c.soft}` } });
   const changed = JSON.stringify(themeFile(d)) !== JSON.stringify(themeFile({ theme: saved.theme in SKINS ? saved.theme : 'classic', ...saved })) || !!d.file;
   unsaved = changed;
+  const ownFall = resolveSkin({ theme: d.theme, hemisphere: d.hemisphere }).falling;
   const walls = Object.entries(WALLPAPERS).map(([id, w]) => [id, w.name]);
   // Each part of the theme in its own tab, like the sections of Rockbox's Theme Settings.
   const opt = (key, extra = {}) =>
@@ -348,8 +359,9 @@ function themeControls(ctx, saved, redraw, preview) {
       h(
         'div',
         { class: 'chip-row', role: 'radiogroup', 'aria-label': OPTIONS[key].name },
-        Object.entries(OPTIONS[key].choices).map(([id, label]) =>
-          h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(t[key] === id), 'aria-pressed': String(t[key] === id), style: extra.font && FONT_FAMILIES[id] ? { fontFamily: FONT_FAMILIES[id] } : null, onclick: () => { d[key] = id; redraw(); } }, label)
+        // (extra.only keeps it to the choices that mean something here; extra.own is the theme's own, which is said so.)
+        Object.entries(OPTIONS[key].choices).filter(([id]) => !extra.only || extra.only.includes(id)).map(([id, label]) =>
+          h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(t[key] === id), 'aria-pressed': String(t[key] === id), style: extra.font && FONT_FAMILIES[id] ? { fontFamily: FONT_FAMILIES[id] } : null, onclick: () => { d[key] = extra.own === id ? '' : id; redraw(); } }, extra.own === id ? `${label} (this theme’s own)` : label)
         )
       )
     );
@@ -419,19 +431,25 @@ function themeControls(ctx, saved, redraw, preview) {
       h('p', { class: 'hint' }, 'A little old-homepage magic. Moving effects stay still for visitors who’ve asked their device for less motion, and never get in the way of tapping or clicking.'),
       opt('name_style'),
       opt('trail'),
-      opt('falling'),
+      isSeasonSkin(d.theme) ? opt('falling', { own: ownFall, only: [ownFall, 'hearts', 'stars', 'confetti', 'bubbles', 'none'] }) : opt('falling'),
+      isSeasonSkin(d.theme)
+        ? h('p', { class: 'hint' }, `${SKINS[d.theme].name} brings what falls with its season. In dark mode it has a night of its own.`)
+        : h('p', { class: 'hint' }, 'With the season or festive day: whatever the time of year brings, if the seasons are on. ', h('button', { type: 'button', class: 'linkish', onclick: () => { ownTab = 'seasons'; redraw(); } }, 'Seasons & festive days')),
       opt('screensaver'),
       h('p', { class: 'hint' }, 'The maze is a slow walk through brick corridors with your photos hung on the walls, each with its title on a little plaque. It’s new every time. Visitors who’ve asked for less motion get the drifting one.')
     ]],
     words_own: ['Words', () => labelControls(d, redraw)],
     floppy: ['Floppy', () => floppyControls(d, t, redraw)],
     seasons: ['Seasons & festive days', () => seasonControls(d, t, redraw, opt)],
-    extras: ['Tab icon & after dark', () => [tabIconControls(d, t, redraw), nightControls(d, t, redraw, preview)]],
+    tabicon: ['Tab icon', () => [tabIconControls(d, t, redraw)]],
+    night: ['After dark', () => [nightControls(d, t, redraw, preview)]],
     apps: ['Apps', () => appControls(d, t, redraw)],
     stickers: [`Stickers${d.stickers.length ? ` (${d.stickers.length})` : ''}`, () => [stickerControls(d, t, c, redraw, preview)]],
     share: ['Share', () => shareControls(ctx, d, redraw)]
   };
   if (!TABS[ownTab]) ownTab = 'colours';
+  const group = TAB_GROUPS.find((g) => g[3].includes(ownTab));
+  lastTabOf[group[0]] = ownTab;
   return [
     cards,
     h(
@@ -441,9 +459,13 @@ function themeControls(ctx, saved, redraw, preview) {
       h('summary', null, `Make ${SKINS[d.theme].name} your own`),
       h(
         'div',
-        { class: 'tm-tabs', role: 'tablist', 'aria-label': 'Parts of the theme' },
-        Object.entries(TABS).map(([id, [label]]) => h('button', { type: 'button', role: 'tab', class: 'tm-tab' + (ownTab === id ? ' on' : ''), 'aria-selected': String(ownTab === id), onclick: () => { ownTab = id; redraw(); } }, label))
+        { class: 'tm-sects', role: 'tablist', 'aria-label': 'Parts of the theme' },
+        TAB_GROUPS.map(([gid, label, , ids]) => h('button', { type: 'button', role: 'tab', class: 'tm-sect' + (group[0] === gid ? ' on' : ''), 'aria-selected': String(group[0] === gid), 'data-tabs': ids.map((id) => TABS[id][0]).join('|'), onclick: () => { ownTab = lastTabOf[gid] || ids[0]; redraw(); } }, label))
       ),
+      h('p', { class: 'hint tm-sect-hint' }, group[2]),
+      group[3].length > 1
+        ? h('div', { class: 'tm-tabs', role: 'tablist', 'aria-label': group[1] }, group[3].map((id) => h('button', { type: 'button', role: 'tab', class: 'tm-tab' + (ownTab === id ? ' on' : ''), 'aria-selected': String(ownTab === id), onclick: () => { ownTab = id; redraw(); } }, TABS[id][0])))
+        : null,
       h('div', { class: 'tm-tabpanel', role: 'tabpanel', 'aria-label': TABS[ownTab][0] }, TABS[ownTab][1]().filter(Boolean)),
       PARTS.some((k) => d[k]) || d.hide.length || d.menu || d.sections_hidden.length || Object.keys(d.apps).length
         ? h('button', { type: 'button', class: 'btn small', onclick: () => { for (const k of PARTS) d[k] = ''; Object.assign(d, { hide: [], menu: null, sections_hidden: [], apps: {} }); redraw(); } }, `Back to ${SKINS[d.theme].name} as it comes`)
