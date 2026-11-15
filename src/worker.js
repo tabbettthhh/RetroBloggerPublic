@@ -118,6 +118,11 @@ async function route(request, env, ctx) {
   const moved = await mainAddress(request, env, url);
   if (moved) return moved;
   if (p === '/manifest.webmanifest') return manifest(env);
+  // The site's icon: your picture, once your site has drawn it (see admin/app-icon.js).
+  if (/^\/icons\/icon(-\d+\.png|\.svg)$/.test(p) && method === 'GET') {
+    const own = await ownIcon(env);
+    if (own) return own;
+  }
   // A friend arriving with a pass from their own site (see friends.acceptPass).
   if (method === 'GET' && p === '/' && url.searchParams.has('friend_pass')) return friends.acceptPass(request, env, url);
   // A friend's visit ended (their cookie goes), and whether one is going on.
@@ -208,7 +213,7 @@ async function route(request, env, ctx) {
 
 // Fonts, the map and photo libraries, icons and cursors hardly ever change, so browsers keep
 // them for a month instead of asking again on every visit. (Change one? Give it a new name.)
-const LONG_LIVED = /^\/(fonts|vendor|icons|cursors|img\/tex)\//;
+const LONG_LIVED = /^\/(fonts|vendor|cursors|img\/tex)\//;
 async function staticFile(request, env, path) {
   const page = path === '/' || path.endsWith('.html');
   const res = await env.ASSETS.fetch(page ? unconditional(request) : request);
@@ -420,7 +425,16 @@ function robots() {
   return new Response(lines.join('\n'), { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
 }
 
-// The home-screen app takes its name from the site name you set in the back office.
+// Your picture, as the site's icon, if it's been drawn.
+async function ownIcon(env) {
+  const site = parseSite(await readText(env, 'site.md'));
+  if (!site.picture) return null;
+  const obj = await env.CONTENT.get(`design/app-${String(site.picture).replace(/[^a-z0-9]+/gi, '-').slice(0, 60)}.png`);
+  return obj ? new Response(obj.body, { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=3600' } }) : null;
+}
+
+// The home-screen app takes its name from the site name you set in the back office, and its
+// icon is your picture (at the same addresses, see ownIcon).
 async function manifest(env) {
   const site = parseSite(await readText(env, 'site.md'));
   const body = {
@@ -433,7 +447,7 @@ async function manifest(env) {
     icons: [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
       { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-      { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml' }
+      ...(site.picture ? [] : [{ src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml' }])
     ]
   };
   return new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/manifest+json', 'Cache-Control': 'public, max-age=300' } });

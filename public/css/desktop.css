@@ -75,6 +75,11 @@
 .desktop .taskbar { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; z-index: 5000; padding-bottom: 0; }
 .tasks { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; padding: 0 10px; overflow: hidden; }
 .task-btn { width: 170px; min-width: 60px; height: 32px; display: flex; align-items: center; padding: 0 10px; border-radius: 3px; border: 1px solid rgba(0,0,0,.25); background: linear-gradient(180deg, #5d93f5, #3a74e6); color: #fff; font-size: 12px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.task-btn { container-type: inline-size; gap: 6px; }
+.task-btn .task-ico { flex: none; width: 20px; height: 20px; box-shadow: none; border-radius: 4px; }
+.task-btn .task-ico::after { font-size: 10px; }
+.task-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 96px) { .task-label { display: none; } .task-ico { margin: 0 auto; } }
 .task-btn.active { background: rgba(0,0,0,.25); box-shadow: inset 1px 1px 3px rgba(0,0,0,.5); font-weight: bold; }
 .tray-status { display: flex; align-items: center; gap: 5px; max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 4px; }
 
@@ -223,3 +228,4 @@
 .ss-phone .ss-floppy { scale: .8; }
 .ss-phone .ss-fl-say { max-width: 200px; }
 
+.task-btn .task-site { object-fit: cover; }

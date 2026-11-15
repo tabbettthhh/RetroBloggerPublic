@@ -3,6 +3,7 @@ import { h, ICON, CATEGORIES, CUSTOM_COLORS, catColor, catLabel, niceDate, regis
 import { stampSvg, INK_DEFS, COUNTRIES, DESIGN_NAMES } from '/js/stamps.js';
 import { parseCSV, fromGoodreads, fromLetterboxd } from '/admin/imports.js';
 import { FILTERS, filtered, stampDateText } from '/admin/filters.js';
+import { ensureAppIcon } from '/admin/app-icon.js';
 import { EMOTICONS, emoticonSvg, withEmoticons } from '/js/emoticons.js';
 import { visaCard, visaLook, VISA_DESIGNS, VISA_STRIPS, VISA_EMBLEMS, VISA_WORLD } from '/js/visa.js';
 import { customKeepsake, SHAPES, SHAPE_COLOURS } from '/js/keepsake-maker.js';
@@ -1336,13 +1337,13 @@ const fontReady = () => (document.fonts?.load ? document.fonts.load("20px 'Share
 async function withFilter(ph, s) {
   const bmp = await createImageBitmap(await ph.ready);
   await fontReady();
-  const c = filtered(bmp, ph.filter, { max: PHOTO_MAX, seed: ph.seed, date: stampDateText(stampDay(ph)) });
+  const c = filtered(bmp, ph.filter, { max: PHOTO_MAX, seed: ph.seed, date: stampDateText(stampDay(ph)), strength: ph.strength ?? 1 });
   bmp.close?.();
   return compact(c);
 }
 
-function previewURL(ph, id, max, s) {
-  return filtered(ph.small, id, { max, seed: ph.seed, date: stampDateText(stampDay(ph)) }).toDataURL('image/jpeg', 0.85);
+function previewURL(ph, id, max, s, strength = 1) {
+  return filtered(ph.small, id, { max, seed: ph.seed, date: stampDateText(stampDay(ph)), strength }).toDataURL('image/jpeg', 0.85);
 }
 
 // The day a digicam-style photo has burnt into its corner: the day it was added, unless you
@@ -1374,29 +1375,96 @@ function stampSetting(ph, s, refresh) {
     h('button', { type: 'button', class: 'btn', onclick: () => { ph._setDate = false; refresh(); } }, 'Cancel'));
 }
 
+// Choosing a filter: the photo big, with every filter in a strip under it (tap one); or swipe the
+// photo itself, or press ← →, to try the next. Hold the photo to see it as it was. A strength
+// slider takes any filter down a little. ‹ › moves to the next photo without closing.
 function filterPanel(s, ph, rerender) {
   if (!ph.tiles) ph.tiles = Object.fromEntries(FILTERS.map((f) => [f.id, previewURL(ph, f.id, 150, s)]));
   if (ph.filter && ph.filter !== 'none' && !ph.thumb) ph.thumb = ph.tiles[ph.filter];
   const current = FILTERS.find((f) => f.id === (ph.filter || 'none'));
-  const big = h('img', { class: 'filter-big', alt: `Preview: ${current.name}`, src: previewURL(ph, current.id, 640, s) });
+  const at = FILTERS.indexOf(current);
+  const strength = ph.strength ?? 1;
+  const big = h('img', { class: 'filter-big', alt: `Preview: ${current.name}`, src: previewURL(ph, current.id, 640, s, strength), draggable: 'false' });
+  const original = previewURL(ph, 'none', 640, s);
+  const tag = h('span', { class: 'filter-tag', 'aria-live': 'polite' }, current.name);
   const choose = (id) => {
     ph.filter = id;
     ph.thumb = id === 'none' ? null : ph.tiles[id];
+    s._filterFlash = true;
+    rerender();
+  };
+  const step = (by) => choose(FILTERS[(at + by + FILTERS.length) % FILTERS.length].id);
+  // On the photo: swipe for the next filter, hold to compare with the original.
+  const stage = h('div', { class: 'filter-stage' + (s._filterFlash ? ' flash' : ''), tabindex: '0', role: 'img', 'aria-label': `${current.name}. Swipe or use the arrow keys for another filter; hold to see the original.` }, big, tag, h('span', { class: 'filter-arrows', 'aria-hidden': 'true' }, h('button', { type: 'button', class: 'filter-step prev', tabindex: '-1', onclick: () => step(-1) }, '‹'), h('button', { type: 'button', class: 'filter-step next', tabindex: '-1', onclick: () => step(1) }, '›')));
+  s._filterFlash = false;
+  let down = null;
+  let held = 0;
+  const showOriginal = (on) => {
+    big.src = on ? original : previewURL(ph, current.id, 640, s, strength);
+    tag.textContent = on ? 'Original' : current.name;
+    stage.classList.toggle('comparing', on);
+  };
+  stage.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button')) return;
+    down = [e.clientX, e.clientY];
+    stage.setPointerCapture?.(e.pointerId);
+    held = setTimeout(() => current.id !== 'none' && showOriginal(true), 260);
+  });
+  const lift = (e) => {
+    clearTimeout(held);
+    if (stage.classList.contains('comparing')) showOriginal(false);
+    else if (down && e) {
+      const dx = e.clientX - down[0];
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(e.clientY - down[1])) step(dx < 0 ? 1 : -1);
+    }
+    down = null;
+  };
+  stage.addEventListener('pointerup', lift);
+  stage.addEventListener('pointercancel', () => lift(null));
+  stage.addEventListener('pointermove', (e) => down && Math.abs(e.clientX - down[0]) > 10 && clearTimeout(held));
+  stage.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') step(1);
+    else if (e.key === 'ArrowLeft') step(-1);
+    else if (e.key === ' ' && !e.repeat) showOriginal(true);
+    else return;
+    e.preventDefault();
+  });
+  stage.addEventListener('keyup', (e) => e.key === ' ' && showOriginal(false));
+  // How strong: any filter but the original, from a touch to the full look.
+  const slider = h('input', { type: 'range', min: '20', max: '100', step: '5', value: String(Math.round(strength * 100)), 'aria-label': 'Strength' });
+  const pct = h('output', null, `${Math.round(strength * 100)}%`);
+  let redrawSoon = 0;
+  slider.addEventListener('input', () => {
+    ph.strength = Number(slider.value) / 100;
+    pct.textContent = `${slider.value}%`;
+    clearTimeout(redrawSoon);
+    redrawSoon = setTimeout(() => (big.src = previewURL(ph, current.id, 640, s, ph.strength)), 60);
+  });
+  // The other photos in this post, to move between without closing.
+  const mine = s.photos.filter((p) => p.small);
+  const idx = mine.indexOf(ph);
+  const go = (by) => {
+    s._filterFor = mine[(idx + by + mine.length) % mine.length];
     rerender();
   };
   const others = s.photos.filter((p) => p !== ph && p.small);
+  const tiles = h(
+    'div',
+    { class: 'filter-strip', role: 'group', 'aria-label': 'Filters' },
+    FILTERS.map((f) => h('button', { type: 'button', class: 'filter-tile', 'aria-pressed': String(current.id === f.id), title: f.note || 'The photo as you took it', onclick: () => choose(f.id) }, h('img', { src: ph.tiles[f.id], alt: '' }), h('span', null, f.name)))
+  );
+  // (The chosen one, in view.)
+  requestAnimationFrame(() => tiles.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest', inline: 'center' }));
   return h(
     'fieldset',
     { class: 'group filter-panel' },
     h('legend', null, 'Filter'),
-    big,
-    h('p', { class: 'hint' }, current.note || 'The photo as you took it.'),
+    mine.length > 1 ? h('div', { class: 'filter-photos' }, h('button', { type: 'button', class: 'btn', 'aria-label': 'Previous photo', onclick: () => go(-1) }, '‹'), h('span', null, `Photo ${idx + 1} of ${mine.length}`), h('button', { type: 'button', class: 'btn', 'aria-label': 'Next photo', onclick: () => go(1) }, '›')) : null,
+    stage,
+    h('p', { class: 'hint' }, (current.note || 'The photo as you took it.') + ' · Swipe the photo for the next filter; hold it to compare.'),
+    tiles,
+    current.id !== 'none' ? h('label', { class: 'filter-strength' }, h('span', null, 'Strength'), slider, pct) : null,
     current.id === 'digicam' ? stampSetting(ph, s, () => { ph.tiles = null; if (ph.filter === 'digicam') ph.thumb = null; rerender(); }) : null,
-    h(
-      'div',
-      { class: 'filter-strip', role: 'group', 'aria-label': 'Filters' },
-      FILTERS.map((f) => h('button', { type: 'button', class: 'filter-tile', 'aria-pressed': String(current.id === f.id), onclick: () => choose(f.id) }, h('img', { src: ph.tiles[f.id], alt: '' }), h('span', null, f.name)))
-    ),
     h(
       'div',
       { class: 'row end' },
@@ -1404,6 +1472,7 @@ function filterPanel(s, ph, rerender) {
         ? h('button', { type: 'button', class: 'btn', onclick: () => {
             for (const p of others) {
               p.filter = ph.filter;
+              p.strength = ph.strength;
               if (p.stamp !== ph.stamp) p.tiles = null;
               p.stamp = ph.stamp;
               p.tiles ||= Object.fromEntries(FILTERS.map((f) => [f.id, previewURL(p, f.id, 150, s)]));
@@ -2779,12 +2848,14 @@ function photoPicker(s, rerenderEditor) {
           ? h('img', {
               src,
               alt: '',
+              // (Tap a new photo to give it a filter.)
+              ...(ph.small ? { class: 'thumb-pick', title: 'Tap for filters', onclick: () => { s._filterFor = s._filterFor === ph ? null : ph; rerender(); } } : {}),
               // A saved photo that can't be found: say so, so it can be removed and added again.
               onerror: (e) => e.target.replaceWith(h('span', { class: 'thumb-wait missing' }, 'Photo missing. Remove it and add it again.'))
             })
           : h('span', { class: 'thumb-wait' }, 'Preparing…'),
         cap,
-        ph.small ? h('button', { type: 'button', class: 'filter-btn' + (s._filterFor === ph ? ' on' : ''), onclick: () => { s._filterFor = s._filterFor === ph ? null : ph; rerender(); } }, ph.filter && ph.filter !== 'none' ? FILTERS.find((f) => f.id === ph.filter).name : 'Filter…') : null,
+        ph.small ? h('button', { type: 'button', class: 'filter-btn' + (s._filterFor === ph ? ' on' : ''), onclick: () => { s._filterFor = s._filterFor === ph ? null : ph; rerender(); } }, ph.filter && ph.filter !== 'none' ? `🎨 ${FILTERS.find((f) => f.id === ph.filter).name}` : '🎨 Filters') : null,
         h('button', { type: 'button', class: 'x', 'aria-label': `Remove photo ${i + 1}`, onclick: () => { if (ph.name) s.removed.push(ph.name); if (s._filterFor === ph) s._filterFor = null; s.photos.splice(i, 1); rerender(); } }, '×')
       )
     );
@@ -2817,7 +2888,7 @@ function photoPicker(s, rerenderEditor) {
   });
   thumbs.append(h('label', { class: 'add-photo', for: 'photo-in' }, '+ Add photos'), input);
   const panel = s._filterFor && s._filterFor.small && s.photos.includes(s._filterFor) ? filterPanel(s, s._filterFor, rerender) : null;
-  return h('div', { class: 'field' }, h('span', { class: 'label' }, 'Photos'), thumbs, panel, h('span', { class: 'hint' }, 'Tap Filter… under a photo to give it a look. Photos are resized and stripped of all hidden data (location, camera, date, everything) before upload, and checked again by the server.'));
+  return h('div', { class: 'field' }, h('span', { class: 'label' }, 'Photos'), thumbs, panel, h('span', { class: 'hint' }, 'Tap a photo (or 🎨 under it) to give it a filter. Photos are resized and stripped of all hidden data (location, camera, date, everything) before upload, and checked again by the server.'));
 }
 
 function placePicker(s, rerender) {
@@ -3538,6 +3609,8 @@ async function squarePhoto(file) {
 async function setPicture(value) {
   const before = data.site?.picture || '';
   await setSiteField('picture', value);
+  // (The site's icon, in the tab and on a home screen, becomes it too.)
+  await ensureAppIcon(value).catch(() => {});
   // (A photo you've replaced isn't kept.)
   if (isPhoto(before) && before !== value) await delFile(before).catch(() => {});
   await refresh();

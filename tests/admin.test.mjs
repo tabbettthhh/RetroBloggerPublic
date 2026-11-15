@@ -45,6 +45,34 @@ await test('a photo post with two photos and captions: every photo loads, cleane
   await page.close();
 });
 
+await test('filters: tap a photo, swipe or pick one (stained glass too), take it down a little, and it’s saved into the photo', async () => {
+  const page = await adminPage();
+  await newPost(page, 'Photos');
+  await page.locator('#photo-in').setInputFiles([PHOTOS[0], PHOTOS[1]]);
+  await waitPhotos(page);
+  await page.locator('.thumb-pick').first().click();
+  await page.waitForSelector('.filter-stage');
+  eq(await page.locator('.filter-photos span').innerText(), 'Photo 1 of 2', 'which photo');
+  await page.locator('.filter-stage').focus();
+  await page.keyboard.press('ArrowRight');
+  eq(await page.locator('.filter-tag').innerText(), 'Digicam \'05', 'the arrow keys: the next filter');
+  await page.locator('.filter-tile', { hasText: 'Stained glass' }).click();
+  eq(await page.locator('.filter-tag').innerText(), 'Stained glass', 'stained glass');
+  await page.locator('.filter-strength input').fill('60');
+  eq(await page.locator('.filter-strength output').innerText(), '60%', 'strength');
+  await page.locator('.filter-photos button[aria-label="Next photo"]').click();
+  eq(await page.locator('.filter-photos span').innerText(), 'Photo 2 of 2', 'on to the next photo without closing');
+  await page.locator('.filter-panel .btn.go').click();
+  eq(await page.locator('.filter-btn').first().innerText(), '🎨 Stained glass', 'shown under the photo');
+  await page.locator('textarea.textarea').first().fill('Stained glass test');
+  const msg = await clickSave(page);
+  assert(/Published/.test(msg), 'toast: ' + msg);
+  const post = await findPost((p) => p.body.includes('Stained glass test'));
+  await photosAllLoad(post);
+  assert(!page.errors.length, page.errors.join('; '));
+  await page.close();
+});
+
 await test('replacing a photo on a saved post keeps every photo working', async () => {
   const page = await adminPage();
   await editPost(page, 'Two photos test');

@@ -206,6 +206,22 @@ await test('while you’re away: the status shows on those days only, and visito
   eq([d.site.status, d.site.presence === 'away'], ['At my desk', false], 'not yet');
 });
 
+await test('the site’s icon is your picture: in the tab, and on a home screen', async () => {
+  const before = await getFile('site.md');
+  await putFile('site.md', '---\nname: Home Corner\nowner: Sam\npicture: duck\n---\nHi.\n');
+  // (Not drawn yet: the site's own icon.)
+  const plain = await fetch(`${BASE}/icons/icon-192.png`);
+  eq(plain.status, 200, 'an icon either way');
+  await site(PHONE, async (p) => {
+    await p.waitForFunction(() => [...document.querySelectorAll('link[rel="icon"]')].some((l) => l.href.includes('app-duck')), null, { timeout: 15000 });
+  }, '/?owner=1#/');
+  const own = await fetch(`${BASE}/icons/icon-192.png`);
+  eq([own.status, own.headers.get('Content-Type'), own.headers.get('Cache-Control')], [200, 'image/png', 'public, max-age=3600'], 'yours, once drawn');
+  const m = await (await fetch(`${BASE}/manifest.webmanifest`)).json();
+  assert(m.icons.every((i) => i.type === 'image/png'), 'the home screen’s too');
+  await putFile('site.md', before);
+});
+
 await test('online when you’re actually here: automatic, or one you chose until you’ve been away a day', async () => {
   const say = (state) => fetch(`${BASE}/admin/api/presence`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state }) });
   const shown = async () => (await publicData()).site.presence;

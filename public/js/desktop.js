@@ -140,7 +140,10 @@ export function startDesktop(root, data) {
     cascade++;
     Object.assign(f.el.style, { width: width + 'px', height: height + 'px', left: left + 'px', top: top + 'px' });
 
-    const task = h('button', { type: 'button', class: 'task-btn task-' + APPS[id].era }, title);
+    // (Its icon and its name; when the taskbar's short of room, just the icon. Your site's own
+    // window wears the site's icon: your picture, as in the browser's tab.)
+    const icon = (DESKTOP_ICONS.find(([k]) => k === id) || [])[2] || (id === 'thoughts' ? 'di-thoughts' : id === 'stats' ? 'di-passport' : 'di-about');
+    const task = h('button', { type: 'button', class: 'task-btn task-' + APPS[id].era, title, 'aria-label': title }, id === 'home' ? h('img', { class: 'task-ico task-site', src: '/icons/icon-192.png', alt: '', 'aria-hidden': 'true' }) : h('span', { class: 'dock-icon task-ico ' + icon, 'aria-hidden': 'true' }), h('span', { class: 'task-label' }, title));
     w = { ...f, task, minimized: false, param: null };
     wins.set(id, w);
     render(w, id, route.param);
