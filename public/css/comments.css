@@ -41,7 +41,7 @@ textarea.cm-input { resize: vertical; min-height: 64px; }
 [data-theme="dark"] .cm-item { background: color-mix(in srgb, var(--sk-soft, #cfe6cf) 14%, transparent); }
 
 /* On a card in the feed: how many comments. */
-.card > .card-comments { display: inline-flex; align-items: center; gap: 5px; margin: 0 10px 8px; padding: 2px 9px; border-radius: 10px; font-size: 12px; text-decoration: none; color: var(--sk-bar, #0054e3); background: color-mix(in srgb, var(--sk-soft, #cfe6cf) 45%, transparent); }
+.card > .card-comments { display: inline-flex; align-items: center; gap: 5px; margin: 0 10px 8px; padding: 2px 9px; border-radius: 10px; font-size: 12px; text-decoration: none; color: var(--sk-link, var(--sk-bar, #0054e3)); background: color-mix(in srgb, var(--sk-soft, #cfe6cf) 45%, transparent); }
 .card > .card-comments:hover { text-decoration: underline; }
 .card[data-card="neon"] > .card-comments { color: #fff; }
 [data-theme="dark"] .card > .card-comments { color: #8fb4ff; }

@@ -55,7 +55,7 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .type-tabs button[aria-pressed="true"] { border: 2px solid #316ac5; background: #dfeafc; font-weight: bold; }
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip-btn { min-height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid #a5a28f; border-radius: 17px; background: #fff; font-size: 12px; cursor: pointer; }
-.chip-btn[aria-pressed="true"] { border: 2px solid #316ac5; background: #dfeafc; font-weight: bold; }
+.chip-btn:is([aria-pressed="true"], [aria-checked="true"]) { border: 2px solid #316ac5; background: #dfeafc; font-weight: bold; }
 .star-pick { display: flex; gap: 2px; }
 .star-pick button { width: 40px; height: 40px; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .star-pick svg { width: 28px; height: 28px; }
@@ -698,7 +698,7 @@ fieldset.group legend { padding: 0 4px; color: #0d3a9a; font-weight: bold; }
 .series-chosen { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
 .series-chosen:empty { display: none; }
 .emo-btn.mood-none { width: auto; padding: 0 8px; font-size: 12px; }
-.emo-btn[aria-pressed="true"] { outline: 2px solid #3a6fd8; outline-offset: -2px; border-radius: 4px; background: #e8eefc; }
+.emo-btn:is([aria-pressed="true"], [aria-checked="true"]) { outline: 2px solid #3a6fd8; outline-offset: -2px; border-radius: 4px; background: #e8eefc; }
 .series-chosen .chip { padding: 4px 10px; border-radius: 12px; background: #eef3fb; font-size: 12px; }
 /* Friends on a post (who it's with, a shared album): chips to tap on and off. */
 .friend-chips { display: flex; flex-wrap: wrap; gap: 6px; }

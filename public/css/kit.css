@@ -54,7 +54,7 @@
 .mc-on :is(.wbody, .phone #main) a:not([class]) { color: var(--k-link) !important; }
 /* Buttons, tabs and chips. */
 .mc-on :is(.wbody, .phone #main) :is(.xp-btn, .chip-btn, .react-btn, .feed-more, .keep-reading, .nudge-btn, .droid-btn, .shelf-btn, .aqua-pill, .seg, .board-tab, .pln-tab, .paper-pill, .leather-pill, .search-chip, .card-comments, .fl-btn, .tab, .al-tab, .gb-send, .visit-btn) { background: var(--k-ctl-bg) !important; color: var(--k-ctl-ink) !important; border: var(--k-ctl-edge) !important; border-radius: var(--k-ctl-radius) !important; box-shadow: none !important; text-shadow: none !important; font-family: var(--k-font) !important; }
-.mc-on :is(.wbody, .phone #main) :is(.seg.on, .aqua-pill.on, .board-tab.on, .search-chip.on, .pln-tab.on, .chip-btn[aria-pressed="true"], .tab.on, .al-tab.on) { background: var(--k-ctl-on-bg) !important; color: var(--k-ctl-on-ink) !important; }
+.mc-on :is(.wbody, .phone #main) :is(.seg.on, .aqua-pill.on, .board-tab.on, .search-chip.on, .pln-tab.on, .chip-btn:is([aria-pressed="true"], [aria-checked="true"]), .tab.on, .al-tab.on) { background: var(--k-ctl-on-bg) !important; color: var(--k-ctl-on-ink) !important; }
 /* Things you type into. */
 .mc-on :is(.wbody, .phone #main) :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], .hp), select, textarea) { background: var(--k-field-bg) !important; color: var(--k-field-ink) !important; border: var(--k-field-edge) !important; border-radius: var(--k-ctl-radius) !important; box-shadow: none !important; font-family: var(--k-font) !important; }
 .mc-on :is(.wbody, .phone #main) ::placeholder { color: var(--k-field-ink); opacity: .55; }
@@ -74,6 +74,10 @@
 .mc-on .phone .xp-ctl { background: var(--k-wbtn-bg) !important; border: var(--k-wbtn-edge) !important; border-radius: var(--k-wbtn-radius, 0) !important; box-shadow: none !important; }
 .mc-on .phone .xp-ctl.close { background: var(--k-close-bg, var(--k-wbtn-bg)) !important; }
 .mc-on .phone :is(.xp-nav, .xp-nav a) { background: var(--k-surface-2) !important; color: var(--k-surface-2-ink) !important; border-color: transparent !important; box-shadow: none !important; text-shadow: none !important; font-family: var(--k-font) !important; }
+/* (The status strip keeps its pale ground under every kit, so its words keep their dark ink.) */
+.mc-on .status-pill, .mc-on #app .status-pill.status-pill :is(b, span, small) { color: #1b1b1b !important; -webkit-text-fill-color: currentColor !important; }
+.mc-on .phone .xp-nav .xp-others { color: var(--k-surface-2-ink) !important; }
+.mc-on .phone .menu-xp.open .xp-others { background: var(--k-ctl-on-bg) !important; color: var(--k-ctl-on-ink) !important; border-color: transparent !important; }
 .mc-on .phone .xp-nav a[aria-current], .mc-on .phone .xp-nav a.on { background: var(--k-ctl-on-bg) !important; color: var(--k-ctl-on-ink) !important; }
 .mc-on .phone .dock-icon { filter: none; }
 .mc-on .start-menu.mobile { background: var(--k-surface) !important; color: var(--k-surface-ink) !important; border: var(--k-edge) !important; }

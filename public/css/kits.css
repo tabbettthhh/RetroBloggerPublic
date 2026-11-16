@@ -87,7 +87,7 @@
   --k-font: 'Open Sans', sans-serif; --k-head-font: 'Open Sans', sans-serif; --k-hand-font: 'Open Sans', sans-serif; --k-mono-font: 'Share Tech Mono', monospace;
   --k-page: #fff; --k-ink: #1b1b1f; --k-ink-soft: #5a5a66; --k-head-ink: #2a1150; --k-link: #0b63b5;
   --k-surface: #f2f2f5; --k-surface-ink: #1b1b1f; --k-surface-2: #2a1150; --k-surface-2-ink: #fff; --k-edge: 0; --k-radius: 0; --k-shadow: none;
-  --k-ctl-bg: #2a1150; --k-ctl-ink: #fff; --k-ctl-edge: 0; --k-ctl-radius: 0; --k-ctl-on-bg: #00a3a3; --k-ctl-on-ink: #fff;
+  --k-ctl-bg: #2a1150; --k-ctl-ink: #fff; --k-ctl-edge: 0; --k-ctl-radius: 0; --k-ctl-on-bg: #008282; --k-ctl-on-ink: #fff;
   --k-field-bg: #fff; --k-field-ink: #1b1b1f; --k-field-edge: 2px solid #5a5a66;
   --k-win-bg: #fff; --k-win-edge: 1px solid #2a1150; --k-win-radius: 0; --k-win-pad: 0; --k-win-shadow: 0 10px 30px rgba(0, 0, 0, .35);
   --k-bar-bg: #2a1150; --k-bar-off-bg: #4a3a66; --k-bar-ink: #fff; --k-bar-font: 400 13px 'Open Sans', sans-serif;

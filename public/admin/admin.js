@@ -320,7 +320,7 @@ function topRoomControls() {
     'div',
     { class: 'chip-row', role: 'radiogroup', 'aria-label': 'Room at the top' },
     Object.entries(TOP_ROOM).map(([v, label]) =>
-      h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-pressed': String(now === v), 'aria-checked': String(now === v), onclick: async (e) => {
+      h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(now === v), onclick: async (e) => {
         const chips = [...e.currentTarget.parentElement.children];
         chips.forEach((b) => { b.setAttribute('aria-pressed', String(b === e.currentTarget)); b.setAttribute('aria-checked', String(b === e.currentTarget)); });
         setTopRoom(v);
@@ -503,7 +503,7 @@ function postsList(all) {
   const chips = h('div', { class: 'chip-row post-kinds', role: 'radiogroup', 'aria-label': 'Show' });
   const drawChips = () =>
     chips.replaceChildren(
-      ...[['', 'All'], ...kinds].map(([id, label]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(postType === id), 'aria-pressed': String(postType === id), onclick: () => { postType = id; drawChips(); show(); } }, label))
+      ...[['', 'All'], ...kinds].map(([id, label]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(postType === id), onclick: () => { postType = id; drawChips(); show(); } }, label))
     );
   const show = () => {
     posts = postType ? all.filter((p) => p.type === postType) : all;
@@ -1646,7 +1646,7 @@ function dressPicker(s) {
     const styles = h(
       'div',
       { class: 'chip-row', role: 'radiogroup', 'aria-label': 'Ribbon style' },
-      Object.entries(RIBBONS).map(([id, name]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-pressed': String((s.ribbon_style || 'banner') === id), onclick: () => { s.ribbon_style = id; draw(); } }, name))
+      Object.entries(RIBBONS).map(([id, name]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String((s.ribbon_style || 'banner') === id), onclick: () => { s.ribbon_style = id; draw(); } }, name))
     );
     const colour = h('input', { type: 'color', value: s.ribbon_colour || t.accent, 'aria-label': 'Ribbon colour' });
     colour.addEventListener('input', () => {
@@ -3469,10 +3469,10 @@ function viewSite(part = 'site') {
     const MOOD_FACES = ['smile', 'grin', 'wink', 'cool', 'love', 'blush', 'tongue', 'meh', 'confused', 'sleepy', 'dizzy', 'sad', 'cry', 'angry', 'wow'];
     const drawMood = () =>
       moodRow.replaceChildren(
-        h('button', { type: 'button', class: 'emo-btn mood-none', role: 'radio', 'aria-checked': String(!st.mood), 'aria-pressed': String(!st.mood), onclick: () => ((st.mood = ''), drawMood()) }, 'None'),
+        h('button', { type: 'button', class: 'emo-btn mood-none', role: 'radio', 'aria-checked': String(!st.mood), onclick: () => ((st.mood = ''), drawMood()) }, 'None'),
         ...MOOD_FACES.map((id) => {
           const label = EMOTICONS.find((e) => e[0] === id)?.[1] || id;
-          return h('button', { type: 'button', class: 'emo-btn', role: 'radio', 'aria-checked': String(st.mood === id), 'aria-pressed': String(st.mood === id), title: label, 'aria-label': label, html: emoticonSvg(id, 22), onclick: () => ((st.mood = id), drawMood()) });
+          return h('button', { type: 'button', class: 'emo-btn', role: 'radio', 'aria-checked': String(st.mood === id), title: label, 'aria-label': label, html: emoticonSvg(id, 22), onclick: () => ((st.mood = id), drawMood()) });
         })
       );
     drawMood();
