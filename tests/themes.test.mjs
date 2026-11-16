@@ -482,8 +482,8 @@ await test('the editor: effects, after dark, colours from a picture, surprise me
   await page.waitForFunction(() => document.querySelector('.tm-frame')?.contentDocument?.documentElement.dataset.skNameStyle === 'glitter', null, { timeout: 10000 });
   // Undo steps back one change at a time.
   await page.locator('button', { hasText: '↶ Undo' }).click();
-  eq(await page.locator('.chip-row[aria-label="Falling over the page"] .chip-btn[aria-pressed="true"]').innerText(), 'With the season or festive day', 'snow undone (back to the season)');
-  eq(await page.locator('.chip-row[aria-label="Your name"] .chip-btn[aria-pressed="true"]').innerText(), 'Glitter', 'glitter kept');
+  eq(await page.locator('.chip-row[aria-label="Falling over the page"] .chip-btn[aria-checked="true"]').innerText(), 'With the season or festive day', 'snow undone (back to the season)');
+  eq(await page.locator('.chip-row[aria-label="Your name"] .chip-btn[aria-checked="true"]').innerText(), 'Glitter', 'glitter kept');
   // Tab icon and after dark.
   await ownTab(page, 'Tab icon');
   await page.locator('.tm-pick[aria-label="Bunny friend"]').click();

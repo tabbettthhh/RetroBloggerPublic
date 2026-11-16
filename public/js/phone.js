@@ -154,7 +154,7 @@ function leatherShell(id, data, content, param) {
     h(
       'div',
       { class: 'stitched' },
-      h('header', { class: 'leather-head' }, h('a', { class: 'paper-tab', href: back[0] }, iconEl(ICON.chevronLeft), back[1]), h('h1', { class: 'gold' }, appTitle(id, data))),
+      h('header', { class: 'leather-head', role: 'none' }, h('a', { class: 'paper-tab', href: back[0] }, iconEl(ICON.chevronLeft), back[1]), h('h1', { class: 'gold' }, appTitle(id, data))),
       h('div', { class: 'paper', id: 'main' }, content)
     )
   );
@@ -241,6 +241,8 @@ export function renderPhone(root, route, data) {
   shell.dataset.app = APPS[id] ? id : 'home';
   if (lastEra && lastEra !== app.era) shell.classList.add('arrive');
   lastEra = app.era;
+  // (For a screen reader, every screen has its name as the page's heading.)
+  if (!shell.querySelector('h1')) shell.append(h('h1', { class: 'sr' }, appTitle(id, data) || data.site.name));
   root.replaceChildren(shell);
   window.scrollTo(0, 0);
   document.title = `${appTitle(id, data)} · ${data.site.name}`.replace(/^ · /, '');

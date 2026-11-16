@@ -37,7 +37,7 @@ export function startDesktop(root, data) {
   const desk = h('div', { class: 'desktop wall' });
   const layer = h('div', { class: 'win-layer' });
   const tasks = h('div', { class: 'tasks' });
-  const icons = h('div', { class: 'desk-icons', role: 'list' });
+  const icons = h('div', { class: 'desk-icons', role: 'group', 'aria-label': 'Apps' });
 
   // ---- icons ----
   // (Drawn again when what's shown changes: signed in, say, your Friends and Planner appear.)
@@ -53,7 +53,7 @@ export function startDesktop(root, data) {
   };
   const iconFor = (id, label, cls) => {
     // (Sections the theme leaves out of the menus have no icon either.)
-    const btn = h('button', { type: 'button', class: 'desk-icon', role: 'listitem', title: `Open ${label}` }, h('span', { class: 'dock-icon ' + cls, 'aria-hidden': 'true' }), h('span', { class: 'desk-label' }, label));
+    const btn = h('button', { type: 'button', class: 'desk-icon', title: `Open ${label}` }, h('span', { class: 'dock-icon ' + cls, 'aria-hidden': 'true' }), h('span', { class: 'desk-label' }, label));
     btn.addEventListener('dblclick', () => go('#/' + (id === 'home' ? '' : id)));
     btn.addEventListener('click', (e) => {
       icons.querySelectorAll('.selected').forEach((n) => n.classList.remove('selected'));

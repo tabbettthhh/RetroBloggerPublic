@@ -48,7 +48,7 @@
 /* Buttons: they stand up, catch the light, and press in. */
 :root[data-sk-realism="extra"] :is(.start-btn, .task-btn, .xp-nav a, .chip-btn, .aqua-pill, .nudge-btn, .feed-more, .droid-btn, .paper-pill, .wbtn, .board-tab, .pln-tab, .seg, .search-chip) { box-shadow: var(--real-bevel), 0 1px 2px rgba(0, 0, 0, .3), 0 2px 5px rgba(0, 0, 0, .15); }
 :root[data-sk-realism="extra"] :is(.start-btn, .task-btn, .xp-nav a, .chip-btn, .aqua-pill, .nudge-btn, .feed-more, .droid-btn, .paper-pill, .wbtn, .board-tab, .pln-tab, .seg, .search-chip):active,
-:root[data-sk-realism="extra"] :is(.task-btn.active, .chip-btn[aria-pressed="true"], .aqua-pill.on, .seg.on) { box-shadow: var(--real-press); translate: 0 1px; }
+:root[data-sk-realism="extra"] :is(.task-btn.active, .chip-btn:is([aria-pressed="true"], [aria-checked="true"]), .aqua-pill.on, .seg.on) { box-shadow: var(--real-press); translate: 0 1px; }
 
 /* Icons: little objects, with gloss and a shadow under them. */
 :root[data-sk-realism="extra"] .dock-icon { filter: drop-shadow(0 3px 3px rgba(0, 0, 0, .45)); }

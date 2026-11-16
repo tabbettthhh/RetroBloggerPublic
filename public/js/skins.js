@@ -59,6 +59,15 @@ export function luminance(hex) {
   const [r, g, b] = hexRgb(hex).map((v, i) => (i < 3 ? v / 255 : v)).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
+// How well two colours read against each other (1 none, 21 black on white).
+export const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+// A colour nudged darker (or lighter, on a dark ground) until words in it can be read on that ground.
+export function readable(hex, ground, least = 4.5) {
+  const to = luminance(ground) > 0.4 ? '#000000' : '#ffffff';
+  let out = hex;
+  for (let i = 0; i < 12 && contrast(out, ground) < least; i++) out = mix(out, to, 0.12);
+  return out;
+}
 const okHex = (v) => /^#[0-9a-f]{6}$/i.test(String(v || ''));
 
 // ---------- the themes that come with the site ----------
@@ -108,7 +117,7 @@ export const SKINS = {
   memphis: { name: 'Memphis Party', vibe: 'Squiggles, zigzags and clashing shapes', main: '#1fb5b0', accent: '#ff5ca8', paper: '#fffbea', leather: '#2a2a2a', wallpaper: 'memphis', decoration: 'squiggle', pointer: 'squiggle', font: 'rounded', title_font: 'bubbly', name_style: 'rainbow', bars: 'stripes', corners: 'round', falling: 'confetti', card_style: 'sticky' },
   leopard: { name: 'Wild Thing', vibe: 'Leopard print, hot pink and a kiss', main: '#e0218a', accent: '#c8873a', paper: '#fff3e8', leather: '#3a2416', wallpaper: 'leopard', decoration: 'lips', pointer: 'lips', title_font: 'handwritten', name_style: 'glitter', selector: 'gradient', trail: 'hearts', card_style: 'polaroid' },
   opera: { name: 'Velvet Opera', vibe: 'Crimson velvet, gold damask and a chandelier', main: '#8e1b2b', accent: '#d4a64a', paper: '#fbf3e4', leather: '#4a0f18', wallpaper: 'damask', decoration: 'chandelier', pointer: 'chandelier', font: 'elegant', title_font: 'elegant', name_style: 'outline', scrollbar: 'themed', header: 'card', card_style: 'letter' },
-  blocky: { name: 'Block World', vibe: 'Grass, dirt and stone blocks, and a pickaxe', main: '#5d9e2f', accent: '#9c6a38', paper: '#f1ead8', leather: '#5b3a1e', wallpaper: 'blocks', decoration: 'pickaxe', pointer: 'pickaxe', title_font: 'pixel', bars: 'pixel', corners: 'square', selector: 'outline', icons: 'colour', sounds: 'chip', trail: 'pixels', card_style: 'pixel' },
+  blocky: { name: 'Block World', vibe: 'Grass, dirt and stone blocks, and a pickaxe', main: '#468021', accent: '#9c6a38', paper: '#f1ead8', leather: '#5b3a1e', wallpaper: 'blocks', decoration: 'pickaxe', pointer: 'pickaxe', title_font: 'pixel', bars: 'pixel', corners: 'square', selector: 'outline', icons: 'colour', sounds: 'chip', trail: 'pixels', card_style: 'pixel' },
   bigtop: { name: 'Big Top', vibe: 'Circus stripes, bunting and showtime', main: '#d7263d', accent: '#f4b400', paper: '#fff8e7', leather: '#3b2a6b', wallpaper: 'bigtop', decoration: 'tent', pointer: 'tent', title_font: 'condensed', name_style: 'wordart', bars: 'stripes', selector: 'gradient', falling: 'confetti', card_style: 'ticket' },
   ...SEASON_SKINS,
   seasonal: seasonalSkin(),
@@ -1539,6 +1548,8 @@ export function skinCss(t, doc = document) {
     '--sk-sel2': tc('#5d93f5'),
     '--sk-sel-text': luminance(sel) > 0.45 ? c.ink : '#ffffff',
     '--sk-bar': tc('#0054e3'),
+    // (The bar's colour for small words on a pale ground, such as a card's "3 comments".)
+    '--sk-link': readable(tc('#0054e3'), '#e4e4e4'),
     '--sk-bar-hi': tc('#3d8af7'),
     '--sk-bar-lo': tc('#003399'),
     '--sk-bar-text': luminance(tc('#0054e3')) > 0.45 ? c.ink : '#ffffff',

@@ -219,7 +219,7 @@ export function viewThemes(ctx) {
       'div',
       { class: 'chip-row', role: 'radiogroup', 'aria-label': 'Preview on' },
       [['phone', 'Phone'], ['computer', 'Computer']].map(([id, label]) =>
-        h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(device === id), 'aria-pressed': String(device === id), onclick: (e) => {
+        h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(device === id), onclick: (e) => {
           device = id;
           frameBox.className = 'tm-frame-box ' + id;
           frameBox.style.removeProperty('height');
@@ -361,7 +361,7 @@ function themeControls(ctx, saved, redraw, preview) {
         { class: 'chip-row', role: 'radiogroup', 'aria-label': OPTIONS[key].name },
         // (extra.only keeps it to the choices that mean something here; extra.own is the theme's own, which is said so.)
         Object.entries(OPTIONS[key].choices).filter(([id]) => !extra.only || extra.only.includes(id)).map(([id, label]) =>
-          h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(t[key] === id), 'aria-pressed': String(t[key] === id), style: extra.font && FONT_FAMILIES[id] ? { fontFamily: FONT_FAMILIES[id] } : null, onclick: () => { d[key] = extra.own === id ? '' : id; redraw(); } }, extra.own === id ? `${label} (this theme’s own)` : label)
+          h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(t[key] === id), style: extra.font && FONT_FAMILIES[id] ? { fontFamily: FONT_FAMILIES[id] } : null, onclick: () => { d[key] = extra.own === id ? '' : id; redraw(); } }, extra.own === id ? `${label} (this theme’s own)` : label)
         )
       )
     );
@@ -657,7 +657,7 @@ function emojiWallControls(d, t, redraw, preview) {
     h(
       'div',
       { class: 'chip-row', role: 'radiogroup', 'aria-label': 'Emoji layout' },
-      Object.entries(EMOJI_LAYOUTS).map(([id, L]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(t.emojiLayout === id), 'aria-pressed': String(t.emojiLayout === id), onclick: () => { d.emoji_layout = id; redraw(); } }, L.name))
+      Object.entries(EMOJI_LAYOUTS).map(([id, L]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(t.emojiLayout === id), onclick: () => { d.emoji_layout = id; redraw(); } }, L.name))
     )
   );
 }
@@ -791,7 +791,7 @@ function appControls(d, t, redraw) {
       h(
         'div',
         { class: 'chip-row', role: 'radiogroup', 'aria-label': `${app.name} look` },
-        Object.entries(APP_LOOKS).map(([v, label]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(look === v), 'aria-pressed': String(look === v), onclick: () => set('look', v) }, label)),
+        Object.entries(APP_LOOKS).map(([v, label]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(look === v), onclick: () => set('look', v) }, label)),
         look === 'custom' ? h('label', { class: 'colour-pick' }, colour, h('span', null, 'Its colour')) : null
       ),
       app.extras.map((k) => {
@@ -801,7 +801,7 @@ function appControls(d, t, redraw) {
           'div',
           { class: 'tm-app-extra' },
           h('span', null, spec.name),
-          h('div', { class: 'chip-row', role: 'radiogroup', 'aria-label': `${app.name} ${spec.name.toLowerCase()}` }, Object.entries(spec.choices).map(([v, label]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn small', 'aria-checked': String(cur === v), 'aria-pressed': String(cur === v), style: k === 'font' && FONT_FAMILIES[v] ? { fontFamily: FONT_FAMILIES[v] } : null, onclick: () => set(k, v) }, label)))
+          h('div', { class: 'chip-row', role: 'radiogroup', 'aria-label': `${app.name} ${spec.name.toLowerCase()}` }, Object.entries(spec.choices).map(([v, label]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn small', 'aria-checked': String(cur === v), style: k === 'font' && FONT_FAMILIES[v] ? { fontFamily: FONT_FAMILIES[v] } : null, onclick: () => set(k, v) }, label)))
         );
       })
     );
@@ -867,7 +867,7 @@ function nightControls(d, t, redraw, preview) {
           'div',
           { class: 'chip-row', role: 'radiogroup', 'aria-label': 'Preview' },
           [[false, '☀️ Daytime'], [true, '🌙 After dark']].map(([v, label]) =>
-            h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(nightPreview === v), 'aria-pressed': String(nightPreview === v), onclick: () => { nightPreview = v; redraw(); } }, label)
+            h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(nightPreview === v), onclick: () => { nightPreview = v; redraw(); } }, label)
           )
         )
       : null
@@ -1100,7 +1100,7 @@ const festName = (id) => FESTIVALS[id].name + (FESTIVALS[id].also ? ` (${FESTIVA
 function seasonControls(d, t, redraw, opt) {
   d.my_days ||= [];
   const chip = (id, label) =>
-    h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(t.seasons === id), 'aria-pressed': String(t.seasons === id), onclick: () => { d.seasons = id; seasonPreview = ''; redraw(); } }, label);
+    h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(t.seasons === id), onclick: () => { d.seasons = id; seasonPreview = ''; redraw(); } }, label);
   const tick = (id) => {
     const on = (d.festivals || []).includes(id);
     return h(
@@ -1150,7 +1150,7 @@ function seasonControls(d, t, redraw, opt) {
           'div',
           { class: 'design-field wide' },
           h('span', null, 'Preview'),
-          h('div', { class: 'chip-row', role: 'radiogroup', 'aria-label': 'Preview a season or festive day' }, previews.map(([id, label]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(seasonPreview === id), 'aria-pressed': String(seasonPreview === id), onclick: () => { seasonPreview = id; redraw(); } }, label)))
+          h('div', { class: 'chip-row', role: 'radiogroup', 'aria-label': 'Preview a season or festive day' }, previews.map(([id, label]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(seasonPreview === id), onclick: () => { seasonPreview = id; redraw(); } }, label)))
         )
       : null
   ].flat();
@@ -1350,7 +1350,7 @@ function barControls(d, t, redraw) {
       'div',
       { class: 'tm-bar-row' },
       h('b', null, BAR_APPS[app]),
-      h('div', { class: 'chip-row', role: 'radiogroup', 'aria-label': `On the ${BAR_APPS[app]} bar` }, Object.entries(BAR_DECOR).map(([mode, label]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(now.mode === mode), 'aria-pressed': String(now.mode === mode), onclick: () => {
+      h('div', { class: 'chip-row', role: 'radiogroup', 'aria-label': `On the ${BAR_APPS[app]} bar` }, Object.entries(BAR_DECOR).map(([mode, label]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(now.mode === mode), onclick: () => {
         if (mode === 'mine' && now.mode !== 'mine') {
           // (Opens the drawings to choose from.)
           barPicking = app;
@@ -1399,7 +1399,7 @@ function floppyControls(d, t, redraw) {
   const f = d.floppy;
   f.own ||= {};
   const chips = (label, value, choices, set, look) =>
-    h('div', { class: 'design-field wide' }, h('span', null, label), h('div', { class: 'chip-row', role: 'radiogroup', 'aria-label': label }, Object.entries(choices).map(([id, name]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(value === id), 'aria-pressed': String(value === id), onclick: () => { set(id); redraw(); } }, look ? look(id) : null, name))));
+    h('div', { class: 'design-field wide' }, h('span', null, label), h('div', { class: 'chip-row', role: 'radiogroup', 'aria-label': label }, Object.entries(choices).map(([id, name]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(value === id), onclick: () => { set(id); redraw(); } }, look ? look(id) : null, name))));
   // A picture of him as he'll look (on Automatic, for the day picked below).
   const tryOn = floppyTry || (FESTIVALS[seasonPreview] || SEASONS[seasonPreview] ? seasonPreview : seasonOf(new Date(), t.hemisphere === 'south'));
   const today = SEASONS[tryOn] ? { season: tryOn, festival: '' } : { season: '', festival: tryOn };
@@ -1416,14 +1416,14 @@ function floppyControls(d, t, redraw) {
     h('p', { class: 'hint' }, 'Floppy, the site’s little helper, can dress for the seasons and festive days (a scarf and bobble hat in winter, sunglasses in summer, a festive hat in December, holding the day’s drawing), or wear an outfit you put together.'),
     h('div', { class: 'tm-floppy' }, h('div', { class: 'tm-floppy-pic', html: pic, role: 'img', 'aria-label': 'Floppy, as he’ll look' }), h('div', { class: 'tm-floppy-side' },
       chips('Dress him', f.dress || 'off', FLOPPY_DRESS, (v) => (f.dress = v)),
-      f.dress === 'auto' ? h('div', { class: 'design-field wide' }, h('span', null, 'Try on'), h('div', { class: 'chip-row', role: 'radiogroup', 'aria-label': 'Try on' }, [...Object.entries(SEASONS), ...Object.entries(FESTIVALS)].map(([id, x]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn small', 'aria-pressed': String(tryOn === id), onclick: () => { floppyTry = id; redraw(); } }, x.name)))) : null
+      f.dress === 'auto' ? h('div', { class: 'design-field wide' }, h('span', null, 'Try on'), h('div', { class: 'chip-row', role: 'radiogroup', 'aria-label': 'Try on' }, [...Object.entries(SEASONS), ...Object.entries(FESTIVALS)].map(([id, x]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn small', 'aria-checked': String(tryOn === id), onclick: () => { floppyTry = id; redraw(); } }, x.name)))) : null
     )),
     f.dress === 'own'
       ? [
           chips(FLOPPY_PIECES.hat.name, f.own.hat || 'none', FLOPPY_PIECES.hat.choices, (v) => (f.own.hat = v)),
           chips(FLOPPY_PIECES.eyes.name, f.own.eyes || 'none', FLOPPY_PIECES.eyes.choices, (v) => (f.own.eyes = v)),
           chips(FLOPPY_PIECES.neck.name, f.own.neck || 'none', FLOPPY_PIECES.neck.choices, (v) => (f.own.neck = v)),
-          h('div', { class: 'design-field wide' }, h('span', null, 'Holding'), h('div', { class: 'chip-row', role: 'radiogroup', 'aria-label': 'Holding' }, Object.entries(FLOPPY_PIECES.held.choices).map(([id, name]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-pressed': String((f.own.held || 'none') === id), onclick: () => { f.own.held = id; redraw(); } }, name))), drawingPicker(t, (what) => { f.own.held = what; redraw(); })),
+          h('div', { class: 'design-field wide' }, h('span', null, 'Holding'), h('div', { class: 'chip-row', role: 'radiogroup', 'aria-label': 'Holding' }, Object.entries(FLOPPY_PIECES.held.choices).map(([id, name]) => h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String((f.own.held || 'none') === id), onclick: () => { f.own.held = id; redraw(); } }, name))), drawingPicker(t, (what) => { f.own.held = what; redraw(); })),
           h('label', { class: 'colour-pick' }, tint, h('span', null, 'Outfit colour'))
         ]
       : null,
@@ -1524,7 +1524,7 @@ function cardMaker(d, t, redraw) {
         'div',
         { class: 'chip-row', role: 'radiogroup', 'aria-label': CARD_PARTS[part].name },
         Object.entries(CARD_PARTS[part].choices).map(([id, label]) =>
-          h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-pressed': String(c[part] === id), onclick: (e) => {
+          h('button', { type: 'button', role: 'radio', class: 'chip-btn', 'aria-checked': String(c[part] === id), onclick: (e) => {
             c[part] = id;
             e.currentTarget.parentElement.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b === e.currentTarget)));
             refresh();
