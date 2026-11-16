@@ -23,6 +23,8 @@ const AI_CRAWLERS = [
   'Diffbot', 'ImagesiftBot', 'Omgilibot', 'Timpibot', 'YouBot', 'DuckAssistBot', 'MistralAI-User', 'AI2Bot', 'Ai2Bot-Dolma'
 ];
 
+// (Your own machine, and the made-up .test addresses the checks use to visit as a stranger.)
+const LOCAL = /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|[\w.-]+\.test)$/;
 const CSP = [
   "default-src 'self'",
   "script-src 'self'",
@@ -33,13 +35,20 @@ const CSP = [
   "media-src 'self'",
   "frame-ancestors 'self'",
   "base-uri 'self'",
-  "form-action 'self'"
+  "form-action 'self'",
+  "object-src 'none'"
 ].join('; ');
 
 const IMAGE_TYPES = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', avif: 'image/avif', heic: 'image/heic' };
 
 export default {
   async fetch(request, env, ctx) {
+    // Always over https (except on your own machine, where the tests and wrangler dev run).
+    const at = new URL(request.url);
+    if (at.protocol === 'http:' && !LOCAL.test(at.hostname)) {
+      at.protocol = 'https:';
+      return new Response(null, { status: 308, headers: { Location: at.href, 'Cache-Control': 'max-age=3600' } });
+    }
     let res;
     try {
       res = await route(request, env, ctx);
@@ -52,7 +61,7 @@ export default {
         ? new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>One moment</title><body style="font-family:Tahoma,sans-serif;padding:24px;max-width:560px;line-height:1.5"><h1 style="font-size:20px">The site hit a snag</h1><p>Something went wrong for a moment. Try again in a few seconds.</p><p><a href="" style="display:inline-block;padding:8px 14px;border:1px solid #003c74;border-radius:3px;background:#ecebe6;color:#000;text-decoration:none">Try again</a></p></body>', { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Retry-After': '5' } })
         : json({ error: 'Something went wrong on the server.' }, 500);
     }
-    return finish(res, new URL(request.url).pathname);
+    return finish(res, at.pathname, at.protocol === 'https:');
   },
   // Every 20 minutes: read your friends' sites for new posts and statuses (in case one was
   // offline when it had news), and tell them about a post of yours that has just gone live.
@@ -87,14 +96,18 @@ export default {
   }
 };
 
-function finish(res, path = '') {
+function finish(res, path = '', secure = false) {
   const out = new Response(res.body, res);
   const h = out.headers;
+  // (For a year, a browser that has been here comes straight back over https, without asking.)
+  if (secure) h.set('Strict-Transport-Security', 'max-age=31536000');
   h.set('X-Robots-Tag', ROBOTS_TAG);
   h.set('X-Content-Type-Options', 'nosniff');
   h.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   h.set('Permissions-Policy', 'geolocation=(self), camera=(), microphone=(), interest-cohort=()');
   h.set('X-Frame-Options', 'SAMEORIGIN');
+  // (A page opened from here, or one that opened this, can't reach into it.)
+  h.set('Cross-Origin-Opener-Policy', 'same-origin');
   if ((h.get('Content-Type') || '').includes('text/html')) {
     // The back office may start a background worker to convert iPhone HEIC/HEIF photos.
     h.set('Content-Security-Policy', path.startsWith('/admin') ? CSP + "; worker-src 'self' blob:" : CSP);

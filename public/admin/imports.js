@@ -143,8 +143,3 @@ export function fromLetterboxd(files) {
     body: f.review
   }));
 }
-
-export function summarise(items) {
-  const count = (s) => items.filter((i) => i.fm.status === s).length;
-  return count;
-}

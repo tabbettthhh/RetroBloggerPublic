@@ -36,12 +36,9 @@
 
 /* Menus, Start menu, right-click menu */
 [data-theme="dark"] .menu-xp .menu-panel,
-[data-theme="dark"] .start-root .menu-panel,
 [data-theme="dark"] .ctx-menu,
 [data-theme="dark"] .ctx-sub { background: #262626; border-color: #444; color: #e6e6e6; }
-[data-theme="dark"] .start-root .menu-panel { border-color: #0b0b0b; }
 [data-theme="dark"] .menu-xp .menu-item:hover, [data-theme="dark"] .menu-xp .menu-item:focus-visible,
-[data-theme="dark"] .start-root .menu-item:hover, [data-theme="dark"] .start-root .menu-item:focus-visible,
 [data-theme="dark"] .ctx-item:hover, [data-theme="dark"] .ctx-item:focus-visible, [data-theme="dark"] .has-sub:focus-within,
 [data-theme="dark"] .sm-item:hover, [data-theme="dark"] .sm-item:focus-visible,
 [data-theme="dark"] .sm-link:hover, [data-theme="dark"] .sm-link:focus-visible { background: var(--xd-orange); color: #111; }

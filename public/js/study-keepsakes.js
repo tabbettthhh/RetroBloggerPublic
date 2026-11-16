@@ -198,7 +198,6 @@ const MAKERS = {
   wfh: (p) => art('wfh', 'Working from home', WFH, p.wfh, 'Working from home today.'),
   tgif: tgifKeepsake, deadline: deadlineKeepsake, employeemonth: employeemonthKeepsake
 };
-export const STUDY_WORK_KEEPSAKES = Object.keys(MAKERS);
 export function studyMakers(post) {
   return Object.entries(MAKERS)
     .filter(([k]) => post[k])

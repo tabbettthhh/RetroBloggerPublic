@@ -201,7 +201,6 @@ const MAKERS = {
   trainticket, ferrypass, travelpin, passportstamp, suitcasesticker, platform, seatres, milesign,
   birthdaycard, gifttag, cakecandle, placecard, favour, bootie, partyhat, thankyou
 };
-export const LIFE_KEEPSAKES = Object.keys(MAKERS);
 export function lifeMakers(post) {
   return Object.entries(MAKERS)
     .filter(([k]) => post[k])

@@ -28,7 +28,6 @@ let DESIGNS = new Map();
 export function registerKeepsakes(list = []) {
   DESIGNS = new Map((list || []).map((d) => [d.id, d]));
 }
-export const keepsakeDesign = (id) => DESIGNS.get(id);
 
 const mediaUrl = (key) => (key ? '/media/' + key.split('/').map(encodeURIComponent).join('/') : '');
 const day = (post) => new Date(post.ts || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();

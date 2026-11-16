@@ -257,7 +257,7 @@
 @keyframes mc-fade { to { opacity: 0; } }
 @keyframes mc-buzz { 50% { translate: 0 1px; } }
 @media (prefers-reduced-motion: reduce) {
-  .mc-reel, .mc-cursor, .mc-marquee span, .mc-dome.on, .mc-rays, .mc-globe.spin svg { animation: none !important; }
+  .mc-reel, .mc-cursor, .mc-marquee span, .mc-dome.on, .mc-globe.spin svg { animation: none !important; }
   .mc-closed.open .mc-lid { transform: none; }
   .mc-playing .mc-cone, .mc-playing .mc-grille { transform: none; }
 }

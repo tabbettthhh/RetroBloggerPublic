@@ -37,7 +37,6 @@ function today(t) {
 }
 
 // ---------- the ornaments (our own drawings; nothing from a visitor goes in here) ----------
-const GOLD = 'var(--cab-gold)';
 const laurel = (flip) => {
   const leaves = Array.from({ length: 7 }, (_, i) => {
     const x = 16 + i * 9;

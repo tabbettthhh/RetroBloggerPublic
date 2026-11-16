@@ -115,7 +115,6 @@ const SKIES = {
   skyplane: { name: 'Plane overhead', caption: 'off somewhere', paint: 'linear-gradient(180deg, #2f78d8, #9fcaf4)', art: () => svgBox(`<path d="M-4 86L88 22" stroke="#fff" stroke-width="2.4" opacity=".8" stroke-linecap="round"/><path d="M-4 90L88 26" stroke="#fff" stroke-width="1.2" opacity=".5"/><path d="M90 20l8-3 1 2-5 3 3 2-1 1-4-1-3 2-1-1 2-3-4-1z" fill="#fff"/>${cloud(70, 70, 1.1)}`) },
   skypink: { name: 'Cotton candy', caption: 'pink skies', paint: 'linear-gradient(180deg, #b48ae0, #f3a6c8 55%, #ffd1b0)', art: () => svgBox(`${cloud(4, 40, 1.8, '#ffc0d8', 0.85)}${cloud(60, 26, 1.4, '#f6b2e4', 0.85)}${cloud(50, 70, 2, '#ffd6e6', 0.8)}`) }
 };
-export const SKY_NAMES = Object.fromEntries(Object.entries(SKIES).map(([k, v]) => [k, v.name]));
 function skyPolaroid(post, key) {
   const s = SKIES[key];
   return h('div', { class: 'ticket-wrap sky ' + key }, h('figure', { class: 'ks ks-sky', role: 'group', 'aria-label': 'Polaroid: ' + s.name }, h('span', { class: 'sk-photo', style: { background: s.paint }, html: s.art(post) }), h('figcaption', null, post[key][0]?.item || s.caption)));
@@ -134,7 +133,6 @@ const WORKOUTS = {
   yoga: ['YOGA', '#c8506a'],
   'leg day': ['LEG DAY', '#8a1a2a']
 };
-export const WORKOUT_TYPES = ['cardio', 'hypertrophy', 'strength', 'mobility', 'HIIT', 'endurance', 'yoga', 'leg day', 'rest day'];
 function workoutKeepsake(post) {
   const said = (post.workout[0]?.item || '').trim().toLowerCase();
   const [label, colour] = WORKOUTS[said] || WORKOUTS.strength;
