@@ -52,7 +52,6 @@
 .spread .page.right { position: relative; background: linear-gradient(90deg, rgba(80,50,20,.22) 0%, rgba(0,0,0,0) 15%), repeating-linear-gradient(0deg, rgba(120,90,50,.05) 0 1px, transparent 1px 3px), #f6efdf; border-radius: 0 4px 4px 0; }
 .spread .gutter { width: 2px; background: linear-gradient(180deg, #b49a72, #8a7050, #b49a72); }
 .spread .journal-map { height: 260px; }
-.page-text { display: flex; flex-direction: column; gap: 14px; }
 .page-curl { position: absolute; right: 0; bottom: 0; width: 34px; height: 34px; background: linear-gradient(135deg, transparent 50%, #e2d4b4 50%, #c9b68f 100%); box-shadow: -2px -2px 4px rgba(0,0,0,.15); }
 
 /* Passport */
@@ -408,7 +407,7 @@
 .chip:nth-child(even) { rotate: 1deg; }
 
 /* Rubber-stamp ink is never perfectly even */
-.return-stamp, .suggested-stamp, .recommend-stamp { -webkit-mask-image: var(--ink-mask); mask-image: var(--ink-mask); -webkit-mask-size: 160px 60px; mask-size: 160px 60px; }
+.return-stamp, .recommend-stamp { -webkit-mask-image: var(--ink-mask); mask-image: var(--ink-mask); -webkit-mask-size: 160px 60px; mask-size: 160px 60px; }
 
 /* Gold stickers get a foil sheen */
 .sticker.on { background: radial-gradient(circle at 32% 28%, #fff4c0 0 12%, transparent 30%), conic-gradient(from 210deg, #f4c94a, #ffe9a0, #d9a21c, #ffe08a, #c98a10, #f4c94a); }
@@ -423,7 +422,6 @@
    while the writing on the right scrolls past it. */
 .spread .page.left { align-self: stretch; }
 .spread .page.left > .left-stick { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 16px; }
-.spread .page.left > .left-stick.no-stick { position: static; }
 .spread .page > .page-curl { position: absolute; right: 0; bottom: 0; z-index: 2; }
 
 /* ---------- The journal as a thick book, on a computer ----------
@@ -501,9 +499,6 @@
 .ruled .deco-floppy .fd-say { font-size: 16px; }
 .deco-postmark { width: 140px; opacity: .8; mix-blend-mode: multiply; -webkit-mask-image: var(--ink-mask); mask-image: var(--ink-mask); -webkit-mask-size: 150px 70px; mask-size: 150px 70px; }
 .deco-postmark svg { display: block; width: 140px; height: auto; }
-.ruled .deco-photo { width: 130px; }
-.ruled .deco-photo img { height: 96px; }
-.ruled .deco-photo .hand { font-size: 15px; }
 .deco-rating { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .deco-rating .hand { font-size: 18px; color: #6b5640; }
 .deco-rating .sticker { width: 24px; height: 24px; }

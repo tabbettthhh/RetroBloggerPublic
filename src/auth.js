@@ -98,7 +98,3 @@ export async function adminCheck(request, env) {
   if (adminEmail && String(payload.email || '').toLowerCase() !== adminEmail.toLowerCase()) return { ok: false, why: 'email', email: String(payload.email || '') };
   return { ok: true };
 }
-
-export async function isAdmin(request, env) {
-  return (await adminCheck(request, env)).ok;
-}

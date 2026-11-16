@@ -90,7 +90,6 @@ function sevenninchKeepsake(post) {
 }
 
 const MAKERS = { discaward: discawardKeepsake, trophy: trophyKeepsake, chartno1: chartno1Keepsake, winnercard: winnercardKeepsake, goldmic: goldmicKeepsake, autograph: autographKeepsake, fanclub: fanclubKeepsake, jukebox: jukeboxKeepsake, radiorequest: radiorequestKeepsake, magreview: magreviewKeepsake, yearonrepeat: yearonrepeatKeepsake, sevenninch: sevenninchKeepsake };
-export const MUSIC_KEEPSAKES = Object.keys(MAKERS);
 export function musicMakers(post) {
   return Object.entries(MAKERS)
     .filter(([k]) => post[k])

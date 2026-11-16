@@ -30,9 +30,10 @@ button { font: inherit; }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex: none; }
 .hand { font-family: Caveat, cursive; }
 :focus-visible { outline: 2px dashed #e68b2c; outline-offset: 2px; }
-/* Asked for less motion: nothing loops, slides or fades in, anywhere (each part says so for itself as well; this catches the rest). */
+/* Asked for less motion: no animation plays or loops, anywhere (each part says so for itself as well; this catches the rest).
+   Transitions are left to each part: hurrying all of them at once kept things on screen that were meant to be hidden. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
 }
 #app { min-height: 100%; }
 

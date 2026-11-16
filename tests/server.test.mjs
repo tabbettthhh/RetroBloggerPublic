@@ -3,6 +3,22 @@
 import { api, test, report, assert, eq, putFile, getFile, upload, publicData, overview, PHOTOS, BASE, chromium } from './lib.mjs';
 import { unzipSync, strFromU8 } from 'fflate';
 
+await test('every answer carries the safety headers, and plain http is sent on to https', async () => {
+  const r = await fetch(BASE + '/');
+  const hd = (k) => r.headers.get(k) || '';
+  eq([hd('x-content-type-options'), hd('x-frame-options'), hd('cross-origin-opener-policy')], ['nosniff', 'SAMEORIGIN', 'same-origin'], 'headers');
+  for (const part of ["default-src 'self'", "script-src 'self'", "object-src 'none'", "base-uri 'self'", "frame-ancestors 'self'"]) assert(hd('content-security-policy').includes(part), `the page's policy has ${part}`);
+  // (On your own machine, plain http is left alone and nothing is promised about https.)
+  eq(hd('strict-transport-security'), '', 'no https promise over plain http');
+  // Under a real address, plain http is sent on, path and all, without touching the site.
+  const { request } = await import('node:http');
+  const u = new URL(BASE);
+  const res = await new Promise((resolve, reject) => request({ host: u.hostname, port: u.port, path: '/admin/api/overview?x=1', method: 'GET', headers: { Host: 'mysite.example' } }, resolve).on('error', reject).end());
+  res.resume();
+  eq(res.statusCode, 308, 'sent on');
+  assert(/^https?:\/\/mysite\.example\/admin\/api\/overview\?x=1$/.test(res.headers.location || ''), `to the same place (${res.headers.location})`);
+});
+
 await test('a post shows up straight away in a tab that already had the site open', async () => {
   const b = await chromium.launch();
   const ctx = await b.newContext();
